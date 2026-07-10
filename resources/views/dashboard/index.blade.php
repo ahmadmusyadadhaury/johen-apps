@@ -423,7 +423,7 @@
         </div>
         @endunless
 
-        @unless(auth()->user()->isSuperAdmin() || auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        @unless(auth()->user()->isSuperAdmin() || auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt() || (auth()->user()->isManager() && auth()->user()->isHeadOfStore()))
         <a href="{{ route('history.index') }}" class="group rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300">
             <div class="flex items-center gap-3 mb-4">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-md group-hover:scale-110 transition-transform duration-300">
