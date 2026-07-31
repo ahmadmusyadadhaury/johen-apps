@@ -1,0 +1,476 @@
+@php
+    $statusLabels = ['menunggu' => 'Menunggu', 'diproses' => 'Diproses', 'dijeda' => 'Dijeda', 'dilanjutkan' => 'Dilanjutkan', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak'];
+    $statusClasses = ['menunggu' => 'bg-blue-50 text-blue-700 ring-blue-600/15 dark:bg-blue-900/20 dark:text-blue-400', 'diproses' => 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400', 'dijeda' => 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/20 dark:text-orange-400', 'dilanjutkan' => 'bg-violet-50 text-violet-700 ring-violet-600/15 dark:bg-violet-900/20 dark:text-violet-400', 'selesai' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-900/20 dark:text-emerald-400', 'ditolak' => 'bg-red-50 text-red-700 ring-red-600/15 dark:bg-red-900/20 dark:text-red-400'];
+    $priorityLabels = ['rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi', 'mendesak' => 'Mendesak'];
+    $priorityClasses = ['rendah' => 'bg-gray-50 text-gray-600 ring-gray-600/15 dark:bg-gray-800 dark:text-gray-400', 'sedang' => 'bg-blue-50 text-blue-700 ring-blue-600/15 dark:bg-blue-900/20 dark:text-blue-400', 'tinggi' => 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400', 'mendesak' => 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/20 dark:text-red-400'];
+    $fmtDurasi = fn (int $detik) => sprintf('%02d:%02d:%02d', intdiv($detik, 3600), intdiv($detik % 3600, 60), $detik % 60);
+    $countChip = fn ($key) => $key === 'semua' ? $tickets->count() : $tickets->where('status', $key)->count();
+@endphp
+
+@push('topbar-left')
+    <div>
+        <h1 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Ticketing IT</h1>
+        <p class="mt-0.5 text-xs text-gray-400">Permintaan bantuan dan pekerjaan lintas divisi</p>
+    </div>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function pad(n) { return String(n).padStart(2, '0'); }
+    window.fmtDurasi = function (total) {
+        total = Math.max(0, Math.floor(total));
+        var h = Math.floor(total / 3600);
+        var m = Math.floor((total % 3600) / 60);
+        var s = total % 60;
+        return pad(h) + ':' + pad(m) + ':' + pad(s);
+    };
+
+    function initTimer(el) {
+        el._update = function () {
+            var durasi = parseInt(el.dataset.durasi || '0', 10);
+            var mulai = parseInt(el.dataset.mulai || '0', 10);
+            var total = durasi + (mulai ? Math.max(0, (Date.now() / 1000) - mulai) : 0);
+            var target = el.querySelector('.timer-time');
+            if (target) target.textContent = fmtDurasi(total);
+        };
+        el._update();
+    }
+
+    setInterval(function () {
+        document.querySelectorAll('.timer').forEach(function (el) {
+            if (!el._update) initTimer(el);
+            el._update();
+        });
+    }, 1000);
+});
+</script>
+@endpush
+
+<x-app-layout title="Ticketing IT">
+    <div class="space-y-6">
+        @if(session('success'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ session('success') }}</div>
+        @endif
+
+        @if($canManage)
+            <div x-data="{ search: '', filter: 'semua', detail: null }" class="space-y-6">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+                    <button type="button" @click="filter = 'semua'" :class="filter === 'semua' ? 'border-primary-200 ring-2 ring-primary-500/20 dark:border-primary-800' : 'hover:border-blue-200 dark:hover:border-blue-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                        <div class="mb-3 flex items-center justify-between">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:bg-blue-900/20 dark:text-blue-400">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
+                            </div>
+                            <span class="badge-info text-[10px]">Semua</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['total'] }}</span>
+                            <span class="text-sm font-medium text-gray-400">tiket</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Total Tiket Masuk</p>
+                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
+                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
+                        </div>
+                    </button>
+
+                    <button type="button" @click="filter = 'diproses'" :class="filter === 'diproses' ? 'border-amber-300 ring-2 ring-amber-500/20 dark:border-amber-800' : 'hover:border-amber-200 dark:hover:border-amber-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                        <div class="mb-3 flex items-center justify-between">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition-transform duration-300 group-hover:scale-110 dark:bg-amber-900/20 dark:text-amber-400">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+                            </div>
+                            <span class="badge-warning text-[10px]">Aktif</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['diproses'] }}</span>
+                            <span class="text-sm font-medium text-gray-400">tiket</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Sedang Diproses</p>
+                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
+                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+                        </div>
+                    </button>
+
+                    <button type="button" @click="filter = 'dijeda'" :class="filter === 'dijeda' ? 'border-violet-300 ring-2 ring-violet-500/20 dark:border-violet-800' : 'hover:border-violet-200 dark:hover:border-violet-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                        <div class="mb-3 flex items-center justify-between">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition-transform duration-300 group-hover:scale-110 dark:bg-violet-900/20 dark:text-violet-400">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>
+                            </div>
+                            <span class="badge-primary text-[10px]">Dijeda</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['dijeda'] }}</span>
+                            <span class="text-sm font-medium text-gray-400">tiket</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Dijeda</p>
+                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
+                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>
+                        </div>
+                    </button>
+
+                    <button type="button" @click="filter = 'selesai'" :class="filter === 'selesai' ? 'border-emerald-300 ring-2 ring-emerald-500/20 dark:border-emerald-800' : 'hover:border-emerald-200 dark:hover:border-emerald-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                        <div class="mb-3 flex items-center justify-between">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform duration-300 group-hover:scale-110 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <span class="badge-success text-[10px]">Selesai</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['selesai'] }}</span>
+                            <span class="text-sm font-medium text-gray-400">tiket</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tiket Selesai</p>
+                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
+                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </button>
+                </div>
+
+                <section class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                    <div class="flex flex-col gap-3 border-b border-gray-100 p-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Semua Tiket Masuk</h2>
+                            <p class="mt-0.5 text-xs text-gray-400">Kelola penugasan dan status tiket secara realtime</p>
+                        </div>
+                        <div class="relative">
+                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                            <input x-model="search" type="text" placeholder="Cari tiket, pengaju, PIC..." class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:bg-white focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:w-64">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 border-b border-gray-100 px-5 py-3 dark:border-gray-800">
+                        @foreach(['semua' => 'Semua', 'menunggu' => 'Menunggu', 'diproses' => 'Diproses', 'dijeda' => 'Dijeda', 'dilanjutkan' => 'Dilanjutkan', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak'] as $key => $label)
+                            <button type="button" @click="filter = '{{ $key }}'" :class="filter === '{{ $key }}' ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'" class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors">
+                                {{ $label }}
+                                <span class="rounded-full bg-black/5 px-1.5 py-0.5 text-[10px] font-bold dark:bg-white/10">{{ $countChip($key) }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+                            <thead class="bg-gray-50/70 dark:bg-gray-800/50">
+                                <tr class="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                    <th class="px-5 py-3">Tiket</th>
+                                    <th class="px-5 py-3">Pengaju</th>
+                                    <th class="px-5 py-3">Prioritas</th>
+                                    <th class="px-5 py-3">Status</th>
+                                    <th class="px-5 py-3">Waktu Pengerjaan</th>
+                                    <th class="px-5 py-3">PIC IT</th>
+                                    <th class="px-5 py-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody x-ref="tbody" class="divide-y divide-gray-50 dark:divide-gray-800/60">
+                                @forelse($tickets as $ticket)
+                                    @php
+                                        $sedangDikerjakan = in_array($ticket->status, ['diproses', 'dilanjutkan']) && $ticket->proses_mulai_at;
+                                        $tampilDetik = $ticket->durasi_detik + ($ticket->proses_mulai_at ? max(0, $ticket->proses_mulai_at->diffInSeconds(now())) : 0);
+                                        $namaPengaju = $ticket->requester->employee?->nama ?? $ticket->requester->name;
+                                        $divisiPengaju = $ticket->requester->employee?->division?->nama ?? '-';
+                                        $namaAssign = $ticket->assignee?->employee?->nama ?? $ticket->assignee?->name ?? '';
+                                        $cari = mb_strtolower($ticket->kode . ' ' . $ticket->judul . ' ' . $namaPengaju . ' ' . $namaAssign);
+                                        $detailData = [
+                                            'id' => $ticket->id,
+                                            'kode' => $ticket->kode,
+                                            'judul' => $ticket->judul,
+                                            'deskripsi' => $ticket->deskripsi,
+                                            'pengaju' => $namaPengaju,
+                                            'divisi' => $divisiPengaju,
+                                            'tanggal' => $ticket->created_at->format('d M Y · H:i'),
+                                            'prioritas' => $priorityLabels[$ticket->prioritas],
+                                            'status' => $ticket->status,
+                                            'assignee_id' => $ticket->assignee_id,
+                                            'catatan_it' => $ticket->catatan_it ?? '',
+                                            'durasi' => (int) $ticket->durasi_detik,
+                                            'mulai' => $ticket->proses_mulai_at?->timestamp ?? 0,
+                                        ];
+                                    @endphp
+                                    <tr class="ticket-row transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-800/40" x-show="(filter === 'semua' || $el.dataset.status === filter) && (search.trim() === '' || $el.dataset.search.includes(search.trim().toLowerCase()))" data-status="{{ $ticket->status }}" data-search="{{ $cari }}">
+                                        <td class="max-w-sm px-5 py-4">
+                                            <p class="text-[11px] font-bold tracking-wide text-primary-600 dark:text-primary-400">{{ $ticket->kode }}</p>
+                                            <p class="mt-1 font-semibold text-gray-900 dark:text-gray-100">{{ $ticket->judul }}</p>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $namaPengaju }}</p>
+                                                <p class="mt-0.5 text-[11px] text-gray-400">{{ $ticket->created_at->format('d M Y · H:i') }}</p>
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 {{ $priorityClasses[$ticket->prioritas] }}">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                                {{ $priorityLabels[$ticket->prioritas] }}
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 {{ $statusClasses[$ticket->status] }}">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                                {{ $statusLabels[$ticket->status] }}
+                                            </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-5 py-4">
+                                            <span class="timer inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold tabular-nums ring-1 {{ $sedangDikerjakan ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-gray-100 text-gray-500 ring-gray-500/10 dark:bg-gray-800 dark:text-gray-400' }}" data-durasi="{{ $ticket->durasi_detik }}" data-mulai="{{ $ticket->proses_mulai_at?->timestamp ?? 0 }}">
+                                                @if($sedangDikerjakan)
+                                                    <span class="relative flex h-2 w-2">
+                                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                                        <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                    </span>
+                                                @else
+                                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                @endif
+                                                <span class="timer-time">{{ $fmtDurasi($tampilDetik) }}</span>
+                                            </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-5 py-4">
+                                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $ticket->assignee?->employee?->nama ?? $ticket->assignee?->name }}</span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-5 py-4">
+                                            <button type="button" data-detail='{{ json_encode($detailData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP) }}' @click="detail = JSON.parse($el.dataset.detail)" class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                Lihat Detail
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="px-5 py-16 text-center">
+                                            <div class="mx-auto flex max-w-xs flex-col items-center gap-3">
+                                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 dark:bg-gray-800">
+                                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
+                                                </div>
+                                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">Belum ada tiket masuk</p>
+                                                <p class="text-xs text-gray-400">Tiket yang diajukan karyawan akan muncul di sini.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                                <tr x-cloak x-show="(filter !== 'semua' || search.trim() !== '') && $refs.tbody.querySelectorAll('tr.ticket-row').length > 0 && Array.from($refs.tbody.querySelectorAll('tr.ticket-row')).every(r => r.style.display === 'none')">
+                                    <td colspan="7" class="px-5 py-16 text-center">
+                                        <div class="mx-auto flex max-w-xs flex-col items-center gap-3">
+                                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 dark:bg-gray-800">
+                                                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5H21M3 10.5h.008v.008H3V10.5z"/></svg>
+                                            </div>
+                                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">Tidak ada tiket yang cocok</p>
+                                            <p class="text-xs text-gray-400">Coba ubah kata kunci pencarian atau filter status.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <template x-if="detail">
+                    <div class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+                        <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="detail = null"></div>
+                        <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+                            <div class="flex items-start justify-between gap-4 border-b border-gray-100 p-5 dark:border-gray-800">
+                                <div class="min-w-0">
+                                    <p class="text-[11px] font-bold tracking-wide text-primary-600 dark:text-primary-400" x-text="detail.kode"></p>
+                                    <h3 class="mt-0.5 text-base font-display font-bold text-gray-900 dark:text-gray-100" x-text="detail.judul"></h3>
+                                </div>
+                                <button type="button" @click="detail = null" class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            <div class="max-h-[70vh] overflow-y-auto p-5">
+                                <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Pengaju</p>
+                                        <p class="mt-0.5 truncate text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="detail.pengaju"></p>
+                                        <p class="truncate text-[11px] text-gray-400" x-text="detail.divisi"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Diajukan</p>
+                                        <p class="mt-0.5 text-xs font-medium text-gray-800 dark:text-gray-200" x-text="detail.tanggal"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Prioritas</p>
+                                        <p class="mt-0.5 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="detail.prioritas"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Status</p>
+                                        <span class="mt-0.5 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1" :class="{
+                                            'bg-blue-50 text-blue-700 ring-blue-600/15 dark:bg-blue-900/20 dark:text-blue-400': detail.status === 'menunggu',
+                                            'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400': detail.status === 'diproses',
+                                            'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/20 dark:text-orange-400': detail.status === 'dijeda',
+                                            'bg-violet-50 text-violet-700 ring-violet-600/15 dark:bg-violet-900/20 dark:text-violet-400': detail.status === 'dilanjutkan',
+                                            'bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-900/20 dark:text-emerald-400': detail.status === 'selesai',
+                                            'bg-red-50 text-red-700 ring-red-600/15 dark:bg-red-900/20 dark:text-red-400': detail.status === 'ditolak'
+                                        }" x-text="detail.status"></span>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Waktu Pengerjaan</p>
+                                        <span class="timer mt-0.5 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums ring-1" :data-durasi="detail.durasi" :data-mulai="detail.mulai" :class="detail.status === 'diproses' || detail.status === 'dilanjutkan' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 ring-gray-500/10 dark:bg-gray-800 dark:text-gray-400'">
+                                            <template x-if="detail.status === 'diproses' || detail.status === 'dilanjutkan'">
+                                                <span class="relative flex h-2 w-2">
+                                                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                </span>
+                                            </template>
+                                            <template x-else>
+                                                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </template>
+                                            <span class="timer-time">{{ $fmtDurasi(0) }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mb-5 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Deskripsi</p>
+                                    <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-700 dark:text-gray-300" x-text="detail.deskripsi"></p>
+                                </div>
+
+                                <form x-ref="updateForm" method="POST" :action="'/it/tickets/' + detail.id" class="space-y-4">
+                                    @csrf
+                                    <input type="hidden" name="_method" value="PATCH">
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">PIC IT</label>
+                                        <select name="assignee_id" x-model="detail.assignee_id" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                            <option value="">Belum ditugaskan</option>
+                                            @foreach($itUsers as $itUser)
+                                                <option value="{{ $itUser->id }}">{{ $itUser->employee?->nama ?? $itUser->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Status</label>
+                                        <select name="status" x-model="detail.status" @change="if (detail.status === 'diproses' || detail.status === 'dilanjutkan') { if (!detail.mulai) detail.mulai = Math.floor(Date.now() / 1000); } else { detail.mulai = 0; }" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                            @foreach($statusLabels as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Catatan IT</label>
+                                        <textarea name="catatan_it" rows="3" x-model="detail.catatan_it" placeholder="Catatan untuk pengaju" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/70 p-4 dark:border-gray-800 dark:bg-gray-800/50">
+                                @if($canDelete)
+                                    <form x-ref="deleteForm" method="POST" :action="'/it/tickets/' + detail.id" class="m-0 hidden">
+                                        @csrf
+                                        <input type="hidden" name="_method" value="DELETE">
+                                    </form>
+                                    <button type="button" @click="if (confirm('Hapus tiket ' + detail.kode + '? Tindakan ini tidak dapat dibatalkan.')) $refs.deleteForm.submit()" class="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                        Hapus
+                                    </button>
+                                @endif
+                                <div class="ml-auto flex items-center gap-3">
+                                    <button type="button" @click="detail = null" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Batal</button>
+                                    <button type="button" @click="$refs.updateForm.submit()" class="rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">Simpan Perubahan</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        @else
+            <div x-data="{ showForm: {{ $errors->any() ? 'true' : 'false' }} }" class="space-y-6">
+            <section class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-3 border-b border-gray-100 p-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Riwayat Pengajuan Saya</h2>
+                        <p class="mt-0.5 text-xs text-gray-400">Pantau status tiket yang pernah Anda ajukan</p>
+                    </div>
+                    <button type="button" @click="showForm = true" class="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        Buat Tiket
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+                        <thead class="bg-gray-50/70 dark:bg-gray-800/50">
+                            <tr class="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                <th class="px-5 py-3">Tiket</th>
+                                <th class="px-5 py-3">Diajukan</th>
+                                <th class="px-5 py-3">Status</th>
+                                <th class="px-5 py-3">PIC IT</th>
+                                <th class="px-5 py-3">Pembaruan IT</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50 dark:divide-gray-800/60">
+                            @forelse($tickets as $ticket)
+                                <tr class="transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-800/40">
+                                    <td class="px-5 py-4">
+                                        <p class="text-[11px] font-bold tracking-wide text-primary-600 dark:text-primary-400">{{ $ticket->kode }}</p>
+                                        <p class="mt-1 font-semibold text-gray-900 dark:text-gray-100">{{ $ticket->judul }}</p>
+                                    </td>
+                                    <td class="whitespace-nowrap px-5 py-4 text-xs text-gray-500">{{ $ticket->created_at->format('d M Y · H:i') }}</td>
+                                    <td class="px-5 py-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 {{ $statusClasses[$ticket->status] }}"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>{{ $statusLabels[$ticket->status] }}</span></td>
+                                    <td class="whitespace-nowrap px-5 py-4 text-xs font-medium text-gray-700 dark:text-gray-300">{{ $ticket->assignee?->employee?->nama ?? $ticket->assignee?->name ?? 'Belum ditugaskan' }}</td>
+                                    <td class="max-w-xs px-5 py-4 text-xs text-gray-600 dark:text-gray-300">{{ $ticket->catatan_it ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-5 py-16 text-center">
+                                        <div class="mx-auto flex max-w-xs flex-col items-center gap-3">
+                                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 dark:bg-gray-800">
+                                                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
+                                            </div>
+                                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">Belum ada riwayat pengajuan</p>
+                                            <p class="text-xs text-gray-400">Tiket yang Anda ajukan akan tampil di sini.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <template x-if="showForm">
+                <div class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+                    <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="showForm = false"></div>
+                    <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+                        <div class="flex items-start justify-between gap-4 border-b border-gray-100 p-5 dark:border-gray-800">
+                            <div>
+                                <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Buat Tiket</h3>
+                                <p class="mt-0.5 text-xs text-gray-400">Sampaikan kebutuhan IT dengan detail agar dapat ditangani lebih cepat.</p>
+                            </div>
+                            <button type="button" @click="showForm = false" class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <form method="POST" action="{{ route('it.tickets.store') }}" class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
+                            @csrf
+                            <div>
+                                <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Judul permintaan</label>
+                                <input name="judul" value="{{ old('judul') }}" required maxlength="150" placeholder="Contoh: Tidak bisa akses aplikasi absensi" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                @error('judul') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Kategori</label>
+                                    <select name="kategori" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                        @foreach(['perangkat' => 'Perangkat', 'aplikasi' => 'Aplikasi', 'akun_akses' => 'Akun & Akses', 'jaringan' => 'Jaringan', 'lainnya' => 'Lainnya'] as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('kategori') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Prioritas</label>
+                                    <select name="prioritas" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                        @foreach(['rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi', 'mendesak' => 'Mendesak'] as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('prioritas', 'sedang') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Detail kebutuhan</label>
+                                <textarea name="deskripsi" required rows="4" maxlength="3000" placeholder="Jelaskan kendala, perangkat atau aplikasi yang digunakan, dan dampaknya." class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ old('deskripsi') }}</textarea>
+                                @error('deskripsi') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+                                <button type="button" @click="showForm = false" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Batal</button>
+                                <button type="submit" class="rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">Kirim Tiket</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+            </div>
+        @endif
+    </div>
+</x-app-layout>

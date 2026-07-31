@@ -37,7 +37,7 @@
                     @endif
                 @endauth
             </div>
-            <div class="footer">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</div>
+            <div class="footer">&copy; {{ date('Y') }} PT. Johen Sukses Abadi. All rights reserved.</div>
         </div>
     </body>
 </html>

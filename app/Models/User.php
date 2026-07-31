@@ -454,6 +454,58 @@ class User extends Authenticatable
         return $this->isStaff();
     }
 
+    public function getRoleDisplayName(): ?string
+    {
+        return match (true) {
+            $this->isKoordinatorPubg() => 'Koordinator Johen PUBG',
+            $this->isKoordinatorFf() => 'Koordinator Free Fire',
+            $this->isKoordinatorMlbb() => 'Koordinator MLBB',
+            $this->isKoordinatorEfootball() => 'Koordinator E-football',
+            $this->isKoordinatorValorant() => 'Koordinator Valorant',
+            $this->isKoordinatorRoblox() => 'Koordinator Roblox',
+            $this->isKoordinatorMonkeyPubg() => 'Koordinator Monkey PUBG',
+            $this->isKoordinatorIt() => 'Koordinator IT',
+            $this->isKoordinatorCreative() => 'Koordinator Creative',
+            $this->isKoordinatorAdmin() => 'Koordinator Admin',
+            $this->isKoordinatorStock() => 'Koordinator Stock',
+            $this->isStaffHostPubg() => 'Staff Host PUBG',
+            $this->isStaffHostFf() => 'Staff Host Free Fire',
+            $this->isStaffHostMlbb() => 'Staff Host MLBB',
+            $this->isStaffHostEfootball() => 'Staff Host E-football',
+            $this->isStaffHostValorant() => 'Staff Host Valorant',
+            $this->isStaffHostRoblox() => 'Staff Host Roblox',
+            $this->isStaffHostMonkeyPubg() => 'Staff Host Monkey PUBG',
+            $this->isStaffIt() => 'Staff IT',
+            $this->isStaffCreative() => 'Staff Creative',
+            $this->isStaffAdmin() => 'Staff Admin',
+            $this->isStaffStock() => 'Staff Stock',
+            $this->isManager() => 'Manager',
+            $this->isKoordinator() => 'Koordinator',
+            $this->isStaff() => 'Staff',
+            $this->isSuperAdmin() => 'Super Admin',
+            $this->isGmCeo() => 'GM / CEO',
+            default => $this->employee?->position,
+        };
+    }
+
+    public function getRoleDivisionName(): ?string
+    {
+        return match (true) {
+            $this->isKoordinatorPubg(), $this->isStaffHostPubg() => 'PUBG',
+            $this->isKoordinatorFf(), $this->isStaffHostFf() => 'Free Fire',
+            $this->isKoordinatorMlbb(), $this->isStaffHostMlbb() => 'MLBB',
+            $this->isKoordinatorEfootball(), $this->isStaffHostEfootball() => 'E-football',
+            $this->isKoordinatorValorant(), $this->isStaffHostValorant() => 'Valorant',
+            $this->isKoordinatorRoblox(), $this->isStaffHostRoblox() => 'Roblox',
+            $this->isKoordinatorMonkeyPubg(), $this->isStaffHostMonkeyPubg() => 'Monkey PUBG',
+            $this->isKoordinatorAdmin(), $this->isStaffAdmin() => 'Admin',
+            $this->isKoordinatorIt(), $this->isStaffIt() => 'IT',
+            $this->isKoordinatorCreative(), $this->isStaffCreative() => 'Creative',
+            $this->isKoordinatorStock(), $this->isStaffStock() => 'Stock',
+            default => $this->employee?->division?->nama,
+        };
+    }
+
     public function canCreateData(): bool
     {
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO]);

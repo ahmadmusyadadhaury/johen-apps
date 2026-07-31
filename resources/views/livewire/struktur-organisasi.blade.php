@@ -45,7 +45,7 @@
                          @click="focusedId = parent.id">
                         <div class="flex items-center justify-center gap-1.5 mb-1">
                             <template x-if="parent.employee_foto">
-                                <img :src="'/storage/employees/' + parent.employee_foto" :alt="parent.employee_nama"
+                                <img :src="parent.employee_foto" :alt="parent.employee_nama"
                                      :class="children.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
                                      class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                             </template>
@@ -69,7 +69,7 @@
                   class="relative rounded-xl bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-950 dark:to-blue-950 border-2 border-primary-500 shadow-lg shadow-primary-100 dark:shadow-primary-900/30 text-center ring-2 ring-primary-200 dark:ring-primary-800">
                  <div class="flex items-center justify-center gap-1.5 mb-1">
                      <template x-if="focused.employee_foto">
-                         <img :src="'/storage/employees/' + focused.employee_foto" :alt="focused.employee_nama"
+                         <img :src="focused.employee_foto" :alt="focused.employee_nama"
                               :class="children.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
                               class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                      </template>
@@ -123,7 +123,7 @@
                                       class="relative cursor-pointer rounded-xl bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-sm text-center hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-md transition-all">
                                      <div class="flex items-center justify-center gap-1.5 mb-1">
                                          <template x-if="child.employee_foto">
-                                             <img :src="'/storage/employees/' + child.employee_foto" :alt="child.employee_nama"
+                                             <img :src="child.employee_foto" :alt="child.employee_nama"
                                                   :class="children.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
                                                   class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                                          </template>

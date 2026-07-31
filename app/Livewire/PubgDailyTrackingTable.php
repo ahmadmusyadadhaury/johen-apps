@@ -6,12 +6,14 @@ use App\Models\BonusPubg;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class PubgDailyTrackingTable extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     public string $search = '';
     public string $bulan = '';
@@ -32,6 +34,10 @@ class PubgDailyTrackingTable extends Component
     public string $durasi = '';
     public string $insentif = '';
     public string $catatan = '';
+    public $foto_bukti_stats;
+    public $foto_bukti_live;
+    public string $fotoBuktiStatsPath = '';
+    public string $fotoBuktiLivePath = '';
 
     protected $updatesQueryString = ['search'];
 
@@ -47,6 +53,8 @@ class PubgDailyTrackingTable extends Component
             'peak_view' => 'required|numeric|min:0',
             'durasi' => 'required|numeric|min:0',
             'catatan' => 'nullable|string',
+            'foto_bukti_stats' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            'foto_bukti_live' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -63,6 +71,12 @@ class PubgDailyTrackingTable extends Component
             'durasi.required' => 'Durasi wajib diisi.',
             'durasi.numeric' => 'Durasi harus berupa angka.',
             'durasi.min' => 'Durasi minimal 0.',
+            'foto_bukti_stats.image' => 'Bukti Stats harus berupa gambar.',
+            'foto_bukti_stats.mimes' => 'Bukti Stats harus format JPG/PNG.',
+            'foto_bukti_stats.max' => 'Ukuran Bukti Stats maksimal 10MB.',
+            'foto_bukti_live.image' => 'Bukti Live harus berupa gambar.',
+            'foto_bukti_live.mimes' => 'Bukti Live harus format JPG/PNG.',
+            'foto_bukti_live.max' => 'Ukuran Bukti Live maksimal 10MB.',
         ];
     }
 
@@ -116,6 +130,8 @@ class PubgDailyTrackingTable extends Component
         $this->durasi = (string) (int) $item->durasi;
         $this->insentif = (string) ($item->ach_sold * 100000);
         $this->catatan = $item->catatan ?? '';
+        $this->fotoBuktiStatsPath = $item->foto_bukti_stats ?? '';
+        $this->fotoBuktiLivePath = $item->foto_bukti_live ?? '';
         $this->showEditModal = true;
     }
 
@@ -142,7 +158,7 @@ class PubgDailyTrackingTable extends Component
         $user = auth()->user();
         $status = $user->isKoordinatorGame() ? 'disetujui' : 'pending';
 
-        BonusPubg::create([
+        $data = [
             'employee_id' => $employee->id,
             'tanggal' => $this->tanggal,
             'nik' => $this->nik,
@@ -155,7 +171,16 @@ class PubgDailyTrackingTable extends Component
             'insentif' => $sold * 100000,
             'catatan' => $this->catatan ?: null,
             'status' => $status,
-        ]);
+        ];
+
+        if ($this->foto_bukti_stats) {
+            $data['foto_bukti_stats'] = $this->foto_bukti_stats->store('daily-tracking', 'public');
+        }
+        if ($this->foto_bukti_live) {
+            $data['foto_bukti_live'] = $this->foto_bukti_live->store('daily-tracking', 'public');
+        }
+
+        BonusPubg::create($data);
 
         $this->closeModal();
         $message = $status === 'pending'
@@ -170,7 +195,8 @@ class PubgDailyTrackingTable extends Component
         $sold = str_replace(',', '.', $this->ach_sold);
         $item = BonusPubg::findOrFail($this->editId);
         if (!$this->canModify($item)) return;
-        $item->update([
+
+        $data = [
             'tanggal' => $this->tanggal,
             'nik' => $this->nik,
             'nama' => $this->nama,
@@ -181,7 +207,22 @@ class PubgDailyTrackingTable extends Component
             'durasi' => str_replace(',', '.', $this->durasi),
             'insentif' => $sold * 100000,
             'catatan' => $this->catatan ?: null,
-        ]);
+        ];
+
+        if ($this->foto_bukti_stats) {
+            if ($item->foto_bukti_stats) {
+                Storage::disk('public')->delete($item->foto_bukti_stats);
+            }
+            $data['foto_bukti_stats'] = $this->foto_bukti_stats->store('daily-tracking', 'public');
+        }
+        if ($this->foto_bukti_live) {
+            if ($item->foto_bukti_live) {
+                Storage::disk('public')->delete($item->foto_bukti_live);
+            }
+            $data['foto_bukti_live'] = $this->foto_bukti_live->store('daily-tracking', 'public');
+        }
+
+        $item->update($data);
 
         $this->closeModal();
         $this->dispatch('notify', type: 'success', message: 'Data berhasil diperbarui.');
@@ -209,6 +250,12 @@ class PubgDailyTrackingTable extends Component
         if (!$this->deleteId) return;
         $item = BonusPubg::findOrFail($this->deleteId);
         if (!$this->canModify($item)) return;
+        if ($item->foto_bukti_stats) {
+            Storage::disk('public')->delete($item->foto_bukti_stats);
+        }
+        if ($item->foto_bukti_live) {
+            Storage::disk('public')->delete($item->foto_bukti_live);
+        }
         $item->delete();
         $this->dispatch('notify', type: 'success', message: 'Data berhasil dihapus.');
         $this->cancelDelete();
@@ -311,6 +358,22 @@ class PubgDailyTrackingTable extends Component
                 $ids = array_merge($ids, $subordinateIds);
             }
             $q->whereIn('id', $ids);
+        })->when(!$user->isKoordinatorGame() && !$user->isManager() && $userEmployee, function ($q) use ($user) {
+            $roleMap = [
+                'isStaffHostPubg' => User::ROLE_STAFF_HOST_PUBG,
+                'isStaffHostFf' => User::ROLE_STAFF_HOST_FF,
+                'isStaffHostMlbb' => User::ROLE_STAFF_HOST_MLBB,
+                'isStaffHostEfootball' => User::ROLE_STAFF_HOST_EFOOTBALL,
+                'isStaffHostValorant' => User::ROLE_STAFF_HOST_VALORANT,
+                'isStaffHostRoblox' => User::ROLE_STAFF_HOST_ROBLOX,
+                'isStaffHostMonkeyPubg' => User::ROLE_STAFF_HOST_MONKEY_PUBG,
+            ];
+            foreach ($roleMap as $method => $role) {
+                if ($user->$method()) {
+                    $q->whereHas('users', fn ($uq) => $uq->where('role', $role));
+                    break;
+                }
+            }
         })->orderBy('nama')->get();
 
         $totalSold = 0;
@@ -420,6 +483,10 @@ class PubgDailyTrackingTable extends Component
         $this->durasi = '';
         $this->insentif = '';
         $this->catatan = '';
+        $this->foto_bukti_stats = null;
+        $this->foto_bukti_live = null;
+        $this->fotoBuktiStatsPath = '';
+        $this->fotoBuktiLivePath = '';
         $this->resetErrorBag();
     }
 }

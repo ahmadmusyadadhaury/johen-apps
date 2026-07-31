@@ -30,6 +30,7 @@ use App\Http\Controllers\WeeklyReportController;
 use App\Http\Controllers\DailyTrackingController;
 use App\Http\Controllers\ProjectItController;
 use App\Http\Controllers\JadwalMaintenanceController;
+use App\Http\Controllers\ItTicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -45,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/influencer', function () { return view('influencer.index'); })->name('influencer');
         Route::get('/influencer/pengajuan', function () { return view('influencer.pengajuan'); })->name('influencer-pengajuan');
         Route::get('/kalender-event', App\Livewire\KalenderEventTable::class)->name('kalender-event');
+        Route::get('/employees/{employee}/photo', [EmployeeController::class, 'showPhoto'])->name('employees.photo');
         Route::post('/employees/{employee}/photo', [EmployeeController::class, 'uploadPhoto'])->name('employees.upload-photo');
         Route::post('/employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.store-document');
         Route::get('/employees/{employee}/documents/{document}/download', [EmployeeController::class, 'downloadDocument'])->name('employees.download-document');
@@ -191,6 +193,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reimbursement', [App\Http\Controllers\ReimbursementController::class, 'index'])->name('reimbursement');
 
     Route::prefix('it')->name('it.')->group(function () {
+        Route::get('/tickets', [ItTicketController::class, 'index'])->name('tickets.index');
+        Route::post('/tickets', [ItTicketController::class, 'store'])->name('tickets.store');
+        Route::patch('/tickets/{ticket}', [ItTicketController::class, 'update'])->name('tickets.update');
+        Route::delete('/tickets/{ticket}', [ItTicketController::class, 'destroy'])->name('tickets.destroy');
         Route::get('/project', [ProjectItController::class, 'index'])->name('project');
         Route::get('/maintenance', [JadwalMaintenanceController::class, 'index'])->name('maintenance');
     });

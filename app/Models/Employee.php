@@ -58,6 +58,17 @@ class Employee extends Model
         return $this->users->first();
     }
 
+    public function getFotoUrlAttribute(): ?string
+    {
+        if (!$this->foto) return null;
+
+        if (str_starts_with($this->foto, 'base64:')) {
+            return route('hris.employees.photo', $this) . '?' . $this->updated_at->timestamp;
+        }
+
+        return asset('storage/employees/' . $this->foto);
+    }
+
     public function division(): BelongsTo
     {
         return $this->belongsTo(Division::class);

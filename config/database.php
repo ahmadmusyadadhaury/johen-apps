@@ -32,6 +32,14 @@ return [
 
     'connections' => [
 
+'sqlite_old' => [
+    'driver' => 'sqlite',
+    'url' => env('DB_URL'),
+    'database' => base_path('JSA_Office'),
+    'prefix' => '',
+    'foreign_key_constraints' => true,
+],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

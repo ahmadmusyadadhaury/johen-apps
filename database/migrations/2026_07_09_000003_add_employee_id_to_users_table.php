@@ -22,8 +22,9 @@ return new class extends Migration
 
         if (Schema::hasColumn('employees', 'user_id')) {
             Schema::table('employees', function (Blueprint $table) {
+                $table->dropForeign(['user_id']);
                 $table->dropUnique(['user_id']);
-                $table->dropConstrainedForeignId('user_id');
+                $table->dropColumn('user_id');
             });
         }
     }

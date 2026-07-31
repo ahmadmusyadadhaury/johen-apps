@@ -18,15 +18,15 @@
         <div class="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/5 blur-2xl"></div>
         <div class="relative flex items-center gap-4 sm:gap-5">
             <div class="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg ring-2 ring-white/20 shrink-0">
-                @if($employee->foto)
-                    <img src="{{ asset('storage/employees/' . $employee->foto) }}" alt="{{ $employee->nama }}" class="w-full h-full rounded-2xl object-cover">
+                @if($employee->foto_url)
+                    <img src="{{ $employee->foto_url }}" alt="{{ $employee->nama }}" class="w-full h-full rounded-2xl object-cover">
                 @else
                     <span class="text-2xl font-bold font-display">{{ substr($employee->nama, 0, 1) }}</span>
                 @endif
             </div>
             <div class="min-w-0">
                 <h1 class="text-xl sm:text-2xl font-display font-bold text-white">Selamat Datang, {{ $employee->nama }}</h1>
-                <p class="text-sm text-white/80 mt-0.5">{{ $employee->position ?? '-' }} <span class="mx-1.5 text-white/40">•</span> {{ $employee->division?->nama ?? '-' }}</p>
+                <p class="text-sm text-white/80 mt-0.5">{{ auth()->user()->getRoleDisplayName() ?? '-' }} <span class="mx-1.5 text-white/40">•</span> {{ auth()->user()->getRoleDivisionName() ?? '-' }}</p>
             </div>
         </div>
     </div>

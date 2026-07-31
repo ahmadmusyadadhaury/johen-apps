@@ -31,7 +31,7 @@ class DashboardService
 
     public function getAvailableYears(): array
     {
-        return PayrollImport::select(DB::raw('CAST(SUBSTR(periode, -4) AS INTEGER) as year'))
+        return PayrollImport::select(DB::raw('CAST(SUBSTR(periode, -4) AS UNSIGNED) as year'))
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year')

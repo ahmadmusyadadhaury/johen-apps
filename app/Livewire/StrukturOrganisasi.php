@@ -319,7 +319,7 @@ class StrukturOrganisasi extends Component
                 'parent_id' => $pos->parent_id,
                 'employee_nama' => $emp?->nama,
                 'employee_nik' => $emp?->nik,
-                'employee_foto' => $emp?->foto,
+                'employee_foto' => $emp?->foto_url,
             ]];
         });
 

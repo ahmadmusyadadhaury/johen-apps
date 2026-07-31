@@ -5,7 +5,7 @@
     </div>
 @endpush
 
-<div>
+<div x-data="{ showFotoModal: false, fotoModalUrl: '', fotoModalLabel: '' }">
     @if(auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostMlbb() || auth()->user()->isStaffHostEfootball() || auth()->user()->isStaffHostValorant() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isKoordinatorGame())
     <div x-data="{ modal: null }" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div @click="modal = 'sold'" class="stat-card group cursor-pointer">
@@ -192,6 +192,9 @@
                         <th class="px-6 py-3 text-right">Peak View</th>
                         <th class="px-6 py-3 text-center">Durasi Live</th>
                         <th class="px-6 py-3">Catatan</th>
+                        <th class="px-6 py-3 text-center">Bukti Stats</th>
+                        <th class="px-6 py-3 text-center">Bukti Live</th>
+                        <th class="px-6 py-3 text-amber-700 dark:text-amber-400">Feedback Atasan</th>
                         <th class="px-6 py-3 text-center">Status</th>
                         <th class="px-6 py-3 text-center w-28">Aksi</th>
                     </tr>
@@ -211,6 +214,33 @@
                             <td class="table-cell text-right font-mono text-sm text-gray-700 dark:text-gray-300">{{ number_format($item->peak_view, 0) }}</td>
                             <td class="table-cell text-center text-gray-600 dark:text-gray-400">{{ $item->durasi ? number_format($item->durasi, 0) . ' Jam' : '-' }}</td>
                             <td class="table-cell text-gray-500 dark:text-gray-400 max-w-[150px] truncate">{{ $item->catatan ?? '-' }}</td>
+                            <td class="table-cell text-center">
+                                @if($item->foto_bukti_stats)
+                                    <button @click="fotoModalUrl = '/storage/{{ $item->foto_bukti_stats }}'; fotoModalLabel = 'Bukti Stats'; showFotoModal = true" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors" title="Bukti Stats">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                                        Stats
+                                    </button>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
+                            <td class="table-cell text-center">
+                                @if($item->foto_bukti_live)
+                                    <button @click="fotoModalUrl = '/storage/{{ $item->foto_bukti_live }}'; fotoModalLabel = 'Bukti Live'; showFotoModal = true" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors" title="Bukti Live">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                                        Live
+                                    </button>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
+                            <td class="table-cell text-sm text-amber-700 dark:text-amber-400 max-w-xs truncate">
+                                @if($item->feedback_atasan)
+                                    {{ $item->feedback_atasan }}
+                                @else
+                                    <span class="text-gray-400 text-xs italic">-</span>
+                                @endif
+                            </td>
                             <td class="table-cell text-center">
                                 @php
                                     $statusBadge = match($item->status) {
@@ -264,7 +294,7 @@
                         @endforeach
                     @empty
                         <tr>
-                            <td colspan="11" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="14" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     <p class="font-medium">Belum ada data</p>
@@ -359,6 +389,21 @@
                     <textarea wire:model="catatan" rows="2" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"></textarea>
                 </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div wire:key="create-foto-bukti-stats">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bukti Stats</label>
+                        <input wire:model="foto_bukti_stats" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <div wire:loading wire:target="foto_bukti_stats" class="text-xs text-primary-600 mt-1">Mengupload...</div>
+                        @error('foto_bukti_stats') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div wire:key="create-foto-bukti-live">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bukti Live</label>
+                        <input wire:model="foto_bukti_live" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <div wire:loading wire:target="foto_bukti_live" class="text-xs text-primary-600 mt-1">Mengupload...</div>
+                        @error('foto_bukti_live') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" wire:click="closeModal" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Batal</button>
                     <button type="submit" class="btn-primary text-xs py-2">Simpan</button>
@@ -442,6 +487,36 @@
                     <textarea wire:model="catatan" rows="2" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"></textarea>
                 </div>
 
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Foto Saat Ini</label>
+                    <div class="flex items-center gap-3">
+                        @if($fotoBuktiStatsPath)
+                            <button @click="fotoModalUrl = '/storage/{{ $fotoBuktiStatsPath }}'; fotoModalLabel = 'Bukti Stats'; showFotoModal = true" class="text-xs text-primary-600 hover:underline cursor-pointer bg-transparent border-none p-0">Lihat Bukti Stats</button>
+                        @endif
+                        @if($fotoBuktiLivePath)
+                            <button @click="fotoModalUrl = '/storage/{{ $fotoBuktiLivePath }}'; fotoModalLabel = 'Bukti Live'; showFotoModal = true" class="text-xs text-emerald-600 hover:underline cursor-pointer bg-transparent border-none p-0">Lihat Bukti Live</button>
+                        @endif
+                        @if(!$fotoBuktiStatsPath && !$fotoBuktiLivePath)
+                            <span class="text-xs text-gray-400">Tidak ada foto</span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div wire:key="edit-foto-bukti-stats">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ganti Bukti Stats</label>
+                        <input wire:model="foto_bukti_stats" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <div wire:loading wire:target="foto_bukti_stats" class="text-xs text-primary-600 mt-1">Mengupload...</div>
+                        @error('foto_bukti_stats') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div wire:key="edit-foto-bukti-live">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ganti Bukti Live</label>
+                        <input wire:model="foto_bukti_live" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <div wire:loading wire:target="foto_bukti_live" class="text-xs text-primary-600 mt-1">Mengupload...</div>
+                        @error('foto_bukti_live') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" wire:click="closeModal" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Batal</button>
                     <button type="submit" class="btn-primary text-xs py-2">Simpan</button>
@@ -467,4 +542,41 @@
         </div>
     </div>
     @endif
+
+    {{-- MODAL FOTO --}}
+    <div x-show="showFotoModal" x-cloak
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-gray-900/60 backdrop-blur-sm"
+         @click="showFotoModal = false">
+        <div x-show="showFotoModal" x-cloak
+             x-transition:enter="transition-all ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition-all ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.stop
+             class="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Foto</h3>
+                <button @click="showFotoModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3" x-text="fotoModalLabel"></p>
+                <img :src="fotoModalUrl" :alt="fotoModalLabel" class="max-w-full max-h-[70vh] w-auto h-auto object-contain mx-auto rounded-xl border border-gray-200 dark:border-gray-600">
+            </div>
+            <div class="flex items-center justify-end px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                <button @click="showFotoModal = false" class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

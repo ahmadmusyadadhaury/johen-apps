@@ -13,19 +13,20 @@ class DailyTrackingTable extends Component
     use WithPagination;
 
     public string $search = '';
-    public string $bulan = '';
-
-    public function mount(): void
-    {
-        $this->bulan = now()->format('Y-m');
-    }
+    public string $tanggal = '';
+    public string $nama = '';
 
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatingBulan(): void
+    public function updatingTanggal(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingNama(): void
     {
         $this->resetPage();
     }
@@ -95,6 +96,14 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
         return str_contains(strtolower($position->nama), 'head of store 2');
     }
 
+    public function saveFeedback($id, $feedback): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->isManager()) return;
+
+        BonusPubg::where('id', $id)->update(['feedback_atasan' => $feedback]);
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -108,7 +117,8 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
                 'totalView' => 0,
                 'totalPeak' => 0,
                 'totalDurasi' => 0,
-                'bulan' => $this->bulan,
+                'tanggal' => $this->tanggal,
+                'namaOptions' => collect(),
             ]);
         }
 
@@ -121,7 +131,8 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
                 'totalView' => 0,
                 'totalPeak' => 0,
                 'totalDurasi' => 0,
-                'bulan' => $this->bulan,
+                'tanggal' => $this->tanggal,
+                'namaOptions' => collect(),
             ]);
         }
 
@@ -137,7 +148,8 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
                         'totalView' => 0,
                         'totalPeak' => 0,
                         'totalDurasi' => 0,
-                        'bulan' => $this->bulan,
+                        'tanggal' => $this->tanggal,
+                        'namaOptions' => collect(),
                     ]);
                 }
             }
@@ -151,9 +163,11 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
                       ->orWhere('bonus_pubgs.nik', 'like', "%{$this->search}%");
                 });
             })
-            ->when($this->bulan, function ($q) {
-                $q->whereYear('bonus_pubgs.tanggal', substr($this->bulan, 0, 4))
-                  ->whereMonth('bonus_pubgs.tanggal', substr($this->bulan, 5, 2));
+            ->when($this->tanggal, function ($q) {
+                $q->whereDate('bonus_pubgs.tanggal', $this->tanggal);
+            })
+            ->when($this->nama, function ($q) {
+                $q->where('bonus_pubgs.nama', $this->nama);
             })
             ->with('employee.division', 'employee.users');
 
@@ -189,6 +203,16 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             });
         });
 
+        $namaOptions = BonusPubg::whereIn('bonus_pubgs.employee_id', $subordinateIds)
+            ->where('bonus_pubgs.status', 'disetujui')
+            ->when($this->tanggal, function ($q) {
+                $q->whereDate('bonus_pubgs.tanggal', $this->tanggal);
+            })
+            ->distinct()
+            ->pluck('bonus_pubgs.nama')
+            ->sort()
+            ->values();
+
         $allItems = (clone $query)->get();
         $totalSold = $allItems->sum('ach_sold');
         $totalView = $allItems->sum('ach_view');
@@ -202,7 +226,8 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             'totalView' => $totalView,
             'totalPeak' => $totalPeak,
             'totalDurasi' => $totalDurasi,
-            'bulan' => $this->bulan,
+            'tanggal' => $this->tanggal,
+            'namaOptions' => $namaOptions,
         ]);
     }
 }

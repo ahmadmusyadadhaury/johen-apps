@@ -18,6 +18,9 @@ class BonusPubg extends Model
         'durasi',
         'insentif',
         'catatan',
+        'foto_bukti_stats',
+        'foto_bukti_live',
+        'feedback_atasan',
         'status',
         'approved_by',
     ];

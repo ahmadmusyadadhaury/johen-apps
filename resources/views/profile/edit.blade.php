@@ -14,9 +14,9 @@
         <div class="card p-6">
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-white font-bold text-3xl shadow-lg shadow-primary-200 overflow-hidden">
-                    @php $foto = Auth::user()->employee?->foto; @endphp
-                    @if($foto)
-                        <img src="{{ asset('storage/employees/' . $foto) }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                    @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
+                    @if($fotoUrl)
+                        <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
                     @else
                         {{ substr(Auth::user()->name, 0, 1) }}
                     @endif
@@ -44,9 +44,9 @@
         <div class="card p-6">
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-white font-bold text-3xl shadow-lg shadow-primary-200 overflow-hidden">
-                    @php $foto = Auth::user()->employee?->foto; @endphp
-                    @if($foto)
-                        <img src="{{ asset('storage/employees/' . $foto) }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                    @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
+                    @if($fotoUrl)
+                        <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
                     @else
                         {{ substr(Auth::user()->name, 0, 1) }}
                     @endif

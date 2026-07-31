@@ -304,8 +304,8 @@
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $employees->firstItem() + $loop->index }}</td>
                                 <td class="table-cell">
                                     <div class="flex items-center gap-2">
-                                        @if($emp->foto)
-                                            <img src="{{ asset('storage/employees/' . $emp->foto) }}" alt="{{ $emp->nama }}" class="w-8 h-8 rounded-lg object-contain bg-gray-50">
+                                        @if($emp->foto_url)
+                                            <img src="{{ $emp->foto_url }}" alt="{{ $emp->nama }}" class="w-8 h-8 rounded-lg object-contain bg-gray-50">
                                         @else
                                             <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 font-semibold text-xs">
                                                 {{ strtoupper(substr($emp->nama, 0, 1)) }}

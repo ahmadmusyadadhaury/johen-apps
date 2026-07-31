@@ -134,18 +134,30 @@ class EmployeeController extends Controller
         ]);
 
         $file = $request->file('foto');
-        $filename = $employee->id . '_' . time() . '.' . $file->extension();
+        $contents = base64_encode(file_get_contents($file->getRealPath()));
 
-        if ($employee->foto) {
-            Storage::disk('public')->delete('employees/' . $employee->foto);
-        }
-
-        $file->storeAs('employees', $filename, 'public');
-
-        $employee->update(['foto' => $filename]);
+        $employee->update(['foto' => 'base64:' . $contents]);
 
         return redirect()->route('hris.employees.show', $employee)
             ->with('success', 'Foto berhasil diperbarui.');
+    }
+
+    public function showPhoto(Employee $employee)
+    {
+        if (!$employee->foto || !str_starts_with($employee->foto, 'base64:')) {
+            abort(404);
+        }
+
+        $imageData = base64_decode(str_replace('base64:', '', $employee->foto));
+        $f = finfo_open();
+        $mimeType = finfo_buffer($f, $imageData, FILEINFO_MIME_TYPE);
+        finfo_close($f);
+
+        return response($imageData, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline',
+            'Cache-Control' => 'public, max-age=31536000',
+        ]);
     }
 
     public function storeDocument(Request $request, Employee $employee)

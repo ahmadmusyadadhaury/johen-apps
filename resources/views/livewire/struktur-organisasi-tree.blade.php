@@ -3,8 +3,8 @@
     <div class="relative" @click="focusedId = {{ $node['id'] }}">
         <div class="cursor-pointer w-64 p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm text-center hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200">
             <div class="flex items-center justify-center mb-1.5">
-                @if($node['employee'] && $node['employee']->foto)
-                    <img src="{{ asset('storage/employees/' . $node['employee']->foto) }}" alt="{{ $node['employee']->nama }}"
+                @if($node['employee'] && $node['employee']->foto_url)
+                    <img src="{{ $node['employee']->foto_url }}" alt="{{ $node['employee']->nama }}"
                          class="w-8 h-8 rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                 @else
                     <div class="flex h-8 w-8 items-center justify-center rounded text-white font-bold text-[13px] shrink-0 shadow-sm

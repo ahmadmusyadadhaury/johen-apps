@@ -192,66 +192,28 @@ html.dark {
     }
 
     .login-card {
-        @apply bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl;
-        will-change: transform;
+        background: rgba(20, 24, 34, 0.75);
+        backdrop-filter: blur(24px) saturate(1.4);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
+        @apply border border-white/[0.08] rounded-2xl;
+        box-shadow: 0 0 60px rgba(9, 135, 245, 0.08), 0 8px 32px rgba(0, 0, 0, 0.5);
     }
 
     .login-input {
-        @apply block w-full rounded-xl border bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition-all duration-300;
-        border-color: theme('colors.gray.200');
-    }
-
-    .dark .login-input {
-        border-color: theme('colors.gray.700');
-    }
-
-    .login-input:focus-visible {
-        border-color: theme('colors.primary.400');
-        box-shadow: 0 0 0 3px rgba(9, 135, 245, 0.12);
-    }
-
-    .dark .login-input:focus-visible {
-        border-color: theme('colors.primary.500');
-        box-shadow: 0 0 0 3px rgba(9, 135, 245, 0.2);
-    }
-
-    .login-input-wrapper {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .login-input-wrapper::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: theme('colors.primary.500');
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-        border-radius: 1px;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .login-input-wrapper::after {
-            transition: none;
-        }
-    }
-
-    .login-input-wrapper:focus-within::after {
-        transform: scaleX(1);
+        @apply block w-full rounded-xl border px-4 py-3 text-sm shadow-sm outline-none transition-all duration-300;
+        @apply bg-white/[0.06] border-white/[0.10] text-white placeholder:text-gray-500;
+        @apply focus:border-primary-400/50 focus:bg-white/[0.10] focus:shadow-[0_0_0_3px_rgba(9,135,245,0.12)];
     }
 
     .login-btn {
         @apply relative inline-flex items-center justify-center gap-2 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 overflow-hidden;
-        background: linear-gradient(135deg, #0987F5, #036bd1);
+        background: linear-gradient(135deg, #0987F5, #7C3AED);
         will-change: transform;
     }
 
     .login-btn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 8px 25px rgba(9, 135, 245, 0.35);
+        box-shadow: 0 8px 30px rgba(9, 135, 245, 0.3), 0 4px 15px rgba(124, 58, 237, 0.2);
     }
 
     .login-btn:active {
@@ -260,7 +222,7 @@ html.dark {
 
     .login-btn:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(9, 135, 245, 0.4), 0 8px 25px rgba(9, 135, 245, 0.35);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.4), 0 8px 30px rgba(9, 135, 245, 0.3);
     }
 
     .login-btn::before {

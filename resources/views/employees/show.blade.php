@@ -275,8 +275,8 @@
                         @csrf
                         <label for="photo-input-{{ $employee->id }}" class="block w-full h-full cursor-pointer">
                     @endif
-                            @if($employee->foto)
-                                <img src="{{ asset('storage/employees/' . $employee->foto) }}" alt="{{ $employee->nama }}" class="w-full h-full object-cover">
+                            @if($employee->foto_url)
+                                <img src="{{ $employee->foto_url }}" alt="{{ $employee->nama }}" class="w-full h-full object-cover">
                             @else
                                 <span class="text-4xl sm:text-5xl font-bold text-white bg-gradient-to-br from-primary-500 to-violet-600 w-full h-full flex items-center justify-center">{{ strtoupper(substr($employee->nama, 0, 1)) }}</span>
                             @endif

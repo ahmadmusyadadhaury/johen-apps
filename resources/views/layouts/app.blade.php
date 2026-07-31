@@ -41,8 +41,21 @@
                 :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
             >
                 <div class="flex h-16 items-center gap-3 px-6 border-b border-gray-50 dark:border-gray-800">
-                    <div class="flex items-center justify-center">
-                        <img src="{{ asset('logo.png') }}" alt="Johen Sukses Abadi" class="h-7 w-auto">
+                    <div x-data="logoAnimation()" class="relative flex items-center justify-center cursor-pointer select-none"
+                        @mouseenter="glowIntensity = 0.5"
+                        @mouseleave="glowIntensity = 0.2">
+                        <div class="absolute inset-0 rounded-lg transition-all duration-1000 ease-out"
+                            x-bind:style="`background: radial-gradient(circle, rgba(9,135,245,${glowIntensity}), rgba(124,58,237,${glowIntensity * 0.5}), transparent 70%); filter: blur(6px); transform: scale(${1 + glowIntensity * 0.25})`">
+                        </div>
+                        <div class="absolute inset-0 rounded-lg overflow-hidden">
+                            <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                x-bind:style="`transform: translateX(${sweepX}%); transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)`">
+                            </div>
+                        </div>
+                        <div class="relative transition-transform duration-700 ease-out"
+                            x-bind:style="`transform: perspective(400px) rotateY(${flipAngle}deg)`">
+                            <img src="{{ asset('logo.png') }}" alt="Johen Sukses Abadi" class="h-7 w-auto relative">
+                        </div>
                     </div>
                     <div>
                         <span class="text-sm font-bold text-gray-900 dark:text-gray-100">Johen Application</span>
@@ -58,6 +71,7 @@ $activeMenu = match (true) {
     request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor') => 'operasional',
     request()->routeIs('hris.*') => 'sdm',
     request()->routeIs('bonus.*', 'reimbursement') => auth()->user()->isManager() ? 'operasional' : '',
+    request()->routeIs('it.tickets.*') && !auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() => 'operasional',
     request()->routeIs('meeting.*') => 'meeting',
     request()->routeIs('assets.*') => auth()->user()->canViewAll() && !auth()->user()->isKoordinator() ? (request()->routeIs('assets.index') ? 'sdm' : 'asset') : 'sdm',
     request()->routeIs('electricity.*', 'internet.*', 'ipl.*', 'payment-submissions.*', 'digital.*') => 'pembayaran',
@@ -176,6 +190,11 @@ $activeMenu = match (true) {
                             <a href="{{ route('hris.jobdesk') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.jobdesk') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Jobdesk saya
                             </a>
+                            @if(!auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt())
+                            <a href="{{ route('it.tickets.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('it.tickets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Bantuan IT
+                            </a>
+                            @endif
                             @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isSuperAdmin())
                             <a href="{{ route('hris.manual-book') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.manual-book') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Manual Book
@@ -252,6 +271,10 @@ $activeMenu = match (true) {
                     @if(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt())
                     <div class="mt-4">
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi IT</p>
+                        <a href="{{ route('it.tickets.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('it.tickets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5h15v5.25a2.25 2.25 0 010 4.5v2.25h-15v-2.25a2.25 2.25 0 010-4.5V7.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v1.5m0 2.25v1.5"/></svg>
+                            Ticketing IT
+                        </a>
                         <a href="{{ route('it.project') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('it.project') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
                             Project IT
@@ -341,6 +364,7 @@ $activeMenu = match (true) {
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                             Daily Tracking
                         </a>
+                        @if(!auth()->user()->isStaffHostEfootball())
                         <a href="{{ route('hris.weekly-report') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-report') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                             Weekly Plan Report
@@ -349,6 +373,7 @@ $activeMenu = match (true) {
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 15.75V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
                             Activity Competitor
                         </a>
+                        @endif
                     </div>
                     @endif
 
@@ -527,7 +552,7 @@ $activeMenu = match (true) {
                     @endunless
                     @endcan
 
-                    @if(auth()->user()->isSuperAdmin())
+                    @if(auth()->user()->isSuperAdmin() || auth()->user()->isKoordinatorFf())
                     <div class="mt-3">
                         <a href="{{ route('kelola-akun') }}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 {{ request()->routeIs('kelola-akun') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
@@ -570,9 +595,9 @@ $activeMenu = match (true) {
                         <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open" @click.outside="open = false" class="flex items-center gap-2.5 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
                                 <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs shadow-sm shrink-0 overflow-hidden">
-                                    @php $foto = Auth::user()->employee?->foto; @endphp
-                                    @if($foto)
-                                        <img src="{{ asset('storage/employees/' . $foto) }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                                    @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
+                                    @if($fotoUrl)
+                                        <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
                                     @else
                                         {{ substr(Auth::user()->name, 0, 1) }}
                                     @endif
@@ -706,6 +731,34 @@ $activeMenu = match (true) {
                 }
             }
 
+            function logoAnimation() {
+                return {
+                    glowIntensity: 0.2,
+                    flipAngle: 0,
+                    sweepX: -150,
+                    init() {
+                        this.startSweep();
+                        this.startFlipCycle();
+                    },
+                    startSweep() {
+                        setInterval(() => {
+                            this.sweepX = 150;
+                            this.$nextTick(() => {
+                                setTimeout(() => { this.sweepX = -150; }, 100);
+                            });
+                        }, 4000);
+                    },
+                    startFlipCycle() {
+                        setInterval(() => {
+                            this.flipAngle = 360;
+                            this.$nextTick(() => {
+                                setTimeout(() => { this.flipAngle = 0; }, 800);
+                            });
+                        }, 6000);
+                    }
+                }
+            }
+
             document.addEventListener('livewire:init', () => {
                 Livewire.on('notify', ({ type, message }) => {
                     if (type === 'success') {
@@ -728,7 +781,6 @@ $activeMenu = match (true) {
         </script>
     </body>
 </html>
-
 
 
 

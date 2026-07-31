@@ -156,8 +156,8 @@
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $leaveRequests->firstItem() + $loop->index }}</td>
                                 <td class="table-cell">
                                     <div class="flex items-center gap-2">
-                                        @if($lr->employee?->foto)
-                                            <img src="{{ asset('storage/employees/' . $lr->employee->foto) }}" alt="{{ $lr->employee->nama }}" class="w-8 h-8 rounded-lg object-contain bg-gray-50">
+                                        @if($lr->employee?->foto_url)
+                                            <img src="{{ $lr->employee->foto_url }}" alt="{{ $lr->employee->nama }}" class="w-8 h-8 rounded-lg object-contain bg-gray-50">
                                         @else
                                             <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 font-semibold text-xs">
                                                 {{ strtoupper(substr($lr->employee->nama ?? '?', 0, 1)) }}

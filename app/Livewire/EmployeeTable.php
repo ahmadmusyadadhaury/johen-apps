@@ -309,7 +309,7 @@ class EmployeeTable extends Component
                 $query->where('status', $this->filterStatus);
             })
             ->when($this->sortField === 'nik', function ($query) {
-                $query->orderByRaw('CAST(nik AS INTEGER) ' . ($this->sortDirection === 'asc' ? 'asc' : 'desc'));
+                $query->orderByRaw('CAST(nik AS UNSIGNED) ' . ($this->sortDirection === 'asc' ? 'asc' : 'desc'));
             }, function ($query) {
                 $query->orderBy($this->sortField, $this->sortDirection);
             })
