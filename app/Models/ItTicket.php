@@ -9,7 +9,7 @@ class ItTicket extends Model
 {
     protected $fillable = [
         'kode', 'requester_id', 'assignee_id', 'judul', 'deskripsi', 'kategori',
-        'prioritas', 'status', 'catatan_it', 'mulai_ditangani_at', 'selesai_at',
+        'prioritas', 'status', 'catatan_it', 'alasan_jeda', 'mulai_ditangani_at', 'selesai_at',
         'durasi_detik', 'proses_mulai_at',
     ];
 

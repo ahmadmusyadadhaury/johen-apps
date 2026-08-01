@@ -67,8 +67,10 @@
 $activeMenu = match (true) {
     request()->routeIs('hris.weekly-report', 'hris.activity-competitor') && auth()->user()->isKoordinatorGame() => '',
     request()->routeIs('hris.weekly-report', 'hris.activity-competitor') && auth()->user()->isKoordinatorAdmin() => '',
+    request()->routeIs('hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor') && auth()->user()->isKoordinatorIt() => '',
     request()->routeIs('hris.daily-tracking-admin') => '',
-    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor') => 'operasional',
+    request()->routeIs('hris.influencer', 'hris.kalender-event', 'hris.content-plan') => '',
+    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'history.*') => 'operasional',
     request()->routeIs('hris.*') => 'sdm',
     request()->routeIs('bonus.*', 'reimbursement') => auth()->user()->isManager() ? 'operasional' : '',
     request()->routeIs('it.tickets.*') && !auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() => 'operasional',
@@ -185,7 +187,10 @@ $activeMenu = match (true) {
                                 {{ auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore() ? 'Presensi' : 'Presensi Saya' }}
                             </a>
                             <a href="{{ route('hris.cuti-izin') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.cuti-izin') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                Cuti dan Izin
+                                <span class="flex-1">Cuti dan Izin</span>
+                                @if($leaveRequestMenungguCount > 0)
+                                    <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold tabular-nums leading-none text-white shadow-sm">{{ $leaveRequestMenungguCount }}</span>
+                                @endif
                             </a>
                             <a href="{{ route('hris.jobdesk') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.jobdesk') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Jobdesk saya
@@ -218,6 +223,16 @@ $activeMenu = match (true) {
                                 Reimbursement
                             </a>
                             @endif
+                            @if(auth()->user()->isGmCeo() || auth()->user()->isSuperAdmin())
+                            <a href="{{ route('history.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('history.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Slip Gaji
+                            </a>
+                            @endif
+                            @if(auth()->user()->isGmCeo() || auth()->user()->isManager() || auth()->user()->isKoordinatorCreative() || (auth()->user()->isStaffCreative() && str_starts_with(auth()->user()->employee?->mainPosition()?->nama ?? '', 'Admin KOL')) || auth()->user()->isKoordinatorAdmin() || auth()->user()->isStaffAdmin())
+                            <a href="{{ route('hris.influencer-pengajuan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.influencer-pengajuan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Pengajuan Influencer
+                            </a>
+                            @endif
                         </div>
                     </div>
 
@@ -238,14 +253,6 @@ $activeMenu = match (true) {
                             Content Plan
                         </a>
                     </div>
-                    @endif
-
-                    @php $canAccessPengajuan = auth()->user()->isKoordinatorCreative() || auth()->user()->isStaffCreative() || auth()->user()->isHeadOfStore() || auth()->user()->isGmCeo() || auth()->user()->isSuperAdmin(); @endphp
-                    @if($canAccessPengajuan)
-                    <a href="{{ route('hris.influencer-pengajuan') }}" class="mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.influencer-pengajuan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                        Pengajuan Influencer
-                    </a>
                     @endif
 
                     @if(auth()->user()->isKoordinatorAdmin() || auth()->user()->isStaffAdmin())
@@ -273,7 +280,10 @@ $activeMenu = match (true) {
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi IT</p>
                         <a href="{{ route('it.tickets.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('it.tickets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5h15v5.25a2.25 2.25 0 010 4.5v2.25h-15v-2.25a2.25 2.25 0 010-4.5V7.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v1.5m0 2.25v1.5"/></svg>
-                            Ticketing IT
+                            <span class="flex-1">Ticketing IT</span>
+                            @if($itTicketMenungguCount > 0)
+                                <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold tabular-nums leading-none text-white shadow-sm">{{ $itTicketMenungguCount }}</span>
+                            @endif
                         </a>
                         <a href="{{ route('it.project') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('it.project') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
@@ -287,12 +297,6 @@ $activeMenu = match (true) {
                         <a href="{{ route('hris.weekly-report') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-report') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                             Weekly Plan Report
-                        </a>
-                        @endif
-                        @if(!auth()->user()->isStaffIt())
-                        <a href="{{ route('hris.daily-tracking') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.daily-tracking') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                            Daily Tracking
                         </a>
                         @endif
 
@@ -552,7 +556,7 @@ $activeMenu = match (true) {
                     @endunless
                     @endcan
 
-                    @if(auth()->user()->isSuperAdmin() || auth()->user()->isKoordinatorFf())
+                    @if(auth()->user()->isSuperAdmin())
                     <div class="mt-3">
                         <a href="{{ route('kelola-akun') }}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 {{ request()->routeIs('kelola-akun') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>

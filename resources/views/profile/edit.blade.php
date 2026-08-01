@@ -8,71 +8,71 @@
 <x-app-layout title="Pengaturan">
 
 
-    @if(auth()->user()->isStaff())
-    {{-- Staff layout: profile full-width, then info & password side by side --}}
-    <div class="space-y-6">
-        <div class="card p-6">
-            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-white font-bold text-3xl shadow-lg shadow-primary-200 overflow-hidden">
-                    @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
-                    @if($fotoUrl)
-                        <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
-                    @else
-                        {{ substr(Auth::user()->name, 0, 1) }}
-                    @endif
-                </div>
-                <div class="text-center sm:text-left">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ Auth::user()->name }}</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ Auth::user()->employee?->position ?? Auth::user()->email }}</p>
-                    <span class="badge-success mt-2 inline-flex">Akun Aktif</span>
-                </div>
+@if(auth()->user()->requiresPinApproval())
+{{-- Layout dengan PIN: profile + pin side by side, password full-width --}}
+<div class="space-y-6">
+    <div class="card p-6">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-white font-bold text-3xl shadow-lg shadow-primary-200 overflow-hidden">
+                @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
+                @if($fotoUrl)
+                    <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                @else
+                    {{ substr(Auth::user()->name, 0, 1) }}
+                @endif
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-6">
-                @include('profile.partials.update-profile-information-form')
-            </div>
-            <div class="card p-6">
-                @include('profile.partials.update-password-form')
+            <div class="text-center sm:text-left">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ Auth::user()->name }}</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ Auth::user()->employee?->position ?? Auth::user()->email }}</p>
+                <span class="badge-success mt-2 inline-flex">Akun Aktif</span>
             </div>
         </div>
     </div>
-    @else
-    {{-- Non-staff layout: profile full-width, then info & pin side by side, password full-width --}}
-    <div class="space-y-6">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="card p-6">
-            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-white font-bold text-3xl shadow-lg shadow-primary-200 overflow-hidden">
-                    @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
-                    @if($fotoUrl)
-                        <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
-                    @else
-                        {{ substr(Auth::user()->name, 0, 1) }}
-                    @endif
-                </div>
-                <div class="text-center sm:text-left">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ Auth::user()->name }}</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ Auth::user()->employee?->position ?? Auth::user()->email }}</p>
-                    <span class="badge-success mt-2 inline-flex">Akun Aktif</span>
-                </div>
+            @include('profile.partials.update-profile-information-form')
+        </div>
+        <div class="card p-6">
+            @include('profile.partials.update-pin-form')
+        </div>
+    </div>
+
+    <div class="card p-6">
+        @include('profile.partials.update-password-form')
+    </div>
+</div>
+@else
+{{-- Layout tanpa PIN: profile + password sejajarkan --}}
+<div class="space-y-6">
+    <div class="card p-6">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-white font-bold text-3xl shadow-lg shadow-primary-200 overflow-hidden">
+                @php $fotoUrl = Auth::user()->employee?->foto_url; @endphp
+                @if($fotoUrl)
+                    <img src="{{ $fotoUrl }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                @else
+                    {{ substr(Auth::user()->name, 0, 1) }}
+                @endif
+            </div>
+            <div class="text-center sm:text-left">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ Auth::user()->name }}</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ Auth::user()->employee?->position ?? Auth::user()->email }}</p>
+                <span class="badge-success mt-2 inline-flex">Akun Aktif</span>
             </div>
         </div>
+    </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-6">
-                @include('profile.partials.update-profile-information-form')
-            </div>
-            <div class="card p-6">
-                @include('profile.partials.update-pin-form')
-            </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-6">
+            @include('profile.partials.update-profile-information-form')
         </div>
-
         <div class="card p-6">
             @include('profile.partials.update-password-form')
         </div>
     </div>
-    @endif
+</div>
+@endif
 
     @if(session('pin_success'))
     <div x-data="{ open: true }" x-show="open" x-cloak

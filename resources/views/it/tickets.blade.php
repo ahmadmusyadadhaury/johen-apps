@@ -2,7 +2,7 @@
     $statusLabels = ['menunggu' => 'Menunggu', 'diproses' => 'Diproses', 'dijeda' => 'Dijeda', 'dilanjutkan' => 'Dilanjutkan', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak'];
     $statusClasses = ['menunggu' => 'bg-blue-50 text-blue-700 ring-blue-600/15 dark:bg-blue-900/20 dark:text-blue-400', 'diproses' => 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400', 'dijeda' => 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/20 dark:text-orange-400', 'dilanjutkan' => 'bg-violet-50 text-violet-700 ring-violet-600/15 dark:bg-violet-900/20 dark:text-violet-400', 'selesai' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-900/20 dark:text-emerald-400', 'ditolak' => 'bg-red-50 text-red-700 ring-red-600/15 dark:bg-red-900/20 dark:text-red-400'];
     $priorityLabels = ['rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi', 'mendesak' => 'Mendesak'];
-    $priorityClasses = ['rendah' => 'bg-gray-50 text-gray-600 ring-gray-600/15 dark:bg-gray-800 dark:text-gray-400', 'sedang' => 'bg-blue-50 text-blue-700 ring-blue-600/15 dark:bg-blue-900/20 dark:text-blue-400', 'tinggi' => 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400', 'mendesak' => 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/20 dark:text-red-400'];
+    $priorityTextClasses = ['rendah' => 'text-gray-500 dark:text-gray-400', 'sedang' => 'text-blue-600 dark:text-blue-400', 'tinggi' => 'text-amber-600 dark:text-amber-400', 'mendesak' => 'text-red-600 dark:text-red-400'];
     $fmtDurasi = fn (int $detik) => sprintf('%02d:%02d:%02d', intdiv($detik, 3600), intdiv($detik % 3600, 60), $detik % 60);
     $countChip = fn ($key) => $key === 'semua' ? $tickets->count() : $tickets->where('status', $key)->count();
 @endphp
@@ -55,73 +55,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
         @if($canManage)
             <div x-data="{ search: '', filter: 'semua', detail: null }" class="space-y-6">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-                    <button type="button" @click="filter = 'semua'" :class="filter === 'semua' ? 'border-primary-200 ring-2 ring-primary-500/20 dark:border-primary-800' : 'hover:border-blue-200 dark:hover:border-blue-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
-                        <div class="mb-3 flex items-center justify-between">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:bg-blue-900/20 dark:text-blue-400">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <button type="button" @click="filter = 'semua'" :class="filter === 'semua' ? 'border-primary-200 ring-2 ring-primary-500/20 dark:border-primary-800' : 'hover:border-blue-200 dark:hover:border-blue-800'" class="stat-card group w-full text-left cursor-pointer">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/30 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
                             </div>
-                            <span class="badge-info text-[10px]">Semua</span>
+                            <span class="badge-info">Semua</span>
                         </div>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['total'] }}</span>
-                            <span class="text-sm font-medium text-gray-400">tiket</span>
-                        </div>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Total Tiket Masuk</p>
-                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
-                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
-                        </div>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total'] }} <span class="text-sm font-medium text-gray-400">tiket</span></p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Total Tiket Masuk</p>
                     </button>
 
-                    <button type="button" @click="filter = 'diproses'" :class="filter === 'diproses' ? 'border-amber-300 ring-2 ring-amber-500/20 dark:border-amber-800' : 'hover:border-amber-200 dark:hover:border-amber-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
-                        <div class="mb-3 flex items-center justify-between">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition-transform duration-300 group-hover:scale-110 dark:bg-amber-900/20 dark:text-amber-400">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+                    <button type="button" @click="filter = 'diproses'" :class="filter === 'diproses' ? 'border-amber-300 ring-2 ring-amber-500/20 dark:border-amber-800' : 'hover:border-amber-200 dark:hover:border-amber-800'" class="stat-card group w-full text-left cursor-pointer">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-200 dark:shadow-amber-900/30 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
                             </div>
-                            <span class="badge-warning text-[10px]">Aktif</span>
+                            <span class="badge-warning">Aktif</span>
                         </div>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['diproses'] }}</span>
-                            <span class="text-sm font-medium text-gray-400">tiket</span>
-                        </div>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Sedang Diproses</p>
-                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
-                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
-                        </div>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['diproses'] }} <span class="text-sm font-medium text-gray-400">tiket</span></p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Sedang Diproses</p>
                     </button>
 
-                    <button type="button" @click="filter = 'dijeda'" :class="filter === 'dijeda' ? 'border-violet-300 ring-2 ring-violet-500/20 dark:border-violet-800' : 'hover:border-violet-200 dark:hover:border-violet-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
-                        <div class="mb-3 flex items-center justify-between">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition-transform duration-300 group-hover:scale-110 dark:bg-violet-900/20 dark:text-violet-400">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>
+                    <button type="button" @click="filter = 'dijeda'" :class="filter === 'dijeda' ? 'border-violet-300 ring-2 ring-violet-500/20 dark:border-violet-800' : 'hover:border-violet-200 dark:hover:border-violet-800'" class="stat-card group w-full text-left cursor-pointer">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/30 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>
                             </div>
-                            <span class="badge-primary text-[10px]">Dijeda</span>
+                            <span class="badge-primary">Dijeda</span>
                         </div>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['dijeda'] }}</span>
-                            <span class="text-sm font-medium text-gray-400">tiket</span>
-                        </div>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Dijeda</p>
-                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
-                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>
-                        </div>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['dijeda'] }} <span class="text-sm font-medium text-gray-400">tiket</span></p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Dijeda</p>
                     </button>
 
-                    <button type="button" @click="filter = 'selesai'" :class="filter === 'selesai' ? 'border-emerald-300 ring-2 ring-emerald-500/20 dark:border-emerald-800' : 'hover:border-emerald-200 dark:hover:border-emerald-800'" class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
-                        <div class="mb-3 flex items-center justify-between">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform duration-300 group-hover:scale-110 dark:bg-emerald-900/20 dark:text-emerald-400">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <button type="button" @click="filter = 'selesai'" :class="filter === 'selesai' ? 'border-emerald-300 ring-2 ring-emerald-500/20 dark:border-emerald-800' : 'hover:border-emerald-200 dark:hover:border-emerald-800'" class="stat-card group w-full text-left cursor-pointer">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                            <span class="badge-success text-[10px]">Selesai</span>
+                            <span class="badge-success">Selesai</span>
                         </div>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['selesai'] }}</span>
-                            <span class="text-sm font-medium text-gray-400">tiket</span>
-                        </div>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tiket Selesai</p>
-                        <div class="absolute bottom-0 right-0 h-20 w-20 opacity-[0.03] dark:opacity-[0.05]">
-                            <svg class="h-full w-full" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['selesai'] }} <span class="text-sm font-medium text-gray-400">tiket</span></p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Tiket Selesai</p>
                     </button>
                 </div>
 
@@ -131,19 +107,21 @@ document.addEventListener('DOMContentLoaded', function () {
                             <h2 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Semua Tiket Masuk</h2>
                             <p class="mt-0.5 text-xs text-gray-400">Kelola penugasan dan status tiket secara realtime</p>
                         </div>
-                        <div class="relative">
-                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                            <input x-model="search" type="text" placeholder="Cari tiket, pengaju, PIC..." class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:bg-white focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:w-64">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <label class="relative flex-1 sm:flex-none">
+                                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                                <input x-model="search" type="text" placeholder="Cari tiket, pengaju, PIC..." class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:bg-white focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:w-56">
+                            </label>
+                            <label class="relative flex-1 sm:flex-none">
+                                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/></svg>
+                                <select x-model="filter" class="w-full appearance-none rounded-xl border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-sm font-semibold text-gray-700 focus:border-primary-500 focus:bg-white focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:w-44">
+                                    @foreach(['semua' => 'Semua', 'menunggu' => 'Menunggu', 'diproses' => 'Diproses', 'dijeda' => 'Dijeda', 'dilanjutkan' => 'Dilanjutkan', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak'] as $key => $label)
+                                        <option value="{{ $key }}">{{ $label }} ({{ $countChip($key) }})</option>
+                                    @endforeach
+                                </select>
+                                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                            </label>
                         </div>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2 border-b border-gray-100 px-5 py-3 dark:border-gray-800">
-                        @foreach(['semua' => 'Semua', 'menunggu' => 'Menunggu', 'diproses' => 'Diproses', 'dijeda' => 'Dijeda', 'dilanjutkan' => 'Dilanjutkan', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak'] as $key => $label)
-                            <button type="button" @click="filter = '{{ $key }}'" :class="filter === '{{ $key }}' ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'" class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors">
-                                {{ $label }}
-                                <span class="rounded-full bg-black/5 px-1.5 py-0.5 text-[10px] font-bold dark:bg-white/10">{{ $countChip($key) }}</span>
-                            </button>
-                        @endforeach
                     </div>
 
                     <div class="overflow-x-auto">
@@ -155,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <th class="px-5 py-3">Prioritas</th>
                                     <th class="px-5 py-3">Status</th>
                                     <th class="px-5 py-3">Waktu Pengerjaan</th>
-                                    <th class="px-5 py-3">PIC IT</th>
+                                    <th class="px-5 py-3">PIC</th>
                                     <th class="px-5 py-3">Aksi</th>
                                 </tr>
                             </thead>
@@ -179,7 +157,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                             'prioritas' => $priorityLabels[$ticket->prioritas],
                                             'status' => $ticket->status,
                                             'assignee_id' => $ticket->assignee_id,
+                                            'can_edit' => $ticket->status !== 'selesai' && (!$ticket->assignee_id || (int) $ticket->assignee_id === (int) auth()->id()),
+                                            'pic_locked' => auth()->user()->isStaffIt(),
                                             'catatan_it' => $ticket->catatan_it ?? '',
+                                            'alasan_jeda' => $ticket->alasan_jeda ?? '',
                                             'durasi' => (int) $ticket->durasi_detik,
                                             'mulai' => $ticket->proses_mulai_at?->timestamp ?? 0,
                                         ];
@@ -196,10 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             </div>
                                         </td>
                                         <td class="px-5 py-4">
-                                            <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 {{ $priorityClasses[$ticket->prioritas] }}">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                                                {{ $priorityLabels[$ticket->prioritas] }}
-                                            </span>
+                                            <span class="whitespace-nowrap text-xs font-semibold {{ $priorityTextClasses[$ticket->prioritas] }}">{{ $priorityLabels[$ticket->prioritas] }}</span>
                                         </td>
                                         <td class="px-5 py-4">
                                             <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 {{ $statusClasses[$ticket->status] }}">
@@ -221,10 +199,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                             </span>
                                         </td>
                                         <td class="whitespace-nowrap px-5 py-4">
-                                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $ticket->assignee?->employee?->nama ?? $ticket->assignee?->name }}</span>
+                                            <span class="text-xs font-medium {{ $namaAssign ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-600' }}">{{ $namaAssign ?: 'Belum ditugaskan' }}</span>
                                         </td>
                                         <td class="whitespace-nowrap px-5 py-4">
-                                            <button type="button" data-detail='{{ json_encode($detailData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP) }}' @click="detail = JSON.parse($el.dataset.detail)" class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400">
+                                            <button type="button" data-detail='{{ json_encode($detailData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP) }}' @click="detail = JSON.parse($el.dataset.detail); detail.jeda_dipilih = false; if (!detail.assignee_id) detail.assignee_id = {{ auth()->id() }};" class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400">
                                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                                 Lihat Detail
                                             </button>
@@ -323,25 +301,34 @@ document.addEventListener('DOMContentLoaded', function () {
                                     @csrf
                                     <input type="hidden" name="_method" value="PATCH">
                                     <div>
-                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">PIC IT</label>
-                                        <select name="assignee_id" x-model="detail.assignee_id" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">PIC</label>
+                                        <select name="assignee_id" x-model="detail.assignee_id" :disabled="!detail.can_edit || detail.pic_locked" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60">
                                             <option value="">Belum ditugaskan</option>
                                             @foreach($itUsers as $itUser)
                                                 <option value="{{ $itUser->id }}">{{ $itUser->employee?->nama ?? $itUser->name }}</option>
                                             @endforeach
                                         </select>
+                                        @if(auth()->user()->isStaffIt())
+                                            <input type="hidden" name="assignee_id" :value="detail.assignee_id">
+                                        @endif
+                                        <p x-show="detail.pic_locked" class="mt-1 text-[10px] font-medium text-gray-400">Sebagai Staff IT, PIC tiket ini otomatis Anda.</p>
                                     </div>
                                     <div>
                                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Status</label>
-                                        <select name="status" x-model="detail.status" @change="if (detail.status === 'diproses' || detail.status === 'dilanjutkan') { if (!detail.mulai) detail.mulai = Math.floor(Date.now() / 1000); } else { detail.mulai = 0; }" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                        <select name="status" x-model="detail.status" :disabled="!detail.can_edit" @change="if (detail.status === 'diproses' || detail.status === 'dilanjutkan') { if (!detail.mulai) detail.mulai = Math.floor(Date.now() / 1000); } else { detail.mulai = 0; } if (detail.status === 'dijeda') detail.jeda_dipilih = true;" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60">
                                             @foreach($statusLabels as $value => $label)
                                                 <option value="{{ $value }}">{{ $label }}</option>
                                             @endforeach
                                         </select>
+                                        <p x-show="!detail.can_edit" x-text="detail.status === 'selesai' ? 'Tiket sudah selesai dan tidak dapat diubah.' : 'Hanya PIC yang ditugaskan yang dapat mengubah status dan catatan.'" class="mt-1 text-[10px] font-medium text-gray-400"></p>
+                                    </div>
+                                    <div x-show="detail.status === 'dijeda' && detail.jeda_dipilih">
+                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Alasan Jeda <span class="text-red-500">*</span></label>
+                                        <textarea name="alasan_jeda" rows="2" x-model="detail.alasan_jeda" :disabled="!detail.can_edit" required placeholder="Jelaskan kenapa tiket dijeda..." class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60"></textarea>
                                     </div>
                                     <div>
-                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Catatan IT</label>
-                                        <textarea name="catatan_it" rows="3" x-model="detail.catatan_it" placeholder="Catatan untuk pengaju" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"></textarea>
+                                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Catatan Tim IT</label>
+                                        <textarea name="catatan_it" rows="3" x-model="detail.catatan_it" :disabled="!detail.can_edit" placeholder="Catatan untuk pengaju" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60"></textarea>
                                     </div>
                                 </form>
                             </div>
@@ -356,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         Hapus
                                     </button>
                                 @endif
-                                <div class="ml-auto flex items-center gap-3">
+                                <div class="ml-auto flex items-center gap-3" x-show="detail.can_edit">
                                     <button type="button" @click="detail = null" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Batal</button>
                                     <button type="button" @click="$refs.updateForm.submit()" class="rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">Simpan Perubahan</button>
                                 </div>
@@ -385,8 +372,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <th class="px-5 py-3">Tiket</th>
                                 <th class="px-5 py-3">Diajukan</th>
                                 <th class="px-5 py-3">Status</th>
-                                <th class="px-5 py-3">PIC IT</th>
-                                <th class="px-5 py-3">Pembaruan IT</th>
+                                <th class="px-5 py-3">PIC</th>
+                                <th class="px-5 py-3">Catatan Tim IT</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50 dark:divide-gray-800/60">
@@ -399,7 +386,16 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <td class="whitespace-nowrap px-5 py-4 text-xs text-gray-500">{{ $ticket->created_at->format('d M Y · H:i') }}</td>
                                     <td class="px-5 py-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 {{ $statusClasses[$ticket->status] }}"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>{{ $statusLabels[$ticket->status] }}</span></td>
                                     <td class="whitespace-nowrap px-5 py-4 text-xs font-medium text-gray-700 dark:text-gray-300">{{ $ticket->assignee?->employee?->nama ?? $ticket->assignee?->name ?? 'Belum ditugaskan' }}</td>
-                                    <td class="max-w-xs px-5 py-4 text-xs text-gray-600 dark:text-gray-300">{{ $ticket->catatan_it ?? '-' }}</td>
+                                    <td class="max-w-xs px-5 py-4 text-xs text-gray-600 dark:text-gray-300">
+                                        @if($ticket->status === 'dijeda' && $ticket->alasan_jeda)
+                                            <p class="mb-1 text-amber-600 dark:text-amber-400"><span class="font-semibold">Alasan jeda:</span> {{ $ticket->alasan_jeda }}</p>
+                                        @endif
+                                        @if($ticket->catatan_it)
+                                            <p>{{ $ticket->catatan_it }}</p>
+                                        @elseif(!($ticket->status === 'dijeda' && $ticket->alasan_jeda))
+                                            <p>-</p>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>

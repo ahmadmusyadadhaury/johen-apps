@@ -6,6 +6,7 @@ use App\Models\ItTicket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ItTicketController extends Controller
@@ -47,7 +48,10 @@ class ItTicketController extends Controller
         ]);
 
         $data['requester_id'] = $request->user()->id;
-        $data['kode'] = 'IT-' . now()->format('Ymd') . '-' . str_pad((string) (ItTicket::whereDate('created_at', today())->count() + 1), 3, '0', STR_PAD_LEFT);
+        $todayPrefix = 'IT-' . now()->format('Ymd') . '-';
+        $lastKode = ItTicket::where('kode', 'like', $todayPrefix . '%')->max('kode');
+        $nextNumber = $lastKode ? ((int) substr($lastKode, -3)) + 1 : 1;
+        $data['kode'] = $todayPrefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
         ItTicket::create($data);
 
         return back()->with('success', 'Tiket IT berhasil dikirim.');
@@ -55,16 +59,46 @@ class ItTicketController extends Controller
 
     public function update(Request $request, ItTicket $ticket): RedirectResponse
     {
-        abort_unless($this->canManage($request->user()), 403);
+        $user = $request->user();
+        abort_unless($this->canManage($user), 403);
+
+        if ($ticket->status === 'selesai') {
+            abort(403, 'Tiket yang sudah selesai tidak dapat diubah.');
+        }
 
         $data = $request->validate([
             'assignee_id' => ['nullable', 'exists:users,id'],
-            'status' => ['required', 'in:menunggu,diproses,dijeda,dilanjutkan,selesai,ditolak'],
+            'status' => ['nullable', 'in:menunggu,diproses,dijeda,dilanjutkan,selesai,ditolak'],
             'catatan_it' => ['nullable', 'string', 'max:3000'],
+            'alasan_jeda' => ['nullable', 'string', 'max:2000'],
         ]);
 
         if ($data['assignee_id'] ?? null) {
             abort_unless(User::whereKey($data['assignee_id'])->whereIn('role', [User::ROLE_KOORDINATOR_IT, User::ROLE_STAFF_IT])->exists(), 422);
+        }
+
+        if ($user->isStaffIt() && ($data['assignee_id'] ?? null) && (int) $data['assignee_id'] !== (int) $user->id) {
+            abort(403, 'Staff IT hanya dapat menugaskan tiket kepada dirinya sendiri.');
+        }
+
+        $data['status'] = $data['status'] ?? $ticket->status;
+        if (!array_key_exists('catatan_it', $data)) {
+            $data['catatan_it'] = $ticket->catatan_it;
+        }
+
+        if ($data['status'] === 'dijeda') {
+            $data['alasan_jeda'] = trim((string) ($data['alasan_jeda'] ?? ''));
+            if ($data['alasan_jeda'] === '') {
+                throw ValidationException::withMessages(['alasan_jeda' => 'Alasan jeda wajib diisi saat status Dijeda.']);
+            }
+        } else {
+            $data['alasan_jeda'] = null;
+        }
+
+        if ($ticket->assignee_id && $ticket->assignee_id !== $user->id) {
+            if ($data['status'] !== $ticket->status || $data['catatan_it'] !== $ticket->catatan_it || $data['alasan_jeda'] !== $ticket->alasan_jeda) {
+                abort(403, 'Hanya PIC yang ditugaskan yang dapat mengubah status dan catatan tiket.');
+            }
         }
 
         $now = now();

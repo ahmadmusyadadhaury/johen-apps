@@ -198,7 +198,15 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/tickets/{ticket}', [ItTicketController::class, 'update'])->name('tickets.update');
         Route::delete('/tickets/{ticket}', [ItTicketController::class, 'destroy'])->name('tickets.destroy');
         Route::get('/project', [ProjectItController::class, 'index'])->name('project');
+        Route::post('/project', [ProjectItController::class, 'store'])->name('project.store');
+        Route::patch('/project/{project}', [ProjectItController::class, 'update'])->name('project.update');
+        Route::delete('/project/{project}', [ProjectItController::class, 'destroy'])->name('project.destroy');
         Route::get('/maintenance', [JadwalMaintenanceController::class, 'index'])->name('maintenance');
+        Route::post('/maintenance', [JadwalMaintenanceController::class, 'storeSchedule'])->name('maintenance.store');
+        Route::patch('/maintenance/{schedule}/complete', [JadwalMaintenanceController::class, 'complete'])->name('maintenance.complete');
+        Route::delete('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
+        Route::post('/maintenance/pc', [JadwalMaintenanceController::class, 'storePc'])->name('maintenance.pc.store');
+        Route::delete('/maintenance/pc/{pc}', [JadwalMaintenanceController::class, 'destroyPc'])->name('maintenance.pc.destroy');
     });
 
     Route::prefix('pubg')->name('pubg.')->group(function () {

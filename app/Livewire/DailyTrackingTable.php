@@ -16,6 +16,11 @@ class DailyTrackingTable extends Component
     public string $tanggal = '';
     public string $nama = '';
 
+    public function mount(): void
+    {
+        $this->tanggal = now()->toDateString();
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -24,6 +29,13 @@ class DailyTrackingTable extends Component
     public function updatingTanggal(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedTanggal(): void
+    {
+        if ($this->tanggal === '') {
+            $this->tanggal = now()->toDateString();
+        }
     }
 
     public function updatingNama(): void

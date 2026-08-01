@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\ItTicket;
+use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +23,28 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('update-data', fn(User $user) => $user->canUpdateData());
         Gate::define('delete-data', fn(User $user) => $user->canDeleteData());
         Gate::define('view-all', fn(User $user) => $user->canViewAll());
+
+        View::composer(['layouts.app', 'layouts::app'], function ($view) {
+            $user = auth()->user();
+
+            $leaveRequestMenungguCount = 0;
+            if ($user && $user->employee) {
+                $employeeId = $user->employee->id;
+                $leaveRequestMenungguCount = LeaveRequest::where(function ($q) use ($employeeId) {
+                    $q->where('atasan_id', $employeeId)
+                      ->where('persetujuan_koor', 'menunggu');
+                })->orWhere(function ($q) use ($employeeId) {
+                    $q->where('atasan2_id', $employeeId)
+                      ->where('persetujuan_atasan2', 'menunggu');
+                })->count();
+            }
+
+            $view->with('itTicketMenungguCount', $user && ($user->isKoordinatorIt() || $user->isStaffIt())
+                ? ItTicket::where('status', 'menunggu')->count()
+                : 0);
+
+            $view->with('leaveRequestMenungguCount', $leaveRequestMenungguCount);
+        });
 
         Blade::directive('assets', function () {
             $manifestPath = public_path('build/manifest.json');
