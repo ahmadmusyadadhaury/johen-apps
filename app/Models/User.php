@@ -373,6 +373,20 @@ class User extends Authenticatable
         return $employee->positions()->whereIn('position_id', $descendantIds)->exists();
     }
 
+    public function hasDivisionPosition(string $rootPositionName): bool
+    {
+        $employee = $this->employee;
+        if (!$employee) return false;
+
+        $root = Position::where('nama', $rootPositionName)->first();
+        if (!$root) return false;
+
+        $descendantIds = $this->getAllDescendantIdsForPosition($root);
+        $descendantIds[] = $root->id;
+
+        return $employee->positions()->whereIn('position_id', $descendantIds)->exists();
+    }
+
     public function getAllDescendantIdsForPosition(Position $position): array
     {
         $ids = [];

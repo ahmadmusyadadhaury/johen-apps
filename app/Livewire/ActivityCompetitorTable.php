@@ -15,6 +15,7 @@ class ActivityCompetitorTable extends Component
     public bool $showModal = false;
     public bool $showFeedbackModal = false;
     public bool $showDetail = false;
+    public bool $showSuccess = false;
     public ?int $editId = null;
     public ?int $feedbackId = null;
     public ?int $detailId = null;
@@ -64,7 +65,8 @@ class ActivityCompetitorTable extends Component
 
         $this->resetInput();
         $this->showFeedbackModal = false;
-        session()->flash('message', 'Feedback berhasil disimpan.');
+        $this->dispatch('report-feedback-updated');
+        $this->showSuccess = true;
     }
 
     public function save(): void
@@ -112,6 +114,7 @@ class ActivityCompetitorTable extends Component
 
         $this->resetInput();
         $this->showModal = false;
+        $this->dispatch('report-feedback-updated');
         session()->flash('message', 'Activity Competitor berhasil disimpan.');
     }
 
@@ -141,6 +144,7 @@ class ActivityCompetitorTable extends Component
     {
         $this->showModal = false;
         $this->showFeedbackModal = false;
+        $this->showSuccess = false;
         $this->resetInput();
     }
 

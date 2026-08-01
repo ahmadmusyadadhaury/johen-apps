@@ -154,6 +154,7 @@ class CutiIzinTable extends Component
 
         $lr->update([$level => 'disetujui']);
         $this->showRekomendasiIfHost($lr, $level);
+        $this->dispatch('leave-request-updated');
         $this->dispatch('notify', type: 'success', message: 'Pengajuan disetujui.');
     }
 
@@ -178,6 +179,7 @@ class CutiIzinTable extends Component
         }
 
         $lr->update([$level => 'ditolak']);
+        $this->dispatch('leave-request-updated');
         $this->dispatch('notify', type: 'success', message: 'Pengajuan ditolak.');
     }
 
@@ -229,6 +231,8 @@ class CutiIzinTable extends Component
         if ($this->pendingAction === 'setujui') {
             $this->showRekomendasiIfHost($lr, $this->pendingLevel);
         }
+
+        $this->dispatch('leave-request-updated');
 
         $message = 'Pengajuan ' . ($this->pendingAction === 'setujui' ? 'disetujui' : 'ditolak') . '.';
 
@@ -329,6 +333,7 @@ class CutiIzinTable extends Component
         $lr->delete();
 
         $this->showDeleteConfirmModal = false;
+        $this->dispatch('leave-request-updated');
         $this->dispatch('notify', type: 'success', message: 'Pengajuan berhasil dihapus.');
         $this->deleteId = null;
     }
@@ -384,6 +389,58 @@ class CutiIzinTable extends Component
         return $atasan2?->nama;
     }
 
+    public function getTimMenungguCountProperty(): int
+    {
+        $user = auth()->user();
+
+        if ($user->isSuperAdmin() || $user->isGmCeo()) {
+            return LeaveRequest::where('persetujuan_hr', 'menunggu')->count();
+        }
+
+        $userEmployee = $user->employee;
+        if (!$userEmployee) return 0;
+
+        $query = LeaveRequest::query();
+
+        if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
+            $query->where('atasan_id', $userEmployee->id);
+
+            $positionName = $this->getRolePositionName();
+            if ($positionName) {
+                $position = Position::where('nama', $positionName)->first();
+                if ($position) {
+                    $descendantIds = $this->getAllDescendantIds($position);
+                    if (!empty($descendantIds)) {
+                        $query->whereIn('selected_position_id', $descendantIds);
+                    }
+                }
+            }
+
+            $query->where('persetujuan_koor', 'menunggu');
+        } elseif ($user->isHeadOfStore()) {
+            $subordinateIds = $this->getSubordinateEmployeeIds();
+            if (empty($subordinateIds)) return 0;
+            $query->whereIn('employee_id', $subordinateIds);
+
+            if ($user->isAnyKoordinator()) {
+                $query->where('persetujuan_koor', 'menunggu');
+            } elseif ($user->isManager()) {
+                $query->where('persetujuan_atasan2', 'menunggu');
+            } elseif ($user->isSuperAdmin() || $user->isGmCeo()) {
+                $query->where('persetujuan_hr', 'menunggu');
+            } else {
+                $query->where(function ($q) {
+                    $q->where('persetujuan_koor', 'menunggu')
+                      ->orWhere('persetujuan_atasan2', 'menunggu');
+                });
+            }
+        } else {
+            return 0;
+        }
+
+        return $query->count();
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -396,7 +453,11 @@ class CutiIzinTable extends Component
 
         $baseQuery = LeaveRequest::query();
 
-        if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
+        if ($user->isSuperAdmin() || $user->isGmCeo()) {
+            if ($this->tab === 'saya' && $userEmployee) {
+                $baseQuery->where('employee_id', $userEmployee->id);
+            }
+        } elseif ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
             if ($userEmployee) {
                 if ($this->tab === 'saya') {
                     $baseQuery->where('employee_id', $userEmployee->id);
@@ -493,8 +554,10 @@ class CutiIzinTable extends Component
         }
         $sisaCuti = max(0, $jatahCuti - $usedCuti);
 
+        $timMenungguCount = $this->getTimMenungguCountProperty();
+
         return view('livewire.cuti-izin-table', compact(
-            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'lihatSemua'
+            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'lihatSemua', 'timMenungguCount'
         ))->with('karyawanView', false);
     }
 

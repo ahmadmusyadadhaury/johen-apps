@@ -12,6 +12,7 @@ class BonusPubg extends Model
         'nik',
         'nama',
         'sesi',
+        'divisi',
         'ach_sold',
         'ach_view',
         'peak_view',

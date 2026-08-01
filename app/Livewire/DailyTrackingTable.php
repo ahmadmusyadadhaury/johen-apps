@@ -12,9 +12,22 @@ class DailyTrackingTable extends Component
 {
     use WithPagination;
 
+    private const DIVISION_POSITION_MAP = [
+        'PUBG' => 'koordinator johen pubg',
+        'Free Fire' => 'koordinator free fire',
+        'MLBB' => 'koordinator mlbb',
+        'E-football' => 'koordinator e-football',
+        'Valorant' => 'koordinator valorant',
+        'Roblox' => 'koordinator roblox',
+        'Monkey PUBG' => 'koordinator monkey pubg',
+        'FC Mobile' => 'koordinator fc mobile',
+        'Admin' => 'koordinator admin',
+    ];
+
     public string $search = '';
     public string $tanggal = '';
     public string $nama = '';
+    public bool $showSuccess = false;
 
     public function mount(): void
     {
@@ -88,6 +101,28 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
         };
     }
 
+    private function getManagerDivisionNames(Employee $employee): array
+    {
+        $position = $employee->mainPosition();
+        if (!$position) return [];
+
+        $descendantIds = $this->getDescendantIds($position->id);
+        $names = Position::whereIn('id', $descendantIds)->pluck('nama')
+            ->map(fn ($n) => strtolower($n))->toArray();
+
+        $divisions = [];
+        foreach (self::DIVISION_POSITION_MAP as $divisi => $posName) {
+            foreach ($names as $name) {
+                if (str_contains($name, $posName)) {
+                    $divisions[] = $divisi;
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($divisions));
+    }
+
     private function getEfootballEmployeeIds(): array
     {
         $efootball = Position::where('nama', 'Koordinator E-football')->first();
@@ -114,6 +149,8 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
         if (!$user || !$user->isManager()) return;
 
         BonusPubg::where('id', $id)->update(['feedback_atasan' => $feedback]);
+        $this->dispatch('daily-tracking-updated');
+        $this->showSuccess = true;
     }
 
     public function render()
@@ -167,8 +204,11 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             }
         }
 
+        $managerDivisionNames = $this->getManagerDivisionNames($employee);
+
         $query = BonusPubg::whereIn('bonus_pubgs.employee_id', $subordinateIds)
             ->where('bonus_pubgs.status', 'disetujui')
+            ->whereIn('bonus_pubgs.divisi', $managerDivisionNames)
             ->when($this->search, function ($q) {
                 $q->where(function ($q) {
                     $q->where('bonus_pubgs.nama', 'like', "%{$this->search}%")
@@ -210,13 +250,14 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
         $groupedItems->transform(function ($dateItems) {
             return $dateItems->map(function ($item) {
                 $emp = $item->employee;
-                $item->divisi = $emp ? $this->getDivisi($emp) : '-';
+                $item->divisi = $item->divisi ?: ($emp ? $this->getDivisi($emp) : '-');
                 return $item;
             });
         });
 
         $namaOptions = BonusPubg::whereIn('bonus_pubgs.employee_id', $subordinateIds)
             ->where('bonus_pubgs.status', 'disetujui')
+            ->whereIn('bonus_pubgs.divisi', $managerDivisionNames)
             ->when($this->tanggal, function ($q) {
                 $q->whereDate('bonus_pubgs.tanggal', $this->tanggal);
             })

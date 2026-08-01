@@ -134,6 +134,7 @@ class AdminDailyTrackingTable extends Component
             'nik' => $this->nik,
             'nama' => $this->nama,
             'sesi' => $this->sesi,
+            'divisi' => 'Admin',
             'ach_sold' => $sold,
             'insentif' => $sold * 100000,
             'catatan' => $this->catatan ?: null,

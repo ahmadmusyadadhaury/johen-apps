@@ -247,4 +247,36 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal Sukses Feedback --}}
+    <div x-data="{ open: false }"
+         x-init="$watch('$wire.showSuccess', value => open = value)"
+         x-show="open" x-cloak
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[250] flex items-center justify-center p-5 bg-gray-900/60 backdrop-blur-sm"
+         @click="open = false">
+        <div x-show="open" x-cloak
+             x-transition:enter="transition-all ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition-all ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.stop
+             class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 text-center shadow-2xl my-10">
+            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                <svg class="w-7 h-7 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Feedback Berhasil</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Feedback Anda sudah disimpan.</p>
+            <div class="mt-6">
+                <button wire:click="$set('showSuccess', false)" class="btn-primary text-xs w-full justify-center">Tutup</button>
+            </div>
+        </div>
+    </div>
 </div>

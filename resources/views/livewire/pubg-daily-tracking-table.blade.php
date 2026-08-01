@@ -157,10 +157,13 @@
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Daily Tracking {{ $divisi }}</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data daily tracking divisi {{ $divisi }}</p>
             </div>
+            @php $isDivisiKoord = $this->isDivisiKoordinator(); @endphp
+            @if(!$isDivisiKoord || auth()->user()->isKoordinatorGame())
             <button wire:click="openCreateModal" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Data
             </button>
+            @endif
         </div>
 
         {{-- Filter --}}
@@ -186,6 +189,7 @@
                         <th class="px-6 py-3 text-center border-r border-gray-200 dark:border-gray-600">Tanggal</th>
                         <th class="px-6 py-3">NIK</th>
                         <th class="px-6 py-3">Nama</th>
+                        <th class="px-6 py-3">Divisi</th>
                         <th class="px-6 py-3">Sesi</th>
                         <th class="px-6 py-3 text-right">Sold</th>
                         <th class="px-6 py-3 text-right">View</th>
@@ -208,6 +212,7 @@
                             @endif
                             <td class="table-cell font-mono text-xs text-gray-600 dark:text-gray-400">{{ $item->nik }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->divisi }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->sesi ?? '-' }}</td>
                             <td class="table-cell text-right font-mono text-sm text-gray-700 dark:text-gray-300">{{ number_format($item->ach_sold, 0) }}</td>
                             <td class="table-cell text-right font-mono text-sm text-gray-700 dark:text-gray-300">{{ number_format($item->ach_view, 0) }}</td>
@@ -260,7 +265,7 @@
                             </td>
                             <td class="table-cell text-center">
                                 @php
-                                    $isKoord = auth()->user()->isKoordinatorGame();
+                                    $isKoord = auth()->user()->isKoordinatorGame() || $isDivisiKoord;
                                     $isStaff = auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostMlbb() || auth()->user()->isStaffHostEfootball() || auth()->user()->isStaffHostValorant() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg();
                                     $canEdit = $isKoord || ($isStaff && $item->status === 'pending');
                                 @endphp
@@ -294,11 +299,11 @@
                         @endforeach
                     @empty
                         <tr>
-                            <td colspan="14" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="15" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     <p class="font-medium">Belum ada data</p>
-                                    <p class="text-xs mt-1">Klik "Tambah Data" untuk menambahkan</p>
+                                    <p class="text-xs mt-1">{{ (!$isDivisiKoord || auth()->user()->isKoordinatorGame()) ? 'Klik "Tambah Data" untuk menambahkan' : 'Menunggu data dari host divisi' }}</p>
                                 </div>
                             </td>
                         </tr>

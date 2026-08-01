@@ -345,39 +345,33 @@
         </div>
     </div>
 
-    {{-- MODAL FOTO --}}
-    <div x-show="showFotoModal" x-cloak
-         x-transition:enter="transition-opacity ease-linear duration-200"
+    {{-- Modal Sukses Feedback --}}
+    <div wire:ignore.self class="fixed inset-0 z-[250] flex items-center justify-center p-5 bg-gray-900/60 backdrop-blur-sm"
+         x-data="{ open: false }"
+         x-init="$watch('$wire.showSuccess', value => open = value)"
+         x-show="open" x-cloak
+         x-transition:enter="ease-out duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave="ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-gray-900/60 backdrop-blur-sm"
-         @click="showFotoModal = false">
-        <div x-show="showFotoModal" x-cloak
-             x-transition:enter="transition-all ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             x-transition:leave="transition-all ease-in duration-150"
+         @click="open = false">
+        <div x-show="open" x-cloak
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
-             @click.stop
-             class="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Foto</h3>
-                <button @click="showFotoModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+             @click.stop class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 text-center shadow-2xl my-10">
+            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                <svg class="w-7 h-7 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
             </div>
-            <div class="p-6 text-center">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3" x-text="fotoModalLabel"></p>
-                <img :src="fotoModalUrl" :alt="fotoModalLabel" class="max-w-full max-h-[70vh] w-auto h-auto object-contain mx-auto rounded-xl border border-gray-200 dark:border-gray-600">
-            </div>
-            <div class="flex items-center justify-end px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                <button @click="showFotoModal = false" class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    Tutup
-                </button>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Feedback Berhasil</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Feedback Anda sudah disimpan.</p>
+            <div class="mt-6">
+                <button wire:click="$set('showSuccess', false)" class="btn-primary text-xs w-full justify-center">Tutup</button>
             </div>
         </div>
     </div>

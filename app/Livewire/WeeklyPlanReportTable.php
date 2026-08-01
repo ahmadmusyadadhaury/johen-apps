@@ -15,6 +15,7 @@ class WeeklyPlanReportTable extends Component
     public bool $showModal = false;
     public bool $showW1Modal = false;
     public bool $showFeedbackModal = false;
+    public bool $showSuccess = false;
     public ?int $editId = null;
     public ?int $w1Id = null;
     public ?int $feedbackId = null;
@@ -83,7 +84,8 @@ class WeeklyPlanReportTable extends Component
 
         $this->resetInput();
         $this->showFeedbackModal = false;
-        session()->flash('message', 'Feedback atasan berhasil disimpan.');
+        $this->dispatch('report-feedback-updated');
+        $this->showSuccess = true;
     }
 
     public function save(): void
@@ -108,6 +110,7 @@ class WeeklyPlanReportTable extends Component
 
         $this->resetInput();
         $this->showModal = false;
+        $this->dispatch('report-feedback-updated');
         session()->flash('message', 'WPR berhasil disimpan.');
     }
 
@@ -133,6 +136,7 @@ class WeeklyPlanReportTable extends Component
         $this->showModal = false;
         $this->showW1Modal = false;
         $this->showFeedbackModal = false;
+        $this->showSuccess = false;
         $this->resetInput();
     }
 
