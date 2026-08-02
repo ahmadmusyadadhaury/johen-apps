@@ -26,7 +26,7 @@
             </div>
             <div class="min-w-0">
                 <h1 class="text-xl sm:text-2xl font-display font-bold text-white">Selamat Datang, {{ $employee->nama }}</h1>
-                <p class="text-sm text-white/80 mt-0.5">{{ auth()->user()->getRoleDisplayName() ?? '-' }} <span class="mx-1.5 text-white/40">•</span> {{ auth()->user()->getRoleDivisionName() ?? '-' }}</p>
+                <p class="text-sm text-white/80 mt-0.5">{{ $employee->positionNames() ?: '-' }} <span class="mx-1.5 text-white/40">•</span> Divisi {{ $employee->division?->nama ?? '-' }}</p>
             </div>
         </div>
     </div>

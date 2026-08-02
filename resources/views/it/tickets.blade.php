@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             'kode' => $ticket->kode,
                                             'judul' => $ticket->judul,
                                             'deskripsi' => $ticket->deskripsi,
+                                            'bukti_kendala' => $ticket->bukti_kendala ? asset('storage/' . $ticket->bukti_kendala) : '',
                                             'pengaju' => $namaPengaju,
                                             'divisi' => $divisiPengaju,
                                             'tanggal' => $ticket->created_at->format('d M Y · H:i'),
@@ -296,6 +297,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Deskripsi</p>
                                     <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-700 dark:text-gray-300" x-text="detail.deskripsi"></p>
                                 </div>
+                                <div class="mb-5 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50" x-show="detail.bukti_kendala">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Bukti Kendala</p>
+                                    <a :href="detail.bukti_kendala" target="_blank" class="mt-2 block overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700">
+                                        <img :src="detail.bukti_kendala" alt="Bukti kendala" class="max-h-56 w-full object-contain">
+                                    </a>
+                                </div>
 
                                 <form x-ref="updateForm" method="POST" :action="'/it/tickets/' + detail.id" class="space-y-4">
                                     @csrf
@@ -353,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </template>
             </div>
         @else
-            <div x-data="{ showForm: {{ $errors->any() ? 'true' : 'false' }} }" class="space-y-6">
+            <div x-data="{ showForm: {{ $errors->any() ? 'true' : 'false' }}, previewFoto: null }" class="space-y-6">
             <section class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex flex-col gap-3 border-b border-gray-100 p-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -428,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
-                        <form method="POST" action="{{ route('it.tickets.store') }}" class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
+                        <form method="POST" action="{{ route('it.tickets.store') }}" enctype="multipart/form-data" class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
                             @csrf
                             <div>
                                 <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Judul permintaan</label>
@@ -457,6 +464,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Detail kebutuhan</label>
                                 <textarea name="deskripsi" required rows="4" maxlength="3000" placeholder="Jelaskan kendala, perangkat atau aplikasi yang digunakan, dan dampaknya." class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ old('deskripsi') }}</textarea>
                                 @error('deskripsi') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Bukti Kendala <span class="text-[10px] font-medium text-gray-400">(opsional, foto JPG/PNG maks 2MB)</span></label>
+                                <input type="file" name="bukti_kendala" accept="image/jpeg,image/png,image/jpg" @change="previewFoto = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-600 hover:file:bg-primary-100 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:file:bg-gray-700 dark:file:text-gray-200">
+                                <div x-show="previewFoto" class="mt-2">
+                                    <img :src="previewFoto" alt="Pratinjau bukti kendala" class="max-h-40 rounded-lg border border-gray-200 object-contain dark:border-gray-700">
+                                </div>
+                                @error('bukti_kendala') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>
                             <div class="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
                                 <button type="button" @click="showForm = false" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Batal</button>

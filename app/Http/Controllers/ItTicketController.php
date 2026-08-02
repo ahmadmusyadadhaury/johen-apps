@@ -6,6 +6,7 @@ use App\Models\ItTicket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -45,7 +46,12 @@ class ItTicketController extends Controller
             'deskripsi' => ['required', 'string', 'max:3000'],
             'kategori' => ['required', 'in:perangkat,aplikasi,akun_akses,jaringan,lainnya'],
             'prioritas' => ['required', 'in:rendah,sedang,tinggi,mendesak'],
+            'bukti_kendala' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
+
+        if ($request->hasFile('bukti_kendala')) {
+            $data['bukti_kendala'] = $request->file('bukti_kendala')->store('bukti-kendala', 'public');
+        }
 
         $data['requester_id'] = $request->user()->id;
         $todayPrefix = 'IT-' . now()->format('Ymd') . '-';
@@ -128,6 +134,10 @@ class ItTicketController extends Controller
     public function destroy(Request $request, ItTicket $ticket): RedirectResponse
     {
         abort_unless($request->user()->isKoordinatorIt(), 403);
+
+        if ($ticket->bukti_kendala) {
+            Storage::disk('public')->delete($ticket->bukti_kendala);
+        }
 
         $ticket->delete();
         return back()->with('success', 'Tiket ' . $ticket->kode . ' dihapus.');

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ItTicket extends Model
 {
     protected $fillable = [
-        'kode', 'requester_id', 'assignee_id', 'judul', 'deskripsi', 'kategori',
+        'kode', 'requester_id', 'assignee_id', 'judul', 'deskripsi', 'bukti_kendala', 'kategori',
         'prioritas', 'status', 'catatan_it', 'alasan_jeda', 'mulai_ditangani_at', 'selesai_at',
         'durasi_detik', 'proses_mulai_at',
     ];
