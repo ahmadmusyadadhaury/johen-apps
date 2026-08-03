@@ -26,7 +26,7 @@
         <div class="container">
             <img src="{{ asset('logo.png') }}" alt="Johen Sukses Abadi" class="logo" style="width: 64px; height: 64px; object-fit: contain; border-radius: 16px; margin: 0 auto 1.5rem; display: block; box-shadow: 0 8px 32px rgba(99,102,241,0.3);">
             <h1>{{ config('app.name', 'Payroll') }}</h1>
-            <p>Kelola payroll, generate slip gaji, dan kirim email ke karyawan dengan mudah dalam satu platform.</p>
+            <p>Kelola payroll, generate slip gaji, dan kirim ke karyawan dengan mudah dalam satu platform.</p>
             <div class="buttons">
                 @auth
                     <a href="{{ url('/dashboard') }}" class="btn-primary">Dashboard</a>

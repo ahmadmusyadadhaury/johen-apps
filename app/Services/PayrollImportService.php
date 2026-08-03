@@ -36,10 +36,13 @@ class PayrollImportService
                 'thr' => (float) ($row[7] ?? 0),
                 'apresiasi' => (float) ($row[8] ?? 0),
                 'tunjangan_jabatan' => (float) ($row[9] ?? 0),
-                'thr_dibayarkan' => (float) ($row[10] ?? 0),
-                'potongan_pinjaman' => (float) ($row[11] ?? 0),
-                'potongan_absensi' => (float) ($row[12] ?? 0),
-                'pdf_password' => trim($row[13] ?? ''),
+                'premi_bpjs_kesehatan' => (float) ($row[10] ?? 0),
+                'thr_dibayarkan' => (float) ($row[11] ?? 0),
+                'potongan_pinjaman' => (float) ($row[12] ?? 0),
+                'potongan_absensi' => (float) ($row[13] ?? 0),
+                'potongan_bpjs_kesehatan_4' => (float) ($row[14] ?? 0),
+                'potongan_bpjs_kesehatan_1' => (float) ($row[15] ?? 0),
+                'pdf_password' => trim($row[16] ?? ''),
             ];
 
             $validator = Validator::make($rowData, [
@@ -53,9 +56,12 @@ class PayrollImportService
                 'thr' => 'numeric|min:0',
                 'apresiasi' => 'numeric|min:0',
                 'tunjangan_jabatan' => 'numeric|min:0',
+                'premi_bpjs_kesehatan' => 'numeric|min:0',
                 'thr_dibayarkan' => 'numeric|min:0',
                 'potongan_pinjaman' => 'numeric|min:0',
                 'potongan_absensi' => 'numeric|min:0',
+                'potongan_bpjs_kesehatan_4' => 'numeric|min:0',
+                'potongan_bpjs_kesehatan_1' => 'numeric|min:0',
                 'pdf_password' => 'required|string|min:1|max:50',
             ]);
 
@@ -80,7 +86,7 @@ class PayrollImportService
 
             $rowData['employee_id'] = $employee->id;
             $rowData['email'] = $employee->email ?? $employee->user?->email ?? '';
-            $rowData['take_home_pay'] = $rowData['gaji_pokok'] + $rowData['tambahan_upah'] + $rowData['bonus'] + $rowData['thr'] + $rowData['apresiasi'] + $rowData['tunjangan_jabatan'] - $rowData['thr_dibayarkan'] - $rowData['potongan_pinjaman'] - $rowData['potongan_absensi'];
+            $rowData['take_home_pay'] = $rowData['gaji_pokok'] + $rowData['tambahan_upah'] + $rowData['bonus'] + $rowData['thr'] + $rowData['apresiasi'] + $rowData['tunjangan_jabatan'] + $rowData['premi_bpjs_kesehatan'] - $rowData['thr_dibayarkan'] - $rowData['potongan_pinjaman'] - $rowData['potongan_absensi'] - $rowData['potongan_bpjs_kesehatan_4'] - $rowData['potongan_bpjs_kesehatan_1'];
             $validData[] = $rowData;
         }
 
@@ -108,9 +114,12 @@ class PayrollImportService
                     'thr' => $data['thr'],
                     'apresiasi' => $data['apresiasi'],
                     'tunjangan_jabatan' => $data['tunjangan_jabatan'],
+                    'premi_bpjs_kesehatan' => $data['premi_bpjs_kesehatan'],
                     'thr_dibayarkan' => $data['thr_dibayarkan'],
                     'potongan_pinjaman' => $data['potongan_pinjaman'],
                     'potongan_absensi' => $data['potongan_absensi'],
+                    'potongan_bpjs_kesehatan_4' => $data['potongan_bpjs_kesehatan_4'],
+                    'potongan_bpjs_kesehatan_1' => $data['potongan_bpjs_kesehatan_1'],
                     'take_home_pay' => $data['take_home_pay'],
                     'pdf_password' => $data['pdf_password'],
                 ]);
@@ -143,9 +152,12 @@ class PayrollImportService
                 'thr' => 'numeric|min:0',
                 'apresiasi' => 'numeric|min:0',
                 'tunjangan_jabatan' => 'numeric|min:0',
+                'premi_bpjs_kesehatan' => 'numeric|min:0',
                 'thr_dibayarkan' => 'numeric|min:0',
                 'potongan_pinjaman' => 'numeric|min:0',
                 'potongan_absensi' => 'numeric|min:0',
+                'potongan_bpjs_kesehatan_4' => 'numeric|min:0',
+                'potongan_bpjs_kesehatan_1' => 'numeric|min:0',
                 'pdf_password' => 'required|string|min:1|max:50',
             ]);
 

@@ -65,17 +65,20 @@ class EmployeeController extends Controller
                 'thr' => (float) $d->thr,
                 'apresiasi' => (float) $d->apresiasi,
                 'tunjangan_jabatan' => (float) $d->tunjangan_jabatan,
+                'premi_bpjs_kesehatan' => (float) $d->premi_bpjs_kesehatan,
                 'thr_dibayarkan' => (float) $d->thr_dibayarkan,
                 'potongan_pinjaman' => (float) $d->potongan_pinjaman,
                 'potongan_absensi' => (float) $d->potongan_absensi,
+                'potongan_bpjs_kesehatan_4' => (float) $d->potongan_bpjs_kesehatan_4,
+                'potongan_bpjs_kesehatan_1' => (float) $d->potongan_bpjs_kesehatan_1,
                 'take_home_pay' => (float) $d->take_home_pay,
                 'status' => $d->status,
             ]);
 
         $stats = [
             'gaji_pokok' => $payrollDetails->sum('gaji_pokok'),
-            'total_tunjangan' => $payrollDetails->sum(fn($d) => $d['tambahan_upah'] + $d['bonus'] + $d['thr'] + $d['apresiasi'] + $d['tunjangan_jabatan']),
-            'total_potongan' => $payrollDetails->sum(fn($d) => $d['thr_dibayarkan'] + $d['potongan_pinjaman'] + $d['potongan_absensi']),
+            'total_tunjangan' => $payrollDetails->sum(fn($d) => $d['tambahan_upah'] + $d['bonus'] + $d['thr'] + $d['apresiasi'] + $d['tunjangan_jabatan'] + $d['premi_bpjs_kesehatan']),
+            'total_potongan' => $payrollDetails->sum(fn($d) => $d['thr_dibayarkan'] + $d['potongan_pinjaman'] + $d['potongan_absensi'] + $d['potongan_bpjs_kesehatan_4'] + $d['potongan_bpjs_kesehatan_1']),
             'gaji_bersih' => $payrollDetails->sum('take_home_pay'),
         ];
 

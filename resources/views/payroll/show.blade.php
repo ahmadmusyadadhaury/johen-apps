@@ -80,7 +80,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
-                                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Semua Email Terkirim!</h3>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Semua Slip Terkirim!</h3>
                             </div>
                         </template>
                         <template x-if="failed > 0">
@@ -269,11 +269,11 @@
                             </td>
                             <td class="table-cell text-center whitespace-nowrap">
                                 @if($detail->status === 'failed')
-                                    <form action="{{ route('payroll.email-retry', $detail) }}" method="POST" class="inline">
+                                    <form action="{{ route('payroll.retry-failed', $detail) }}" method="POST" class="inline">
                                         @csrf
                                         <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-500 transition-colors">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
-                                            Kirim Ulang
+                                            Generate Ulang
                                         </button>
                                     </form>
                                 @else

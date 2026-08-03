@@ -366,8 +366,8 @@ class DashboardService
             if ($sentCount > 0) {
                 $timeline[] = [
                     'time' => $import->created_at->addMinutes(2),
-                    'icon' => 'mail',
-                    'title' => "{$sentCount} email terkirim",
+                    'icon' => 'check',
+                    'title' => "{$sentCount} slip terkirim",
                     'description' => "Periode {$import->periode}",
                 ];
             }
@@ -376,8 +376,8 @@ class DashboardService
                 $timeline[] = [
                     'time' => $import->created_at->addMinutes(3),
                     'icon' => 'alert',
-                    'title' => "{$failedCount} email gagal",
-                    'description' => "Perlu retry",
+                    'title' => "{$failedCount} slip gagal",
+                    'description' => "Perlu generate ulang",
                 ];
             }
         }

@@ -2,21 +2,64 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessPayrollJob;
 use App\Models\PayrollDetail;
 use App\Models\PayrollImport;
+use App\Services\PdfGenerationService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 
 class PayrollController extends Controller
 {
-    public function generate(PayrollImport $import)
-    {
-        ProcessPayrollJob::dispatch($import);
+    private const BATCH_SIZE = 8;
 
-        return redirect()
-            ->route('payroll.show', $import)
-            ->with('processing', true)
-            ->with('success', 'Proses generate PDF dan pengiriman email telah dimulai.');
+    public function processBatch(PayrollImport $import, PdfGenerationService $pdfService): JsonResponse
+    {
+        set_time_limit(120);
+
+        $details = $import->payrollDetails()
+            ->where('status', 'pending')
+            ->limit(self::BATCH_SIZE)
+            ->get();
+
+        foreach ($details as $detail) {
+            try {
+                $path = $pdfService->generate($detail, $import->periode, $detail->pdf_password);
+                $detail->update([
+                    'pdf_path' => $path,
+                    'status' => 'sent',
+                ]);
+            } catch (\Exception $e) {
+                $detail->update(['status' => 'failed']);
+            }
+        }
+
+        $progress = $this->getProgress($import);
+
+        if ($progress['allDone']) {
+            session()->flash('success', 'Slip gaji berhasil digenerate dan tersedia di menu Riwayat Payroll masing-masing karyawan.');
+        }
+
+        return response()->json($progress);
+    }
+
+    public function retryFailed(PayrollDetail $detail, PdfGenerationService $pdfService): RedirectResponse
+    {
+        if ($detail->status !== 'failed') {
+            return redirect()->back()->with('error', 'Slip ini tidak berstatus gagal.');
+        }
+
+        try {
+            $path = $pdfService->generate($detail, $detail->payrollImport->periode, $detail->pdf_password);
+            $detail->update([
+                'pdf_path' => $path,
+                'status' => 'sent',
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Generate ulang gagal: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Slip gaji berhasil digenerate ulang.');
     }
 
     public function show(PayrollImport $import)

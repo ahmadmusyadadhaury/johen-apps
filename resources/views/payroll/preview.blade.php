@@ -27,7 +27,7 @@
             <div class="flex-1 flex items-center mx-2"><div class="w-full h-1 rounded-full bg-gray-200"></div></div>
             <div class="flex flex-col items-center gap-1 shrink-0">
                 <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 text-gray-400 dark:text-gray-500 text-sm font-bold">4</div>
-                <span class="text-[10px] font-medium text-gray-400 dark:text-gray-500">Kirim Email</span>
+                <span class="text-[10px] font-medium text-gray-400 dark:text-gray-500">Slip Tersedia</span>
             </div>
             <div class="flex-1 flex items-center mx-2"><div class="w-full h-1 rounded-full bg-gray-200"></div></div>
             <div class="flex flex-col items-center gap-1 shrink-0">
@@ -76,35 +76,117 @@
                 Upload Ulang
             </a>
         </div>
-        <div x-data="{ open: false }">
+        <div x-data="generateFlow()">
             <button @click="open = true" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Generate Slip Gaji
             </button>
 
-            <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div x-show="open" x-transition:enter="transition-opacity ease-linear duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="open = false"></div>
-                <div x-show="open" x-transition:enter="transition-all ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition-all ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl">
+            <div x-show="processing" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                <div class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl">
+                    <div class="text-center">
+                        <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-100 to-violet-100 flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-primary-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Mengirim Slip Gaji</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Mohon tunggu, jangan tutup halaman ini</p>
+
+                        <div class="mt-6 mb-2">
+                            <span class="text-5xl font-extrabold text-primary-600" x-text="percent + '%'">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                            <div class="bg-gradient-to-r from-primary-500 to-violet-500 h-3 rounded-full transition-all duration-700 ease-out shadow-sm shadow-primary-200"
+                                 x-bind:style="'width: ' + percent + '%'"></div>
+                        </div>
+
+                        <div class="flex items-center justify-center gap-6 mt-4">
+                            <span class="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span x-text="sent + ' Terkirim'">0 Terkirim</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700" x-show="pending > 0">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                <span x-text="pending + ' Pending'">0 Pending</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 text-sm font-medium text-red-700" x-show="failed > 0">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span x-text="failed + ' Gagal'">0 Gagal</span>
+                            </span>
+                        </div>
+                        <p class="mt-4 text-xs text-gray-400 dark:text-gray-500" x-text="`(${sent + failed} dari ${total} karyawan)`"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="open && !processing" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div x-show="open && !processing" x-transition:enter="transition-opacity ease-linear duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="open = false"></div>
+                <div x-show="open && !processing" x-transition:enter="transition-all ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition-all ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl">
                     <div class="text-center">
                         <div class="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-100 to-violet-100 flex items-center justify-center mb-4">
                             <svg class="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Konfirmasi Generate</h3>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Anda akan membuat <strong class="text-gray-900 dark:text-gray-100">{{ $import->total_employee }} slip gaji</strong> untuk periode <strong class="text-gray-900 dark:text-gray-100">{{ $import->periode }}</strong>. Slip gaji akan dikirim ke email masing-masing karyawan.</p>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Anda akan membuat <strong class="text-gray-900 dark:text-gray-100">{{ $import->total_employee }} slip gaji</strong> untuk periode <strong class="text-gray-900 dark:text-gray-100">{{ $import->periode }}</strong>. Slip gaji akan tersedia di menu Riwayat Payroll masing-masing karyawan.</p>
                     </div>
                     <div class="mt-6 flex items-center justify-end gap-3">
                         <button @click="open = false" class="btn-secondary">Batal</button>
-                        <form action="{{ route('payroll.generate', $import) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-primary">
-                                Generate Sekarang
-                            </button>
-                        </form>
+                        <button @click="start()" class="btn-primary" :disabled="processing">
+                            Generate Sekarang
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function generateFlow() {
+            return {
+                open: false,
+                processing: false,
+                total: {{ $import->total_employee }},
+                sent: 0,
+                failed: 0,
+                pending: {{ $import->total_employee }},
+                percent: 0,
+                async start() {
+                    this.open = false;
+                    this.processing = true;
+                    await this.processUntilDone();
+                },
+                async processUntilDone() {
+                    while (true) {
+                        let d;
+                        try {
+                            const resp = await fetch('{{ route('payroll.process-batch', $import) }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json',
+                                },
+                            });
+                            d = await resp.json();
+                        } catch (e) {
+                            await new Promise(r => setTimeout(r, 1500));
+                            continue;
+                        }
+                        this.sent = d.sent;
+                        this.failed = d.failed;
+                        this.pending = d.pending;
+                        this.percent = d.percent;
+                        if (d.allDone) {
+                            window.location.href = '{{ route('history.index') }}';
+                            return;
+                        }
+                        await new Promise(r => setTimeout(r, 600));
+                    }
+                }
+            }
+        }
+    </script>
 
 </x-app-layout>
 

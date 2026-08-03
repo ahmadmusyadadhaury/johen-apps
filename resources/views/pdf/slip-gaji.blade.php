@@ -19,14 +19,25 @@
             margin-bottom: 18px;
         }
         .header .company-name {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
             color: #1a56db;
             letter-spacing: 1px;
         }
+        .company-logo {
+            height: 32px;
+            width: auto;
+            margin-bottom: 4px;
+        }
+        .header .electronic-note {
+            font-size: 9px;
+            font-style: italic;
+            color: #888;
+            margin-top: 2px;
+        }
         .header h1 {
-            font-size: 16px;
-            margin: 4px 0;
+            font-size: 13px;
+            margin: 2px 0;
             color: #1a1a1a;
         }
         .identity-section {
@@ -159,8 +170,12 @@
 <body>
     <div class="watermark">Private &amp; Confidential</div>
     <div class="header">
+        @if($logo)
+            <img src="{{ $logo }}" alt="Logo" class="company-logo">
+        @endif
         <div class="company-name">PT. JOHEN SUKSES ABADI</div>
         <h1>SLIP GAJI</h1>
+        <div class="electronic-note">Slip ini dicetak secara elektronik</div>
     </div>
 
     <div class="identity-section">
@@ -218,6 +233,10 @@
                 <td>Tunjangan Jabatan</td>
                 <td class="text-right">{{ $detail->tunjangan_jabatan > 0 ? number_format($detail->tunjangan_jabatan, 0, ',', '.') : '-' }}</td>
             </tr>
+            <tr>
+                <td>Premi BPJS Kesehatan (4%)</td>
+                <td class="text-right">{{ $detail->premi_bpjs_kesehatan > 0 ? number_format($detail->premi_bpjs_kesehatan, 0, ',', '.') : '-' }}</td>
+            </tr>
             <tr class="total-row">
                 <td>TOTAL PENGHASILAN BRUTO</td>
                 <td class="text-right">Rp {{ number_format($detail->total_penghasilan_bruto, 0, ',', '.') }}</td>
@@ -245,6 +264,14 @@
             <tr>
                 <td>Potongan Absensi / Jam Kerja</td>
                 <td class="text-right">{{ $detail->potongan_absensi > 0 ? number_format($detail->potongan_absensi, 0, ',', '.') : '-' }}</td>
+            </tr>
+            <tr>
+                <td>Potongan BPJS Kesehatan (4%)</td>
+                <td class="text-right">{{ $detail->potongan_bpjs_kesehatan_4 > 0 ? number_format($detail->potongan_bpjs_kesehatan_4, 0, ',', '.') : '-' }}</td>
+            </tr>
+            <tr>
+                <td>Potongan BPJS Kesehatan (1%)</td>
+                <td class="text-right">{{ $detail->potongan_bpjs_kesehatan_1 > 0 ? number_format($detail->potongan_bpjs_kesehatan_1, 0, ',', '.') : '-' }}</td>
             </tr>
             <tr class="total-row">
                 <td>TOTAL PENGELUARAN</td>

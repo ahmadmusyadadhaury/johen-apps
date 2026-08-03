@@ -1027,8 +1027,8 @@
                                         <td class="px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400" x-text="i + 1"></td>
                                         <td class="px-4 py-3.5 text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="p.periode"></td>
                                         <td class="px-4 py-3.5 text-sm text-right font-medium text-gray-900 dark:text-gray-100" x-text="'Rp ' + Number(p.gaji_pokok).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-emerald-600" x-text="'Rp ' + Number(p.tambahan_upah + p.bonus + p.thr + p.apresiasi + p.tunjangan_jabatan).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-red-600" x-text="'Rp ' + Number(p.thr_dibayarkan + p.potongan_pinjaman + p.potongan_absensi).toLocaleString('id-ID')"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-emerald-600" x-text="'Rp ' + Number(p.tambahan_upah + p.bonus + p.thr + p.apresiasi + p.tunjangan_jabatan + p.premi_bpjs_kesehatan).toLocaleString('id-ID')"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-red-600" x-text="'Rp ' + Number(p.thr_dibayarkan + p.potongan_pinjaman + p.potongan_absensi + p.potongan_bpjs_kesehatan_4 + p.potongan_bpjs_kesehatan_1).toLocaleString('id-ID')"></td>
                                         <td class="px-4 py-3.5 text-sm text-right font-bold text-gray-900 dark:text-gray-100" x-text="'Rp ' + Number(p.take_home_pay).toLocaleString('id-ID')"></td>
                                         <td class="px-4 py-3.5 text-center">
                                             <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"

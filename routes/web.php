@@ -93,7 +93,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/upload', [PayrollImportController::class, 'store'])->name('store');
         Route::delete('/{import}', [PayrollImportController::class, 'destroy'])->name('destroy');
         Route::get('/{import}/preview', [PayrollPreviewController::class, 'index'])->name('preview');
-        Route::post('/{import}/generate', [PayrollController::class, 'generate'])->name('generate');
+        Route::post('/{import}/process-batch', [PayrollController::class, 'processBatch'])->name('process-batch');
+        Route::post('/detail/{detail}/retry', [PayrollController::class, 'retryFailed'])->name('retry-failed');
         Route::get('/{import}', [PayrollController::class, 'show'])->name('show');
         Route::get('/detail/{detail}/download', [PayrollController::class, 'downloadPdf'])->name('download-pdf');
 

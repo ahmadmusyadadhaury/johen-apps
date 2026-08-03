@@ -23,12 +23,15 @@ class ProcessPayrollJob implements ShouldQueue
         $details = $this->payrollImport->payrollDetails;
 
         foreach ($details as $detail) {
-            $path = $pdfService->generate($detail, $this->payrollImport->periode, $detail->pdf_password);
-            $detail->update(['pdf_path' => $path]);
-        }
-
-        foreach ($details as $detail) {
-            SendEmailJob::dispatch($detail, $this->payrollImport->periode)->onQueue('email');
+            try {
+                $path = $pdfService->generate($detail, $this->payrollImport->periode, $detail->pdf_password);
+                $detail->update([
+                    'pdf_path' => $path,
+                    'status' => 'sent',
+                ]);
+            } catch (\Exception $e) {
+                $detail->update(['status' => 'failed']);
+            }
         }
     }
 }
