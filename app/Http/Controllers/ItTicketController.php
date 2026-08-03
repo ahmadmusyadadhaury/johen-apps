@@ -18,7 +18,7 @@ class ItTicketController extends Controller
         $canManage = $this->canManage($user);
 
         $tickets = $canManage
-            ? ItTicket::with(['requester.employee.division', 'assignee.employee'])->latest()->get()
+            ? ItTicket::with(['requester.employee.divisions', 'assignee.employee'])->latest()->get()
             : ItTicket::with('assignee.employee')->where('requester_id', $user->id)->latest()->get();
 
         $itUsers = $canManage

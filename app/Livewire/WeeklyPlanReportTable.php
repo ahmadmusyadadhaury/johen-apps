@@ -211,7 +211,8 @@ class WeeklyPlanReportTable extends Component
             $visibleIds = [$currentEmployeeId];
 
             if ($user->isKoordinator()) {
-                $teamIds = Employee::where('division_id', $employee->division_id)
+                $divisionIds = $employee->divisions()->pluck('divisions.id')->toArray();
+                $teamIds = Employee::whereHas('divisions', fn($q) => $q->whereIn('divisions.id', $divisionIds))
                     ->where('id', '!=', $employee->id)
                     ->pluck('id')
                     ->toArray();

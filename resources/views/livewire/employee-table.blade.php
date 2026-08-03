@@ -87,7 +87,7 @@
                             </div>
                         </td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $emp->position ?? '-' }}</td>
-                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $emp->division?->nama ?? '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $emp->divisionNames() ?: '-' }}</td>
                         <td class="table-cell text-gray-500 dark:text-gray-400">{{ $emp->tanggal_masuk?->format('d M Y') ?? '-' }}</td>
                         <td class="table-cell">
                             @if($emp->status == 'aktif')
@@ -267,14 +267,23 @@
                 @if($step == 2)
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <x-input-label for="create-division_id" value="Divisi" />
-                            <select id="create-division_id" wire:model="division_id" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                                <option value="">-- Pilih Divisi --</option>
+                        <div x-data="{ open: false }" class="relative">
+                            <x-input-label value="Divisi" />
+                            <button type="button" @click="open = !open"
+                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                                <span>{{ count($division_ids) > 0 ? count($division_ids) . ' divisi dipilih' : 'Pilih divisi' }}</span>
+                                <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" @click.outside="open = false" x-cloak
+                                 class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
                                 @foreach($divisions as $div)
-                                    <option value="{{ $div->id }}">{{ $div->nama }}</option>
+                                    <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($div->id, $division_ids) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
+                                        <input type="checkbox" value="{{ $div->id }}" wire:model="division_ids"
+                                               class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $div->nama }}</span>
+                                    </label>
                                 @endforeach
-                            </select>
+                            </div>
                         </div>
                         <div x-data="{ open: false }" class="relative">
                             <x-input-label value="Jabatan" />
@@ -540,14 +549,23 @@
                 @if($step == 2)
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <x-input-label for="edit-division_id" value="Divisi" />
-                            <select id="edit-division_id" wire:model="division_id" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                                <option value="">-- Pilih Divisi --</option>
+                        <div x-data="{ open: false }" class="relative">
+                            <x-input-label value="Divisi" />
+                            <button type="button" @click="open = !open"
+                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                                <span>{{ count($division_ids) > 0 ? count($division_ids) . ' divisi dipilih' : 'Pilih divisi' }}</span>
+                                <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" @click.outside="open = false" x-cloak
+                                 class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
                                 @foreach($divisions as $div)
-                                    <option value="{{ $div->id }}">{{ $div->nama }}</option>
+                                    <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($div->id, $division_ids) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
+                                        <input type="checkbox" value="{{ $div->id }}" wire:model="division_ids"
+                                               class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $div->nama }}</span>
+                                    </label>
                                 @endforeach
-                            </select>
+                            </div>
                         </div>
                         <div x-data="{ open: false }" class="relative">
                             <x-input-label value="Jabatan" />
@@ -755,7 +773,7 @@
                         Data Pekerjaan
                     </h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div class="preview-field"><span class="preview-label">Divisi</span><span class="preview-value">{{ $divisions->firstWhere('id', $division_id)?->nama ?? '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Divisi</span><span class="preview-value">{{ $divisions->whereIn('id', $division_ids)->pluck('nama')->implode(' & ') ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jabatan</span><span class="preview-value">
                             @php
                                 $previewPositions = \App\Models\Position::whereIn('id', $position_ids)->get();

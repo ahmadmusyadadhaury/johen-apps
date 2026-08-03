@@ -86,7 +86,7 @@ class DailyTrackingTable extends Component
     private function getDivisi(Employee $employee): string
     {
         $user = $employee->user;
-        if (!$user) return $employee->division?->nama ?? '-';
+        if (!$user) return $employee->divisionNames() ?: '-';
 
         return match (true) {
             $user->isKoordinatorPubg(), $user->isStaffHostPubg() => 'PUBG',
@@ -97,7 +97,7 @@ class DailyTrackingTable extends Component
 $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
              $user->isKoordinatorMonkeyPubg(), $user->isStaffHostMonkeyPubg() => 'Monkey PUBG',
              $user->isKoordinatorAdmin(), $user->isStaffAdmin() => 'Admin',
-            default => $employee->division?->nama ?? '-',
+            default => $employee->divisionNames() ?: '-',
         };
     }
 
@@ -221,7 +221,7 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             ->when($this->nama, function ($q) {
                 $q->where('bonus_pubgs.nama', $this->nama);
             })
-            ->with('employee.division', 'employee.users');
+            ->with('employee.divisions', 'employee.users');
 
         $orderRaw = "CASE
             WHEN users.role IN ('staff_host_pubg', 'koordinator_pubg') THEN 1

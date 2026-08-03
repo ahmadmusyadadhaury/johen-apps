@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Division extends Model
 {
@@ -21,8 +21,9 @@ class Division extends Model
         ];
     }
 
-    public function employees(): HasMany
+    public function employees(): BelongsToMany
     {
-        return $this->hasMany(Employee::class);
+        return $this->belongsToMany(Employee::class, 'employee_division')
+            ->withTimestamps();
     }
 }

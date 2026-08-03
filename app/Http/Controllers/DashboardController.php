@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Division;
 use App\Models\LeaveRequest;
 use App\Services\DashboardService;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
+        session()->forget('division_menu');
+
         $user = auth()->user();
 
         if ($user->isStaff() || $user->isStaffCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isStaffIt() || $user->isKoordinatorCreative() || $user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isStaffAdmin()) {
@@ -62,5 +65,22 @@ class DashboardController extends Controller
             'expiringContracts', 'expiringContractCount', 'meetingStats',
             'koordinatorStats',
         ));
+    }
+
+    public function division(Division $division)
+    {
+        $user = auth()->user();
+
+        abort_unless($user->canViewAll() && !$user->isKoordinator(), 403);
+
+        session(['division_menu' => $division->id]);
+
+        $division->loadCount('employees');
+        $menu = \App\Support\DivisionMenu::for($division->nama);
+        $employees = $division->employees()
+            ->orderBy('employees.nama')
+            ->get(['employees.id', 'employees.nama', 'employees.position', 'employees.foto', 'employees.updated_at']);
+
+        return view('dashboard.division', compact('division', 'menu', 'employees'));
     }
 }

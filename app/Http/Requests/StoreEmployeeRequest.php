@@ -23,11 +23,12 @@ class StoreEmployeeRequest extends FormRequest
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
             'jenis_kelamin' => 'nullable|in:L,P',
-            'division_id' => 'nullable|exists:divisions,id',
             'position' => 'nullable|string|max:255',
             'position_ids' => 'nullable|array',
             'position_ids.*' => 'exists:positions,id',
             'main_position_id' => 'nullable|exists:positions,id',
+            'division_ids' => 'nullable|array',
+            'division_ids.*' => 'exists:divisions,id',
             'atasan' => 'nullable|string|max:255',
             'atasan2' => 'nullable|string|max:255',
             'status' => 'required|in:aktif,nonaktif,resign',
@@ -46,7 +47,7 @@ class StoreEmployeeRequest extends FormRequest
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid.',
             'status.required' => 'Status wajib dipilih.',
             'status.in' => 'Status tidak valid.',
-            'division_id.exists' => 'Divisi tidak ditemukan.',
+            'division_ids.*.exists' => 'Divisi tidak ditemukan.',
             'tanggal_resign.after_or_equal' => 'Tanggal resign harus setelah atau sama dengan tanggal masuk.',
         ];
     }

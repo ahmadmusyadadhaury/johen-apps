@@ -135,17 +135,18 @@ class AbsensiTable extends Component
             ))->with('karyawanView', true);
         }
 
-        $attendances = Attendance::with('employee.division')
+        $attendances = Attendance::with('employee.divisions')
             ->whereDate('date', $today)
             ->get()
             ->keyBy('employee_id');
 
-        $employeeQuery = Employee::with('division')->where('status', 'aktif');
+        $employeeQuery = Employee::with('divisions')->where('status', 'aktif');
 
         if ($user->isKoordinator() && $this->tab === 'tim') {
             $koordinatorEmployee = $user->employee;
-            if ($koordinatorEmployee && $koordinatorEmployee->division_id) {
-                $employeeQuery->where('division_id', $koordinatorEmployee->division_id)
+            if ($koordinatorEmployee && $koordinatorEmployee->divisions->isNotEmpty()) {
+                $divisionIds = $koordinatorEmployee->divisions->pluck('id')->toArray();
+                $employeeQuery->whereHas('divisions', fn($q) => $q->whereIn('divisions.id', $divisionIds))
                     ->where('id', '!=', $koordinatorEmployee->id);
             }
         }

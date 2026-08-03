@@ -48,7 +48,7 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['division', 'documents', 'contracts', 'positionHistories', 'payrollDetails.payrollImport', 'promotions', 'positions']);
+        $employee->load(['divisions', 'documents', 'contracts', 'positionHistories', 'payrollDetails.payrollImport', 'promotions', 'positions']);
         $employee->setRelation('contracts', $employee->contracts->sortByDesc('tanggal_mulai')->values());
 
         $payrollDetails = $employee->payrollDetails()
@@ -113,6 +113,11 @@ class EmployeeController extends Controller
                 $syncData[$pid] = ['is_main' => $pid == $mainPositionId];
             }
             $employee->positions()->sync($syncData);
+        }
+
+        // Sync divisions from pivot
+        if ($request->has('division_ids')) {
+            $employee->divisions()->sync($request->input('division_ids', []));
         }
 
         if ($request->input('_redirect') === 'show') {

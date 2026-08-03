@@ -41,7 +41,7 @@ class EmployeeTable extends Component
     public string $position = '';
     public array $position_ids = [];
     public string $main_position_id = '';
-    public string $division_id = '';
+    public array $division_ids = [];
     public string $atasan = '';
     public string $atasan2 = '';
     public string $tanggal_masuk = '';
@@ -87,7 +87,8 @@ class EmployeeTable extends Component
             'position_ids' => 'nullable|array',
             'position_ids.*' => 'exists:positions,id',
             'main_position_id' => 'nullable|string',
-            'division_id' => 'nullable|exists:divisions,id',
+            'division_ids' => 'nullable|array',
+            'division_ids.*' => 'exists:divisions,id',
             'atasan' => 'nullable|string|max:255',
             'atasan2' => 'nullable|string|max:255',
             'tanggal_masuk' => 'nullable|date',
@@ -116,8 +117,7 @@ class EmployeeTable extends Component
             'nama.required' => 'Nama wajib diisi.',
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid.',
             'status.required' => 'Status wajib dipilih.',
-            'division_id.exists' => 'Divisi tidak ditemukan.',
-        
+            'division_ids.*.exists' => 'Divisi tidak ditemukan.',
         ];
     }
 
@@ -147,7 +147,7 @@ class EmployeeTable extends Component
     public function openEditModal(int $id): void
     {
         Gate::authorize('update-data');
-        $emp = Employee::with('positions')->findOrFail($id);
+        $emp = Employee::with('positions', 'divisions')->findOrFail($id);
         $this->editId = $emp->id;
         $this->nik = $emp->nik;
         $this->nama = $emp->nama;
@@ -160,7 +160,7 @@ class EmployeeTable extends Component
         $this->position_ids = $emp->positions->pluck('id')->toArray();
         $mainPos = $emp->mainPosition();
         $this->main_position_id = (string) ($mainPos?->id ?? '');
-        $this->division_id = (string) ($emp->division_id ?? '');
+        $this->division_ids = $emp->divisions->pluck('id')->toArray();
         $this->atasan = $emp->atasan ?? '';
         $this->atasan2 = $emp->atasan2 ?? '';
         $this->tanggal_masuk = $emp->tanggal_masuk?->format('Y-m-d') ?? '';
@@ -242,6 +242,8 @@ class EmployeeTable extends Component
             $employee->positions()->sync($syncData);
         }
 
+        $employee->divisions()->sync($this->division_ids);
+
         $this->closeModal();
         $this->dispatch('notify', type: 'success', message: 'Karyawan berhasil ditambahkan.');
     }
@@ -264,6 +266,8 @@ class EmployeeTable extends Component
             }
             $emp->positions()->sync($syncData);
         }
+
+        $emp->divisions()->sync($this->division_ids);
 
         $this->closeModal();
         $this->dispatch('notify', type: 'success', message: 'Data karyawan berhasil diperbarui.');
@@ -293,7 +297,7 @@ class EmployeeTable extends Component
 
     public function render()
     {
-        $employees = Employee::with('division')
+        $employees = Employee::with('divisions')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nik', 'like', "%{$this->search}%")
@@ -303,7 +307,7 @@ class EmployeeTable extends Component
                 });
             })
             ->when($this->filterDivision, function ($query) {
-                $query->where('division_id', $this->filterDivision);
+                $query->whereHas('divisions', fn($q) => $q->where('divisions.id', $this->filterDivision));
             })
             ->when($this->filterStatus, function ($query) {
                 $query->where('status', $this->filterStatus);
@@ -341,7 +345,6 @@ class EmployeeTable extends Component
             'tempat_lahir' => $this->tempat_lahir ?: null,
             'tanggal_lahir' => $this->tanggal_lahir ?: null,
             'jenis_kelamin' => $this->jenis_kelamin ?: null,
-            'division_id' => $this->division_id ?: null,
             'position' => $posStr,
             'atasan' => $this->atasan ?: null,
             'atasan2' => $this->atasan2 ?: null,
@@ -375,7 +378,7 @@ class EmployeeTable extends Component
         $this->position = '';
         $this->position_ids = [];
         $this->main_position_id = '';
-        $this->division_id = '';
+        $this->division_ids = [];
         $this->atasan = '';
         $this->atasan2 = '';
         $this->tanggal_masuk = '';

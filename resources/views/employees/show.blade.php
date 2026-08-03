@@ -313,7 +313,7 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 sm:mb-2">
                         NIK <strong class="text-gray-700 dark:text-gray-200 font-semibold">{{ $employee->nik }}</strong>
                         &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : '—' }}
-                        &nbsp;&mdash;&nbsp; Divisi {{ $employee->division?->nama ?? '—' }}
+                        &nbsp;&mdash;&nbsp; Divisi {{ $employee->divisionNames() ?: '—' }}
                     </p>
                     <div class="flex items-center justify-center sm:justify-start gap-5 flex-wrap">
                         @if($employee->no_hp)
@@ -429,7 +429,15 @@
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Divisi</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->division?->nama ?? '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">
+                                    @if($employee->divisions->count() > 0)
+                                        @foreach($employee->divisions as $div)
+                                            {{ $div->nama }}@if(!$loop->last)<br>@endif
+                                        @endforeach
+                                    @else
+                                        -
+                                    @endif
+                                </span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Atasan 1</span>
@@ -1103,15 +1111,25 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
+                    <div x-data="{ open: false }" class="relative">
                         <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Divisi</label>
-                        <select name="division_id"
-                                class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                            <option value="">Pilih Divisi</option>
+                        @php $selectedDivisionIds = old('division_ids', $employee->divisions->pluck('id')->toArray()); @endphp
+                        <button type="button" @click="open = !open"
+                                class="flex items-center justify-between w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                            <span>{{ count($selectedDivisionIds) > 0 ? count($selectedDivisionIds) . ' divisi dipilih' : 'Pilih divisi' }}</span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <div x-show="open" @click.outside="open = false" x-cloak
+                             class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
                             @foreach($divisions as $division)
-                                <option value="{{ $division->id }}" {{ $employee->division_id == $division->id ? 'selected' : '' }}>{{ $division->nama }}</option>
+                                <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($division->id, $selectedDivisionIds) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
+                                    <input type="checkbox" name="division_ids[]" value="{{ $division->id }}"
+                                           {{ in_array($division->id, $selectedDivisionIds) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $division->nama }}</span>
+                                </label>
                             @endforeach
-                        </select>
+                        </div>
                     </div>
                     <div x-data="{ open: false }" class="relative">
                         <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Jabatan</label>
@@ -1608,14 +1626,20 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi Baru</label>
-                        <select name="divisi_baru"
-                                class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
-                            <option value="">Tetap ({{ $employee->division?->nama ?? '—' }})</option>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi</label>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                            Saat ini: <b>{{ $employee->divisionNames() ?: '—' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
+                        </p>
+                        <div class="mt-1.5 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-xl p-2 space-y-0.5">
                             @foreach($divisions as $division)
-                                <option value="{{ $division->id }}">{{ $division->nama }}</option>
+                                <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ $employee->divisions->contains('id', $division->id) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
+                                    <input type="checkbox" name="division_ids[]" value="{{ $division->id }}"
+                                           {{ $employee->divisions->contains('id', $division->id) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ $division->nama }}</span>
+                                </label>
                             @endforeach
-                        </select>
+                        </div>
                     </div>
                     <div class="space-y-1">
                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Atasan Baru</label>

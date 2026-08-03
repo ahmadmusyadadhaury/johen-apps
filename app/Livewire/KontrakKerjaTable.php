@@ -31,13 +31,13 @@ class KontrakKerjaTable extends Component
             ->count();
         $totalSelesai = EmployeeContract::where('status', 'selesai')->count();
 
-        $segeraHabis = EmployeeContract::with('employee.division')
+        $segeraHabis = EmployeeContract::with('employee.divisions')
             ->where('status', 'berlaku')
             ->where('tanggal_berakhir', '<=', now()->addDays(7))
             ->where('tanggal_berakhir', '>=', now())
             ->get();
 
-        $contracts = EmployeeContract::with('employee.division')
+        $contracts = EmployeeContract::with('employee.divisions')
             ->where('status', 'berlaku')
             ->whereDate('tanggal_berakhir', '>=', now())
             ->when($this->search, function ($query) {

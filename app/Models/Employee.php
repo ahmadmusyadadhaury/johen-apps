@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -18,7 +17,6 @@ class Employee extends Model
         'tempat_lahir',
         'tanggal_lahir',
         'jenis_kelamin',
-        'division_id',
         'position',
         'atasan',
         'atasan2',
@@ -69,9 +67,15 @@ class Employee extends Model
         return asset('storage/employees/' . $this->foto);
     }
 
-    public function division(): BelongsTo
+    public function divisions(): BelongsToMany
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsToMany(Division::class, 'employee_division')
+            ->withTimestamps();
+    }
+
+    public function divisionNames(): string
+    {
+        return $this->divisions->pluck('nama')->implode(' & ');
     }
 
     public function documents(): HasMany

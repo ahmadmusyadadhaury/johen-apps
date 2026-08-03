@@ -526,7 +526,7 @@ class User extends Authenticatable
             $this->isKoordinatorIt(), $this->isStaffIt() => 'IT',
             $this->isKoordinatorCreative(), $this->isStaffCreative() => 'Creative',
             $this->isKoordinatorStock(), $this->isStaffStock() => 'Stock',
-            default => $this->employee?->division?->nama,
+            default => $this->employee?->divisionNames() ?: null,
         };
     }
 

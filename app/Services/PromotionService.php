@@ -17,8 +17,18 @@ class PromotionService
     {
         return DB::transaction(function () use ($data, $employee) {
             $posisiLama = $employee->position;
-            $divisiLama = $employee->division?->nama;
+            $divisiLama = $employee->divisionNames() ?: null;
             $atasanLama = $employee->atasan;
+
+            $newDivisionIds = array_map('intval', $data['division_ids'] ?? []);
+            if (empty($newDivisionIds)) {
+                $newDivisionIds = $employee->divisions->pluck('id')->toArray();
+            }
+            $divisiBaru = Division::whereIn('id', $newDivisionIds)
+                ->orderBy('nama')
+                ->pluck('nama')
+                ->implode(' & ');
+            $divisiBaru = $divisiBaru ?: $divisiLama;
 
             $promotion = Promotion::create([
                 'employee_id' => $employee->id,
@@ -26,7 +36,7 @@ class PromotionService
                 'posisi_lama' => $posisiLama ?? '—',
                 'posisi_baru' => $data['posisi_baru'],
                 'divisi_lama' => $divisiLama,
-                'divisi_baru' => $data['divisi_baru'] ?? $divisiLama,
+                'divisi_baru' => $divisiBaru,
                 'atasan_lama' => $atasanLama,
                 'atasan_baru' => $data['atasan_baru'] ?? $atasanLama,
                 'tanggal_efektif' => $data['tanggal_efektif'],
@@ -37,9 +47,10 @@ class PromotionService
 
             $employee->update([
                 'position' => $data['posisi_baru'],
-                'division_id' => $data['divisi_baru'] ?? $employee->division_id,
                 'atasan' => $data['atasan_baru'] ?? $atasanLama,
             ]);
+
+            $employee->divisions()->sync($newDivisionIds);
 
             $activeHistory = $employee->positionHistories()
                 ->where('status', 'Aktif')
@@ -56,7 +67,7 @@ class PromotionService
             PositionHistory::create([
                 'employee_id' => $employee->id,
                 'jabatan' => $data['posisi_baru'],
-                'divisi' => $data['divisi_baru'] ?? $divisiLama ?? '—',
+                'divisi' => $divisiBaru ?? '—',
                 'atasan' => $data['atasan_baru'] ?? $atasanLama,
                 'mulai' => $data['tanggal_efektif'],
                 'status' => 'Aktif',
@@ -131,17 +142,20 @@ class PromotionService
         $employee = $promotion->employee;
 
         DB::transaction(function () use ($promotion, $employee) {
-            $divisiIdLama = null;
-            if ($promotion->divisi_lama) {
-                $divisiLama = Division::where('nama', $promotion->divisi_lama)->first();
-                $divisiIdLama = $divisiLama?->id;
-            }
+            $divisiNamesLama = $promotion->divisi_lama
+                ? array_filter(array_map('trim', explode(' & ', $promotion->divisi_lama)))
+                : [];
+
+            $divisiIdsLama = $divisiNamesLama
+                ? Division::whereIn('nama', $divisiNamesLama)->pluck('id')->toArray()
+                : [];
 
             $employee->update([
                 'position' => $promotion->posisi_lama,
-                'division_id' => $divisiIdLama ?? $employee->division_id,
                 'atasan' => $promotion->atasan_lama,
             ]);
+
+            $employee->divisions()->sync($divisiIdsLama);
 
             $newHistory = $employee->positionHistories()
                 ->where('jabatan', $promotion->posisi_baru)

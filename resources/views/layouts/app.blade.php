@@ -82,7 +82,39 @@ $activeMenu = match (true) {
     default => '',
 };
                 @endphp
+
+                @php
+$isDivisionView = false;
+$activeDivisionMenu = null;
+
+$divisionViewUser = auth()->check() && auth()->user()->canViewAll() && !auth()->user()->isKoordinator();
+
+if ($divisionViewUser) {
+    $divisionViewId = null;
+    if (request()->routeIs('dashboard.division')) {
+        $divisionViewRoute = request()->route('division');
+        $divisionViewId = $divisionViewRoute instanceof \App\Models\Division ? $divisionViewRoute->id : (int) $divisionViewRoute;
+    } elseif (session('division_menu')) {
+        $divisionViewId = (int) session('division_menu');
+    }
+
+    if ($divisionViewId) {
+        $divisionViewRecord = \App\Models\Division::find($divisionViewId);
+        if ($divisionViewRecord) {
+            $divisionViewMenu = \App\Support\DivisionMenu::for($divisionViewRecord->nama);
+            if ($divisionViewMenu && (request()->routeIs('dashboard.division') || \App\Support\DivisionMenu::matchesAny($divisionViewMenu, request()))) {
+                $isDivisionView = true;
+                $activeDivisionMenu = $divisionViewMenu;
+            }
+        }
+    }
+}
+                @endphp
+
                 <nav x-data="{ openMenu: @js($activeMenu) }" class="flex-1 overflow-y-auto p-4 space-y-1">
+                    @if($isDivisionView)
+                        @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
+                    @else
                     <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Menu</p>
 
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
@@ -596,6 +628,7 @@ $activeMenu = match (true) {
                     </div>
                     @endif
 
+                    @endif
                 </nav>
 
                 <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100 dark:border-gray-800 px-4 py-3">

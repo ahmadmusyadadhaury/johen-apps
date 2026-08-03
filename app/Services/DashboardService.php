@@ -181,7 +181,7 @@ class DashboardService
     {
         $now = now();
         $tahunIni = $now->year;
-        $employee = Employee::with('division')->find($employeeId);
+        $employee = Employee::with('divisions')->find($employeeId);
 
         if (!$employee) {
             return [];
@@ -305,7 +305,7 @@ class DashboardService
                 'nama' => $employee->nama,
                 'nik' => $employee->nik,
                 'position' => $employee->position ?? '-',
-                'division' => $employee->division?->nama ?? '-',
+                'division' => $employee->divisionNames() ?: '-',
                 'lokasi_kerja' => $employee->lokasi_kerja ?? '-',
                 'foto' => $employee->foto,
                 'status' => $employee->status,

@@ -13,7 +13,7 @@ class ExportController extends Controller
 {
     public function employees()
     {
-        $employees = Employee::with('division')->orderBy('nama')->get();
+        $employees = Employee::with('divisions')->orderBy('nama')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -36,7 +36,7 @@ class ExportController extends Controller
             $sheet->setCellValue('G' . $row, $emp->tempat_lahir ?? '-');
             $sheet->setCellValue('H' . $row, $emp->tanggal_lahir?->isoFormat('D MMM YYYY') ?? '-');
             $sheet->setCellValue('I' . $row, $emp->position ?? '-');
-            $sheet->setCellValue('J' . $row, $emp->division->nama ?? '-');
+            $sheet->setCellValue('J' . $row, $emp->divisionNames() ?: '-');
             $sheet->setCellValue('K' . $row, ucfirst($emp->status));
             $sheet->setCellValue('L' . $row, $emp->tanggal_masuk?->isoFormat('D MMM YYYY') ?? '-');
             $row++;
@@ -97,7 +97,7 @@ class ExportController extends Controller
 
     public function kontrakKerja()
     {
-        $contracts = EmployeeContract::with('employee.division')
+        $contracts = EmployeeContract::with('employee.divisions')
             ->orderBy('tanggal_mulai', 'desc')
             ->get();
 
@@ -121,7 +121,7 @@ class ExportController extends Controller
             $sheet->setCellValue('B' . $row, $ct->employee->nama);
             $sheet->setCellValue('C' . $row, $ct->employee->nik);
             $sheet->setCellValue('D' . $row, $ct->employee->position ?? '-');
-            $sheet->setCellValue('E' . $row, $ct->employee->division->nama ?? '-');
+            $sheet->setCellValue('E' . $row, $ct->employee->divisionNames() ?: '-');
             $sheet->setCellValue('F' . $row, $ct->jenis_kontrak);
             $sheet->setCellValue('G' . $row, $ct->tanggal_mulai->isoFormat('D MMM YYYY'));
             $sheet->setCellValue('H' . $row, $ct->tanggal_berakhir->isoFormat('D MMM YYYY'));

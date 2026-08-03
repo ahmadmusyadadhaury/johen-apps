@@ -117,7 +117,7 @@
                             </td>
                             <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $ct->employee->nik }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $ct->employee->position ?? '-' }}</td>
-                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $ct->employee->division->nama ?? '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $ct->employee->divisionNames() ?: '-' }}</td>
                             <td class="table-cell font-mono {{ $isUrgent ? 'text-red-600 font-semibold' : ($isAkanBerakhir ? 'text-amber-600 font-semibold' : 'text-gray-600 dark:text-gray-400') }}">
                                 @if($sisaHari < 0)
                                     <span class="text-red-500">-</span>

@@ -21,7 +21,8 @@ class PromotionController extends Controller
         $validated = $request->validate([
             'nomor_surat' => 'nullable|string|max:100',
             'posisi_baru' => 'required|string|max:255',
-            'divisi_baru' => 'nullable|exists:divisions,id',
+            'division_ids' => 'nullable|array',
+            'division_ids.*' => 'exists:divisions,id',
             'atasan_baru' => 'nullable|string|max:255',
             'tanggal_efektif' => 'required|date',
             'jenis' => 'required|in:promosi,demosi,mutasi',

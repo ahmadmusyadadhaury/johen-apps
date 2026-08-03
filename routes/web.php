@@ -39,6 +39,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/divisi/{division}', [DashboardController::class, 'division'])->name('dashboard.division');
 
     Route::prefix('hris')->name('hris.')->group(function () {
         Route::resource('employees', EmployeeController::class);

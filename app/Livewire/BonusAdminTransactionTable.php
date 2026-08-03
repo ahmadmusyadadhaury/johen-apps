@@ -65,11 +65,11 @@ class BonusAdminTransactionTable extends Component
     public function updatedNik(string $value): void
     {
         if (!$value) return;
-        $employee = Employee::with('division')->where('nik', $value)->first();
+        $employee = Employee::with('divisions')->where('nik', $value)->first();
         if ($employee) {
             $this->nama = $employee->nama;
             $this->jabatan = $employee->position;
-            $this->divisi = $employee->division?->nama ?? '';
+            $this->divisi = $employee->divisions->first()?->nama ?? '';
         }
     }
 
@@ -108,7 +108,7 @@ class BonusAdminTransactionTable extends Component
             $this->nik = $user->employee->nik;
             $this->nama = $user->employee->nama;
             $this->jabatan = $user->employee->position;
-            $this->divisi = $user->employee->division?->nama ?? '';
+            $this->divisi = $user->employee->divisions->first()?->nama ?? '';
         }
 
         $this->showCreateModal = true;
@@ -203,8 +203,8 @@ class BonusAdminTransactionTable extends Component
         ->orderBy($this->sortField, $this->sortDirection)
         ->paginate(10);
 
-        $employees = Employee::with('division')
-            ->whereHas('division', fn($q) => $q->where('nama', 'Admin Transaksi'))
+        $employees = Employee::with('divisions')
+            ->whereHas('divisions', fn($q) => $q->where('nama', 'Admin Transaksi'))
             ->orderBy('nama')
             ->get();
 

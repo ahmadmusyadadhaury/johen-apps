@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         $sedangDikerjakan = in_array($ticket->status, ['diproses', 'dilanjutkan']) && $ticket->proses_mulai_at;
                                         $tampilDetik = $ticket->durasi_detik + ($ticket->proses_mulai_at ? max(0, $ticket->proses_mulai_at->diffInSeconds(now())) : 0);
                                         $namaPengaju = $ticket->requester->employee?->nama ?? $ticket->requester->name;
-                                        $divisiPengaju = $ticket->requester->employee?->division?->nama ?? '-';
+                                        $divisiPengaju = $ticket->requester->employee?->divisionNames() ?: '-';
                                         $namaAssign = $ticket->assignee?->employee?->nama ?? $ticket->assignee?->name ?? '';
                                         $cari = mb_strtolower($ticket->kode . ' ' . $ticket->judul . ' ' . $namaPengaju . ' ' . $namaAssign);
                                         $detailData = [

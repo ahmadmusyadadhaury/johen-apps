@@ -26,7 +26,7 @@
             </div>
             <div class="min-w-0">
                 <h1 class="text-xl sm:text-2xl font-display font-bold text-white">Selamat Datang, {{ $employee->nama }}</h1>
-                <p class="text-sm text-white/80 mt-0.5">{{ $employee->positionNames() ?: '-' }} <span class="mx-1.5 text-white/40">•</span> Divisi {{ $employee->division?->nama ?? '-' }}</p>
+                <p class="text-sm text-white/80 mt-0.5">{{ $employee->positionNames() ?: '-' }} <span class="mx-1.5 text-white/40">•</span> Divisi {{ $employee->divisionNames() ?: '-' }}</p>
             </div>
         </div>
     </div>
@@ -519,7 +519,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Pilih Divisi</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Klik divisi untuk melihat daftar karyawan</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Klik divisi untuk melihat menu divisi</p>
                 </div>
                 <button @click="openDivisiModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -535,7 +535,7 @@
                     <span class="text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
                 </a>
                 @foreach($divisionStats as $ds)
-                <a href="{{ route('hris.employees.index', ['division' => $ds['id']]) }}"
+                <a href="{{ route('dashboard.division', $ds['id']) }}"
                    class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
                     <div>
                         <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $ds['nama'] }}</p>

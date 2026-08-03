@@ -91,11 +91,11 @@ class BonusHostLiveTable extends Component
     public function updatedNik(string $value): void
     {
         if (!$value) return;
-        $employee = Employee::with('division')->where('nik', $value)->first();
+        $employee = Employee::with('divisions')->where('nik', $value)->first();
         if ($employee) {
             $this->nama = $employee->nama;
             $this->jabatan = $employee->position;
-            $this->divisi = $employee->division?->nama ?? '';
+            $this->divisi = $employee->divisions->first()?->nama ?? '';
         }
     }
 
@@ -134,7 +134,7 @@ class BonusHostLiveTable extends Component
             $this->nik = $user->employee->nik;
             $this->nama = $user->employee->nama;
             $this->jabatan = $user->employee->position;
-            $this->divisi = $user->employee->division?->nama ?? '';
+            $this->divisi = $user->employee->divisions->first()?->nama ?? '';
         }
 
         $this->showCreateModal = true;
@@ -269,7 +269,7 @@ class BonusHostLiveTable extends Component
         ->orderBy($this->sortField, $this->sortDirection)
         ->paginate(10);
 
-        $employees = Employee::with('division')
+        $employees = Employee::with('divisions')
             ->where('position', 'like', 'Host%')
             ->orderBy('nama')
             ->get();
