@@ -22,7 +22,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-[#07080F] selection:bg-primary-500/20">
+        <div class="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-primary-50 via-white to-violet-50 dark:bg-none dark:bg-[#07080F] selection:bg-primary-500/20">
 
             {{-- Animated background layer --}}
             <div
@@ -31,38 +31,72 @@
                 x-on:mouseleave="reset"
                 class="absolute inset-0 overflow-hidden"
             >
-                {{-- Gradient mesh base --}}
-                <div class="absolute inset-0 opacity-35 dark:opacity-45"
+                {{-- Gradient mesh base (dark) --}}
+                <div class="absolute inset-0 opacity-40 dark:opacity-45 hidden dark:block"
                     style="background: linear-gradient(135deg, #0987F5 0%, #7C3AED 25%, #1E1B4B 50%, #4C1D95 75%, #0987F5 100%);
                     background-size: 400% 400%;
                     animation: meshShift 12s ease-in-out infinite;">
                 </div>
 
-                {{-- Aurora light ribbons --}}
+                {{-- Gradient mesh base (light) --}}
+                <div class="absolute inset-0 opacity-60 dark:hidden"
+                    style="background: linear-gradient(135deg, #BFDFFE 0%, #E8E0FF 30%, #FFFFFF 55%, #D1C0FE 80%, #BFDFFE 100%);
+                    background-size: 400% 400%;
+                    animation: meshShift 12s ease-in-out infinite;">
+                </div>
+
+                {{-- Aurora light ribbons (dark) --}}
                 <div
-                    class="absolute top-[10%] right-[5%] w-[500px] h-[200px] rounded-full opacity-40 dark:opacity-50 blur-[100px]"
+                    class="absolute top-[10%] right-[5%] w-[500px] h-[200px] rounded-full opacity-40 dark:opacity-50 blur-[100px] hidden dark:block"
                     x-bind:style="`transform: translate(${floatOffsetX[0]}px, ${floatOffsetY[0]}px); background: linear-gradient(90deg, rgba(9,135,245,0.5), rgba(124,58,237,0.3), transparent)`"
                 ></div>
 
                 <div
-                    class="absolute bottom-[15%] left-[5%] w-[450px] h-[180px] rounded-full opacity-30 dark:opacity-40 blur-[100px]"
+                    class="absolute bottom-[15%] left-[5%] w-[450px] h-[180px] rounded-full opacity-30 dark:opacity-40 blur-[100px] hidden dark:block"
                     x-bind:style="`transform: translate(${floatOffsetX[1]}px, ${floatOffsetY[1]}px) rotate(-20deg); background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), rgba(9,135,245,0.3))`"
                 ></div>
 
                 <div
-                    class="absolute top-[40%] left-[60%] w-[400px] h-[150px] rounded-full opacity-25 dark:opacity-35 blur-[80px]"
+                    class="absolute top-[40%] left-[60%] w-[400px] h-[150px] rounded-full opacity-25 dark:opacity-35 blur-[80px] hidden dark:block"
                     x-bind:style="`transform: translate(${floatOffsetX[2]}px, ${floatOffsetY[2]}px) rotate(15deg); background: linear-gradient(90deg, rgba(9,135,245,0.3), rgba(168,85,247,0.2), transparent)`"
                 ></div>
 
-                {{-- Subtle light streaks --}}
+                {{-- Aurora light ribbons (light) --}}
                 <div
-                    class="absolute top-[25%] left-[20%] w-[300px] h-[1px] opacity-20 blur-[2px]"
+                    class="absolute top-[5%] right-[8%] w-[480px] h-[180px] rounded-full opacity-60 blur-[90px] dark:hidden"
+                    x-bind:style="`transform: translate(${floatOffsetX[0]}px, ${floatOffsetY[0]}px); background: linear-gradient(90deg, rgba(9,135,245,0.20), rgba(124,58,237,0.14), transparent)`"
+                ></div>
+
+                <div
+                    class="absolute bottom-[12%] left-[6%] w-[430px] h-[160px] rounded-full opacity-50 blur-[90px] dark:hidden"
+                    x-bind:style="`transform: translate(${floatOffsetX[1]}px, ${floatOffsetY[1]}px) rotate(-20deg); background: linear-gradient(90deg, transparent, rgba(124,58,237,0.16), rgba(9,135,245,0.14))`"
+                ></div>
+
+                <div
+                    class="absolute top-[42%] left-[58%] w-[380px] h-[140px] rounded-full opacity-45 blur-[80px] dark:hidden"
+                    x-bind:style="`transform: translate(${floatOffsetX[2]}px, ${floatOffsetY[2]}px) rotate(15deg); background: linear-gradient(90deg, rgba(9,135,245,0.15), rgba(168,85,247,0.12), transparent)`"
+                ></div>
+
+                {{-- Subtle light streaks (dark) --}}
+                <div
+                    class="absolute top-[25%] left-[20%] w-[300px] h-[1px] opacity-20 blur-[2px] hidden dark:block"
                     x-bind:style="`transform: translate(${floatOffsetX[3]}px, ${floatOffsetY[3]}px) rotate(${floatRotate[0]}deg); background: linear-gradient(90deg, transparent, rgba(9,135,245,0.6), transparent)`"
                 ></div>
 
                 <div
-                    class="absolute bottom-[35%] right-[15%] w-[250px] h-[1px] opacity-15 blur-[2px]"
+                    class="absolute bottom-[35%] right-[15%] w-[250px] h-[1px] opacity-15 blur-[2px] hidden dark:block"
                     x-bind:style="`transform: translate(${floatOffsetX[4]}px, ${floatOffsetY[4]}px) rotate(${floatRotate[1]}deg); background: linear-gradient(90deg, transparent, rgba(168,85,247,0.5), transparent)`"
+                ></div>
+
+                {{-- Subtle light streaks (light) --}}
+                <div
+                    class="absolute top-[25%] left-[20%] w-[320px] h-[2px] opacity-40 blur-[2px] dark:hidden"
+                    x-bind:style="`transform: translate(${floatOffsetX[3]}px, ${floatOffsetY[3]}px) rotate(${floatRotate[0]}deg); background: linear-gradient(90deg, transparent, rgba(9,135,245,0.35), transparent)`"
+                ></div>
+
+                <div
+                    class="absolute bottom-[35%] right-[15%] w-[260px] h-[2px] opacity-35 blur-[2px] dark:hidden"
+                    x-bind:style="`transform: translate(${floatOffsetX[4]}px, ${floatOffsetY[4]}px) rotate(${floatRotate[1]}deg); background: linear-gradient(90deg, transparent, rgba(124,58,237,0.30), transparent)`"
                 ></div>
 
                 {{-- Star dust particles --}}
@@ -75,12 +109,12 @@
                 </template>
 
                 {{-- Vignette overlay --}}
-                <div class="absolute inset-0 bg-gradient-to-b from-[#07080F]/30 via-transparent to-[#07080F]/60 pointer-events-none"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-primary-100/40 via-transparent to-primary-100/30 pointer-events-none dark:from-[#07080F]/30 dark:via-transparent dark:to-[#07080F]/60"></div>
             </div>
 
             {{-- Theme toggle --}}
             <div class="fixed top-4 right-4 z-50">
-                <button @click="toggleTheme()" x-data="themeToggle()" class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300" title="Toggle theme">
+                <button @click="toggleTheme()" x-data="themeToggle()" class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 backdrop-blur-lg border border-white/60 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-white transition-all duration-300 dark:bg-white/5 dark:border-white/10 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10 dark:shadow-none" title="Toggle theme">
                     <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
                     <svg x-show="isDark" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
                 </button>
@@ -90,7 +124,7 @@
                 {{ $slot }}
             </div>
 
-            <p class="mt-8 text-xs text-gray-600 relative z-10">&copy; {{ date('Y') }} PT. Johen Sukses Abadi. All rights reserved.</p>
+            <p class="mt-8 text-xs text-gray-500 dark:text-gray-600 relative z-10">&copy; {{ date('Y') }} PT. Johen Sukses Abadi. All rights reserved.</p>
         </div>
 
         <style>
