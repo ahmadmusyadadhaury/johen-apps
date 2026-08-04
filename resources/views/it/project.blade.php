@@ -6,7 +6,7 @@
 @endpush
 
 <x-app-layout title="Project IT">
-    <div x-data="{ showModal: false, editMode: false, deleteMode: false, selected: null, formNama: '', formDeadline: '', formStatus: 'aktif' }" class="space-y-6">
+    <div x-data="{ showModal: false, editMode: false, deleteMode: false, selected: null, formNama: '', formDeadline: '', formStatus: 'aktif', feedbackTarget: null, feedbackText: '' }" class="space-y-6">
 
         {{-- Stats --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -51,7 +51,7 @@
                     <h2 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Daftar Project</h2>
                     <p class="mt-0.5 text-xs text-gray-400">Semua project IT yang sedang berjalan</p>
                 </div>
-                @if(auth()->user()->isKoordinatorIt())
+                @if($canManage)
                 <button @click="showModal = true; editMode = false; formNama = ''; formDeadline = ''; formStatus = 'aktif'" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     Tambah Project
@@ -68,7 +68,10 @@
                             <th class="px-5 py-3">Deadline</th>
                             <th class="px-5 py-3">Status</th>
                             <th class="px-5 py-3">Dibuat Oleh</th>
-                            @if(auth()->user()->isKoordinatorIt())
+                            @if($canGiveFeedback || $canManage)
+                            <th class="px-5 py-3">Feedback</th>
+                            @endif
+                            @if($canManage)
                             <th class="px-5 py-3">Aksi</th>
                             @endif
                         </tr>
@@ -95,7 +98,28 @@
                                     @endif
                                 </td>
                                 <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400">{{ $project->creator->employee?->nama ?? $project->creator->name }}</td>
-                                @if(auth()->user()->isKoordinatorIt())
+                                @if($canGiveFeedback || $canManage)
+                                <td class="px-5 py-3.5">
+                                    @if($canGiveFeedback)
+                                    <button @click="feedbackTarget = { id: {{ $project->id }}, nama: '{{ addslashes($project->nama) }}', feedback_atasan: {{ json_encode($project->feedback_atasan ?? '') }} }; feedbackText = feedbackTarget.feedback_atasan; editMode = false; deleteMode = false; showModal = false" class="inline-flex items-center gap-1.5 rounded-lg border {{ $project->feedback_atasan ? 'border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-400' : 'border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:text-gray-300 dark:hover:text-primary-400' }} px-2.5 py-1 text-xs font-semibold transition-colors">
+                                        @if($project->feedback_atasan)
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            Lihat
+                                        @else
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+                                            Feedback
+                                        @endif
+                                    </button>
+                                    @else
+                                        @if($project->feedback_atasan)
+                                            <span class="block max-w-[180px] truncate text-xs font-medium text-amber-700 dark:text-amber-400" title="{{ $project->feedback_atasan }}">{{ $project->feedback_atasan }}</span>
+                                        @else
+                                            <span class="text-xs text-gray-400">-</span>
+                                        @endif
+                                    @endif
+                                </td>
+                                @endif
+                                @if($canManage)
                                 <td class="px-5 py-3.5">
                                     <div class="flex items-center gap-2">
                                         <button @click="editMode = true; deleteMode = false; selected = {{ $project->toJson() }}; formNama = '{{ addslashes($project->nama) }}'; formDeadline = '{{ $project->deadline->format('Y-m-d') }}'; formStatus = '{{ $project->status }}'; showModal = true" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800" title="Edit">
@@ -110,7 +134,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ auth()->user()->isKoordinatorIt() ? 6 : 5 }}" class="px-5 py-12 text-center text-gray-400">
+                                <td colspan="{{ (($canManage || $canGiveFeedback) ? 1 : 0) + ($canManage ? 1 : 0) + 5 }}" class="px-5 py-12 text-center text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
                                     Belum ada project.
                                 </td>
@@ -173,6 +197,32 @@
                             <button type="submit" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition">Hapus</button>
                         </form>
                     </div>
+                </div>
+            </div>
+        </template>
+
+        {{-- Modal Feedback --}}
+        <template x-if="feedbackTarget">
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                <div class="fixed inset-0 bg-black/50" @click="feedbackTarget = null"></div>
+                <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900" @click.stop>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Feedback Project</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Berikan evaluasi untuk project <span class="font-semibold text-gray-900 dark:text-gray-100" x-text="feedbackTarget?.nama"></span>
+                    </p>
+                    <div class="mt-4 rounded-xl bg-primary-50 p-3 text-xs text-gray-700 dark:bg-primary-900/20 dark:text-gray-300" x-show="feedbackTarget?.feedback_atasan">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">Feedback Sebelumnya</p>
+                        <p class="mt-1 whitespace-pre-line" x-text="feedbackTarget?.feedback_atasan"></p>
+                    </div>
+                    <form :action="'{{ url('it/project') }}/' + feedbackTarget?.id + '/feedback'" method="POST" class="mt-4">
+                        @csrf
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Feedback Atasan</label>
+                        <textarea name="feedback_atasan" x-model="feedbackText" required rows="4" placeholder="Arahan atau catatan untuk tim IT..." class="mt-1 block w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"></textarea>
+                        <div class="flex justify-end gap-3 mt-5">
+                            <button type="button" @click="feedbackTarget = null" class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Batal</button>
+                            <button type="submit" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 transition">Kirim Feedback</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </template>

@@ -15,11 +15,16 @@ class JadwalMaintenanceController extends Controller
             $q->orderByDesc('urutan')->limit(1);
         }])->where('aktif', true)->get();
 
-        return view('it.maintenance', compact('pcs'));
+        $canManage = auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt();
+        $canGiveFeedback = auth()->user()->isHeadOfStore2();
+
+        return view('it.maintenance', compact('pcs', 'canManage', 'canGiveFeedback'));
     }
 
     public function storeMaintenance(Request $request)
     {
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
+
         $request->validate([
             'nama' => 'required|string|max:255',
             'urutan' => 'required|integer|min:1',
@@ -40,6 +45,8 @@ class JadwalMaintenanceController extends Controller
 
     public function complete(Request $request, ItMaintenanceSchedule $schedule)
     {
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
+
         $data = $request->validate([
             'foto_sebelum' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'foto_sesudah' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -66,6 +73,8 @@ class JadwalMaintenanceController extends Controller
 
     public function update(Request $request, ItMaintenanceSchedule $schedule)
     {
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
+
         $data = $request->validate([
             'urutan' => ['required', 'integer', 'min:1'],
             'tanggal' => ['nullable', 'date'],
@@ -95,6 +104,8 @@ class JadwalMaintenanceController extends Controller
 
     public function destroy(ItMaintenanceSchedule $schedule)
     {
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
+
         if ($schedule->foto_sebelum) {
             Storage::disk('public')->delete($schedule->foto_sebelum);
         }
@@ -107,6 +118,8 @@ class JadwalMaintenanceController extends Controller
 
     public function destroyPc(ItMaintenancePc $pc)
     {
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
+
         foreach ($pc->schedules as $schedule) {
             if ($schedule->foto_sebelum) {
                 Storage::disk('public')->delete($schedule->foto_sebelum);
@@ -117,5 +130,18 @@ class JadwalMaintenanceController extends Controller
         }
         $pc->delete();
         return back()->with('success', 'PC berhasil dihapus.');
+    }
+
+    public function feedback(Request $request, ItMaintenanceSchedule $schedule)
+    {
+        abort_unless($request->user()->isHeadOfStore2(), 403);
+
+        $request->validate([
+            'feedback_atasan' => 'required|string|max:3000',
+        ]);
+
+        $schedule->update(['feedback_atasan' => $request->input('feedback_atasan')]);
+
+        return back()->with('success', 'Feedback untuk jadwal maintenance berhasil disimpan.');
     }
 }

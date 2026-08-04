@@ -132,7 +132,7 @@ class DivisionMenu
             ['label' => 'Kontrak Kerja', 'route' => 'hris.kontrak-kerja', 'icon' => 'report', 'desc' => 'Data kontrak kerja karyawan'],
             ['label' => 'Jobdesk', 'route' => 'hris.jobdesk', 'icon' => 'content', 'desc' => 'Jobdesk dan tanggung jawab'],
             ['label' => 'Struktur Organisasi', 'route' => 'hris.struktur-organisasi', 'icon' => 'users', 'desc' => 'Bagan organisasi perusahaan'],
-            ['label' => 'Bantuan IT', 'route' => 'it.tickets.index', 'icon' => 'ticket', 'desc' => 'Kelola tiket bantuan IT'],
+            ['label' => 'Ticketing IT', 'route' => 'it.tickets.index', 'icon' => 'ticket', 'desc' => 'Ajukan dan kelola tiket IT'],
         ],
     ];
 

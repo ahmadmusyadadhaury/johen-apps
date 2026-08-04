@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('hris')->name('hris.')->group(function () {
         Route::resource('employees', EmployeeController::class);
+        Route::get('/informasi-saya', [EmployeeController::class, 'informasiSaya'])->name('informasi-saya');
         Route::get('/employees/creative', [EmployeeController::class, 'creative'])->name('employees.creative');
         Route::get('/influencer', function () { return view('influencer.index'); })->name('influencer');
         Route::get('/influencer/pengajuan', function () { return view('influencer.pengajuan'); })->name('influencer-pengajuan');
@@ -59,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/employees/{employee}/contracts/{contract}', [EmployeeController::class, 'updateContract'])->name('employees.update-contract');
 
         Route::post('/employees/{employee}/position-histories', [EmployeeController::class, 'storePositionHistory'])->name('employees.store-position-history');
+        Route::put('/employees/{employee}/position-histories/{positionHistory}', [EmployeeController::class, 'updatePositionHistory'])->name('employees.update-position-history');
         Route::delete('/employees/{employee}/position-histories/{positionHistory}', [EmployeeController::class, 'destroyPositionHistory'])->name('employees.destroy-position-history');
 
         Route::post('/employees/{employee}/promotions', [PromotionController::class, 'store'])->name('employees.store-promotion');
@@ -199,16 +201,19 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/tickets', [ItTicketController::class, 'store'])->name('tickets.store');
         Route::patch('/tickets/{ticket}', [ItTicketController::class, 'update'])->name('tickets.update');
         Route::delete('/tickets/{ticket}', [ItTicketController::class, 'destroy'])->name('tickets.destroy');
+        Route::post('/tickets/{ticket}/feedback', [ItTicketController::class, 'feedback'])->name('tickets.feedback');
         Route::get('/project', [ProjectItController::class, 'index'])->name('project');
         Route::post('/project', [ProjectItController::class, 'store'])->name('project.store');
         Route::patch('/project/{project}', [ProjectItController::class, 'update'])->name('project.update');
         Route::delete('/project/{project}', [ProjectItController::class, 'destroy'])->name('project.destroy');
+        Route::post('/project/{project}/feedback', [ProjectItController::class, 'feedback'])->name('project.feedback');
         Route::get('/maintenance', [JadwalMaintenanceController::class, 'index'])->name('maintenance');
         Route::post('/maintenance', [JadwalMaintenanceController::class, 'storeMaintenance'])->name('maintenance.store');
         Route::patch('/maintenance/{schedule}/complete', [JadwalMaintenanceController::class, 'complete'])->name('maintenance.complete');
         Route::patch('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'update'])->name('maintenance.update');
         Route::delete('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
         Route::delete('/maintenance/pc/{pc}', [JadwalMaintenanceController::class, 'destroyPc'])->name('maintenance.pc.destroy');
+        Route::post('/maintenance/{schedule}/feedback', [JadwalMaintenanceController::class, 'feedback'])->name('maintenance.feedback');
     });
 
     Route::prefix('pubg')->name('pubg.')->group(function () {

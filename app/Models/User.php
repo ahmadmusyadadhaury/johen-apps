@@ -426,6 +426,20 @@ class User extends Authenticatable
         return str_contains(strtolower($position->nama), 'head of store');
     }
 
+    public function isHeadOfStore2(): bool
+    {
+        $employee = $this->employee;
+        if (!$employee) return false;
+        $position = $employee->mainPosition();
+        if (!$position) return false;
+        return strtolower($position->nama) === 'head of store 2';
+    }
+
+    public function isKoordinatorItOrAbove(): bool
+    {
+        return $this->isKoordinatorIt() || $this->isStaffIt() || $this->isHeadOfStore2();
+    }
+
     public function roleLevel(): int
     {
         return match ($this->role) {

@@ -51,6 +51,10 @@ class DashboardController extends Controller
         $expiringContractCount = count($expiringContracts);
         $meetingStats = $this->dashboardService->getMonthlyMeetingStats();
 
+        $managerReviewStats = $user->isManager()
+            ? $this->dashboardService->getManagerReviewStats($user)
+            : null;
+
         $koordinatorStats = [];
         if ($user->isKoordinator()) {
             $employee = $user->employee;
@@ -63,7 +67,7 @@ class DashboardController extends Controller
             'stats', 'availableYears', 'selectedYear', 'payrolls', 'divisionStats',
             'latestPayroll', 'pendingLeaveRequests', 'pendingLeaveCount',
             'expiringContracts', 'expiringContractCount', 'meetingStats',
-            'koordinatorStats',
+            'koordinatorStats', 'managerReviewStats',
         ));
     }
 

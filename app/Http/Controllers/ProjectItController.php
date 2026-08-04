@@ -10,11 +10,16 @@ class ProjectItController extends Controller
     public function index()
     {
         $projects = ItProject::with('creator')->latest()->get();
-        return view('it.project', compact('projects'));
+        $canManage = auth()->user()->isKoordinatorIt();
+        $canGiveFeedback = auth()->user()->isHeadOfStore2();
+
+        return view('it.project', compact('projects', 'canManage', 'canGiveFeedback'));
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->isKoordinatorIt(), 403);
+
         $request->validate([
             'nama' => 'required|string|max:255',
             'deadline' => 'required|date',
@@ -32,6 +37,8 @@ class ProjectItController extends Controller
 
     public function update(Request $request, ItProject $project)
     {
+        abort_unless(auth()->user()->isKoordinatorIt(), 403);
+
         $request->validate([
             'nama' => 'required|string|max:255',
             'deadline' => 'required|date',
@@ -45,7 +52,22 @@ class ProjectItController extends Controller
 
     public function destroy(ItProject $project)
     {
+        abort_unless(auth()->user()->isKoordinatorIt(), 403);
+
         $project->delete();
         return back()->with('success', 'Project berhasil dihapus.');
+    }
+
+    public function feedback(Request $request, ItProject $project)
+    {
+        abort_unless($request->user()->isHeadOfStore2(), 403);
+
+        $request->validate([
+            'feedback_atasan' => 'required|string|max:3000',
+        ]);
+
+        $project->update(['feedback_atasan' => $request->input('feedback_atasan')]);
+
+        return back()->with('success', 'Feedback untuk project "' . $project->nama . '" berhasil disimpan.');
     }
 }

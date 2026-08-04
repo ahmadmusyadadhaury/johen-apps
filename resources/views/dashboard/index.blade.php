@@ -535,7 +535,7 @@
                     <span class="text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
                 </a>
                 @foreach($divisionStats as $ds)
-                <a href="{{ route('dashboard.division', $ds['id']) }}"
+                <a href="{{ auth()->user()->isManager() ? route('hris.employees.index', ['division' => $ds['id']]) : route('dashboard.division', $ds['id']) }}"
                    class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
                     <div>
                         <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $ds['nama'] }}</p>
@@ -600,6 +600,47 @@
     {{-- 2x2 Grid: Kontrak, Reimbursement, Cuti, Pembayaran --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        {{-- Daily Tracking yang perlu direview (manager) --}}
+        @if(auth()->user()->isManager())
+        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                    <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Daily Tracking</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Yang perlu direview</p>
+                </div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6 flex-1">
+                @if($managerReviewStats['daily_tracking']['count'] > 0)
+                    <div class="space-y-2.5">
+                        @foreach($managerReviewStats['daily_tracking']['items'] as $dt)
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $dt['employee'] }}</p>
+                                    <p class="text-[11px] text-rose-600 dark:text-rose-400">{{ $dt['subtitle'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-rose-600 dark:text-rose-400">{{ $managerReviewStats['daily_tracking']['count'] }} perlu direview</span>
+                        <a href="{{ route('hris.daily-tracking') }}" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Selengkapnya &rarr;</a>
+                    </div>
+                @else
+                    <div class="flex items-center justify-center h-full py-6">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Semua daily tracking sudah direview</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @else
         {{-- Kontrak Akan Berakhir --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -640,6 +681,7 @@
                 @endif
             </div>
         </div>
+        @endif
         @endunless
 
         {{-- Pengajuan Cuti & Izin --}}
@@ -684,6 +726,47 @@
         </div>
 
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        {{-- Weekly Plan Report yang perlu direview (manager) --}}
+        @if(auth()->user()->isManager())
+        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                    <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Weekly Plan Report</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Yang perlu direview</p>
+                </div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6 flex-1">
+                @if($managerReviewStats['weekly_report']['count'] > 0)
+                    <div class="space-y-2.5">
+                        @foreach($managerReviewStats['weekly_report']['items'] as $wr)
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $wr['employee'] }}</p>
+                                    <p class="text-[11px] text-amber-600 dark:text-amber-400">{{ $wr['subtitle'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">{{ $managerReviewStats['weekly_report']['count'] }} perlu direview</span>
+                        <a href="{{ route('hris.weekly-report') }}" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Selengkapnya &rarr;</a>
+                    </div>
+                @else
+                    <div class="flex items-center justify-center h-full py-6">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Semua weekly plan report sudah direview</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @else
         {{-- Pembayaran Mendatang --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -720,9 +803,51 @@
                 </div>
             </div>
         </div>
+        @endif
         @endunless
 
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        {{-- Activity Competitor yang perlu direview (manager) --}}
+        @if(auth()->user()->isManager())
+        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                    <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Activity Competitor</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Yang perlu direview</p>
+                </div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6 flex-1">
+                @if($managerReviewStats['activity_competitor']['count'] > 0)
+                    <div class="space-y-2.5">
+                        @foreach($managerReviewStats['activity_competitor']['items'] as $ac)
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/10 border border-cyan-100 dark:border-cyan-900/30">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $ac['employee'] }}</p>
+                                    <p class="text-[11px] text-cyan-600 dark:text-cyan-400">{{ $ac['subtitle'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-cyan-600 dark:text-cyan-400">{{ $managerReviewStats['activity_competitor']['count'] }} perlu direview</span>
+                        <a href="{{ route('hris.activity-competitor') }}" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Selengkapnya &rarr;</a>
+                    </div>
+                @else
+                    <div class="flex items-center justify-center h-full py-6">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Semua activity competitor sudah direview</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @else
         {{-- Pengajuan Reimbursement --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -745,6 +870,7 @@
                 </div>
             </div>
         </div>
+        @endif
         @endunless
     </div>
 

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ItMaintenanceSchedule extends Model
 {
-    protected $fillable = ['pc_id', 'urutan', 'tanggal', 'status', 'catatan', 'foto_sebelum', 'foto_sesudah', 'created_by'];
+    protected $fillable = ['pc_id', 'urutan', 'tanggal', 'status', 'catatan', 'foto_sebelum', 'foto_sesudah', 'created_by', 'feedback_atasan'];
     protected $casts = ['urutan' => 'integer', 'tanggal' => 'date'];
 
     public function pc(): BelongsTo

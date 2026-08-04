@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ItProject extends Model
 {
-    protected $fillable = ['nama', 'deadline', 'status', 'created_by'];
+    protected $fillable = ['nama', 'deadline', 'status', 'created_by', 'feedback_atasan'];
 
     protected function casts(): array
     {

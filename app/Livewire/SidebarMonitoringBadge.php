@@ -5,14 +5,13 @@ namespace App\Livewire;
 use App\Models\ActivityCompetitor;
 use App\Models\BonusPubg;
 use App\Models\Employee;
-use App\Models\LeaveRequest;
 use App\Models\Position;
 use App\Models\User;
 use App\Models\WeeklyPlanReport;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class SidebarOperasionalBadge extends Component
+class SidebarMonitoringBadge extends Component
 {
     private const DIVISION_POSITION_MAP = [
         'PUBG' => 'koordinator johen pubg',
@@ -31,18 +30,17 @@ class SidebarOperasionalBadge extends Component
         $user = auth()->user();
         $total = 0;
 
-        if (!$user) {
-            return view('livewire.sidebar-operasional-badge', ['total' => 0]);
+        if ($user && $user->isManager() && $user->isHeadOfStore() && $user->employee) {
+            $subordinateIds = $this->getManagerSubordinateIds($user->employee);
+            if (!empty($subordinateIds)) {
+                $total += $this->countReportsAwaitingFeedback($subordinateIds);
+                $total += $this->countDailyTrackingPending($subordinateIds, $user);
+            }
         }
 
-        $total += $this->countLeaveRequests($user);
-        $total += $this->countReportsAwaitingFeedback($user);
-        $total += $this->countDailyTrackingPending($user);
-
-        return view('livewire.sidebar-operasional-badge', ['total' => $total]);
+        return view('livewire.sidebar-monitoring-badge', ['total' => $total]);
     }
 
-    #[On('leave-request-updated')]
     #[On('report-feedback-updated')]
     #[On('daily-tracking-updated')]
     public function refresh(): void
@@ -50,37 +48,8 @@ class SidebarOperasionalBadge extends Component
         //
     }
 
-    private function countLeaveRequests(User $user): int
+    private function countReportsAwaitingFeedback(array $subordinateIds): int
     {
-        if ($user->isSuperAdmin() || $user->isGmCeo()) {
-            return LeaveRequest::where('persetujuan_hr', 'menunggu')->count();
-        }
-
-        if ($user->employee) {
-            $employeeId = $user->employee->id;
-            return LeaveRequest::where(function ($q) use ($employeeId) {
-                $q->where('atasan_id', $employeeId)
-                  ->where('persetujuan_koor', 'menunggu');
-            })->orWhere(function ($q) use ($employeeId) {
-                $q->where('atasan2_id', $employeeId)
-                  ->where('persetujuan_atasan2', 'menunggu');
-            })->count();
-        }
-
-        return 0;
-    }
-
-    private function countReportsAwaitingFeedback(User $user): int
-    {
-        if (!$user->isManager() || !$user->employee || $user->isHeadOfStore()) {
-            return 0;
-        }
-
-        $subordinateIds = $this->getManagerSubordinateIds($user->employee);
-        if (empty($subordinateIds)) {
-            return 0;
-        }
-
         $feedbackQuery = function ($q) {
             $q->whereNull('feedback_atasan')
               ->orWhere('feedback_atasan', '');
@@ -94,17 +63,8 @@ class SidebarOperasionalBadge extends Component
                 ->count();
     }
 
-    private function countDailyTrackingPending(User $user): int
+    private function countDailyTrackingPending(array $subordinateIds, User $user): int
     {
-        if (!$user->isManager() || !$user->employee || $user->isHeadOfStore()) {
-            return 0;
-        }
-
-        $subordinateIds = $this->getManagerSubordinateIds($user->employee);
-        if (empty($subordinateIds)) {
-            return 0;
-        }
-
         return BonusPubg::whereIn('employee_id', $subordinateIds)
             ->where('status', 'disetujui')
             ->whereNotNull('approved_by')
@@ -123,7 +83,7 @@ class SidebarOperasionalBadge extends Component
 
         $descendantIds = $this->getDescendantPositionIds($position->id);
         $names = Position::whereIn('id', $descendantIds)->pluck('nama')
-            ->map(fn ($n) => strtolower($n))->toArray();
+            ->map(fn($n) => strtolower($n))->toArray();
 
         $divisions = [];
         foreach (self::DIVISION_POSITION_MAP as $divisi => $posName) {

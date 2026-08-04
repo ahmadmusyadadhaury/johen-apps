@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\Announcement;
+use App\Models\ActivityCompetitor;
+use App\Models\BonusPubg;
 use App\Models\Division;
 use App\Models\EmailLog;
 use App\Models\Employee;
@@ -13,6 +15,8 @@ use App\Models\Meeting;
 use App\Models\MeetingRequest;
 use App\Models\PayrollDetail;
 use App\Models\PayrollImport;
+use App\Models\Position;
+use App\Models\WeeklyPlanReport;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -175,6 +179,144 @@ class DashboardService
                 'days_remaining' => now()->diffInDays($c->tanggal_berakhir, false),
             ])
             ->toArray();
+    }
+
+    public function getManagerReviewStats($user): array
+    {
+        $empty = [
+            'daily_tracking' => ['count' => 0, 'items' => []],
+            'weekly_report' => ['count' => 0, 'items' => []],
+            'activity_competitor' => ['count' => 0, 'items' => []],
+        ];
+
+        $employee = $user?->employee;
+        if (!$employee || !$user?->isManager()) {
+            return $empty;
+        }
+
+        $position = $employee->mainPosition();
+        if (!$position) {
+            return $empty;
+        }
+
+        $subordinateIds = $this->getSubordinateIds($position);
+        $subordinateIds = array_diff($subordinateIds, [$position->id]);
+
+        if (empty($subordinateIds)) {
+            return $empty;
+        }
+
+        $dailySubordinateIds = $subordinateIds;
+        if (str_contains(strtolower($position->nama), 'head of store 2')) {
+            $efootball = Position::where('nama', 'Koordinator E-football')->first();
+            if ($efootball) {
+                $efootballPositionIds = $this->getDescendantPositionIds($efootball->id);
+                $efootballIds = Employee::whereHas('positions', fn($q) => $q->whereIn('position_id', $efootballPositionIds))
+                    ->pluck('id')->toArray();
+                $dailySubordinateIds = array_diff($dailySubordinateIds, $efootballIds);
+            }
+        }
+
+        $divisionNames = $this->getManagerDivisionNames($position);
+
+        $dailyQuery = BonusPubg::whereIn('employee_id', $dailySubordinateIds)
+            ->where('status', 'disetujui')
+            ->whereNotNull('approved_by')
+            ->whereIn('divisi', $divisionNames)
+            ->where(fn($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
+            ->with('employee');
+
+        $dailyCount = (clone $dailyQuery)->count();
+        $dailyItems = (clone $dailyQuery)->latest('tanggal')->take(3)->get()->map(fn($b) => [
+            'id' => $b->id,
+            'employee' => $b->employee?->nama ?? $b->nama,
+            'subtitle' => ($b->divisi ?: '-') . ' • ' . $b->tanggal->isoFormat('D MMM'),
+        ])->toArray();
+
+        $weeklyQuery = WeeklyPlanReport::whereIn('employee_id', $subordinateIds)
+            ->where(fn($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
+            ->with('employee');
+
+        $weeklyCount = (clone $weeklyQuery)->count();
+        $weeklyItems = (clone $weeklyQuery)->latest('tanggal')->take(3)->get()->map(fn($w) => [
+            'id' => $w->id,
+            'employee' => $w->employee?->nama ?? '-',
+            'subtitle' => ($w->kategori ?: '-') . ' • ' . $w->tanggal->isoFormat('D MMM'),
+        ])->toArray();
+
+        $activityQuery = ActivityCompetitor::whereIn('employee_id', $subordinateIds)
+            ->where(fn($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
+            ->with('employee');
+
+        $activityCount = (clone $activityQuery)->count();
+        $activityItems = (clone $activityQuery)->latest('tanggal_analysis')->take(3)->get()->map(fn($a) => [
+            'id' => $a->id,
+            'employee' => $a->employee?->nama ?? '-',
+            'subtitle' => ($a->jenis ?: '-') . ' • ' . $a->tanggal_analysis->isoFormat('D MMM'),
+        ])->toArray();
+
+        return [
+            'daily_tracking' => ['count' => $dailyCount, 'items' => $dailyItems],
+            'weekly_report' => ['count' => $weeklyCount, 'items' => $weeklyItems],
+            'activity_competitor' => ['count' => $activityCount, 'items' => $activityItems],
+        ];
+    }
+
+    private function getSubordinateIds(Position $position): array
+    {
+        $descendantIds = $this->getDescendantPositionIds($position->id);
+        $descendantIds = array_diff($descendantIds, [$position->id]);
+
+        if (empty($descendantIds)) {
+            return [];
+        }
+
+        return Employee::whereIn('id', function ($q) use ($descendantIds) {
+            $q->select('employee_id')
+              ->from('employee_position')
+              ->whereIn('position_id', $descendantIds);
+        })->pluck('id')->toArray();
+    }
+
+    private function getDescendantPositionIds(int $positionId): array
+    {
+        $ids = [$positionId];
+        $children = Position::where('parent_id', $positionId)->pluck('id')->toArray();
+        foreach ($children as $childId) {
+            $ids = array_merge($ids, $this->getDescendantPositionIds($childId));
+        }
+        return $ids;
+    }
+
+    private function getManagerDivisionNames(Position $position): array
+    {
+        $descendantIds = $this->getDescendantPositionIds($position->id);
+        $names = Position::whereIn('id', $descendantIds)->pluck('nama')
+            ->map(fn($n) => strtolower($n))->toArray();
+
+        $map = [
+            'PUBG' => 'koordinator johen pubg',
+            'Free Fire' => 'koordinator free fire',
+            'MLBB' => 'koordinator mlbb',
+            'E-football' => 'koordinator e-football',
+            'Valorant' => 'koordinator valorant',
+            'Roblox' => 'koordinator roblox',
+            'Monkey PUBG' => 'koordinator monkey pubg',
+            'FC Mobile' => 'koordinator fc mobile',
+            'Admin' => 'koordinator admin',
+        ];
+
+        $divisions = [];
+        foreach ($map as $divisi => $posName) {
+            foreach ($names as $name) {
+                if (str_contains($name, $posName)) {
+                    $divisions[] = $divisi;
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($divisions));
     }
 
     public function getKaryawanDashboard(int $employeeId): array

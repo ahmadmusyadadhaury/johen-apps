@@ -6,7 +6,6 @@ use App\Models\Employee;
 use App\Models\Promotion;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class PromotionController extends Controller
@@ -17,7 +16,7 @@ class PromotionController extends Controller
 
     public function store(Request $request, Employee $employee)
     {
-        Gate::authorize('create-data');
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
         $validated = $request->validate([
             'nomor_surat' => 'nullable|string|max:100',
             'posisi_baru' => 'required|string|max:255',
@@ -52,7 +51,7 @@ class PromotionController extends Controller
 
     public function destroy(Employee $employee, Promotion $promotion)
     {
-        Gate::authorize('delete-data');
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
         if ($promotion->employee_id !== $employee->id) {
             abort(404);
         }

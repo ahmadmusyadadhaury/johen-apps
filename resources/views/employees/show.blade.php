@@ -1,16 +1,24 @@
+@php
+    $isOwnView = $isOwnView ?? false;
+    $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdmin() ?? false);
+    $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdmin() ?? false);
+@endphp
+
 @push('topbar-left')
     <div class="flex items-center gap-3">
+        @if(!$isOwnView)
         <a href="{{ route('hris.employees.index') }}" class="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all hover:-translate-x-0.5">
             <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
+        @endif
         <div>
-            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Detail Karyawan</h1>
-            <p class="text-xs text-gray-400 mt-0.5">HRIS &mdash; Data SDM &mdash; Karyawan</p>
+            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}</h1>
+            <p class="text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : 'Kelola data personal, dokumen, dan riwayat karyawan di sini' }}</p>
         </div>
     </div>
 @endpush
 
-<x-app-layout title="Detail Karyawan">
+<x-app-layout title="{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}">
 
     <div id="page-data"
          data-documents="{{ $employee->documents->toJson() }}"
@@ -85,6 +93,18 @@
         formKontrakId: null,
         contracts: [],
         tambahJabatanModal: false,
+        tambahMasihMenjabat: false,
+        tambahJabatanSelesai: '',
+        editJabatanModal: false,
+        editMasihMenjabat: false,
+        formJabatanId: null,
+        formJabatanJabatan: '',
+        formJabatanDivisi: '',
+        formJabatanAtasan: '',
+        formJabatanMulai: '',
+        formJabatanSelesai: '',
+        formJabatanStatus: 'Aktif',
+        formJabatanUrl: '',
         jabatanList: [],
         promosiModal: false,
         promosiList: [],
@@ -201,6 +221,18 @@
             this.formKontrakId = k.id;
             this.editKontrakModal = true;
         },
+        openEditJabatan(j) {
+            this.formJabatanId = j.id;
+            this.formJabatanJabatan = j.jabatan;
+            this.formJabatanDivisi = j.divisi;
+            this.formJabatanAtasan = j.atasan && j.atasan !== '—' ? j.atasan : '';
+            this.formJabatanMulai = j.mulai;
+            this.formJabatanSelesai = j.selesai;
+            this.editMasihMenjabat = !j.selesai;
+            this.formJabatanStatus = j.status;
+            this.formJabatanUrl = '{{ route('hris.employees.update-position-history', [$employee, '__PID__']) }}'.replace('__PID__', j.id);
+            this.editJabatanModal = true;
+        },
         openPromosiModal() {
             const currentPosisi = this.jabatanList.find(j => j.status === 'Aktif')?.jabatan || '';
             this.formPromosiPosisi = '';
@@ -229,24 +261,25 @@
                         @endif
                     </div>
                     <div class="flex items-center gap-2.5">
-                        @if(auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id)
+                        @if(!$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id))
                                     <button @click="editModal = true" class="inline-flex items-center gap-2 rounded-xl bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Edit Informasi
                         </button>
                         @endif
+                        @if(!$isOwnReadOnly)
                         <div class="relative" @click.outside="aksiOpen = false">
                             <button @click="aksiOpen = !aksiOpen" class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white border border-white/60 hover:bg-white/20 transition-all">
                                 Aksi Lainnya
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </button>
                             <div x-show="aksiOpen" x-cloak @click="aksiOpen = false" class="absolute top-full right-0 mt-2 min-w-[190px] bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-600 py-1.5 z-50">
-                                @can('create-data')
+                                @if($canManageEmployeeData)
                                 <button type="button" @click="aksiOpen = false; openPromosiModal()" class="w-full text-left px-3 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 flex items-center gap-2.5 rounded-lg">
                                     <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
                                     Promosi / Mutasi
                                 </button>
-                                @endcan
+                                @endif
                                 <button type="button" class="w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 rounded-lg">
                                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
                                     Ekspor Data
@@ -263,13 +296,14 @@
                                 @endcan
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
 
             <div class="px-7 pb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 -mt-12 sm:-mt-20">
                 <div class="w-[120px] h-[120px] sm:w-[140px] sm:h-[140px] rounded-2xl bg-gray-100 dark:bg-gray-700 border-4 border-white dark:border-gray-800 shadow-xl flex-shrink-0 overflow-hidden relative group">
-                    @php $canEditPhoto = auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id; @endphp
+                    @php $canEditPhoto = !$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id); @endphp
                     @if($canEditPhoto)
                     <form method="POST" action="{{ route('hris.employees.upload-photo', $employee) }}" enctype="multipart/form-data" id="photo-form-{{ $employee->id }}">
                         @csrf
@@ -535,11 +569,13 @@
                         <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         <input type="text" x-model="cariDokumen" placeholder="Cari Dokumen" class="border-none outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 w-full placeholder:text-gray-400">
                     </div>
+                    @if($canManageEmployeeData)
                     <button @click="dokumenModal = true"
                             class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                         Tambah Dokumen
                     </button>
+                    @endif
                 </div>
 
                 <div class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4" x-show="dokumenFiltered.length > 0 || cariDokumen">
@@ -556,32 +592,36 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
                                     Lihat
                                 </button>
+                                @if($canManageEmployeeData)
                                 <button @click="deleteDokumenId = doc.id"
                                         class="flex-1 border-none rounded-lg py-1.5 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition-all active:scale-96">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                                     Hapus
                                 </button>
+                                @endif
                             </div>
                         </div>
                     </template>
 
+                     @if($canManageEmployeeData)
                      <div x-show="!cariDokumen" @click="dokumenModal = true"
                           class="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 min-h-[172px] cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600 transition-all active:scale-[.98]">
                         <svg class="w-[26px] h-[26px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                         <span class="text-xs font-semibold">Tambah Dokumen</span>
                     </div>
+                    @endif
                 </div>
 
                 <div x-show="dokumenFiltered.length === 0 && !cariDokumen" class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                     <svg class="w-11 h-11 text-gray-300 dark:text-gray-600 mb-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Belum Ada Dokumen</h4>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">Klik tombol "Tambah Dokumen" untuk mengunggah dokumen pertama.</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500">{{ $canManageEmployeeData ? 'Klik tombol "Tambah Dokumen" untuk mengunggah dokumen pertama.' : 'Belum ada dokumen yang tercatat untuk karyawan ini.' }}</p>
                 </div>
 
                 <div x-show="dokumenFiltered.length === 0 && cariDokumen" class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                     <svg class="w-11 h-11 text-gray-300 dark:text-gray-600 mb-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Dokumen tidak ditemukan</h4>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">Coba kata kunci lain atau tambah dokumen baru.</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500">{{ $canManageEmployeeData ? 'Coba kata kunci lain atau tambah dokumen baru.' : 'Coba kata kunci lain.' }}</p>
                 </div>
 
                 {{-- Modal Tambah Dokumen --}}
@@ -796,11 +836,13 @@
                         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         Riwayat Kontrak
                     </div>
+                    @if($canManageEmployeeData)
                     <button @click="tambahKontrakModal = true"
                             class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                         Tambah Kontrak
                     </button>
+                    @endif
                 </div>
 
                 <template x-if="contracts.length > 0">
@@ -854,6 +896,7 @@
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
                                                 Lihat Kontrak
                                             </button>
+                                            @if($canManageEmployeeData)
                                             <button @click="editKontrak(k)"
                                                     class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-all" title="Edit Kontrak">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -862,6 +905,7 @@
                                                     class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-all" title="Hapus Kontrak">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                             </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -874,7 +918,7 @@
                     <div class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                         <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
                         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Belum Ada Riwayat Kontrak</h4>
-                        <p class="text-xs">Klik tombol "Tambah Kontrak" untuk membuat kontrak baru.</p>
+                        <p class="text-xs">{{ $canManageEmployeeData ? 'Klik tombol "Tambah Kontrak" untuk membuat kontrak baru.' : 'Belum ada riwayat kontrak yang tercatat.' }}</p>
                     </div>
                 </template>
             </div>
@@ -887,16 +931,18 @@
                         Riwayat Jabatan
                     </div>
                     <div class="flex items-center gap-2.5">
+                        @if($canManageEmployeeData)
                         <button @click="openPromosiModal()"
                                 class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
                             Promosi / Mutasi
                         </button>
-                        <button @click="tambahJabatanModal = true"
+                        <button @click="tambahJabatanModal = true; tambahMasihMenjabat = false; tambahJabatanSelesai = ''"
                                 class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                             Tambah Jabatan
                         </button>
+                        @endif
                     </div>
                 </div>
 
@@ -912,6 +958,9 @@
                                     <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Mulai</th>
                                     <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Selesai</th>
                                     <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
+                                    @if($canManageEmployeeData)
+                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider w-16">Aksi</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -922,12 +971,21 @@
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.divisi"></td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.atasan"></td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.mulai"></td>
-                                        <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.selesai"></td>
+                                        <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.selesai || '—'"></td>
                                         <td class="px-4 py-3.5">
                                             <span class="inline-flex text-xs font-bold px-2.5 py-0.5 rounded-full"
                                                   :class="j.status === 'Aktif' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'"
                                                   x-text="j.status"></span>
                                         </td>
+                                        @if($canManageEmployeeData)
+                                        <td class="px-4 py-3.5 text-center">
+                                            <button @click="openEditJabatan(j)"
+                                                    class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                Edit
+                                            </button>
+                                        </td>
+                                        @endif
                                     </tr>
                                 </template>
                             </tbody>
@@ -939,7 +997,7 @@
                     <div class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600 rounded-xl">
                         <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
                         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Belum Ada Riwayat Jabatan</h4>
-                        <p class="text-xs">Klik tombol "Tambah Jabatan" untuk menambahkan riwayat jabatan baru.</p>
+                        <p class="text-xs">{{ $canManageEmployeeData ? 'Klik tombol "Tambah Jabatan" untuk menambahkan riwayat jabatan baru.' : 'Belum ada riwayat jabatan yang tercatat.' }}</p>
                     </div>
                 </template>
 
@@ -989,10 +1047,12 @@
                                                 <span x-show="!p.pdf_path" class="text-xs text-gray-400 dark:text-gray-500">—</span>
                                             </td>
                                             <td class="px-4 py-3.5 text-center">
+                                                @if($canManageEmployeeData)
                                                 <button @click="hapusPromosiId = p.id"
                                                         class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all">
                                                     Hapus
                                                 </button>
+                                                @endif
                                             </td>
                                         </tr>
                                     </template>
@@ -1267,6 +1327,7 @@
                         class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                     Tutup
                 </button>
+                @if($canManageEmployeeData)
                 <button @click="viewKontrak = null; editKontrak(viewKontrak)"
                         class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -1277,6 +1338,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
                     Perpanjang Kontrak
                 </button>
+                @endif
             </div>
         </div>
     </div>
@@ -1541,8 +1603,13 @@
                     </div>
                     <div class="space-y-1">
                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Selesai</label>
-                        <input type="date" name="selesai"
-                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                        <input type="date" name="selesai" x-model="tambahJabatanSelesai" :disabled="tambahMasihMenjabat"
+                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed">
+                        <label class="flex items-center gap-2 pt-1 cursor-pointer select-none">
+                            <input type="checkbox" x-model="tambahMasihMenjabat" @change="if (tambahMasihMenjabat) tambahJabatanSelesai = ''"
+                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Masih menjabat</span>
+                        </label>
                     </div>
                 </div>
                 <div class="space-y-1">
@@ -1561,6 +1628,99 @@
                     <button type="submit"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
                         Simpan Jabatan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Modal Edit Jabatan --}}
+    <div x-show="editJabatanModal" x-cloak
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-gray-900/50 backdrop-blur-sm"
+         @click="editJabatanModal = false">
+        <div x-show="editJabatanModal" x-cloak
+             x-transition:enter="transition-all ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition-all ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.stop
+             class="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Edit Jabatan</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perbarui riwayat jabatan karyawan</p>
+                </div>
+                <button @click="editJabatanModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form :action="formJabatanUrl" method="POST" class="overflow-y-auto p-6 space-y-4">
+                @csrf
+                @method('PUT')
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Jabatan <span class="text-red-500">*</span></label>
+                    <input type="text" name="jabatan" placeholder="Contoh: IT Staff" required x-model="formJabatanJabatan"
+                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi <span class="text-red-500">*</span></label>
+                    <select name="divisi" required x-model="formJabatanDivisi"
+                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
+                        <option value="">Pilih divisi</option>
+                        <option value="IT">IT</option>
+                        <option value="Creative">Creative</option>
+                        <option value="HR">HR</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Operational">Operational</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Atasan</label>
+                    <input type="text" name="atasan" placeholder="Nama atasan langsung" x-model="formJabatanAtasan"
+                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Mulai <span class="text-red-500">*</span></label>
+                        <input type="date" name="mulai" required x-model="formJabatanMulai"
+                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Selesai</label>
+                        <input type="date" name="selesai" x-model="formJabatanSelesai" :disabled="editMasihMenjabat"
+                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed">
+                        <label class="flex items-center gap-2 pt-1 cursor-pointer select-none">
+                            <input type="checkbox" x-model="editMasihMenjabat" @change="if (editMasihMenjabat) formJabatanSelesai = ''"
+                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Masih menjabat</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Status <span class="text-red-500">*</span></label>
+                    <select name="status" required x-model="formJabatanStatus"
+                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
+                        <option value="Aktif">Aktif</option>
+                        <option value="Selesai">Selesai</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <button type="button" @click="editJabatanModal = false"
+                            class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>

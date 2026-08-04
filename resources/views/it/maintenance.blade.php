@@ -16,7 +16,9 @@
         editTarget: null,
         editPreviewSebelum: null,
         editPreviewSesudah: null,
-        fotoViewer: null
+        fotoViewer: null,
+        feedbackTarget: null,
+        feedbackText: ''
     }" class="space-y-6">
 
         @php
@@ -81,10 +83,12 @@
                     <p class="mt-0.5 text-xs text-gray-400">Jadwal maintenance setiap PC</p>
                 </div>
                 <div class="flex gap-2">
+                    @if($canManage)
                     <button @click="showAddMaintenance = true; formNama = ''; formUrutan = ''; formCatatan = ''" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         Tambah Maintenance
                     </button>
+                    @endif
                 </div>
             </div>
 
@@ -100,7 +104,12 @@
                             <th class="px-5 py-3">Sebelum</th>
                             <th class="px-5 py-3">Sesudah</th>
                             <th class="px-5 py-3">Keterangan</th>
+                            @if($canGiveFeedback || $canManage)
+                            <th class="px-5 py-3">Feedback</th>
+                            @endif
+                            @if($canManage)
                             <th class="px-5 py-3">Aksi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800/60">
@@ -144,6 +153,28 @@
                                         @endif
                                     </td>
                                     <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400 max-w-[200px] truncate">{{ $latest->catatan ?? '-' }}</td>
+                                    @if($canGiveFeedback || $canManage)
+                                    <td class="px-5 py-3.5">
+                                        @if($canGiveFeedback)
+                                        <button type="button" @click="feedbackTarget = { id: {{ $latest->id }}, nama: '{{ addslashes($pc->nama) }}', feedback_atasan: {{ json_encode($latest->feedback_atasan ?? '') }} }; feedbackText = feedbackTarget.feedback_atasan" class="inline-flex items-center gap-1 rounded-lg border {{ $latest->feedback_atasan ? 'border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-400' : 'border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:text-gray-300 dark:hover:text-primary-400' }} px-2.5 py-1 text-xs font-semibold transition-colors">
+                                            @if($latest->feedback_atasan)
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Lihat
+                                            @else
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+                                                Feedback
+                                            @endif
+                                        </button>
+                                        @else
+                                            @if($latest->feedback_atasan)
+                                                <span class="block max-w-[180px] truncate text-xs font-medium text-amber-700 dark:text-amber-400" title="{{ $latest->feedback_atasan }}">{{ $latest->feedback_atasan }}</span>
+                                            @else
+                                                <span class="text-xs text-gray-400">-</span>
+                                            @endif
+                                        @endif
+                                    </td>
+                                    @endif
+                                    @if($canManage)
                                     <td class="px-5 py-3.5">
                                         <div class="flex items-center gap-2">
                                             <button type="button" data-edit='{{ json_encode(['id' => $latest->id, 'nama' => $pc->nama, 'urutan' => $latest->urutan, 'tanggal' => $latest->tanggal?->format('Y-m-d') ?? '', 'catatan' => $latest->catatan ?? '', 'status' => $latest->status, 'foto_sebelum' => $latest->foto_sebelum ? asset('storage/' . $latest->foto_sebelum) : '', 'foto_sesudah' => $latest->foto_sesudah ? asset('storage/' . $latest->foto_sesudah) : ''], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP) }}' @click="editTarget = JSON.parse($el.dataset.edit); editPreviewSebelum = null; editPreviewSesudah = null" class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:text-blue-400">
@@ -156,18 +187,21 @@
                                             </button>
                                         </div>
                                     </td>
+                                    @endif
                                 @else
-                                    <td class="px-5 py-3.5 text-gray-400 italic" colspan="6">Belum ada jadwal</td>
+                                    <td class="px-5 py-3.5 text-gray-400 italic" colspan="{{ 8 + (($canGiveFeedback || $canManage) ? 1 : 0) + ($canManage ? 1 : 0) }}">Belum ada jadwal</td>
+                                    @if($canManage)
                                     <td class="px-5 py-3.5">
                                         <button @click="showAddMaintenance = true; formNama = '{{ $pc->nama }}'; formUrutan = ''; formCatatan = ''" class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Tambah Maintenance">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                                         </button>
                                     </td>
+                                    @endif
                                 @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="px-5 py-12 text-center text-gray-400">
+                                <td colspan="{{ 8 + (($canGiveFeedback || $canManage) ? 1 : 0) + ($canManage ? 1 : 0) }}" class="px-5 py-12 text-center text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
                                     Belum ada PC terdaftar.
                                 </td>
@@ -299,6 +333,32 @@
                             <button type="submit" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition">Hapus</button>
                         </form>
                     </div>
+                </div>
+            </div>
+        </template>
+
+        {{-- Modal Feedback --}}
+        <template x-if="feedbackTarget">
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                <div class="fixed inset-0 bg-black/50" @click="feedbackTarget = null"></div>
+                <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900" @click.stop>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Feedback Maintenance</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Berikan evaluasi untuk <span class="font-semibold text-gray-900 dark:text-gray-100" x-text="feedbackTarget?.nama"></span>
+                    </p>
+                    <div class="mt-4 rounded-xl bg-primary-50 p-3 text-xs text-gray-700 dark:bg-primary-900/20 dark:text-gray-300" x-show="feedbackTarget?.feedback_atasan">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">Feedback Sebelumnya</p>
+                        <p class="mt-1 whitespace-pre-line" x-text="feedbackTarget?.feedback_atasan"></p>
+                    </div>
+                    <form :action="'{{ url('it/maintenance') }}/' + feedbackTarget?.id + '/feedback'" method="POST" class="mt-4">
+                        @csrf
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Feedback Atasan</label>
+                        <textarea name="feedback_atasan" x-model="feedbackText" required rows="4" placeholder="Arahan atau catatan untuk tim IT..." class="mt-1 block w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"></textarea>
+                        <div class="flex justify-end gap-3 mt-5">
+                            <button type="button" @click="feedbackTarget = null" class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Batal</button>
+                            <button type="submit" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 transition">Kirim Feedback</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </template>

@@ -16,10 +16,15 @@ class ItTicketController extends Controller
     {
         $user = $request->user();
         $canManage = $this->canManage($user);
+        $canViewOnly = $user->isHeadOfStore2();
 
-        $tickets = $canManage
-            ? ItTicket::with(['requester.employee.divisions', 'assignee.employee'])->latest()->get()
-            : ItTicket::with('assignee.employee')->where('requester_id', $user->id)->latest()->get();
+        if ($canManage) {
+            $tickets = ItTicket::with(['requester.employee.divisions', 'assignee.employee'])->latest()->get();
+        } elseif ($canViewOnly) {
+            $tickets = ItTicket::with(['requester.employee.divisions', 'assignee.employee'])->latest()->get();
+        } else {
+            $tickets = ItTicket::with('assignee.employee')->where('requester_id', $user->id)->latest()->get();
+        }
 
         $itUsers = $canManage
             ? User::with('employee')->whereIn('role', [User::ROLE_KOORDINATOR_IT, User::ROLE_STAFF_IT])
@@ -28,6 +33,7 @@ class ItTicketController extends Controller
             : collect();
 
         $canDelete = $user->isKoordinatorIt();
+        $canGiveFeedback = $canViewOnly;
 
         $stats = [
             'total' => $tickets->count(),
@@ -36,7 +42,7 @@ class ItTicketController extends Controller
             'selesai' => $tickets->where('status', 'selesai')->count(),
         ];
 
-        return view('it.tickets', compact('tickets', 'itUsers', 'canManage', 'canDelete', 'stats'));
+        return view('it.tickets', compact('tickets', 'itUsers', 'canManage', 'canDelete', 'canViewOnly', 'canGiveFeedback', 'stats'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -141,6 +147,19 @@ class ItTicketController extends Controller
 
         $ticket->delete();
         return back()->with('success', 'Tiket ' . $ticket->kode . ' dihapus.');
+    }
+
+    public function feedback(Request $request, ItTicket $ticket): RedirectResponse
+    {
+        abort_unless($request->user()->isHeadOfStore2(), 403);
+
+        $request->validate([
+            'feedback_atasan' => 'required|string|max:3000',
+        ]);
+
+        $ticket->update(['feedback_atasan' => $request->input('feedback_atasan')]);
+
+        return back()->with('success', 'Feedback untuk tiket ' . $ticket->kode . ' berhasil disimpan.');
     }
 
     private function canManage(User $user): bool

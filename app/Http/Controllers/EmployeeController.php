@@ -48,6 +48,22 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
+        return view('employees.show', $this->viewData($employee));
+    }
+
+    public function informasiSaya()
+    {
+        $employee = auth()->user()->employee;
+        abort_unless($employee, 404);
+
+        return view('employees.show', [
+            ...$this->viewData($employee),
+            'isOwnView' => true,
+        ]);
+    }
+
+    private function viewData(Employee $employee): array
+    {
         $employee->load(['divisions', 'documents', 'contracts', 'positionHistories', 'payrollDetails.payrollImport', 'promotions', 'positions']);
         $employee->setRelation('contracts', $employee->contracts->sortByDesc('tanggal_mulai')->values());
 
@@ -92,7 +108,7 @@ class EmployeeController extends Controller
         $jenisDokumenList = ['KTP', 'KK', 'NPWP', 'Ijazah', 'Sertifikat', 'Kontrak', 'SK', 'Lainnya'];
         $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
 
-        return view('employees.show', compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions'));
+        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions');
     }
 
     public function edit(Employee $employee)
@@ -170,9 +186,7 @@ class EmployeeController extends Controller
 
     public function storeDocument(Request $request, Employee $employee)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('create-data');
-        }
+        $this->authorizeManageEmployeeData();
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
             'jenis_dokumen' => 'required|string|max:100',
@@ -210,9 +224,7 @@ class EmployeeController extends Controller
 
     public function destroyDocument(Employee $employee, EmployeeDocument $document)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('delete-data');
-        }
+        $this->authorizeManageEmployeeData();
         $filePath = 'documents/' . $document->file;
 
         if (Storage::disk('public')->exists($filePath)) {
@@ -227,9 +239,7 @@ class EmployeeController extends Controller
 
     public function storeContract(Request $request, Employee $employee)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('create-data');
-        }
+        $this->authorizeManageEmployeeData();
         $request->validate([
             'jenis_kontrak' => 'required|string|max:100',
             'posisi' => 'required|string|max:255',
@@ -261,9 +271,7 @@ class EmployeeController extends Controller
 
     public function destroyContract(Employee $employee, EmployeeContract $contract)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('delete-data');
-        }
+        $this->authorizeManageEmployeeData();
         $contract->delete();
 
         return redirect(route('hris.employees.show', $employee) . '#kontrak')
@@ -272,9 +280,7 @@ class EmployeeController extends Controller
 
     public function storePositionHistory(Request $request, Employee $employee)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('create-data');
-        }
+        $this->authorizeManageEmployeeData();
         $request->validate([
             'jabatan' => 'required|string|max:255',
             'divisi' => 'required|string|max:255',
@@ -298,11 +304,34 @@ class EmployeeController extends Controller
             ->with('position_success', 'Riwayat jabatan berhasil ditambahkan.');
     }
 
+    public function updatePositionHistory(Request $request, Employee $employee, PositionHistory $positionHistory)
+    {
+        $this->authorizeManageEmployeeData();
+        $request->validate([
+            'jabatan' => 'required|string|max:255',
+            'divisi' => 'required|string|max:255',
+            'atasan' => 'nullable|string|max:255',
+            'mulai' => 'required|date',
+            'selesai' => 'nullable|date',
+            'status' => 'required|in:Aktif,Selesai',
+        ]);
+
+        $positionHistory->update([
+            'jabatan' => $request->jabatan,
+            'divisi' => $request->divisi,
+            'atasan' => $request->atasan,
+            'mulai' => $request->mulai,
+            'selesai' => $request->selesai,
+            'status' => $request->status,
+        ]);
+
+        return redirect(route('hris.employees.show', $employee) . '#jabatan')
+            ->with('position_success', 'Riwayat jabatan berhasil diperbarui.');
+    }
+
     public function destroyPositionHistory(Employee $employee, PositionHistory $positionHistory)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('delete-data');
-        }
+        $this->authorizeManageEmployeeData();
         $positionHistory->delete();
 
         return redirect(route('hris.employees.show', $employee) . '#jabatan')
@@ -311,9 +340,7 @@ class EmployeeController extends Controller
 
     public function updateContract(Request $request, Employee $employee, EmployeeContract $contract)
     {
-        if (auth()->user()->employee_id !== $employee->id) {
-            Gate::authorize('update-data');
-        }
+        $this->authorizeManageEmployeeData();
         $request->validate([
             'jenis_kontrak' => 'required|string|max:100',
             'posisi' => 'required|string|max:255',
@@ -347,5 +374,10 @@ class EmployeeController extends Controller
 
         return redirect()->route('hris.employees.index')
             ->with('success', 'Karyawan berhasil dihapus.');
+    }
+
+    private function authorizeManageEmployeeData(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
     }
 }
