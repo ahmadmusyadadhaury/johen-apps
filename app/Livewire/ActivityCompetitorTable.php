@@ -57,6 +57,7 @@ class ActivityCompetitorTable extends Component
 
     public function saveFeedback(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate(['feedback_atasan' => 'required']);
 
         ActivityCompetitor::where('id', $this->feedbackId)->update([
@@ -71,6 +72,7 @@ class ActivityCompetitorTable extends Component
 
     public function save(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $rules = [
             'jenis' => 'required|in:swot,monitoring',
         ];
@@ -120,6 +122,7 @@ class ActivityCompetitorTable extends Component
 
     public function delete(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $item = ActivityCompetitor::findOrFail($id);
         $employee = auth()->user()->employee;
         if ($employee && $item->employee_id === $employee->id) {

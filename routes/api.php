@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DigitalAssetApiController;
 use App\Http\Controllers\Api\ElectricityApiController;
 use App\Http\Controllers\Api\InternetApiController;
 use App\Http\Controllers\Api\IplRukoApiController;
+use App\Http\Controllers\Api\JadwalMeetingApiController;
 use App\Http\Controllers\Api\PaymentCategoryController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentSubmissionApiController;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+
+// Public meeting schedule endpoint
+Route::get('/jadwal-meeting', [JadwalMeetingApiController::class, 'index'])->name('api.jadwal-meeting');
 
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {

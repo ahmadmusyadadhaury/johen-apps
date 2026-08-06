@@ -78,6 +78,7 @@ class ContentPlanTable extends Component
 
     public function openNew(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetInput();
         $this->posisi = $this->activeTab;
         $this->status = in_array($this->activeTab, ['Content Creator', 'Desain Grafis', 'Video Animator']) ? 'concept' : 'plan';
@@ -86,6 +87,7 @@ class ContentPlanTable extends Component
 
     public function openEdit(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $item = ContentPlan::findOrFail($id);
         $this->editId = $item->id;
         $this->posisi = $item->posisi;
@@ -121,6 +123,7 @@ class ContentPlanTable extends Component
 
     public function save(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $rules = [];
 
         if ($this->posisi === 'Content Creator') {
@@ -267,6 +270,7 @@ class ContentPlanTable extends Component
 
     public function delete(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         ContentPlan::findOrFail($id)->delete();
         $this->dispatch('notify', type: 'success', message: 'Content plan dihapus.');
     }
@@ -326,6 +330,7 @@ class ContentPlanTable extends Component
 
     public function openEditReport(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $report = ContentPlanReport::findOrFail($id);
         $this->reportContentPlanId = $report->content_plan_id;
         $this->reportEditId = $report->id;
@@ -342,6 +347,7 @@ class ContentPlanTable extends Component
 
     public function saveReport(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'reportWeek' => 'required|integer|min:1|max:52',
             'reportViews' => 'required|integer|min:0',
@@ -376,12 +382,14 @@ class ContentPlanTable extends Component
 
     public function deleteReport(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         ContentPlanReport::findOrFail($id)->delete();
         $this->dispatch('notify', type: 'success', message: 'Report dihapus.');
     }
 
     public function openNewReport(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $maxWeek = ContentPlanReport::where('content_plan_id', $this->reportContentPlanId)->max('week') ?: 0;
         $this->reportEditId = null;
         $this->reportWeek = $maxWeek + 1;

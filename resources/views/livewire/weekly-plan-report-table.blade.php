@@ -9,7 +9,7 @@
         <div>
             <p class="text-sm text-gray-500 dark:text-gray-400">Kelola rencana kerja mingguan</p>
         </div>
-        @unless($hideCreateButton)
+        @unless($hideCreateButton || auth()->user()->isReadOnlyWorkspace())
         <button wire:click="openNew" class="btn-primary text-xs py-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Tambah WPR
@@ -100,7 +100,7 @@
                         </td>
                         <td class="px-4 py-3 text-center border-r border-gray-100 dark:border-gray-700">
                             <div class="flex items-center justify-center gap-2">
-                                @if($reportEmployee && auth()->user()->employee && $reportEmployee->id === auth()->user()->employee->id)
+                                @if($reportEmployee && auth()->user()->employee && $reportEmployee->id === auth()->user()->employee->id && !auth()->user()->isReadOnlyWorkspace())
                                     @if(!$r->keterangan || !$r->action_plan)
                                     <button wire:click="openW1({{ $r->id }})" class="text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline whitespace-nowrap">
                                         Isi W+1

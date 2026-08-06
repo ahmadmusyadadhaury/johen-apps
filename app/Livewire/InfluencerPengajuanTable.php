@@ -220,6 +220,13 @@ class InfluencerPengajuanTable extends Component
 
         $items = $query->latest()->paginate(10);
 
-        return view('livewire.influencer-pengajuan-table', compact('items'));
+        $stats = [
+            'total' => InfluencerPengajuan::count(),
+            'pending_hos1' => InfluencerPengajuan::where('status', 'pending_hos1')->count(),
+            'pending_gm' => InfluencerPengajuan::where('status', 'pending_gm')->count(),
+            'approved' => InfluencerPengajuan::where('status', 'approved')->count(),
+        ];
+
+        return view('livewire.influencer-pengajuan-table', compact('items', 'stats'));
     }
 }

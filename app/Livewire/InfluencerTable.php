@@ -49,12 +49,14 @@ class InfluencerTable extends Component
 
     public function openNew(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetInput();
         $this->showModal = true;
     }
 
     public function openEdit(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $item = Influencer::findOrFail($id);
         $this->editId = $item->id;
         $this->no_kontrak = $item->no_kontrak;
@@ -68,6 +70,7 @@ class InfluencerTable extends Component
 
     public function save(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate();
 
         if ($this->editId) {
@@ -99,12 +102,14 @@ class InfluencerTable extends Component
 
     public function delete(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         Influencer::findOrFail($id)->delete();
         session()->flash('message', 'Data influencer berhasil dihapus.');
     }
 
     public function openPaymentModal(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->paymentInfluencerId = $id;
         $influencer = Influencer::find($id);
         if ($influencer && $influencer->payments()->count() === 0) {
@@ -121,6 +126,7 @@ class InfluencerTable extends Component
 
     public function markAsPaid(int $paymentId): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $payment = InfluencerPembayaran::findOrFail($paymentId);
         $payment->update([
             'status' => 'lunas',

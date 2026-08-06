@@ -7,6 +7,48 @@
 
 <x-app-layout title="Riwayat Payroll">
 
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-success">Seluruh Data</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">Rp {{ number_format($stats['total_payroll'], 0, ',', '.') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Payroll</p>
+        </div>
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                </div>
+                <span class="badge-warning">Rekap</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($stats['total_employees']) }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Karyawan</p>
+        </div>
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                </div>
+                <span class="badge-warning">Upload</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_periode'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Periode</p>
+        </div>
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+                </div>
+                <span class="badge-danger">Terkirim</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['email_sent'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Email Slip Terkirim</p>
+        </div>
+    </div>
 
     @if($imports->count() > 0)
         <div class="card overflow-hidden">

@@ -262,7 +262,7 @@
                     </div>
                     <div class="flex items-center gap-2.5">
                         @if(!$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id))
-                                    <button @click="editModal = true" class="inline-flex items-center gap-2 rounded-xl bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all">
+                                    <button @click="editModal = true" class="inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:ring-1 dark:ring-white/40 px-4 py-2 text-sm font-semibold transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Edit Informasi
                         </button>

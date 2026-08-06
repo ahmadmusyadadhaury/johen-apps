@@ -73,7 +73,7 @@ $activeMenu = match (true) {
     request()->routeIs('hris.weekly-report', 'hris.activity-competitor') && (auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostMlbb()) => '',
     request()->routeIs('hris.daily-tracking-admin') => '',
     request()->routeIs('hris.influencer', 'hris.kalender-event', 'hris.content-plan') => '',
-    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'history.*') => 'operasional',
+    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.birthday-wishes*', 'history.*') => 'operasional',
     request()->routeIs('hris.*') => 'sdm',
     request()->routeIs('bonus.*', 'reimbursement') => auth()->user()->isManager() ? 'operasional' : '',
     request()->routeIs('it.tickets.*') && !auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() && !auth()->user()->isHeadOfStore2() => 'operasional',
@@ -225,7 +225,7 @@ if ($divisionViewUser) {
                              x-transition:leave-end="opacity-0 -translate-y-2"
                              class="ml-2 mt-1 space-y-0.5">
                             <a href="{{ route('hris.absensi') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.absensi') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                {{ auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore() ? 'Presensi' : 'Presensi Saya' }}
+                                Presensi
                             </a>
                             <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.cuti-izin') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 <a href="{{ route('hris.cuti-izin') }}" class="flex-1">Cuti dan Izin</a>
@@ -265,6 +265,14 @@ if ($divisionViewUser) {
                             @if(auth()->user()->isManager() && !auth()->user()->isHeadOfStore2())
                             <a href="{{ route('reimbursement') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('reimbursement') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Reimbursement
+                            </a>
+                            @endif
+                            @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('hris.announcements') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.announcements') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Pengumuman
+                            </a>
+                            <a href="{{ route('hris.birthday-wishes') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.birthday-wishes*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Ucapan Ulang Tahun
                             </a>
                             @endif
                             @if(auth()->user()->isGmCeo())
@@ -603,9 +611,6 @@ if ($divisionViewUser) {
                              class="ml-2 mt-1 space-y-0.5">
                             <a href="{{ route('meeting.jadwal') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('meeting.jadwal') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Jadwal Meeting
-                            </a>
-                            <a href="{{ route('meeting.permintaan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('meeting.permintaan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                Permintaan Meeting
                             </a>
                         </div>
                     </div>

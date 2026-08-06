@@ -9,21 +9,28 @@
 
 @if($employee)
     {{-- Profile Header --}}
-    <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm mb-6">
-        <div class="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-amber-500/5 dark:from-primary-500/10 dark:to-amber-500/10 pointer-events-none"></div>
-        <div class="relative px-6 py-5 sm:px-8 sm:py-6 flex items-center gap-5">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z"/></svg>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 p-6 sm:p-8 mb-6">
+        <div class="absolute top-0 right-0 w-64 h-64 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
+        </div>
+        <div class="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/5 blur-2xl"></div>
+        <div class="relative flex items-center gap-4 sm:gap-5">
+            <div class="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg ring-2 ring-white/20 overflow-hidden">
+                @if($employee->foto_url)
+                    <img src="{{ $employee->foto_url }}" alt="{{ $employee->nama }}" class="w-full h-full rounded-2xl object-cover">
+                @else
+                    <span class="text-2xl font-bold font-display">{{ substr($employee->nama, 0, 1) }}</span>
+                @endif
             </div>
             <div class="min-w-0">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{{ $employee->nama }}</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ $employee->position ?? '-' }} <span class="mx-1.5 text-gray-300 dark:text-gray-600">•</span> {{ $employee->divisionNames() ?: '-' }}</p>
+                <h2 class="text-xl sm:text-2xl font-display font-bold text-white truncate">{{ $employee->nama }}</h2>
+                <p class="text-sm text-white/80 mt-0.5">{{ $employee->position ?? '-' }} <span class="mx-1.5 text-white/40">•</span> Divisi {{ $employee->divisionNames() ?: '-' }}</p>
                 <div class="flex items-center gap-3 mt-2">
-                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-gray-400 dark:text-gray-500">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-white/80">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
                         {{ $employee->lokasi_kerja ?? '-' }}
                     </span>
-                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-gray-400 dark:text-gray-500">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-white/80">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
                         {{ $employee->atasan ?? 'Tanpa atasan' }}
                     </span>

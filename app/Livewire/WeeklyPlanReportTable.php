@@ -30,6 +30,7 @@ class WeeklyPlanReportTable extends Component
 
     public function openNew(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetInput();
         $this->showModal = true;
     }
@@ -57,6 +58,7 @@ class WeeklyPlanReportTable extends Component
 
     public function saveW1(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'keterangan' => 'required',
             'action_plan' => 'required',
@@ -74,6 +76,7 @@ class WeeklyPlanReportTable extends Component
 
     public function saveFeedback(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'feedback_atasan' => 'required',
         ]);
@@ -90,6 +93,7 @@ class WeeklyPlanReportTable extends Component
 
     public function save(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'tanggal' => 'required|date',
             'kategori' => 'required',
@@ -116,6 +120,7 @@ class WeeklyPlanReportTable extends Component
 
     public function delete(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $report = WeeklyPlanReport::findOrFail($id);
         $user = auth()->user();
         $employee = $user->employee;

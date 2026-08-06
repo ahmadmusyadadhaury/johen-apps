@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'meeting' => [
+        'url' => env('MEETING_API_URL'),
+        'login_path' => env('MEETING_API_LOGIN_PATH', '/api/login'),
+        'path' => env('MEETING_API_PATH', '/api/meetings'),
+        'username' => env('MEETING_API_USERNAME'),
+        'password' => env('MEETING_API_PASSWORD'),
+        'verify_ssl' => env('MEETING_API_VERIFY_SSL', true),
+    ],
+
 ];

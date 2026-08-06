@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BirthdayBannerPreference;
+use App\Models\BirthdayWish;
 use App\Models\Division;
+use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Services\DashboardService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
 {
@@ -19,24 +23,53 @@ class DashboardController extends Controller
 
         $user = auth()->user();
 
+        $birthdayEmployees = Employee::whereNotNull('tanggal_lahir')
+            ->where('status', 'aktif')
+            ->whereMonth('tanggal_lahir', now()->month)
+            ->whereDay('tanggal_lahir', now()->day)
+            ->orderBy('nama')
+            ->get();
+
+        $birthdayEmployee = null;
+        $birthdayWishes = collect();
+        if ($user->employee && $user->employee->tanggal_lahir && $user->employee->tanggal_lahir->isBirthday()) {
+            $birthdayEmployee = $user->employee;
+            $birthdayWishes = $birthdayEmployee->birthdayWishes()
+                ->with('user.employee')
+                ->latest()
+                ->get();
+        }
+
+        $hideBirthdayBanner = BirthdayBannerPreference::where('user_id', $user->id)->value('hide_banner') ?? false;
+
+        $alreadySentWish = false;
+        if ($birthdayEmployees->isNotEmpty()) {
+            $alreadySentWish = BirthdayWish::where('user_id', $user->id)
+                ->whereIn('employee_id', $birthdayEmployees->pluck('id'))
+                ->whereDate('created_at', now()->toDateString())
+                ->exists();
+        }
+
+        $bannerData = compact('birthdayEmployee', 'birthdayEmployees', 'birthdayWishes', 'hideBirthdayBanner', 'alreadySentWish');
+
         if ($user->isStaff() || $user->isStaffCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isStaffIt() || $user->isKoordinatorCreative() || $user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isStaffAdmin()) {
             $employee = $user->employee;
 
             if (!$employee) {
-                return view('dashboard.index', [
+                return view('dashboard.index', array_merge([
                     'karyawanView' => true,
                     'employee' => null,
                     'karyawanData' => null,
-                ]);
+                ], $bannerData));
             }
 
             $karyawanData = $this->dashboardService->getKaryawanDashboard($employee->id);
 
-            return view('dashboard.index', [
+            return view('dashboard.index', array_merge([
                 'karyawanView' => true,
                 'employee' => $employee,
                 'karyawanData' => $karyawanData,
-            ]);
+            ], $bannerData));
         }
 
         $stats = $this->dashboardService->getStats();
@@ -49,7 +82,7 @@ class DashboardController extends Controller
         $pendingLeaveCount = $this->dashboardService->getPendingLeaveCount(user: $user);
         $expiringContracts = $this->dashboardService->getExpiringContracts();
         $expiringContractCount = count($expiringContracts);
-        $meetingStats = $this->dashboardService->getMonthlyMeetingStats();
+        $meetingStats = $this->dashboardService->getMeetingStats();
 
         $managerReviewStats = $user->isManager()
             ? $this->dashboardService->getManagerReviewStats($user)
@@ -63,12 +96,45 @@ class DashboardController extends Controller
             }
         }
 
-        return view('dashboard.index', compact(
+        $employee = $user->employee;
+
+        return view('dashboard.index', array_merge(compact(
             'stats', 'availableYears', 'selectedYear', 'payrolls', 'divisionStats',
             'latestPayroll', 'pendingLeaveRequests', 'pendingLeaveCount',
             'expiringContracts', 'expiringContractCount', 'meetingStats',
-            'koordinatorStats', 'managerReviewStats',
-        ));
+            'koordinatorStats', 'managerReviewStats', 'employee',
+        ), $bannerData));
+    }
+
+    public function storeBirthdayWish(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'message' => ['required', 'string', 'max:300'],
+        ]);
+
+        $employee = Employee::findOrFail($validated['employee_id']);
+        if (!$employee->tanggal_lahir || !$employee->tanggal_lahir->isBirthday()) {
+            return back()->with('error', 'Karyawan ini tidak berulang tahun hari ini.');
+        }
+
+        BirthdayWish::create([
+            'employee_id' => $validated['employee_id'],
+            'user_id' => auth()->id(),
+            'message' => trim($validated['message']),
+        ]);
+
+        return back()->with('success', 'Ucapan ulang tahun terkirim! 🎉');
+    }
+
+    public function hideBirthdayBanner(Request $request): JsonResponse
+    {
+        BirthdayBannerPreference::updateOrCreate(
+            ['user_id' => auth()->id()],
+            ['hide_banner' => $request->boolean('hide', true)],
+        );
+
+        return response()->json(['ok' => true]);
     }
 
     public function division(Division $division)

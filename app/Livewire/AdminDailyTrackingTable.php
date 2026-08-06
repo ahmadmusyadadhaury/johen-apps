@@ -86,12 +86,14 @@ class AdminDailyTrackingTable extends Component
 
     public function openCreateModal(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetForm();
         $this->showCreateModal = true;
     }
 
     public function openEditModal(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $item = BonusPubg::findOrFail($id);
         if (!$this->canModify($item)) return;
         $this->editId = $item->id;
@@ -115,6 +117,7 @@ class AdminDailyTrackingTable extends Component
 
     public function save(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate();
 
         $employee = Employee::where('nik', $this->nik)->first();
@@ -150,6 +153,7 @@ class AdminDailyTrackingTable extends Component
 
     public function update(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate();
         $sold = str_replace(',', '.', $this->ach_sold);
         $item = BonusPubg::findOrFail($this->editId);

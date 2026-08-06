@@ -25,10 +25,12 @@
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Data Daily Tracking</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data penjualan harian</p>
             </div>
+            @unless(auth()->user()->isReadOnlyWorkspace())
             <button wire:click="openCreateModal" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Data
             </button>
+            @endunless
         </div>
 
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">

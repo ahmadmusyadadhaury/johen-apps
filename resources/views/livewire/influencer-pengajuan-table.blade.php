@@ -11,6 +11,49 @@
     </div>
     @endif
 
+    <div class="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-success">Semua</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Pengajuan</p>
+        </div>
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 text-white shadow-lg shadow-sky-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-warning">HOS 1</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['pending_hos1'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu Atasan 1</p>
+        </div>
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                </div>
+                <span class="badge-warning">GM/CEO</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['pending_gm'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu GM / CEO</p>
+        </div>
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
+                </div>
+                <span class="badge-success">Disetujui</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['approved'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan Disetujui</p>
+        </div>
+    </div>
+
     <div class="card">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
             <div>

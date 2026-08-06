@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Asset;
 use App\Models\Attendance;
 use App\Models\Announcement;
 use App\Models\ActivityCompetitor;
@@ -28,6 +29,7 @@ class DashboardService
             'total_employee' => PayrollImport::sum('total_employee'),
             'total_employees' => Employee::count(),
             'total_divisions' => Division::count(),
+            'total_assets' => Asset::count(),
             'email_sent' => EmailLog::where('status', 'sent')->count(),
             'email_failed' => EmailLog::where('status', 'failed')->count(),
         ];
@@ -148,20 +150,30 @@ class DashboardService
         ];
     }
 
-    public function getMonthlyMeetingStats(): array
+    public function getMeetingStats(): array
     {
-        $divisions = Division::orderBy('nama')->get();
-        $totalMeetings = Meeting::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
+        $divisionNames = Division::whereNotNull('nama')->get('nama')->pluck('nama');
+
+        $perDivision = Meeting::query()
+            ->get(['team'])
+            ->reject(fn ($m) => in_array(trim((string) $m->team), ['', '-'], true))
+            ->groupBy(function ($m) use ($divisionNames) {
+                $team = trim((string) $m->team);
+                $match = $divisionNames
+                    ->filter(fn ($name) => $name !== '' && mb_stripos($team, $name) !== false)
+                    ->sortByDesc(fn ($name) => mb_strlen($name))
+                    ->first();
+
+                return $match ?? $team;
+            })
+            ->map(fn ($group, $key) => ['nama' => $key, 'total' => $group->count()])
+            ->sortByDesc('total')
+            ->values()
+            ->toArray();
 
         return [
-            'total_meetings' => $totalMeetings,
-            'per_division' => $divisions->map(fn($d) => [
-                'id' => $d->id,
-                'nama' => $d->nama,
-                'total' => 0,
-            ])->toArray(),
+            'total_meetings' => Meeting::query()->whereNotNull('team')->where('team', '<>', '')->where('team', '<>', '-')->count(),
+            'per_division' => $perDivision,
         ];
     }
 
@@ -418,28 +430,26 @@ class DashboardService
                 'date' => $mr->date->isoFormat('D MMM YYYY'),
             ]);
 
-        try {
-            $announcements = Announcement::where('is_published', true)->latest()->take(5)->get()->map(fn($a) => [
-                'title' => $a->title,
-                'date' => $a->created_at->isoFormat('D MMM YYYY'),
-                'summary' => $a->summary ?? $a->content,
-                'id' => $a->id,
-            ]);
+        $userId = $employee->user?->id;
 
-            $upcomingEvents = Announcement::whereNotNull('event_date')
-                ->where('event_date', '>=', today())
-                ->where('is_published', true)
-                ->orderBy('event_date')
-                ->take(5)
-                ->get()
-                ->map(fn($a) => [
-                    'title' => $a->title,
-                    'date' => $a->event_date->isoFormat('D MMM'),
-                    'time' => $a->event_time ?? '',
+        try {
+            $latestAnnouncement = Announcement::where('is_published', true)->latest()->first();
+            $announcements = collect();
+            if ($latestAnnouncement) {
+                $isRead = $userId && $latestAnnouncement->readByUsers()->where('users.id', $userId)->exists();
+                $announcements = collect([
+                    [
+                        'title' => $latestAnnouncement->title,
+                        'date' => $latestAnnouncement->created_at->isoFormat('D MMM YYYY'),
+                        'summary' => $latestAnnouncement->summary ?? $latestAnnouncement->content,
+                        'content' => $latestAnnouncement->content,
+                        'id' => $latestAnnouncement->id,
+                        'is_read' => (bool) $isRead,
+                    ],
                 ]);
+            }
         } catch (\Exception $e) {
             $announcements = collect();
-            $upcomingEvents = collect();
         }
 
         return [
@@ -474,7 +484,6 @@ class DashboardService
             ] : null,
             'meeting_requests' => $meetingRequests,
             'announcements' => $announcements,
-            'upcoming_events' => $upcomingEvents,
         ];
     }
 

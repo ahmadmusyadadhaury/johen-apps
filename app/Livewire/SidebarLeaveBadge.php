@@ -13,7 +13,7 @@ class SidebarLeaveBadge extends Component
         $user = auth()->user();
         $leaveRequestMenungguCount = 0;
 
-        if ($user && ($user->isSuperAdmin() || $user->isGmCeo())) {
+        if ($user && $user->isSuperAdmin()) {
             $leaveRequestMenungguCount = LeaveRequest::where('persetujuan_hr', 'menunggu')->count();
         } elseif ($user && $user->employee) {
             $employeeId = $user->employee->id;

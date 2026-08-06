@@ -9,6 +9,14 @@
 
 @if($karyawanView ?? false)
 
+    @include('partials.birthday-banner', [
+        'birthdayEmployees' => $birthdayEmployees ?? collect(),
+        'birthdayEmployee' => $birthdayEmployee ?? null,
+        'birthdayWishes' => $birthdayWishes ?? collect(),
+        'hideBirthdayBanner' => $hideBirthdayBanner ?? false,
+        'alreadySentWish' => $alreadySentWish ?? false,
+    ])
+
     @if($employee && $karyawanData)
     {{-- Welcome Header --}}
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 p-6 sm:p-8 mb-6">
@@ -29,6 +37,8 @@
                 <p class="text-sm text-white/80 mt-0.5">{{ $employee->positionNames() ?: '-' }} <span class="mx-1.5 text-white/40">•</span> Divisi {{ $employee->divisionNames() ?: '-' }}</p>
             </div>
         </div>
+        @include('partials.birthday-fireworks', ['birthdayEmployee' => $birthdayEmployee ?? null])
+        @include('partials.birthday-wishes', ['birthdayWishes' => $birthdayWishes ?? collect()])
     </div>
 
     {{-- Summary Cards --}}
@@ -200,8 +210,13 @@
         {{-- Work Schedule --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Jadwal Kerja</h3>
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                <div>
+                    <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Jadwal Kerja</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Jam kerja, lokasi & supervisor Anda</p>
+                </div>
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                </div>
             </div>
             <div class="space-y-4">
                 <div class="flex items-center gap-3">
@@ -235,7 +250,7 @@
         </div>
 
         {{-- Announcements --}}
-        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 shadow-sm">
+        <div x-data="{ openAnnouncement: false, selectedAnn: null, announcements: {{ \Illuminate\Support\Js::from($karyawanData['announcements'] ?? []) }}, viewAnn(id) { this.selectedAnn = this.announcements.find(a => a.id === id); this.openAnnouncement = true; } }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Pengumuman</h3>
@@ -246,21 +261,40 @@
                 </div>
             </div>
             @if(count($karyawanData['announcements'] ?? []) > 0)
-                <div class="space-y-2.5">
-                    @foreach($karyawanData['announcements'] as $ann)
-                        <div class="group p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all cursor-pointer">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $ann['title'] }}</p>
-                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{{ $ann['summary'] ?? '-' }}</p>
-                                </div>
-                                <span class="shrink-0 text-[10px] text-gray-400">{{ $ann['date'] }}</span>
+                @php $ann = $karyawanData['announcements'][0]; @endphp
+                <div x-show="announcements.length > 0" x-cloak
+                     @click="viewAnn({{ $ann['id'] }})"
+                     class="group relative overflow-hidden rounded-xl p-4 border transition-all cursor-pointer"
+                     :class="announcements[0]?.is_read ? 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800' : 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-700'">
+                    <div class="absolute top-0 right-0 w-16 h-16 opacity-10">
+                        <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
+                    </div>
+                    <div class="relative flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                                <span x-show="!announcements[0]?.is_read" class="w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
+                                <p class="text-xs font-semibold truncate" :class="announcements[0]?.is_read ? 'text-gray-900 dark:text-gray-100' : 'text-blue-900 dark:text-blue-100'">{{ $ann['title'] }}</p>
                             </div>
+                            <p class="text-[11px] mt-0.5 line-clamp-2" :class="announcements[0]?.is_read ? 'text-gray-500 dark:text-gray-400' : 'text-blue-700/80 dark:text-blue-200/80'">{{ $ann['summary'] ?? '-' }}</p>
+                            <p class="text-[10px] font-medium mt-1.5" :class="announcements[0]?.is_read ? 'text-primary-600 dark:text-primary-400' : 'text-blue-600 dark:text-blue-300'">Lihat Selengkapnya</p>
                         </div>
-                    @endforeach
-                </div>
-                <div class="mt-3 text-center">
-                    <span class="text-xs font-semibold text-gray-400 cursor-default">Lihat Semua Pengumuman</span>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            <span class="text-[10px] text-gray-400">{{ $ann['date'] }}</span>
+                            <button x-show="!announcements[0]?.is_read" @click.stop="
+                                fetch('{{ route('hris.announcements.mark-read', $ann['id']) }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, credentials: 'same-origin' }).then(r => r.json()).then(() => {
+                                    const a = this.announcements.find(x => x.id === {{ $ann['id'] }});
+                                    if (a) a.is_read = true;
+                                    Alpine.store('toast').add('success', 'Pengumuman ditandai sebagai sudah dibaca.');
+                                });
+                            " class="rounded-lg bg-blue-600 text-white px-3 py-1.5 text-[10px] font-semibold hover:bg-blue-700 transition-colors">
+                                Dibaca
+                            </button>
+                            <span x-show="announcements[0]?.is_read" class="rounded-lg bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 px-3 py-1.5 text-[10px] font-semibold inline-flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Sudah Dibaca
+                            </span>
+                        </div>
+                    </div>
                 </div>
             @else
                 <div class="py-8 text-center">
@@ -270,6 +304,46 @@
                     <p class="text-sm text-gray-400 dark:text-gray-500">Belum ada pengumuman</p>
                 </div>
             @endif
+
+            {{-- Detail Modal --}}
+            <div x-show="openAnnouncement" x-cloak
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+                 @click="openAnnouncement = false">
+                <div @click.stop
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+                     class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
+                    <div class="relative overflow-hidden bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 px-6 py-5">
+                        <div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+                            <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
+                        </div>
+                        <div class="relative flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="text-lg font-display font-bold text-white" x-text="selectedAnn?.title"></h3>
+                                <p class="text-xs text-white/70 mt-0.5" x-text="selectedAnn?.date"></p>
+                            </div>
+                            <button @click="openAnnouncement = false" class="rounded-lg p-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="px-6 py-6">
+                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="selectedAnn?.summary" x-show="selectedAnn?.summary"></p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-3 leading-relaxed whitespace-pre-line" x-text="selectedAnn?.content"></p>
+                        <p class="text-xs text-gray-400 mt-4" x-show="!selectedAnn?.content">Tidak ada detail tambahan untuk pengumuman ini.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -289,19 +363,43 @@
 @else
     {{-- Admin / Direksi Dashboard --}}
 
+    @include('partials.birthday-banner', [
+        'birthdayEmployees' => $birthdayEmployees ?? collect(),
+        'birthdayEmployee' => $birthdayEmployee ?? null,
+        'birthdayWishes' => $birthdayWishes ?? collect(),
+        'hideBirthdayBanner' => $hideBirthdayBanner ?? false,
+        'alreadySentWish' => $alreadySentWish ?? false,
+    ])
+
     {{-- Welcome Header --}}
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 p-6 sm:p-8 mb-6">
         <div class="absolute top-0 right-0 w-96 h-96 opacity-5">
             <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/><circle cx="180" cy="50" r="30" fill="white"/><circle cx="30" cy="160" r="20" fill="white"/></svg>
         </div>
         <div class="relative">
-            <div class="flex items-center gap-4">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg ring-2 ring-white/20">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+            <div class="flex items-center gap-4 sm:gap-5">
+                <div class="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg ring-2 ring-white/20 shrink-0">
+                    @if($employee && $employee->foto_url)
+                        <img src="{{ $employee->foto_url }}" alt="{{ $employee->nama }}" class="w-full h-full rounded-2xl object-cover">
+                    @else
+                        <span class="text-2xl font-bold font-display">{{ $employee ? substr($employee->nama, 0, 1) : substr(auth()->user()->name, 0, 1) }}</span>
+                    @endif
                 </div>
-                <div>
-                    <h1 class="text-lg sm:text-xl font-display font-bold text-white">Dashboard Admin</h1>
-                    <p class="text-sm text-white/80 mt-0.5">Halo, {{ auth()->user()->name }} — {{ now()->isoFormat('dddd, D MMMM YYYY') }}</p>
+                <div class="min-w-0">
+                    <h1 class="text-xl sm:text-2xl font-display font-bold text-white">Selamat Datang, {{ $employee->nama ?? auth()->user()->name }}</h1>
+                    <p class="text-sm text-white/80 mt-0.5">
+                        @if($employee && $employee->positionNames())
+                            {{ $employee->positionNames() }}
+                        @else
+                            {{ ucfirst(auth()->user()->role) }}
+                        @endif
+                        <span class="mx-1.5 text-white/40">•</span>
+                        @if($employee && $employee->divisionNames())
+                            Divisi {{ $employee->divisionNames() }}
+                        @else
+                            {{ now()->isoFormat('dddd, D MMMM YYYY') }}
+                        @endif
+                    </p>
                 </div>
             </div>
             <div class="mt-4 flex flex-wrap gap-3">
@@ -318,10 +416,12 @@
                     <span class="text-sm font-bold text-white">{{ $pendingLeaveCount }}</span>
                 </div>
                 <div class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
-                    <span class="text-xs font-semibold text-white/80">Meeting Bulan Ini</span>
+                    <span class="text-xs font-semibold text-white/80">Total Meeting</span>
                     <span class="text-sm font-bold text-white">{{ $meetingStats['total_meetings'] }}</span>
                 </div>
             </div>
+            @include('partials.birthday-fireworks', ['birthdayEmployee' => $birthdayEmployee ?? null])
+            @include('partials.birthday-wishes', ['birthdayWishes' => $birthdayWishes ?? collect()])
         </div>
     </div>
 
@@ -453,7 +553,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-bold font-display text-gray-900 dark:text-gray-100">Meeting</p>
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Bulan Ini</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Semua</p>
                 </div>
             </div>
             <div class="flex items-baseline gap-1">
@@ -468,6 +568,18 @@
         @endunless
 
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        @if(auth()->user()->isGmCeo())
+        <a href="{{ route('assets.index') }}" class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+                <span class="badge-primary">Total</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_assets'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Asset Saya</p>
+        </a>
+        @else
         <a href="{{ route('hris.cuti-izin') }}" class="stat-card group">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
@@ -478,9 +590,10 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $pendingLeaveCount }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan Menunggu</p>
         </a>
+        @endif
         @endunless
 
-        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt() || auth()->user()->isGmCeo())
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
             <div class="flex items-center gap-3 mb-4">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 text-white shadow-md">
@@ -569,7 +682,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Meeting per Divisi</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Total meeting bulan {{ now()->isoFormat('MMMM YYYY') }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total seluruh meeting</p>
                 </div>
                 <button @click="openMeetingModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -599,7 +712,7 @@
 
     {{-- 2x2 Grid: Kontrak, Reimbursement, Cuti, Pembayaran --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
+        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt() || auth()->user()->isGmCeo())
         {{-- Daily Tracking yang perlu direview (manager) --}}
         @if(auth()->user()->isManager())
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
@@ -684,6 +797,7 @@
         @endif
         @endunless
 
+        @unless(auth()->user()->isGmCeo())
         {{-- Pengajuan Cuti & Izin --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -724,6 +838,7 @@
                 @endif
             </div>
         </div>
+        @endunless
 
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
         {{-- Weekly Plan Report yang perlu direview (manager) --}}

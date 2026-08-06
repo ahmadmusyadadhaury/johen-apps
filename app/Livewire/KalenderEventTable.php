@@ -80,6 +80,7 @@ class KalenderEventTable extends Component
 
     public function openNew(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetInput();
         if (!$this->selectedDate) {
             $this->selectedDate = now()->format('Y-m-d');
@@ -91,6 +92,7 @@ class KalenderEventTable extends Component
 
     public function openEdit(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $event = KalenderEvent::findOrFail($id);
         $this->editId = $event->id;
         $this->kegiatan = $event->kegiatan;
@@ -104,6 +106,7 @@ class KalenderEventTable extends Component
 
     public function save(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate();
 
         $data = [
@@ -130,6 +133,7 @@ class KalenderEventTable extends Component
 
     public function delete(int $id): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         KalenderEvent::findOrFail($id)->delete();
         $this->dispatch('notify', type: 'success', message: 'Event dihapus.');
     }

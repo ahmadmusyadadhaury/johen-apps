@@ -4,29 +4,84 @@ namespace App\Http\Controllers;
 
 use App\Models\Meeting;
 use App\Models\MeetingRequest;
+use App\Services\ExternalMeetingService;
 use Illuminate\Http\Request;
 
 class MeetingController extends Controller
 {
-    public function jadwal(Request $request)
+    public function jadwal(Request $request, ExternalMeetingService $externalMeetingService)
     {
-        $month = $request->month ?? now()->month;
-        $year = $request->year ?? now()->year;
-        $view = $request->view ?? 'month';
+        $user = auth()->user();
+        $isAdvancedView = $user->isGmCeo() || $user->isManager() || $user->isSuperAdmin();
 
-        $meetings = Meeting::with('creator')
-            ->where(function ($q) use ($month, $year) {
-                $q->whereMonth('date', $month)->whereYear('date', $year);
+        $month = (int) ($request->month ?? now()->month);
+        $year = (int) ($request->year ?? now()->year);
+
+        $view = $request->view;
+        if (!in_array($view, ['month', 'week', 'day'], true)) {
+            $view = 'month';
+        }
+        if (!$isAdvancedView && in_array($view, ['week', 'day'], true)) {
+            $view = 'month';
+        }
+
+        $focus = $request->date ? \Carbon\Carbon::parse($request->date) : now();
+        $weekStart = $focus->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        $weekEnd = $focus->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+
+        $meetings = Meeting::with('creator')->orderBy('start_time')
+            ->where(function ($q) use ($view, $month, $year, $weekStart, $weekEnd, $focus) {
+                if ($view === 'week') {
+                    $q->whereBetween('date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')]);
+                } elseif ($view === 'day') {
+                    $q->whereDate('date', $focus->format('Y-m-d'));
+                } else {
+                    $q->whereMonth('date', $month)->whereYear('date', $year);
+                }
             })
             ->orWhereNotNull('recurring_type')
-            ->orderBy('start_time')
             ->get();
+
+        $external = $externalMeetingService->fetch();
+        $externalMeetings = $external->filter(function ($m) use ($view, $month, $year, $weekStart, $weekEnd, $focus) {
+            if ($m->recurring_type || $m->recurring_day) return true;
+            if (!$m->date) return false;
+            if ($view === 'week') return $m->date->between($weekStart, $weekEnd);
+            if ($view === 'day') return $m->date->isSameDay($focus);
+            return $m->date->month === $month && $m->date->year === $year;
+        });
+
+        $meetings = $meetings->merge($externalMeetings);
+
+        $meetings = $meetings->map(function ($m) {
+            $display = $m->status ?? 'booked';
+
+            if (!$m->recurring_type) {
+                if (in_array($display, ['cancelled', 'completed'], true)) {
+                    // keep explicit status
+                } elseif ($m->actual_end_time) {
+                    $display = 'completed';
+                } elseif ($m->date && $m->end_time) {
+                    $meetingEnd = \Carbon\Carbon::parse($m->date->toDateString() . ' ' . $m->end_time);
+                    if ($meetingEnd->isPast()) {
+                        $display = 'completed';
+                    } elseif ($m->start_time && \Carbon\Carbon::parse($m->date->toDateString() . ' ' . $m->start_time)->isPast()) {
+                        $display = 'ongoing';
+                    }
+                }
+            }
+
+            $m->display_status = $display;
+
+            return $m;
+        });
 
         $recurring = $meetings->whereNotNull('recurring_type');
         $nonRecurring = $meetings->whereNull('recurring_type');
 
         return view('meeting.jadwal', compact(
-            'meetings', 'recurring', 'nonRecurring', 'month', 'year', 'view'
+            'meetings', 'recurring', 'nonRecurring', 'month', 'year', 'view',
+            'isAdvancedView', 'focus', 'weekStart', 'weekEnd'
         ));
     }
 

@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -24,6 +25,13 @@ class User extends Authenticatable
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
+    public function readAnnouncements(): BelongsToMany
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_user')
+            ->withPivot('read_at')
+            ->withTimestamps();
     }
 
     public function hasPin(): bool
@@ -544,18 +552,29 @@ class User extends Authenticatable
         };
     }
 
+    public function isReadOnlyWorkspace(): bool
+    {
+        return $this->isGmCeo() && session()->has('division_menu');
+    }
+
     public function canCreateData(): bool
     {
+        if ($this->isReadOnlyWorkspace()) return false;
+
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO]);
     }
 
     public function canUpdateData(): bool
     {
+        if ($this->isReadOnlyWorkspace()) return false;
+
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER]);
     }
 
     public function canDeleteData(): bool
     {
+        if ($this->isReadOnlyWorkspace()) return false;
+
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO]);
     }
 

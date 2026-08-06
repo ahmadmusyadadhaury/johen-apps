@@ -51,6 +51,11 @@ class Employee extends Model
         return $this->hasMany(User::class, 'employee_id');
     }
 
+    public function birthdayWishes(): HasMany
+    {
+        return $this->hasMany(BirthdayWish::class, 'employee_id');
+    }
+
     public function getUserAttribute()
     {
         return $this->users->first();

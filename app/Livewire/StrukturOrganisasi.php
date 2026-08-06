@@ -126,6 +126,7 @@ class StrukturOrganisasi extends Component
 
     public function deleteNote(int $noteId): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $note = PositionNote::withCount('comments')->find($noteId);
 
         if (!$note) {
@@ -185,6 +186,7 @@ class StrukturOrganisasi extends Component
 
     public function saveComment(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'selectedNoteId' => ['required', 'exists:position_notes,id'],
             'komentar' => ['required', 'string', 'max:5000'],
@@ -260,6 +262,7 @@ class StrukturOrganisasi extends Component
 
     public function saveNote(): void
     {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'selectedPositionId' => ['required', 'exists:positions,id'],
             'situasi' => ['nullable', 'string', 'max:5000'],
@@ -337,6 +340,7 @@ class StrukturOrganisasi extends Component
             'flatPositions' => $flatPositions,
             'notesByPosition' => $notesByPosition,
             'canGiveNotesByPosition' => $canGiveNotesByPosition,
+            'readOnlyWorkspace' => auth()->user()->isReadOnlyWorkspace(),
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\EmailLogController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HistoryController;
@@ -39,6 +40,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/ucapan-ultah', [DashboardController::class, 'storeBirthdayWish'])->name('dashboard.birthday-wish');
+    Route::post('/dashboard/ucapan-ultah/sembunyikan', [DashboardController::class, 'hideBirthdayBanner'])->name('dashboard.birthday-banner.hide');
     Route::get('/dashboard/divisi/{division}', [DashboardController::class, 'division'])->name('dashboard.division');
 
     Route::prefix('hris')->name('hris.')->group(function () {
@@ -74,6 +77,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kontrak-kerja', KontrakKerjaTable::class)->name('kontrak-kerja');
         Route::get('/freelance', App\Livewire\FreelanceTable::class)->name('freelance');
         Route::get('/manual-book', App\Livewire\ManualBookTable::class)->name('manual-book');
+        Route::get('/pengumuman', App\Livewire\AnnouncementTable::class)->name('announcements');
+        Route::get('/ucapan-ulang-tahun', App\Livewire\BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin');
+        Route::get('/ucapan-ulang-tahun/{employee}', App\Livewire\BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin');
+        Route::post('/pengumuman/{announcement}/dibaca', [AnnouncementController::class, 'markRead'])->name('announcements.mark-read');
         Route::get('/buku-panduan', function () { return view('buku-panduan.index'); })->name('buku-panduan');
         Route::get('/laporan-penjualan', function () { return view('laporan-penjualan.index'); })->name('laporan-penjualan');
         Route::get('/jobdesk', [JobdeskController::class, 'index'])->name('jobdesk');

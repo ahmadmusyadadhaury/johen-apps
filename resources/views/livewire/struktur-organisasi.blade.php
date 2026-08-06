@@ -205,7 +205,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6A2.25 2.25 0 016 3.75h1.5m9 0h-9"/></svg>
                                 <span>{{ count($notesHistory) }} evaluasi tersimpan</span>
                         </span>
-                        @if($isSuperior)
+                        @if($isSuperior && !$readOnlyWorkspace)
                             <span class="px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">Anda dapat memberi evaluasi</span>
                         @endif
                     </div>
@@ -233,7 +233,7 @@
                     </div>
 
                     {{-- Form --}}
-                    @if($isSuperior)
+                    @if($isSuperior && !$readOnlyWorkspace)
                         <div class="space-y-3 mb-5">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Situasi</label>
@@ -334,7 +334,7 @@
                                 <p class="text-xs text-gray-400 italic mb-4">Belum ada komentar.</p>
                             @endif
 
-                            @if($canComment && !$replyToId)
+                            @if($canComment && !$replyToId && !$readOnlyWorkspace)
                                 <div class="flex items-start gap-2">
                                     <textarea wire:model="komentar" rows="2"
                                               class="flex-1 text-xs rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
@@ -357,7 +357,7 @@
                             <span>{{ count($notesHistory) }} evaluasi tersimpan</span>
                             </span>
                         </div>
-                        @if($isSuperior)
+                        @if($isSuperior && !$readOnlyWorkspace)
                             <button wire:click="switchToForm"
                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-xs font-medium transition-colors">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
@@ -394,7 +394,7 @@
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                                         Lihat Detail
                                                     </button>
-                                                    @if((auth()->id() ?? null) === ($note['created_by'] ?? null))
+                                                    @if(!$readOnlyWorkspace && (auth()->id() ?? null) === ($note['created_by'] ?? null))
                                                         <button wire:click="deleteNote({{ $note['id'] }})"
                                                                  wire:confirm="Yakin ingin menghapus evaluasi ini?"
                                                                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 font-medium transition-colors">
@@ -433,7 +433,7 @@
                         @endphp
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-semibold text-gray-500">{{ $bulanNama }} {{ $noteDetail['tahun'] }} — oleh {{ $creator }}</span>
-                            @if((auth()->id() ?? null) === ($noteDetail['created_by'] ?? null))
+                            @if(!$readOnlyWorkspace && (auth()->id() ?? null) === ($noteDetail['created_by'] ?? null))
                                 <button wire:click="deleteNote({{ $noteDetail['id'] }})"
                                         wire:confirm="Yakin ingin menghapus evaluasi ini?"
                                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 font-medium transition-colors">
@@ -532,7 +532,7 @@
                         @endif
 
                         {{-- Add comment --}}
-                        @if($canComment && !$replyToId)
+                        @if($canComment && !$replyToId && !$readOnlyWorkspace)
                             <div class="flex items-start gap-2">
                                 <textarea wire:model="komentar" rows="2"
                                           class="flex-1 text-xs rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"

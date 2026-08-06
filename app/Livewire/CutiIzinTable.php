@@ -453,7 +453,9 @@ class CutiIzinTable extends Component
 
         $baseQuery = LeaveRequest::query();
 
-        if ($user->isSuperAdmin() || $user->isGmCeo()) {
+        if ($user->isGmCeo()) {
+            // GM/CEO sees all cuti/izin data from every employee
+        } elseif ($user->isSuperAdmin()) {
             if ($this->tab === 'saya' && $userEmployee) {
                 $baseQuery->where('employee_id', $userEmployee->id);
             }
