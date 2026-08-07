@@ -1,37 +1,49 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ActivityCompetitorController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AssetViewController;
+use App\Http\Controllers\BonusController;
+use App\Http\Controllers\DailyTrackingController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DigitalAssetController;
+use App\Http\Controllers\DigitalAssetRegistryController;
+use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ElectricityController;
 use App\Http\Controllers\EmailLogController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\HistoryController;
-use App\Http\Controllers\ManualBookController;
+use App\Http\Controllers\InternetController;
+use App\Http\Controllers\IplRukoController;
+use App\Http\Controllers\ItTicketController;
+use App\Http\Controllers\JadwalMaintenanceController;
+use App\Http\Controllers\JobdeskController;
+use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\PaymentSubmissionController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PayrollImportController;
 use App\Http\Controllers\PayrollPreviewController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\StrukturOrganisasiController;
-use App\Livewire\AbsensiTable;
-use App\Livewire\CutiIzinTable;
-use App\Livewire\KontrakKerjaTable;
-use App\Livewire\UserTable;
-use App\Http\Controllers\ExportController;
-use App\Http\Controllers\MeetingController;
-use App\Http\Controllers\BonusController;
-use App\Http\Controllers\DigitalAssetController;
-use App\Http\Controllers\ElectricityController;
-use App\Http\Controllers\InternetController;
-use App\Http\Controllers\IplRukoController;
-use App\Http\Controllers\PaymentSubmissionController;
-use App\Http\Controllers\PromotionController;
-use App\Http\Controllers\AssetViewController;
-use App\Http\Controllers\JobdeskController;
-use App\Http\Controllers\WeeklyReportController;
-use App\Http\Controllers\DailyTrackingController;
 use App\Http\Controllers\ProjectItController;
-use App\Http\Controllers\JadwalMaintenanceController;
-use App\Http\Controllers\ItTicketController;
+use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\ReimbursementController;
+use App\Http\Controllers\StrukturOrganisasiController;
+use App\Http\Controllers\WeeklyReportController;
+use App\Livewire\AbsensiTable;
+use App\Livewire\AdminDailyTrackingTable;
+use App\Livewire\AnnouncementTable;
+use App\Livewire\BirthdayWishDetail;
+use App\Livewire\BirthdayWishTable;
+use App\Livewire\ContentPlanTable;
+use App\Livewire\CutiIzinTable;
+use App\Livewire\FreelanceTable;
+use App\Livewire\KalenderEventTable;
+use App\Livewire\KontrakKerjaTable;
+use App\Livewire\ManualBookTable;
+use App\Livewire\PositionTable;
+use App\Livewire\PubgDailyTrackingTable;
+use App\Livewire\UserTable;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -48,9 +60,13 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('employees', EmployeeController::class);
         Route::get('/informasi-saya', [EmployeeController::class, 'informasiSaya'])->name('informasi-saya');
         Route::get('/employees/creative', [EmployeeController::class, 'creative'])->name('employees.creative');
-        Route::get('/influencer', function () { return view('influencer.index'); })->name('influencer');
-        Route::get('/influencer/pengajuan', function () { return view('influencer.pengajuan'); })->name('influencer-pengajuan');
-        Route::get('/kalender-event', App\Livewire\KalenderEventTable::class)->name('kalender-event');
+        Route::get('/influencer', function () {
+            return view('influencer.index');
+        })->name('influencer');
+        Route::get('/influencer/pengajuan', function () {
+            return view('influencer.pengajuan');
+        })->name('influencer-pengajuan');
+        Route::get('/kalender-event', KalenderEventTable::class)->name('kalender-event');
         Route::get('/employees/{employee}/photo', [EmployeeController::class, 'showPhoto'])->name('employees.photo');
         Route::post('/employees/{employee}/photo', [EmployeeController::class, 'uploadPhoto'])->name('employees.upload-photo');
         Route::post('/employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.store-document');
@@ -75,20 +91,24 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/absensi', AbsensiTable::class)->name('absensi');
         Route::get('/cuti-izin', CutiIzinTable::class)->name('cuti-izin');
         Route::get('/kontrak-kerja', KontrakKerjaTable::class)->name('kontrak-kerja');
-        Route::get('/freelance', App\Livewire\FreelanceTable::class)->name('freelance');
-        Route::get('/manual-book', App\Livewire\ManualBookTable::class)->name('manual-book');
-        Route::get('/pengumuman', App\Livewire\AnnouncementTable::class)->name('announcements');
-        Route::get('/ucapan-ulang-tahun', App\Livewire\BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin');
-        Route::get('/ucapan-ulang-tahun/{employee}', App\Livewire\BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin');
+        Route::get('/freelance', FreelanceTable::class)->name('freelance');
+        Route::get('/manual-book', ManualBookTable::class)->name('manual-book');
+        Route::get('/pengumuman', AnnouncementTable::class)->name('announcements');
+        Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin');
+        Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin');
         Route::post('/pengumuman/{announcement}/dibaca', [AnnouncementController::class, 'markRead'])->name('announcements.mark-read');
-        Route::get('/buku-panduan', function () { return view('buku-panduan.index'); })->name('buku-panduan');
-        Route::get('/laporan-penjualan', function () { return view('laporan-penjualan.index'); })->name('laporan-penjualan');
+        Route::get('/buku-panduan', function () {
+            return view('buku-panduan.index');
+        })->name('buku-panduan');
+        Route::get('/laporan-penjualan', function () {
+            return view('laporan-penjualan.index');
+        })->name('laporan-penjualan');
         Route::get('/jobdesk', [JobdeskController::class, 'index'])->name('jobdesk');
         Route::get('/weekly-report', [WeeklyReportController::class, 'index'])->name('weekly-report');
         Route::get('/daily-tracking', [DailyTrackingController::class, 'index'])->name('daily-tracking');
-        Route::get('/daily-tracking-admin', App\Livewire\AdminDailyTrackingTable::class)->name('daily-tracking-admin');
-        Route::get('/activity-competitor', [App\Http\Controllers\ActivityCompetitorController::class, 'index'])->name('activity-competitor');
-        Route::get('/content-plan', App\Livewire\ContentPlanTable::class)->name('content-plan');
+        Route::get('/daily-tracking-admin', AdminDailyTrackingTable::class)->name('daily-tracking-admin');
+        Route::get('/activity-competitor', [ActivityCompetitorController::class, 'index'])->name('activity-competitor');
+        Route::get('/content-plan', ContentPlanTable::class)->name('content-plan');
 
         Route::prefix('export')->name('export.')->group(function () {
             Route::get('/employees', [ExportController::class, 'employees'])->name('employees');
@@ -198,10 +218,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('assets')->name('assets.')->group(function () {
         Route::get('/', [AssetViewController::class, 'index'])->name('index');
+        Route::get('/{asset}/detail', [AssetViewController::class, 'detail'])->name('detail');
         Route::get('/{category}', [AssetViewController::class, 'index'])->name('category');
     });
 
-    Route::get('/reimbursement', [App\Http\Controllers\ReimbursementController::class, 'index'])->name('reimbursement');
+    Route::prefix('digital-registries')->name('digital-registries.')->group(function () {
+        Route::get('/', [DigitalAssetRegistryController::class, 'index'])->name('index');
+    });
+
+    Route::get('/reimbursement', [ReimbursementController::class, 'index'])->name('reimbursement');
 
     Route::prefix('it')->name('it.')->group(function () {
         Route::get('/tickets', [ItTicketController::class, 'index'])->name('tickets.index');
@@ -224,11 +249,11 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('pubg')->name('pubg.')->group(function () {
-        Route::get('/daily-tracking', App\Livewire\PubgDailyTrackingTable::class)->name('daily-tracking');
+        Route::get('/daily-tracking', PubgDailyTrackingTable::class)->name('daily-tracking');
     });
 
     Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin');
-    Route::get('/kelola-jabatan', App\Livewire\PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin');
+    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin');
 });
 
 Route::middleware('auth')->group(function () {

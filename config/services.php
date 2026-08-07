@@ -44,4 +44,39 @@ return [
         'verify_ssl' => env('MEETING_API_VERIFY_SSL', true),
     ],
 
+    'vehicle_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('KENDARAAN_API_PATH', '/api/peralatan-kantor'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'digital_asset_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('DIGITAL_API_PATH', '/api/digital-assets'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'sim_card_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('SIM_CARD_API_PATH', '/api/sim-cards'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'peralatan_kantor_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('KENDARAAN_API_PATH', '/api/peralatan-kantor'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'aset_ruko_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('ASET_RUKO_API_PATH', '/api/aset-ruko'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
 ];
