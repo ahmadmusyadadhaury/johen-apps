@@ -648,7 +648,7 @@
                     <span class="text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
                 </a>
                 @foreach($divisionStats as $ds)
-                <a href="{{ auth()->user()->isManager() ? route('hris.employees.index', ['division' => $ds['id']]) : route('dashboard.division', $ds['id']) }}"
+                <a href="{{ (auth()->user()->isManager() || auth()->user()->isSuperAdmin()) ? route('hris.employees.index', ['division' => $ds['id']]) : route('dashboard.division', $ds['id']) }}"
                    class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
                     <div>
                         <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $ds['nama'] }}</p>
@@ -708,6 +708,7 @@
             </div>
         </div>
     </div>
+
     </div>
 
     {{-- 2x2 Grid: Kontrak, Reimbursement, Cuti, Pembayaran --}}
@@ -755,11 +756,11 @@
         </div>
         @else
         {{-- Kontrak Akan Berakhir --}}
-        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+        <div x-data="{ openKontrakModal: false }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                 <div>
                     <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Kontrak Akan Berakhir</h3>
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">3 hari ke depan</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">7 hari ke depan</p>
                 </div>
                 <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -767,8 +768,9 @@
             </div>
             <div class="p-5 sm:p-6 flex-1">
                 @if($expiringContractCount > 0)
+                    @php $previewContracts = array_slice($expiringContracts, 0, 2); @endphp
                     <div class="space-y-2.5">
-                        @foreach($expiringContracts as $ec)
+                        @foreach($previewContracts as $ec)
                             @php $isUrgent = $ec['days_remaining'] < 3; @endphp
                             <div class="flex items-center justify-between p-3 rounded-xl {{ $isUrgent ? 'bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30' : 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30' }}">
                                 <div class="min-w-0 flex-1">
@@ -780,7 +782,11 @@
                     </div>
                     <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
                         <span class="text-xs font-semibold text-rose-600 dark:text-rose-400">{{ $expiringContractCount }} kontrak akan berakhir</span>
+                        @if($expiringContractCount > 2)
+                        <button @click="openKontrakModal = true" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Semua &rarr;</button>
+                        @else
                         <a href="{{ route('hris.kontrak-kerja') }}" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Selengkapnya &rarr;</a>
+                        @endif
                     </div>
                 @else
                     <div class="flex items-center justify-center h-full py-6">
@@ -793,13 +799,61 @@
                     </div>
                 @endif
             </div>
+
+            {{-- KONTRAK MODAL --}}
+            <div x-show="openKontrakModal" x-cloak
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+                 @click="openKontrakModal = false">
+                <div x-show="openKontrakModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Kontrak Akan Berakhir</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $expiringContractCount }} kontrak berakhir dalam 7 hari ke depan</p>
+                        </div>
+                        <button @click="openKontrakModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="max-h-[60vh] overflow-y-auto pr-1 space-y-2.5">
+                        @foreach($expiringContracts as $ec)
+                            @php $isUrgent = $ec['days_remaining'] < 3; @endphp
+                            <div class="flex items-center justify-between p-3 rounded-xl {{ $isUrgent ? 'bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30' : 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30' }}">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $ec['employee'] }}</p>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $ec['posisi'] }} • Berakhir {{ $ec['tanggal_berakhir'] }}</p>
+                                </div>
+                                <span class="shrink-0 ml-3 text-[10px] font-bold px-2 py-1 rounded-lg {{ $isUrgent ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' }}">
+                                    {{ $ec['days_remaining'] }} hari lagi
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-rose-600 dark:text-rose-400">{{ $expiringContractCount }} kontrak akan berakhir</span>
+                        <a href="{{ route('hris.kontrak-kerja') }}" class="inline-flex items-center gap-1 rounded-lg bg-white border border-primary-200 px-3 py-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 transition-colors">Buka Menu Kontrak &rarr;</a>
+                    </div>
+                </div>
+            </div>
         </div>
         @endif
         @endunless
 
         @unless(auth()->user()->isGmCeo())
         {{-- Pengajuan Cuti & Izin --}}
-        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+        <div x-data="{ openCutiModal: false }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                 <div>
                     <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Pengajuan Cuti & Izin</h3>
@@ -811,8 +865,9 @@
             </div>
             <div class="p-5 sm:p-6 flex-1">
                 @if($pendingLeaveCount > 0)
+                    @php $previewLeaves = array_slice($pendingLeaveRequests, 0, 2); @endphp
                     <div class="space-y-2.5">
-                        @foreach($pendingLeaveRequests as $pl)
+                        @foreach($previewLeaves as $pl)
                             <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $pl['employee'] }}</p>
@@ -824,7 +879,11 @@
                     </div>
                     <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
                         <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">{{ $pendingLeaveCount }} pengajuan menunggu</span>
+                        @if($pendingLeaveCount > 2)
+                        <button @click="openCutiModal = true" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Semua &rarr;</button>
+                        @else
                         <a href="{{ route('hris.cuti-izin') }}" class="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline">Lihat Selengkapnya &rarr;</a>
+                        @endif
                     </div>
                 @else
                     <div class="flex items-center justify-center h-full py-6">
@@ -836,6 +895,51 @@
                         </div>
                     </div>
                 @endif
+            </div>
+
+            {{-- CUTI & IZIN MODAL --}}
+            <div x-show="openCutiModal" x-cloak
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+                 @click="openCutiModal = false">
+                <div x-show="openCutiModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Pengajuan Cuti & Izin</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $pendingLeaveCount }} pengajuan menunggu persetujuan</p>
+                        </div>
+                        <button @click="openCutiModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="max-h-[60vh] overflow-y-auto pr-1 space-y-2.5">
+                        @foreach($pendingLeaveRequests as $pl)
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $pl['employee'] }}</p>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $pl['jenis'] }} • {{ $pl['tanggal'] }}</p>
+                                </div>
+                                <a href="{{ route('hris.cuti-izin') }}" class="shrink-0 ml-3 text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors">Proses</a>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">{{ $pendingLeaveCount }} pengajuan menunggu</span>
+                        <a href="{{ route('hris.cuti-izin') }}" class="inline-flex items-center gap-1 rounded-lg bg-white border border-primary-200 px-3 py-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 transition-colors">Buka Menu Cuti & Izin &rarr;</a>
+                    </div>
+                </div>
             </div>
         </div>
         @endunless

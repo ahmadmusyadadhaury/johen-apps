@@ -381,6 +381,11 @@ class User extends Authenticatable
         return $employee->positions()->whereIn('position_id', $descendantIds)->exists();
     }
 
+    public function isKoordinatorFcMobile(): bool
+    {
+        return $this->hasDivisionPosition('Koordinator FC Mobile');
+    }
+
     public function hasDivisionPosition(string $rootPositionName): bool
     {
         $employee = $this->employee;

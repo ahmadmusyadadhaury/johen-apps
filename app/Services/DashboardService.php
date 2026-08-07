@@ -72,22 +72,12 @@ class DashboardService
 
     public function getPendingLeaveCount($user = null): int
     {
-        return $this->applyAtasanFilter(LeaveRequest::query(), $user)
-            ->where(function ($q) {
-                $q->where('persetujuan_koor', 'menunggu')
-                  ->orWhere('persetujuan_atasan2', 'menunggu')
-                  ->orWhere('persetujuan_hr', 'menunggu');
-            })->count();
+        return $this->applyPendingLeaveFilter(LeaveRequest::query(), $user)->count();
     }
 
     public function getPendingLeaveRequests(int $limit = 3, $user = null): array
     {
-        return $this->applyAtasanFilter(LeaveRequest::with('employee'), $user)
-            ->where(function ($q) {
-                $q->where('persetujuan_koor', 'menunggu')
-                  ->orWhere('persetujuan_atasan2', 'menunggu')
-                  ->orWhere('persetujuan_hr', 'menunggu');
-            })
+        return $this->applyPendingLeaveFilter(LeaveRequest::with('employee'), $user)
             ->latest()
             ->take($limit)
             ->get()
@@ -101,34 +91,51 @@ class DashboardService
             ->toArray();
     }
 
-    private function applyAtasanFilter($query, $user)
+    private function applyPendingLeaveFilter($query, $user)
     {
-        if (!$user) return $query;
+        if (!$user || !$user->employee) {
+            return $query->where(function ($q) {
+                $q->where('persetujuan_koor', 'menunggu')
+                  ->orWhere('persetujuan_atasan2', 'menunggu')
+                  ->orWhere('persetujuan_hr', 'menunggu');
+            });
+        }
 
         $userEmployee = $user->employee;
-        if (!$userEmployee) return $query;
 
-        if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
-            $query->where(function ($q) use ($userEmployee) {
+        $isKoordinatorRole = $user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg();
+
+        if ($user->isManager()) {
+            return $query->where(function ($q) use ($userEmployee) {
                 $q->where('atasan_id', $userEmployee->id)
-                  ->orWhere('atasan2_id', $userEmployee->id);
+                  ->where('persetujuan_koor', 'menunggu')
+                  ->orWhere(function ($q2) use ($userEmployee) {
+                      $q2->where('atasan2_id', $userEmployee->id)
+                         ->where('persetujuan_atasan2', 'menunggu');
+                  });
             });
-
-            return $query;
         }
 
         $lihatSemua = $user->id === 4 || ($user->canViewAll() && !$user->isKoordinator()) || in_array($userEmployee->position, [
             'Human Resource Generalist', 'Admin HR', 'Admin GA', 'OB'
         ]);
 
-        if (!$lihatSemua) {
-            $query->where(function ($q) use ($userEmployee) {
-                $q->where('atasan_id', $userEmployee->id)
-                  ->orWhere('atasan2_id', $userEmployee->id);
+        if (!$isKoordinatorRole && $lihatSemua) {
+            return $query->where(function ($q) {
+                $q->where('persetujuan_koor', 'menunggu')
+                  ->orWhere('persetujuan_atasan2', 'menunggu')
+                  ->orWhere('persetujuan_hr', 'menunggu');
             });
         }
 
-        return $query;
+        return $query->where(function ($q) use ($userEmployee) {
+            $q->where('atasan_id', $userEmployee->id)
+              ->where('persetujuan_koor', 'menunggu')
+              ->orWhere(function ($q2) use ($userEmployee) {
+                  $q2->where('atasan2_id', $userEmployee->id)
+                     ->where('persetujuan_atasan2', 'menunggu');
+              });
+        });
     }
 
     public function getEmployeeStatusBreakdown(): array
@@ -180,8 +187,9 @@ class DashboardService
     public function getExpiringContracts(): array
     {
         return EmployeeContract::with('employee')
-            ->whereBetween('tanggal_berakhir', [now(), now()->addDays(3)])
+            ->whereBetween('tanggal_berakhir', [now(), now()->addDays(7)])
             ->where('status', 'berlaku')
+            ->orderBy('tanggal_berakhir')
             ->get()
             ->map(fn($c) => [
                 'id' => $c->id,

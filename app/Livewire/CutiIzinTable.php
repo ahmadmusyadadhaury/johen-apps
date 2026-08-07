@@ -6,7 +6,6 @@ use App\Models\Freelance;
 use App\Models\LeaveRequest;
 use App\Models\Employee;
 use App\Models\Position;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -112,7 +111,7 @@ class CutiIzinTable extends Component
             'tanggal_selesai' => $this->pengajuanTanggalSelesai,
             'durasi' => $durasi . ' hari',
             'keterangan' => $this->pengajuanKeterangan,
-            'persetujuan_koor' => 'menunggu',
+            'persetujuan_koor' => $atasan ? 'menunggu' : 'disetujui',
             'persetujuan_atasan2' => $hasAtasan2 ? 'menunggu' : 'disetujui',
             'persetujuan_hr' => 'menunggu',
         ]);
@@ -132,9 +131,15 @@ class CutiIzinTable extends Component
             return;
         }
 
-        if ($level === 'persetujuan_hr' && !$lr->tanggal_selesai->isPast()) {
-            $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
-            return;
+        if ($level === 'persetujuan_hr') {
+            if ($lr->persetujuan_atasan2 !== 'disetujui') {
+                $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah Atasan 2 menyetujui.');
+                return;
+            }
+            if (!$lr->tanggal_selesai->isPast() && !auth()->user()->isSuperAdmin()) {
+                $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
+                return;
+            }
         }
 
         $user = auth()->user();
@@ -212,11 +217,19 @@ class CutiIzinTable extends Component
             return;
         }
 
-        if ($this->pendingLevel === 'persetujuan_hr' && $this->pendingAction === 'setujui' && !$lr->tanggal_selesai->isPast()) {
-            $this->showPinModal = false;
-            $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
-            $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
-            return;
+        if ($this->pendingLevel === 'persetujuan_hr' && $this->pendingAction === 'setujui') {
+            if ($lr->persetujuan_atasan2 !== 'disetujui') {
+                $this->showPinModal = false;
+                $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
+                $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah Atasan 2 menyetujui.');
+                return;
+            }
+            if (!$lr->tanggal_selesai->isPast() && !auth()->user()->isSuperAdmin()) {
+                $this->showPinModal = false;
+                $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
+                $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
+                return;
+            }
         }
 
         $status = $this->pendingAction === 'setujui' ? 'disetujui' : 'ditolak';
@@ -267,33 +280,8 @@ class CutiIzinTable extends Component
 
     public function confirmDelete(int $id): void
     {
-        $user = auth()->user();
-
-        if ($user->isStaff() || $user->isStaffCreative() || $user->isKoordinatorCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isStaffIt() || $user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isStaffAdmin()) {
-            $employee = $user->employee;
-            if (!$employee) {
-                $this->dispatch('notify', type: 'error', message: 'Akun Anda tidak terhubung ke data karyawan.');
-                return;
-            }
-
-            if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
-                $subordinateIds = $this->getSubordinateEmployeeIds();
-                $allowedIds = array_merge([$employee->id], $subordinateIds);
-                $lr = LeaveRequest::where('id', $id)->whereIn('employee_id', $allowedIds)->first();
-            } else {
-                $lr = LeaveRequest::where('id', $id)->where('employee_id', $employee->id)->first();
-            }
-
-            if (!$lr) {
-                $this->dispatch('notify', type: 'error', message: 'Data tidak ditemukan.');
-                return;
-            }
-            if ($lr->persetujuan_koor !== 'menunggu' && $lr->persetujuan_atasan2 !== 'menunggu' && $lr->persetujuan_hr !== 'menunggu') {
-                $this->dispatch('notify', type: 'error', message: 'Hanya pengajuan yang masih menunggu yang dapat dihapus.');
-                return;
-            }
-        } else {
-            Gate::authorize('delete-data');
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403);
         }
 
         $this->deleteId = $id;
@@ -304,32 +292,11 @@ class CutiIzinTable extends Component
     {
         if (!$this->deleteId) return;
 
-        $user = auth()->user();
-        $lr = LeaveRequest::findOrFail($this->deleteId);
-
-        if ($user->isStaff() || $user->isStaffCreative() || $user->isKoordinatorCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isStaffIt() || $user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isStaffAdmin()) {
-            $employee = $user->employee;
-            if (!$employee) {
-                abort(403);
-            }
-
-            if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
-                $subordinateIds = $this->getSubordinateEmployeeIds();
-                $allowedIds = array_merge([$employee->id], $subordinateIds);
-                if (!in_array($lr->employee_id, $allowedIds)) {
-                    abort(403);
-                }
-            } elseif ($lr->employee_id !== $employee->id) {
-                abort(403);
-            }
-
-            if ($lr->persetujuan_koor !== 'menunggu' && $lr->persetujuan_atasan2 !== 'menunggu' && $lr->persetujuan_hr !== 'menunggu') {
-                abort(403);
-            }
-        } else {
-            Gate::authorize('delete-data');
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403);
         }
 
+        $lr = LeaveRequest::findOrFail($this->deleteId);
         $lr->delete();
 
         $this->showDeleteConfirmModal = false;
@@ -384,7 +351,6 @@ class CutiIzinTable extends Component
         $position = Position::find($this->selectedPositionId);
         if (!$position) return null;
         $atasan1 = $this->getAtasan(auth()->user()->employee, $position);
-        if (!$atasan1) return null;
         $atasan2 = $this->getAtasan2(auth()->user()->employee, $atasan1, $position);
         return $atasan2?->nama;
     }
@@ -402,7 +368,7 @@ class CutiIzinTable extends Component
 
         $query = LeaveRequest::query();
 
-        if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
+        if ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isKoordinatorFcMobile()) {
             $query->where('atasan_id', $userEmployee->id);
 
             $positionName = $this->getRolePositionName();
@@ -418,9 +384,10 @@ class CutiIzinTable extends Component
 
             $query->where('persetujuan_koor', 'menunggu');
         } elseif ($user->isHeadOfStore()) {
-            $subordinateIds = $this->getSubordinateEmployeeIds();
-            if (empty($subordinateIds)) return 0;
-            $query->whereIn('employee_id', $subordinateIds);
+            $query->where(function ($q) use ($userEmployee) {
+                $q->where('atasan_id', $userEmployee->id)
+                  ->orWhere('atasan2_id', $userEmployee->id);
+            });
 
             if ($user->isAnyKoordinator()) {
                 $query->where('persetujuan_koor', 'menunggu');
@@ -459,7 +426,7 @@ class CutiIzinTable extends Component
             if ($this->tab === 'saya' && $userEmployee) {
                 $baseQuery->where('employee_id', $userEmployee->id);
             }
-        } elseif ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
+        } elseif ($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isKoordinatorFcMobile()) {
             if ($userEmployee) {
                 if ($this->tab === 'saya') {
                     $baseQuery->where('employee_id', $userEmployee->id);
@@ -485,12 +452,10 @@ class CutiIzinTable extends Component
                 if ($this->tab === 'saya') {
                     $baseQuery->where('employee_id', $userEmployee->id);
                 } else {
-                    $subordinateIds = $this->getSubordinateEmployeeIds();
-                    if (!empty($subordinateIds)) {
-                        $baseQuery->whereIn('employee_id', $subordinateIds);
-                    } else {
-                        $baseQuery->whereRaw('1 = 0');
-                    }
+                    $baseQuery->where(function ($q) use ($userEmployee) {
+                        $q->where('atasan_id', $userEmployee->id)
+                          ->orWhere('atasan2_id', $userEmployee->id);
+                    });
                 }
             } else {
                 $baseQuery->whereRaw('1 = 0');
@@ -558,8 +523,16 @@ class CutiIzinTable extends Component
 
         $timMenungguCount = $this->getTimMenungguCountProperty();
 
+        $userPositions = $userEmployee?->positions()->with('division')->get() ?? collect();
+
+        $showPositionDropdown = $userPositions->count() > 1;
+
+        if ($userEmployee && in_array($userEmployee->id, [9, 14, 22])) {
+            $showPositionDropdown = $userPositions->pluck('division_id')->unique()->count() > 1;
+        }
+
         return view('livewire.cuti-izin-table', compact(
-            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'lihatSemua', 'timMenungguCount'
+            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown'
         ))->with('karyawanView', false);
     }
 
@@ -567,6 +540,10 @@ class CutiIzinTable extends Component
     {
         $pos = $position ?? $employee->mainPosition();
         if (!$pos || !$pos->parent_id) return null;
+
+        if (str_starts_with($pos->nama, 'Koordinator')) {
+            return null;
+        }
 
         $current = $pos->parent;
         while ($current) {
@@ -580,16 +557,21 @@ class CutiIzinTable extends Component
 
     private function getAtasan2(Employee $employee, ?Employee $atasan1 = null, ?Position $position = null): ?Employee
     {
-        $user = auth()->user();
-        if ($user && $user->isAnyKoordinator()) {
+        $pos = $position ?? $employee->mainPosition();
+        if (!$pos) return null;
+
+        if (str_starts_with($pos->nama, 'Koordinator')) {
+            $current = $pos->parent;
+            while ($current) {
+                $atasan = $current->employees()->first();
+                if ($atasan) return $atasan;
+                $current = $current->parent;
+            }
             return null;
         }
 
         $atasan1 = $atasan1 ?? $this->getAtasan($employee, $position);
         if (!$atasan1) return null;
-
-        $pos = $position ?? $employee->mainPosition();
-        if (!$pos) return null;
 
         $current = $pos->parent;
         while ($current) {
@@ -615,23 +597,6 @@ class CutiIzinTable extends Component
         return null;
     }
 
-    private function getSubordinateEmployeeIds(): array
-    {
-        $employee = auth()->user()->employee;
-        if (!$employee) return [];
-
-        $mainPosition = $employee->mainPosition();
-        if (!$mainPosition) return [];
-
-        $descendantIds = $this->getAllDescendantIds($mainPosition);
-        if (empty($descendantIds)) return [];
-
-        return Employee::whereHas('positions', function ($q) use ($descendantIds) {
-            $q->whereIn('position_id', $descendantIds)
-              ->where('is_main', true);
-        })->pluck('id')->toArray();
-    }
-
     private function getRolePositionName(): ?string
     {
         $user = auth()->user();
@@ -646,6 +611,7 @@ class CutiIzinTable extends Component
             $user->isKoordinatorIt() => 'Koordinator IT',
             $user->isKoordinatorCreative() => 'Koordinator Creative',
             $user->isKoordinatorAdmin() => 'Koordinator Admin',
+            $user->isKoordinatorFcMobile() => 'Koordinator FC Mobile',
             default => null,
         };
     }

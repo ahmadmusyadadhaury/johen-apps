@@ -7,7 +7,7 @@
 
 <div x-data="{ confirmAction: false, confirmTitle: '', confirmMessage: '', confirmHandler: null }">
 
-    @if(!auth()->user()->isGmCeo() && (auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin()))
+    @if(!auth()->user()->isGmCeo() && (auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isKoordinatorFcMobile() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin()))
     {{-- Tab Navigation --}}
     <div class="mb-6">
         <div class="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
@@ -143,11 +143,9 @@
                                 $isAtasan = $userEmployee && $userEmployee->id === $lr->atasan_id;
                                 $isAtasan2 = $userEmployee && $userEmployee->id === $lr->atasan2_id;
                                 $canApproveKoor = $isAtasan;
-                                $canApproveAtasan2 = $isAtasan2;
-                                $canApproveHr = $lihatSemua && !$user->isGmCeo() && !$user->isKoordinatorIt() && !$user->isKoordinatorAdmin() && !$user->isKoordinatorPubg() && !$user->isKoordinatorFf() && !$user->isKoordinatorMlbb() && !$user->isKoordinatorEfootball() && !$user->isKoordinatorValorant() && $lr->tanggal_selesai->isPast();
+                                $canApproveAtasan2 = $isAtasan2 && (!$user->isManager() || $lr->persetujuan_koor === 'disetujui');
+                                $canApproveHr = $lihatSemua && !$user->isGmCeo() && !$user->isKoordinatorIt() && !$user->isKoordinatorAdmin() && !$user->isKoordinatorPubg() && !$user->isKoordinatorFf() && !$user->isKoordinatorMlbb() && !$user->isKoordinatorEfootball() && !$user->isKoordinatorValorant() && $lr->persetujuan_atasan2 === 'disetujui' && ($lr->tanggal_selesai->isPast() || $user->isSuperAdmin());
                                 $requiresPin = $user->requiresPinApproval();
-                                $isOwnRequest = $userEmployee && $userEmployee->id === $lr->employee_id;
-                                $isPending = $lr->persetujuan_koor === 'menunggu' || ($lr->atasan2_id && $lr->persetujuan_atasan2 === 'menunggu') || $lr->persetujuan_hr === 'menunggu';
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $leaveRequests->firstItem() + $loop->index }}</td>
@@ -260,20 +258,12 @@
                                     @endif
                                 </td>
                                 <td class="table-cell">
-                                    @if(!$user->isGmCeo())
-                                    @can('delete-data')
+                                    @if($user->isSuperAdmin())
                                     <button wire:click="confirmDelete({{ $lr->id }})"
                                             class="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                                             title="Hapus">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                                     </button>
-                                    @elseif($isOwnRequest && $isPending)
-                                    <button wire:click="confirmDelete({{ $lr->id }})"
-                                            class="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                            title="Hapus">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-                                    </button>
-                                    @endcan
                                     @endif
                                 </td>
                             </tr>
@@ -325,14 +315,14 @@
             </div>
 
             <form wire:submit.prevent="submitPengajuan" class="space-y-4">
-                @if(isset($userPositions) && $userPositions->count() > 1)
+                @if(isset($showPositionDropdown) && $showPositionDropdown)
                 <div>
                     <x-input-label value="Ajukan sebagai *" />
                     <select wire:model.live="selectedPositionId" required
                             class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                         <option value="">Pilih jabatan</option>
                         @foreach($userPositions as $up)
-                            <option value="{{ $up->id }}">{{ $up->nama }}</option>
+                            <option value="{{ $up->id }}">{{ $up->nama }}@if($up->division) — {{ $up->division->nama }}@endif</option>
                         @endforeach
                     </select>
                     @if($selectedPositionId)
