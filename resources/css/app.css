@@ -163,7 +163,7 @@ html.dark {
     }
 
     .table-cell {
-        @apply px-4 py-3 text-sm;
+        @apply px-6 py-3 text-sm;
     }
 
     .gradient-text {

@@ -11,7 +11,7 @@ class Asset extends Model
     protected $fillable = [
         'code', 'name', 'category_id', 'brand', 'model', 'serial_number',
         'purchase_price', 'purchase_date', 'supplier', 'location',
-        'condition', 'status', 'description', 'photo', 'created_by',
+        'condition', 'status', 'description', 'photo', 'metadata', 'created_by',
     ];
 
     protected function casts(): array
@@ -19,6 +19,7 @@ class Asset extends Model
         return [
             'purchase_price' => 'decimal:2',
             'purchase_date' => 'date',
+            'metadata' => 'array',
         ];
     }
 

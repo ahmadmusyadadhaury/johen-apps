@@ -4,6 +4,11 @@
 // Livewire 4 juga menyediakan magic property $wire untuk entangle.
 // Jika ada kode Alpine custom, gunakan window.Alpine yang disediakan Livewire.
 
+import JsBarcode from 'jsbarcode';
+
+// Ekspos ke window agar bisa dipakai di directive x-init "@barcode" pada halaman Asset.
+window.JsBarcode = JsBarcode;
+
 document.addEventListener('alpine:init', () => {
     // Toast notifications (top-right)
     Alpine.store('toast', {

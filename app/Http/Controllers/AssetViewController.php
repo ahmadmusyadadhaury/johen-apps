@@ -52,17 +52,54 @@ class AssetViewController extends Controller
             });
         }
 
+        $statsQuery = Asset::query();
+
+        if ($category) {
+            $statsQuery->whereHas('category', function ($q) use ($category) {
+                $q->whereRaw('LOWER(REPLACE(name, " ", "-")) LIKE ?', ['%'.strtolower($category).'%']);
+            });
+        }
+
+        $isSimCard = $category && strtolower(str_replace('-', ' ', $category)) === 'sim card';
+
+        if ($isSimCard) {
+            $total = (clone $statsQuery)->count();
+            $aktif = (clone $statsQuery)->where('status', 'tersedia')->where(function ($q) {
+                $q->whereNull('purchase_date')->orWhereDate('purchase_date', '>=', now()->toDateString());
+            })->count();
+            $segeraHabis = (clone $statsQuery)->where('status', 'tersedia')
+                ->whereBetween('purchase_date', [now()->toDateString(), now()->addDays(30)->toDateString()])
+                ->count();
+            $mati = $total - $aktif - $segeraHabis;
+
+            $stats = [
+                'total' => $total,
+                'aktif' => $aktif,
+                'segera_habis' => $segeraHabis,
+                'mati' => max($mati, 0),
+            ];
+        } else {
+            $stats = [
+                'total' => (clone $statsQuery)->count(),
+                'baik' => (clone $statsQuery)->where('condition', 'baik')->count(),
+                'perlu_diservis' => (clone $statsQuery)->where('condition', 'rusak_ringan')->count(),
+                'rusak' => (clone $statsQuery)->where('condition', 'rusak_berat')->count(),
+            ];
+        }
+
         $assets = $query->latest()->paginate(20);
         $selectedCategory = $category;
 
-        return view('assets.index', compact('assets', 'categories', 'selectedCategory'));
+        $isKendaraan = $category && strtolower(str_replace('-', ' ', $category)) === 'kendaraan';
+
+        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan'));
     }
 
-    public function detail(Asset $asset)
+public function detail(Asset $asset)
     {
         $asset->load(['category', 'creator']);
 
-        return response()->json([
+        $response = [
             'id' => $asset->id,
             'code' => $asset->code,
             'name' => $asset->name,
@@ -77,9 +114,135 @@ class AssetViewController extends Controller
             'condition' => $asset->condition,
             'status' => $asset->status,
             'description' => $asset->description,
-            'photo' => $asset->photo,
             'creator' => $asset->creator?->name,
-        ]);
+        ];
+
+        if ($asset->category?->name === 'SIM Card') {
+            $response['fields'] = $this->structuredSimFields($asset->description);
+            $response['description'] = null;
+        } elseif ($asset->category?->name === 'Peralatan Kantor') {
+            $response['fields'] = $this->peralatanKantorFields($asset->metadata);
+            $response['description'] = null;
+        } elseif ($asset->category?->name === 'Kendaraan') {
+            $response['fields'] = $this->vehicleFields($asset->metadata);
+            $response['photo'] = $asset->photo;
+            $response['description'] = $asset->description;
+        }
+
+        return response()->json($response);
+    }
+
+    private function vehicleFields(?array $metadata): array
+    {
+        if (! $metadata) {
+            return [];
+        }
+
+        $photo = $metadata['foto'] ?? null;
+
+        $map = [
+            'Nomor Polisi' => 'plat_nomor',
+            'Jenis' => 'jenis_kendaraan',
+            'Merk/Tipe' => 'merk_tipe',
+            'Tahun' => 'tahun',
+            'Warna' => 'warna',
+            'Nomor Rangka' => 'nomor_rangka',
+            'Nomor Mesin' => 'nomor_mesin',
+            'Status Pajak' => 'status_pajak',
+            'Pajak Tahunan' => 'pajak_tahunan',
+            'Pajak 5 Tahun' => 'pajak_5_tahun',
+            'Kepemilikan' => 'kepemilikan_status',
+            'Biaya Kendaraan' => 'biaya_kendaraan',
+            'Keterangan' => 'keperluan',
+            'PIC' => 'pic',
+            'Jabatan' => 'jabatan',
+        ];
+
+        $fields = [];
+
+        foreach ($map as $label => $key) {
+            $value = $metadata[$key] ?? null;
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            if ($key === 'biaya_kendaraan') {
+                $value = 'Rp ' . number_format((float) $value, 0, ',', '.');
+            }
+
+            $fields[] = ['label' => $label, 'value' => (string) $value];
+        }
+
+        return $fields;
+    }
+
+    private function peralatanKantorFields(?array $metadata): array
+    {
+        if (! $metadata) {
+            return [];
+        }
+
+        $map = [
+            'Jumlah' => 'jumlah',
+            'Detail' => 'detail',
+            'Keterangan' => 'keterangan',
+            'Lokasi Unit' => 'lokasi_unit',
+            'Ruangan' => 'ruangan',
+            'Pengadaan (Tahun)' => 'pengadaan_tahun',
+            'Kategori Nilai' => 'kategori_nilai',
+            'Kategori Ukuran' => 'kategori_ukuran',
+            'Sub Kategori' => 'sub_kategori',
+            'Milik' => 'milik',
+            'Barcode' => 'barcode',
+            'Waktu Pakai/Hari' => 'waktu_pakai_per_hari',
+            'Estimasi Waktu (hari)' => 'estimasi_waktu_barang',
+            'Penggunaan/hari' => 'pengurangan_harga_per_hari',
+            'Harga Saat Ini' => 'nilai_sekarang',
+            'PIC' => 'pic',
+            'Jabatan PIC' => 'jabatan',
+            'Atasan' => 'atasan',
+            'Jabatan Atasan' => 'jabatan_atasan',
+        ];
+
+        $rupiahFields = ['pengurangan_harga_per_hari', 'nilai_sekarang'];
+
+        $fields = [];
+
+        foreach ($map as $label => $key) {
+            $value = $metadata[$key] ?? null;
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            if (in_array($key, $rupiahFields, true)) {
+                $value = 'Rp ' . number_format((float) $value, 0, ',', '.');
+            }
+
+            $fields[] = ['label' => $label, 'value' => (string) $value];
+        }
+
+        return $fields;
+    }
+
+    private function structuredSimFields(?string $description): array
+    {
+        if (! $description) {
+            return [];
+        }
+
+        $fields = [];
+
+        foreach (explode(' | ', $description) as $part) {
+            $pair = explode(': ', $part, 2);
+
+            if (count($pair) === 2) {
+                $fields[] = ['label' => $pair[0], 'value' => $pair[1]];
+            }
+        }
+
+        return $fields;
     }
 
     private function syncKendaraan(): void

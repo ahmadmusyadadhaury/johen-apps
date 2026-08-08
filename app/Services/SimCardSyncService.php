@@ -160,6 +160,10 @@ class SimCardSyncService
             $parts[] = 'Masa Aktif: '.$masaAktif;
         }
 
+        if ($masaTenggang = $this->nullableDate($item['masa_tenggang'] ?? null)) {
+            $parts[] = 'Masa Tenggang: '.$masaTenggang;
+        }
+
         if ($keperluan = $this->nullable($item['keperluan'] ?? null)) {
             $parts[] = 'Keperluan: '.$keperluan;
         }

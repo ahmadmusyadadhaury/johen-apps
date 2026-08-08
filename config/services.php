@@ -46,7 +46,7 @@ return [
 
     'vehicle_api' => [
         'url' => env('KENDARAAN_API_URL'),
-        'path' => env('KENDARAAN_API_PATH', '/api/peralatan-kantor'),
+        'path' => env('VEHICLE_API_PATH', '/api/vehicles'),
         'token' => env('KENDARAAN_API_TOKEN'),
         'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
     ],
