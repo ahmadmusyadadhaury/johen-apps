@@ -13,7 +13,9 @@ class AssetCategorySeeder extends Seeder
             ['name' => 'Kendaraan', 'description' => 'Kendaraan operasional perusahaan'],
             ['name' => 'SIM Card', 'description' => 'Kartu SIM dan paket data'],
             ['name' => 'Peralatan Kantor', 'description' => 'Peralatan dan perlengkapan kantor'],
-            ['name' => 'Asset Ruko', 'description' => 'Aset properti ruko'],
+            ['name' => 'Aset Ruko', 'description' => 'Aset properti ruko'],
+            ['name' => 'Sosial Media', 'description' => 'Akun dan aset sosial media'],
+            ['name' => 'Aset Mes', 'description' => 'Aset mes'],
         ];
 
         foreach ($categories as $cat) {

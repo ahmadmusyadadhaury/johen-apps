@@ -82,6 +82,196 @@
                 </div>
             </div>
         </div>
+        @elseif($isKendaraan)
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    </div>
+                    <span class="badge-info text-[10px]">Keseluruhan</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['total']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Kendaraan</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-blue-500">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 dark:shadow-emerald-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="badge-success text-[10px]">Aktif</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['pajak_aktif']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Pajak Aktif</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-emerald-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/40 dark:shadow-amber-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-3 3.187A8.998 8.998 0 109 12.5m0 0V12m0 0h.008M12 6.75h.008M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                    </div>
+                    <span class="badge-warning text-[10px]">Awas</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['segera_habis']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Segera Habis</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-amber-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m-3 3.15h.008M12 6.75h.008M12 12a9 9 0 100 15 9 9 0 000-15z"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-red-200 dark:hover:border-red-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/40 dark:shadow-red-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM20.617 6.468A9 9 0 005.383 17.532m14.234-11.064L3.25 10.09a1.5 1.5 0 00.538 2.28l1.31.65m16.5-2.123a1.5 1.5 0 01.538 2.28l-1.31.65"/></svg>
+                    </div>
+                    <span class="badge-danger text-[10px]">Mati</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['pajak_mati']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Pajak Mati</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-red-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM20.617 6.468A9 9 0 005.383 17.532m14.234-11.064L3.25 10.09a1.5 1.5 0 00.538 2.28l1.31.65m16.5-2.123a1.5 1.5 0 01.538 2.28l-1.31.65m0 0l4.35 2.175a1.5 1.5 0 01-.538 2.28l-1.31.65"/></svg>
+                </div>
+            </div>
+        </div>
+        @elseif($isSosialMedia)
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                    </div>
+                    <span class="badge-info text-[10px]">Keseluruhan</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['total']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Akun</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-blue-500">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 dark:shadow-emerald-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="badge-success text-[10px]">Aktif</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['aktif']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Akun Aktif</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-emerald-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-red-200 dark:hover:border-red-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/40 dark:shadow-red-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4.5m0 4.5h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="badge-danger text-[10px]">Tidak Aktif</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['tidak_aktif']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Akun Tidak Aktif</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-red-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM20.75 12.5a8.75 8.75 0 11-17.5 0 8.75 8.75 0 0117.5 0z"/></svg>
+                </div>
+            </div>
+        </div>
+        @elseif($isAssetMes)
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    </div>
+                    <span class="badge-info text-[10px]">Keseluruhan</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['total']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Asset Mes</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-blue-500">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 dark:shadow-emerald-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM19.5 21v-2.25a4.5 4.5 0 00-4.5-4.5h-6a4.5 4.5 0 00-4.5 4.5V21"/></svg>
+                    </div>
+                    <span class="badge-success text-[10px]">Putra</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['putra']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Asset Mes Putra</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-emerald-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM19.5 21v-2.25.4.5a4.5 4.5 0 00-4.5-4.5h-6a4.5 4.5 0 00-4.5 4.5V21"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-pink-200 dark:hover:border-pink-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/40 dark:shadow-pink-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                    </div>
+                    <span class="badge-danger text-[10px]">Putri</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['putri']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Asset Mes Putri</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-pink-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                </div>
+            </div>
+</div>
+        @elseif($isAsetTim)
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    </div>
+                    <span class="badge-info text-[10px]">Keseluruhan</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['total']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Aset Tim</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-blue-500">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 dark:shadow-emerald-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="badge-success text-[10px]">Aktif</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['aktif']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Aset Tim Aktif</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-emerald-500 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-red-200 dark:hover:border-red-800 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/40 dark:shadow-red-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.008v.008H12v-.008z"/></svg>
+                    </div>
+                    <span class="badge-danger text-[10px]">Nonaktif</span>
+                </div>
+                <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['nonaktif']) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Aset Tim Nonaktif</p>
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-red-500">
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM20.617 6.468A9 9 0 005.383 17.532m14.234-11.064L3.25 10.09a1.5 1.5 0 00.538 2.28l1.31.65m16.5-2.123a1.5 1.5 0 01.538 2.28l-1.31.65m0 0l4.35 2.175a1.5 1.5 0 01-.538 2.28l-1.31.65"/></svg>
+                </div>
+            </div>
+        </div>
         @else
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
@@ -129,25 +319,35 @@
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-red-200 dark:hover:border-red-800 transition-all duration-300">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/40 dark:shadow-red-900/50 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.008v.008H12v-.008z"/></svg>
                     </div>
                     <span class="badge-danger text-[10px]">Bahaya</span>
                 </div>
                 <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['rusak']) }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Rusak</p>
                 <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-red-500 pointer-events-none">
-                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM20.617 6.468A9 9 0 005.383 17.532m14.234-11.063A9 9 0 005.383 17.532m14.234-11.064L3.25 10.09a1.5 1.5 0 00.538 2.28l1.31.65m16.5-2.123a1.5 1.5 0 01.538 2.28l-1.31.65m0 0l4.35 2.175a1.5 1.5 0 01-.538 2.28l-1.31.65"/></svg>
+                    <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM20.617 6.468A9 9 0 005.383 17.532m14.234-11.064L3.25 10.09a1.5 1.5 0 00.538 2.28l1.31.65m16.5-2.123a1.5 1.5 0 01.538 2.28l-1.31.65m0 0l4.35 2.175a1.5 1.5 0 01-.539 2.28l-1.31.65"/></svg>
                 </div>
             </div>
         </div>
         @endif
 
-        <div class="card overflow-hidden">
+        <div class="card overflow-hidden" x-data="{ mesTab: 'putra' }">
             <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                 <h2 class="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                     Daftar Asset
                 </h2>
+                @if($isAssetMes)
+                <div class="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+                    <button @click="mesTab = 'putra'" :class="mesTab === 'putra' ? 'bg-white dark:bg-gray-900 shadow-sm text-blue-600' : 'text-gray-500 dark:text-gray-400'" class="rounded-lg px-4 py-1.5 text-xs font-semibold transition-all duration-200">
+                        Mes Putra
+                    </button>
+                    <button @click="mesTab = 'putri'" :class="mesTab === 'putri' ? 'bg-white dark:bg-gray-900 shadow-sm text-pink-600' : 'text-gray-500 dark:text-gray-400'" class="rounded-lg px-4 py-1.5 text-xs font-semibold transition-all duration-200">
+                        Mes Putri
+                    </button>
+                </div>
+                @endif
                 <div class="flex items-center gap-2">
                     <form method="GET" action="{{ route('assets.index') }}" class="relative">
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari..."
@@ -159,7 +359,8 @@
 
             @php
                 $isPeralatanKantor = $selectedCategory && strtolower(str_replace('-', ' ', $selectedCategory)) === 'peralatan kantor';
-                $colspan = $isPeralatanKantor ? 9 : ($selectedCategory ? 7 : 8);
+                $isSosialMedia = $selectedCategory && strtolower(str_replace('-', ' ', $selectedCategory)) === 'sosial media';
+                $colspan = $isPeralatanKantor ? 9 : ($isSosialMedia ? 9 : ($selectedCategory ? 7 : 8));
             @endphp
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -368,6 +569,136 @@
                                 </div>
                             </td>
                         </tr>
+@endforelse
+                    </tbody>
+                    @elseif($isSosialMedia)
+                    <thead>
+                        <tr class="table-header">
+                            <th class="px-6 py-3 text-center w-10">No</th>
+                            <th class="px-6 py-3">Username</th>
+                            <th class="px-6 py-3">Nama</th>
+                            <th class="px-6 py-3 text-center">Followers</th>
+                            <th class="px-6 py-3">Platform</th>
+                            <th class="px-6 py-3 text-center">Status</th>
+                            <th class="px-6 py-3">Divisi</th>
+                            <th class="px-6 py-3">PIC</th>
+                            <th class="px-6 py-3 text-right w-24">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                        @forelse($assets as $a)
+                        @php $s = (array) ($a->metadata ?? []); @endphp
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $s['username'] ?? $a->code }}</td>
+                            <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $s['nama'] ?? '-' }}</td>
+                            <td class="table-cell text-center tabular-nums text-gray-700 dark:text-gray-300">{{ ($s['followers'] ?? null) !== null && $s['followers'] !== '-' ? $s['followers'] : '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $s['platform'] ?? '-' }}</td>
+                            <td class="table-cell text-center">
+                                @if(strtolower((string) ($s['status_akun'] ?? $s['status'] ?? '')) === 'aktif')
+                                    <span class="badge-success">Aktif</span>
+                                @else
+                                    <span class="badge-danger">Tidak Aktif</span>
+                                @endif
+                            </td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $s['divisi'] ?? '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $s['pic'] ?? '-' }}</td>
+                            <td class="table-cell text-right">
+                                <button type="button" @click="show({{ $a->id }})" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    Detail
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                    </div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum Ada Asset</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Belum ada data asset di kategori ini.</p>
+                                </div>
+                            </td>
+                        </tr>
+@endforelse
+                    </tbody>
+                    @elseif($isAssetMes || $isAsetTim)
+                    <thead>
+                        <tr class="table-header">
+                            <th class="px-6 py-3 text-center w-10">No</th>
+                            @if($isAssetMes)
+                            <th class="px-6 py-3">Nama Aset</th>
+                            <th class="px-6 py-3">Kategori</th>
+                            @else
+                            <th class="px-6 py-3">Nama Aset</th>
+                            <th class="px-6 py-3">Tim</th>
+                            @endif
+                            <th class="px-6 py-3 text-center">Jumlah</th>
+                            <th class="px-6 py-3 whitespace-nowrap">Penanggung Jawab</th>
+                            <th class="px-6 py-3">PIC</th>
+                            <th class="px-6 py-3">Jabatan</th>
+                            <th class="px-6 py-3 text-center">Status</th>
+                            <th class="px-6 py-3">Keterangan</th>
+                            <th class="px-6 py-3 text-right w-24">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                        @forelse($assets as $a)
+                        @php
+                            $m = (array) ($a->metadata ?? []);
+                            if ($isAssetMes) {
+                                $isPutri = str_contains(strtolower((string) ($m['kategori'] ?? $a->name)), 'putri');
+                            }
+                        @endphp
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors" @if($isAssetMes) x-show="mesTab === '{{ $isPutri ? 'putri' : 'putra' }}'" @endif>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ $m['nama_aset'] ?? $a->name }}</td>
+                            @if($isAssetMes)
+                            <td class="table-cell">
+                                @if(str_contains(strtolower((string) ($m['kategori'] ?? $a->name)), 'putri'))
+                                    <span class="badge-danger">Mes Putri</span>
+                                @else
+                                    <span class="badge-success">Mes Putra</span>
+                                @endif
+                            </td>
+                            @else
+                            <td class="table-cell">
+                                <span class="badge-info">{{ $m['tim'] ?? '-' }}</span>
+                            </td>
+                            @endif
+                            <td class="table-cell text-center tabular-nums">{{ $m['jumlah'] ?? '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $m['penanggung_jawab'] ?? '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $m['pic'] ?? '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $m['jabatan'] ?? '-' }}</td>
+                            <td class="table-cell text-center">
+                                @if(strtolower((string) ($m['status'] ?? '')) === 'aktif')
+                                    <span class="badge-success">Aktif</span>
+                                @else
+                                    <span class="badge-danger">Nonaktif</span>
+                                @endif
+                            </td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $m['keterangan'] ?? '-' }}</td>
+                            <td class="table-cell text-right">
+                                <button type="button" @click="show({{ $a->id }})" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    Detail
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                    </div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum Ada Asset</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Belum ada data asset di kategori ini.</p>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                     @else
@@ -435,7 +766,7 @@
                     @endif
                 </table>
             </div>
-            @if($assets->hasPages())
+            @if(method_exists($assets, 'hasPages') && $assets->hasPages())
             <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
                 {{ $assets->links() }}
             </div>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Asset;
+use App\Models\AssetCategory;
 use App\Models\Attendance;
 use App\Models\Announcement;
 use App\Models\ActivityCompetitor;
@@ -33,6 +34,19 @@ class DashboardService
             'email_sent' => EmailLog::where('status', 'sent')->count(),
             'email_failed' => EmailLog::where('status', 'failed')->count(),
         ];
+    }
+
+    public function getAssetCategoryStats(): array
+    {
+        return AssetCategory::withCount('assets')
+            ->orderByDesc('assets_count')
+            ->get()
+            ->map(fn($cat) => [
+                'id' => $cat->id,
+                'nama' => $cat->name,
+                'total' => $cat->assets_count,
+            ])
+            ->toArray();
     }
 
     public function getAvailableYears(): array

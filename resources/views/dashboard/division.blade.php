@@ -19,8 +19,8 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                     </div>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-display font-bold text-white">{{ $division->nama }}</h1>
-                        <p class="text-sm text-white/80 mt-0.5">{{ $division->deskripsi ?: 'Menu dan aktivitas divisi ' . $division->nama }}</p>
+                        <h1 class="text-lg sm:text-xl font-display font-bold text-white">{{ $division->nama }} Workspace</h1>
+                        <p class="text-sm text-white/80 mt-0.5">Divisi {{ $division->nama }}</p>
                     </div>
                 </div>
                 <div class="mt-4 flex flex-wrap gap-3">

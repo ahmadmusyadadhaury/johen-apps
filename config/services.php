@@ -79,4 +79,25 @@ return [
         'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
     ],
 
+    'sosial_media_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('SOSIAL_MEDIA_API_PATH', '/api/social-media'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'aset_mes_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('ASET_MES_API_PATH', '/api/aset-mes'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'aset_tim_api' => [
+        'url' => env('KENDARAAN_API_URL'),
+        'path' => env('ASET_TIM_API_PATH', '/api/aset-tim'),
+        'token' => env('KENDARAAN_API_TOKEN'),
+        'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
 ];

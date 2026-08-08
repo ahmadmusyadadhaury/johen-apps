@@ -77,6 +77,7 @@ class DashboardController extends Controller
         $selectedYear = $request->integer('year', $availableYears[0] ?? now()->year);
         $payrolls = $this->dashboardService->getPayrollsByYear($selectedYear);
         $divisionStats = $this->dashboardService->getDivisionStats();
+        $assetStats = $this->dashboardService->getAssetCategoryStats();
         $latestPayroll = $this->dashboardService->getLatestPayroll();
         $pendingLeaveRequests = $this->dashboardService->getPendingLeaveRequests(user: $user);
         $pendingLeaveCount = $this->dashboardService->getPendingLeaveCount(user: $user);
@@ -102,7 +103,7 @@ class DashboardController extends Controller
             'stats', 'availableYears', 'selectedYear', 'payrolls', 'divisionStats',
             'latestPayroll', 'pendingLeaveRequests', 'pendingLeaveCount',
             'expiringContracts', 'expiringContractCount', 'meetingStats',
-            'koordinatorStats', 'managerReviewStats', 'employee',
+            'assetStats', 'koordinatorStats', 'managerReviewStats', 'employee',
         ), $bannerData));
     }
 

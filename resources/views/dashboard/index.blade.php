@@ -493,7 +493,7 @@
     @endif
 
     {{-- Ringkasan Menu --}}
-    <div x-data="{ openDivisiModal: false, openMeetingModal: false }">
+    <div x-data="{ openDivisiModal: false, openMeetingModal: false, openAssetModal: false }">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6">
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
         <div @click="openDivisiModal = true" class="group cursor-pointer rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300">
@@ -568,8 +568,8 @@
         @endunless
 
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
-        @if(auth()->user()->isGmCeo())
-        <a href="{{ route('assets.index') }}" class="stat-card group">
+        @if(auth()->user()->isGmCeo() || auth()->user()->isSuperAdmin() || auth()->user()->isManager())
+        <div @click="openAssetModal = true" class="group cursor-pointer rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -577,8 +577,8 @@
                 <span class="badge-primary">Total</span>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_assets'] }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Asset Saya</p>
-        </a>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Data Aset</p>
+        </div>
         @else
         <a href="{{ route('hris.cuti-izin') }}" class="stat-card group">
             <div class="flex items-center justify-between mb-3">
@@ -593,7 +593,7 @@
         @endif
         @endunless
 
-        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt() || auth()->user()->isGmCeo())
+        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt() || auth()->user()->isGmCeo() || auth()->user()->isSuperAdmin() || auth()->user()->isManager())
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
             <div class="flex items-center gap-3 mb-4">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 text-white shadow-md">
@@ -661,6 +661,56 @@
         </div>
     </div>
 
+    {{-- DATA ASET MODAL --}}
+    <div x-show="openAssetModal" x-cloak
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         @click="openAssetModal = false">
+        <div x-show="openAssetModal"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Data Aset per Kategori</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Jumlah seluruh aset</p>
+                </div>
+                <button @click="openAssetModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex items-center justify-between p-4 rounded-xl border-2 border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Semua Kategori</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total seluruh aset</p>
+                    </div>
+                    <span class="text-lg font-bold font-display text-blue-600 dark:text-blue-400">{{ $stats['total_assets'] }}</span>
+                </div>
+                @foreach($assetStats as $as)
+                @php $assetSlug = strtolower(str_replace(' ', '-', $as['nama'])); @endphp
+                <a href="{{ route('assets.category', $assetSlug === 'asset-ruko' ? 'aset-ruko' : $assetSlug) }}"
+                   class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-all group">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $as['nama'] }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $as['total'] }} aset</p>
+                    </div>
+                    <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $as['total'] }}</span>
+                </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
     {{-- MEETING MODAL --}}
     <div x-show="openMeetingModal" x-cloak
          x-transition:enter="ease-out duration-300"
@@ -669,7 +719,7 @@
          x-transition:leave="ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          @click="openMeetingModal = false">
         <div x-show="openMeetingModal"
              x-transition:enter="ease-out duration-300"

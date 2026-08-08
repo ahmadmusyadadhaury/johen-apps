@@ -51,7 +51,7 @@
                 Admin Transaksi
             </button>
             <button @click="tab = 'creative'" :class="tab === 'creative' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 font-semibold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'" class="px-4 py-3 text-sm font-medium transition-colors">
-                Creative
+                Divisi Creative
             </button>
         </div>
 
