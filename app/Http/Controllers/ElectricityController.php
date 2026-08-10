@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\ElectricitySetting;
 use App\Models\ElectricityTokenCheck;
 use App\Models\ElectricityTopup;
+use App\Services\ElectricityApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ElectricityController extends Controller
 {
+    public function __construct(private ElectricityApiService $api)
+    {
+    }
+
     public function index()
     {
         $setting = ElectricitySetting::firstOrCreate(
@@ -18,14 +24,30 @@ class ElectricityController extends Controller
             ['kapasitas_kwh' => 3000, 'updated_by' => auth()->id()]
         );
 
-        $lastTopup = ElectricityTopup::with('creator')->latest()->first();
+        $apiTopups = $this->api->topups()
+            ->sortByDesc(fn ($t) => $t->tanggal_bayar)
+            ->values();
+
+        $lastTopup = $apiTopups->first()
+            ?? ElectricityTopup::with('creator')->latest()->first();
+
         $lastCheck = ElectricityTokenCheck::with('checker')->latest()->first();
 
-        $totalTerpakai = ElectricityTokenCheck::sum('terpakai');
-        $sisaToken = $lastCheck?->sisa_kwh ?? 0;
+        $apiChecks = $this->api->checks();
+        $totalTerpakai = $apiChecks->isNotEmpty()
+            ? $apiChecks->sum('terpakai')
+            : ElectricityTokenCheck::sum('terpakai');
 
-        $topups = ElectricityTopup::with('creator')->latest()->paginate(20);
-        $checks = ElectricityTokenCheck::with('checker')->latest()->paginate(20);
+        $sisaApi = $this->api->sisaToken();
+        $sisaToken = $sisaApi ?? $lastCheck?->sisa_kwh ?? 0;
+
+        $topups = $apiTopups->isNotEmpty()
+            ? $apiTopups
+            : ElectricityTopup::with('creator')->latest()->get();
+
+        $checks = $apiChecks->isNotEmpty()
+            ? $apiChecks
+            : ElectricityTokenCheck::with('checker')->latest()->paginate(20);
 
         return view('electricity.index', compact(
             'setting', 'lastTopup', 'lastCheck', 'totalTerpakai', 'sisaToken', 'topups', 'checks'
@@ -34,20 +56,30 @@ class ElectricityController extends Controller
 
     public function topupsData(Request $request)
     {
-        $query = ElectricityTopup::with('creator');
+        $topups = $this->api->topups();
+
+        if ($topups->isEmpty()) {
+            $topups = ElectricityTopup::with('creator')->latest()->get();
+        }
 
         $filter = $request->filter ?? 'bulanan';
-        $query = $this->applyFilter($query, $filter);
+        $topups = $this->applyCollectionFilter($topups, $filter)
+            ->sortByDesc(fn ($t) => $t->tanggal_bayar)
+            ->values();
 
-        $topups = $query->latest()->paginate(20);
+        $perPage = 20;
+        $total = $topups->count();
+        $page = max(1, (int) $request->page);
+        $items = $topups->forPage($page, $perPage)->values();
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => $topups->items(),
+                'data' => $items->map(fn ($t) => $this->toClientArray($t))->all(),
                 'meta' => [
-                    'current_page' => $topups->currentPage(),
-                    'last_page' => $topups->lastPage(),
-                    'total' => $topups->total(),
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => $perPage,
+                    'total' => $total,
                 ],
             ]);
         }
@@ -63,9 +95,14 @@ class ElectricityController extends Controller
             'jumlah_kwh' => 'required|numeric|min:0',
             'nominal' => 'required|numeric|min:0',
             'catatan' => 'nullable|string',
+            'bukti' => 'nullable|image|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $validated['created_by'] = auth()->id();
+
+        if ($request->hasFile('bukti')) {
+            $validated['bukti'] = $request->file('bukti')->store('bukti-token', 'public');
+        }
 
         ElectricityTopup::create($validated);
 
@@ -74,6 +111,10 @@ class ElectricityController extends Controller
 
     public function destroyTopup(ElectricityTopup $electricityTopup)
     {
+        if ($electricityTopup->bukti && Storage::disk('public')->exists($electricityTopup->bukti)) {
+            Storage::disk('public')->delete($electricityTopup->bukti);
+        }
+
         $electricityTopup->delete();
 
         return back()->with('success', 'Riwayat top up berhasil dihapus.');
@@ -81,20 +122,28 @@ class ElectricityController extends Controller
 
     public function checksData(Request $request)
     {
-        $query = ElectricityTokenCheck::with('checker');
+        $checks = $this->api->checks();
+
+        if ($checks->isEmpty()) {
+            $checks = ElectricityTokenCheck::with('checker')->latest()->get();
+        }
 
         $filter = $request->filter ?? 'bulanan';
-        $query = $this->applyFilter($query, $filter);
+        $checks = $this->applyCollectionFilterChecks($checks, $filter)->values();
 
-        $checks = $query->latest()->paginate(20);
+        $perPage = 20;
+        $total = $checks->count();
+        $page = max(1, (int) $request->page);
+        $items = $checks->forPage($page, $perPage)->values();
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => $checks->items(),
+                'data' => $items->map(fn ($c) => $this->toCheckClientArray($c))->all(),
                 'meta' => [
-                    'current_page' => $checks->currentPage(),
-                    'last_page' => $checks->lastPage(),
-                    'total' => $checks->total(),
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => $perPage,
+                    'total' => $total,
                 ],
             ]);
         }
@@ -143,13 +192,28 @@ class ElectricityController extends Controller
             ['kapasitas_kwh' => 3000, 'updated_by' => auth()->id()]
         );
 
-        $lastTopup = ElectricityTopup::with('creator')->latest()->first();
+        $apiTopups = $this->api->topups()
+            ->sortByDesc(fn ($t) => $t->tanggal_bayar)
+            ->values();
+
+        $lastTopup = $apiTopups->first()
+            ?? ElectricityTopup::with('creator')->latest()->first();
         $lastCheck = ElectricityTokenCheck::with('checker')->latest()->first();
 
-        $totalTopupKwh = ElectricityTopup::sum('jumlah_kwh');
-        $totalTerpakai = ElectricityTokenCheck::sum('terpakai');
-        $totalNominal = ElectricityTopup::sum('nominal');
-        $sisaToken = $lastCheck?->sisa_kwh ?? 0;
+        $totalTopupKwh = $apiTopups->isNotEmpty()
+            ? $apiTopups->sum('jumlah_kwh')
+            : ElectricityTopup::sum('jumlah_kwh');
+
+        $apiChecks = $this->api->checks();
+        $totalTerpakai = $apiChecks->isNotEmpty()
+            ? $apiChecks->sum('terpakai')
+            : ElectricityTokenCheck::sum('terpakai');
+        $totalNominal = $apiTopups->isNotEmpty()
+            ? $apiTopups->sum('nominal')
+            : ElectricityTopup::sum('nominal');
+
+        $sisaApi = $this->api->sisaToken();
+        $sisaToken = $sisaApi ?? $lastCheck?->sisa_kwh ?? 0;
 
         return response()->json([
             'setting' => $setting,
@@ -183,18 +247,22 @@ class ElectricityController extends Controller
 
     public function exportTopups(Request $request)
     {
-        $query = ElectricityTopup::with('creator');
+        $topups = $this->api->topups();
+
+        if ($topups->isEmpty()) {
+            $topups = ElectricityTopup::with('creator')->latest()->get();
+        }
 
         $filter = $request->filter ?? 'bulanan';
-        $query = $this->applyFilter($query, $filter);
-
-        $topups = $query->latest()->get();
+        $topups = $this->applyCollectionFilter($topups, $filter)
+            ->sortByDesc(fn ($t) => $t->tanggal_bayar)
+            ->values();
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Riwayat Top Up');
 
-        $headers = ['No', 'Tanggal Bayar', 'Periode', 'Jumlah KWH', 'Nominal', 'Oleh', 'Catatan'];
+        $headers = ['No', 'Tanggal Bayar', 'Periode', 'Jumlah KWH', 'Nominal', 'Oleh', 'Bukti', 'Catatan'];
         foreach ($headers as $i => $h) {
             $sheet->setCellValue(chr(65 + $i) . '1', $h);
         }
@@ -207,7 +275,8 @@ class ElectricityController extends Controller
             $sheet->setCellValue('D' . $row, $t->jumlah_kwh);
             $sheet->setCellValue('E' . $row, $t->nominal);
             $sheet->setCellValue('F' . $row, $t->creator?->name);
-            $sheet->setCellValue('G' . $row, $t->catatan);
+            $sheet->setCellValue('G' . $row, $t->bukti_url ?? '-');
+            $sheet->setCellValue('H' . $row, $t->catatan);
             $row++;
         }
 
@@ -222,12 +291,14 @@ class ElectricityController extends Controller
 
     public function exportChecks(Request $request)
     {
-        $query = ElectricityTokenCheck::with('checker');
+        $checks = $this->api->checks();
+
+        if ($checks->isEmpty()) {
+            $checks = ElectricityTokenCheck::with('checker')->latest()->get();
+        }
 
         $filter = $request->filter ?? 'bulanan';
-        $query = $this->applyFilter($query, $filter);
-
-        $checks = $query->latest()->get();
+        $checks = $this->applyCollectionFilterChecks($checks, $filter)->values();
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
@@ -241,9 +312,9 @@ class ElectricityController extends Controller
         $row = 2;
         foreach ($checks as $idx => $c) {
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $c->tanggal_check->format('d/m/Y'));
+            $sheet->setCellValue('B' . $row, $c->tanggal_check?->format('d/m/Y') ?? '-');
             $sheet->setCellValue('C' . $row, $c->sisa_kwh);
-            $sheet->setCellValue('D' . $row, $c->terpakai);
+            $sheet->setCellValue('D' . $row, $c->terpakai ?? '-');
             $sheet->setCellValue('E' . $row, $c->status);
             $sheet->setCellValue('F' . $row, $c->checker?->name);
             $sheet->setCellValue('G' . $row, $c->catatan);
@@ -259,12 +330,48 @@ class ElectricityController extends Controller
         return response()->download($temp, $filename)->deleteFileAfterSend(true);
     }
 
-    private function applyFilter($query, $filter)
+    private function applyCollectionFilter($items, $filter)
     {
         return match ($filter) {
-            'harian' => $query->whereDate('created_at', today()),
-            'mingguan' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
-            default => $query,
+            'harian' => $items->filter(fn ($i) => $i->tanggal_bayar?->isToday()),
+            'mingguan' => $items->filter(fn ($i) => $i->tanggal_bayar?->between(now()->startOfWeek(), now()->endOfWeek())),
+            default => $items,
         };
+    }
+
+    private function applyCollectionFilterChecks($items, $filter)
+    {
+        return match ($filter) {
+            'harian' => $items->filter(fn ($i) => $i->tanggal_check?->isToday()),
+            'mingguan' => $items->filter(fn ($i) => $i->tanggal_check?->between(now()->startOfWeek(), now()->endOfWeek())),
+            default => $items,
+        };
+    }
+
+    private function toCheckClientArray($c): array
+    {
+        return [
+            'id' => $c->id ?? null,
+            'tanggal_check' => $c->tanggal_check ? $c->tanggal_check->toISOString() : null,
+            'sisa_kwh' => (float) ($c->sisa_kwh ?? 0),
+            'terpakai' => $c->terpakai !== null ? (float) $c->terpakai : null,
+            'status' => $c->status ?? null,
+            'checker' => ['name' => $c->checker?->name],
+            'catatan' => $c->catatan ?? null,
+        ];
+    }
+
+    private function toClientArray($t): array
+    {
+        return [
+            'id' => $t->id ?? null,
+            'tanggal_bayar' => $t->tanggal_bayar ? $t->tanggal_bayar->toISOString() : null,
+            'periode' => $t->periode ?? '-',
+            'jumlah_kwh' => (float) ($t->jumlah_kwh ?? 0),
+            'nominal' => (float) ($t->nominal ?? 0),
+            'creator' => ['name' => $t->creator?->name],
+            'catatan' => $t->catatan ?? null,
+            'bukti_url' => $t->bukti_url ?? null,
+        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\IplRukoPayment;
+use App\Services\IplRukoApiService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -10,21 +11,35 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class IplRukoController extends Controller
 {
+    public function __construct(private IplRukoApiService $api)
+    {
+    }
+
     public function index()
     {
-        $totalTagihan = IplRukoPayment::count();
-        $totalLunas = IplRukoPayment::where('status', 'lunas')->count();
-        $totalTerlambat = IplRukoPayment::where('status', 'terlambat')
-            ->orWhere(function ($q) {
-                $q->where('status', 'menunggu')->whereDate('jatuh_tempo', '<', today());
-            })->count();
-        $totalMenunggu = IplRukoPayment::where('status', 'menunggu')
-            ->whereDate('jatuh_tempo', '>=', today())->count();
+        $apiPayments = $this->api->payments()
+            ->sortByDesc(fn ($p) => ($p->jatuh_tempo?->timestamp ?? $p->id ?? 0))
+            ->values();
 
-        $payments = IplRukoPayment::with('creator')->latest()->paginate(20);
+        $payments = $apiPayments->isNotEmpty()
+            ? $apiPayments
+            : IplRukoPayment::with('creator')->latest()->get();
+
+        $totalTagihan = $payments->count();
+        $totalLunas = $payments->filter(fn ($p) => $p->status === 'lunas')->count();
+        $totalTerlambat = $payments->filter(
+            fn ($p) => $p->status === 'terlambat'
+                || ($p->status === 'menunggu' && $p->jatuh_tempo?->lt(today()))
+        )->count();
+        $totalMenunggu = $payments->filter(
+            fn ($p) => $p->status === 'menunggu' && $p->jatuh_tempo?->gte(today())
+        )->count();
+
+        $paymentsClient = $payments->map(fn ($p) => $this->toClientArray($p))->values();
 
         return view('ipl.index', compact(
-            'totalTagihan', 'totalLunas', 'totalTerlambat', 'totalMenunggu', 'payments'
+            'totalTagihan', 'totalLunas', 'totalTerlambat', 'totalMenunggu',
+            'payments', 'paymentsClient'
         ));
     }
 
@@ -119,16 +134,78 @@ class IplRukoController extends Controller
         return redirect()->route('ipl.index')->with('success', "Berhasil generate {$count} tagihan IPL Ruko untuk tahun {$tahun}.");
     }
 
+    public function data(Request $request)
+    {
+        $payments = $this->api->payments();
+
+        if ($payments->isEmpty()) {
+            $payments = IplRukoPayment::with('creator')->latest()->get();
+        }
+
+        if ($request->search) {
+            $search = strtolower((string) $request->search);
+            $payments = $payments->filter(function ($p) use ($search) {
+                return str_contains(strtolower((string) $p->periode), $search)
+                    || str_contains(strtolower((string) $p->tagihan), $search);
+            });
+        }
+
+        if ($request->status && $request->status !== 'semua') {
+            if ($request->status === 'terlambat') {
+                $payments = $payments->filter(
+                    fn ($p) => $p->status === 'terlambat'
+                        || ($p->status === 'menunggu' && $p->jatuh_tempo?->lt(today()))
+                );
+            } else {
+                $payments = $payments->filter(fn ($p) => $p->status === $request->status);
+            }
+        }
+
+        $payments = $payments
+            ->sortByDesc(fn ($p) => ($p->jatuh_tempo?->timestamp ?? $p->id ?? 0))
+            ->values();
+
+        $perPage = 20;
+        $total = $payments->count();
+        $page = max(1, (int) $request->page);
+        $items = $payments->forPage($page, $perPage)->values();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $items->map(fn ($p) => $this->toClientArray($p))->all(),
+                'meta' => [
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => $perPage,
+                    'total' => $total,
+                ],
+            ]);
+        }
+
+        return $payments;
+    }
+
     public function export(Request $request)
     {
-        $query = IplRukoPayment::with('creator');
-        $payments = $query->latest()->get();
+        $payments = $this->api->payments();
+
+        if ($payments->isEmpty()) {
+            $payments = IplRukoPayment::with('creator')->latest()->get();
+        }
+
+        if ($request->status && $request->status !== 'semua') {
+            $payments = $payments->filter(fn ($p) => $p->status === $request->status);
+        }
+
+        $payments = $payments
+            ->sortByDesc(fn ($p) => ($p->jatuh_tempo?->timestamp ?? $p->id ?? 0))
+            ->values();
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('IPL Ruko');
 
-        $headers = ['No', 'Periode', 'Tagihan', 'Jatuh Tempo', 'Nominal', 'Status', 'Tgl Bayar', 'Oleh'];
+        $headers = ['No', 'Periode', 'Tagihan', 'Jatuh Tempo', 'Hari', 'Nominal', 'Status', 'Tgl Bayar'];
         foreach ($headers as $i => $h) {
             $sheet->setCellValue(chr(65 + $i) . '1', $h);
         }
@@ -136,13 +213,13 @@ class IplRukoController extends Controller
         $row = 2;
         foreach ($payments as $idx => $p) {
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $p->periode);
-            $sheet->setCellValue('C' . $row, $p->tagihan);
-            $sheet->setCellValue('D' . $row, $p->jatuh_tempo->format('d/m/Y'));
-            $sheet->setCellValue('E' . $row, $p->nominal);
-            $sheet->setCellValue('F' . $row, $p->status);
-            $sheet->setCellValue('G' . $row, $p->tgl_bayar?->format('d/m/Y'));
-            $sheet->setCellValue('H' . $row, $p->creator?->name);
+            $sheet->setCellValue('B' . $row, $p->periode ?? '-');
+            $sheet->setCellValue('C' . $row, $p->tagihan ?? '-');
+            $sheet->setCellValue('D' . $row, $p->jatuh_tempo?->format('d/m/Y') ?? '-');
+            $sheet->setCellValue('E' . $row, $p->hari ?? '-');
+            $sheet->setCellValue('F' . $row, $p->nominal ?? 0);
+            $sheet->setCellValue('G' . $row, $p->status ?? '-');
+            $sheet->setCellValue('H' . $row, $p->tgl_bayar?->format('d/m/Y') ?? '-');
             $row++;
         }
 
@@ -155,43 +232,19 @@ class IplRukoController extends Controller
         return response()->download($temp, $filename)->deleteFileAfterSend(true);
     }
 
-    public function data(Request $request)
+    private function toClientArray($p): array
     {
-        $query = IplRukoPayment::with('creator');
-
-        if ($status = $request->status) {
-            if ($status === 'terlambat') {
-                $query->where(function ($q) {
-                    $q->where('status', 'terlambat')
-                        ->orWhere(function ($q2) {
-                            $q2->where('status', 'menunggu')->whereDate('jatuh_tempo', '<', today());
-                        });
-                });
-            } else {
-                $query->where('status', $status);
-            }
-        }
-
-        if ($search = $request->search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('periode', 'like', "%{$search}%")
-                    ->orWhere('tagihan', 'like', "%{$search}%");
-            });
-        }
-
-        $payments = $query->latest()->paginate($request->per_page ?? 20);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'data' => $payments->items(),
-                'meta' => [
-                    'current_page' => $payments->currentPage(),
-                    'last_page' => $payments->lastPage(),
-                    'total' => $payments->total(),
-                ],
-            ]);
-        }
-
-        return $payments;
+        return [
+            'id' => $p->id ?? null,
+            'periode' => $p->periode ?? null,
+            'tagihan' => $p->tagihan ?? null,
+            'jatuh_tempo' => $p->jatuh_tempo ? $p->jatuh_tempo->toISOString() : null,
+            'hari' => $p->hari ?? null,
+            'nominal' => (float) ($p->nominal ?? 0),
+            'status' => $p->status ?? null,
+            'tgl_bayar' => $p->tgl_bayar ? $p->tgl_bayar->toISOString() : null,
+            'bukti' => $p->bukti ?? null,
+            'creator' => ['name' => $p->creator?->name],
+        ];
     }
 }

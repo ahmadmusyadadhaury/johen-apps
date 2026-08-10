@@ -4,28 +4,44 @@ namespace App\Http\Controllers;
 
 use App\Models\InternetPayment;
 use App\Models\InternetUsageCheck;
+use App\Services\InternetApiService;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class InternetController extends Controller
 {
+    public function __construct(private InternetApiService $api)
+    {
+    }
+
     public function index()
     {
-        $totalWifi = InternetPayment::count();
-        $sudahDibayar = InternetPayment::where('status', 'lunas')->count();
-        $jatuhTempo = InternetPayment::where('status', 'menunggu')
-            ->where('masa_tenggang', '>=', now())
-            ->count();
-        $terlambat = InternetPayment::where('status', 'terlambat')
-            ->orWhere(function ($q) {
-                $q->where('status', 'menunggu')
-                  ->where('masa_tenggang', '<', now());
-            })
-            ->count();
+        $apiPayments = $this->api->payments()
+            ->sortByDesc(fn ($p) => ($p->masa_tenggang?->timestamp ?? $p->id ?? 0))
+            ->values();
 
-        $payments = InternetPayment::with('creator')->latest()->paginate(20);
-        $checks = InternetUsageCheck::with('checker')->latest()->paginate(20);
+        $payments = $apiPayments->isNotEmpty()
+            ? $apiPayments
+            : InternetPayment::with('creator')->latest()->get();
+
+        $totalWifi = $payments->count();
+        $sudahDibayar = $payments->filter(fn ($p) => $p->status === 'lunas')->count();
+        $jatuhTempo = $payments->filter(
+            fn ($p) => $p->status === 'menunggu' && $p->masa_tenggang?->gte(now())
+        )->count();
+        $terlambat = $payments->filter(
+            fn ($p) => $p->status === 'terlambat'
+                || ($p->status === 'menunggu' && $p->masa_tenggang?->lt(now()))
+        )->count();
+
+        $apiChecks = $this->api->checks()
+            ->sortByDesc(fn ($c) => ($c->tanggal?->timestamp ?? $c->id ?? 0))
+            ->values();
+
+        $checks = $apiChecks->isNotEmpty()
+            ? $apiChecks
+            : InternetUsageCheck::with('checker')->latest()->get();
 
         return view('internet.index', compact(
             'totalWifi', 'sudahDibayar', 'jatuhTempo', 'terlambat',
@@ -35,29 +51,42 @@ class InternetController extends Controller
 
     public function paymentsData(Request $request)
     {
-        $query = InternetPayment::with('creator');
+        $payments = $this->api->payments();
+
+        if ($payments->isEmpty()) {
+            $payments = InternetPayment::with('creator')->latest()->get();
+        }
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('nama_internet', 'like', "%{$request->search}%")
-                  ->orWhere('provider', 'like', "%{$request->search}%")
-                  ->orWhere('pic', 'like', "%{$request->search}%");
+            $search = strtolower((string) $request->search);
+            $payments = $payments->filter(function ($p) use ($search) {
+                return str_contains(strtolower((string) $p->nama_internet), $search)
+                    || str_contains(strtolower((string) $p->provider), $search)
+                    || str_contains(strtolower((string) $p->pic), $search);
             });
         }
 
         if ($request->status && $request->status !== 'semua') {
-            $query->where('status', $request->status);
+            $payments = $payments->filter(fn ($p) => $p->status === $request->status);
         }
 
-        $payments = $query->latest()->paginate(20);
+        $payments = $payments
+            ->sortByDesc(fn ($p) => ($p->masa_tenggang?->timestamp ?? $p->id ?? 0))
+            ->values();
+
+        $perPage = 20;
+        $total = $payments->count();
+        $page = max(1, (int) $request->page);
+        $items = $payments->forPage($page, $perPage)->values();
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => $payments->items(),
+                'data' => $items->map(fn ($p) => $this->toPaymentClientArray($p))->all(),
                 'meta' => [
-                    'current_page' => $payments->currentPage(),
-                    'last_page' => $payments->lastPage(),
-                    'total' => $payments->total(),
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => $perPage,
+                    'total' => $total,
                 ],
             ]);
         }
@@ -112,22 +141,40 @@ class InternetController extends Controller
 
     public function checksData(Request $request)
     {
-        $query = InternetUsageCheck::with('checker');
+        $checks = $this->api->checks();
 
-        if ($request->month && $request->year) {
-            $query->whereMonth('tanggal', $request->month)
-                  ->whereYear('tanggal', $request->year);
+        if ($checks->isEmpty()) {
+            $checks = InternetUsageCheck::with('checker')->latest()->get();
         }
 
-        $checks = $query->latest()->paginate(20);
+        if ($request->month && $request->year) {
+            $month = (int) $request->month;
+            $year = (int) $request->year;
+            $checks = $checks->filter(function ($c) use ($month, $year) {
+                if (!$c->tanggal) {
+                    return false;
+                }
+                return $c->tanggal->month === $month && $c->tanggal->year === $year;
+            });
+        }
+
+        $checks = $checks
+            ->sortByDesc(fn ($c) => ($c->tanggal?->timestamp ?? $c->id ?? 0))
+            ->values();
+
+        $perPage = 20;
+        $total = $checks->count();
+        $page = max(1, (int) $request->page);
+        $items = $checks->forPage($page, $perPage)->values();
 
         if ($request->wantsJson()) {
             return response()->json([
-                'data' => $checks->items(),
+                'data' => $items->map(fn ($c) => $this->toCheckClientArray($c))->all(),
                 'meta' => [
-                    'current_page' => $checks->currentPage(),
-                    'last_page' => $checks->lastPage(),
-                    'total' => $checks->total(),
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => $perPage,
+                    'total' => $total,
                 ],
             ]);
         }
@@ -160,19 +207,25 @@ class InternetController extends Controller
 
     public function exportPayments(Request $request)
     {
-        $query = InternetPayment::with('creator');
+        $payments = $this->api->payments();
 
-        if ($request->status && $request->status !== 'semua') {
-            $query->where('status', $request->status);
+        if ($payments->isEmpty()) {
+            $payments = InternetPayment::with('creator')->latest()->get();
         }
 
-        $payments = $query->latest()->get();
+        if ($request->status && $request->status !== 'semua') {
+            $payments = $payments->filter(fn ($p) => $p->status === $request->status);
+        }
+
+        $payments = $payments
+            ->sortByDesc(fn ($p) => ($p->masa_tenggang?->timestamp ?? $p->id ?? 0))
+            ->values();
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Pembayaran Internet');
 
-        $headers = ['No', 'Nama Internet', 'Provider', 'PIC', 'Jabatan', 'Masa Tenggang', 'Biaya', 'Status', 'Tgl Bayar', 'Keterangan'];
+        $headers = ['No', 'Nama Internet', 'Provider', 'PIC', 'Jabatan', 'Masa Tenggang', 'Hari', 'Biaya', 'Status', 'Tgl Bayar'];
         foreach ($headers as $i => $h) {
             $sheet->setCellValue(chr(65 + $i) . '1', $h);
         }
@@ -180,15 +233,15 @@ class InternetController extends Controller
         $row = 2;
         foreach ($payments as $idx => $p) {
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $p->nama_internet);
-            $sheet->setCellValue('C' . $row, $p->provider);
-            $sheet->setCellValue('D' . $row, $p->pic);
-            $sheet->setCellValue('E' . $row, $p->jabatan);
-            $sheet->setCellValue('F' . $row, $p->masa_tenggang->format('d/m/Y'));
-            $sheet->setCellValue('G' . $row, $p->biaya);
-            $sheet->setCellValue('H' . $row, $p->status);
-            $sheet->setCellValue('I' . $row, $p->tgl_bayar?->format('d/m/Y') ?? '-');
-            $sheet->setCellValue('J' . $row, $p->keterangan);
+            $sheet->setCellValue('B' . $row, $p->nama_internet ?? '-');
+            $sheet->setCellValue('C' . $row, $p->provider ?? '-');
+            $sheet->setCellValue('D' . $row, $p->pic ?? '-');
+            $sheet->setCellValue('E' . $row, $p->jabatan ?? '-');
+            $sheet->setCellValue('F' . $row, $p->masa_tenggang?->format('d/m/Y') ?? '-');
+            $sheet->setCellValue('G' . $row, $p->hari ?? '-');
+            $sheet->setCellValue('H' . $row, $p->biaya ?? 0);
+            $sheet->setCellValue('I' . $row, $p->status ?? '-');
+            $sheet->setCellValue('J' . $row, $p->tgl_bayar?->format('d/m/Y') ?? '-');
             $row++;
         }
 
@@ -202,14 +255,26 @@ class InternetController extends Controller
 
     public function exportChecks(Request $request)
     {
-        $query = InternetUsageCheck::with('checker');
+        $checks = $this->api->checks();
 
-        if ($request->month && $request->year) {
-            $query->whereMonth('tanggal', $request->month)
-                  ->whereYear('tanggal', $request->year);
+        if ($checks->isEmpty()) {
+            $checks = InternetUsageCheck::with('checker')->latest()->get();
         }
 
-        $checks = $query->latest()->get();
+        if ($request->month && $request->year) {
+            $month = (int) $request->month;
+            $year = (int) $request->year;
+            $checks = $checks->filter(function ($c) use ($month, $year) {
+                if (!$c->tanggal) {
+                    return false;
+                }
+                return $c->tanggal->month === $month && $c->tanggal->year === $year;
+            });
+        }
+
+        $checks = $checks
+            ->sortByDesc(fn ($c) => ($c->tanggal?->timestamp ?? $c->id ?? 0))
+            ->values();
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
@@ -223,13 +288,13 @@ class InternetController extends Controller
         $row = 2;
         foreach ($checks as $idx => $c) {
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $c->ruangan);
-            $sheet->setCellValue('C' . $row, $c->hari);
-            $sheet->setCellValue('D' . $row, $c->tanggal->format('d/m/Y'));
-            $sheet->setCellValue('E' . $row, $c->penggunaan_wifi);
-            $sheet->setCellValue('F' . $row, $c->penggunaan_ethernet);
+            $sheet->setCellValue('B' . $row, $c->ruangan ?? '-');
+            $sheet->setCellValue('C' . $row, $c->hari ?? '-');
+            $sheet->setCellValue('D' . $row, $c->tanggal?->format('d/m/Y') ?? '-');
+            $sheet->setCellValue('E' . $row, $c->penggunaan_wifi ?? 0);
+            $sheet->setCellValue('F' . $row, $c->penggunaan_ethernet ?? 0);
             $sheet->setCellValue('G' . $row, $c->checker?->name);
-            $sheet->setCellValue('H' . $row, $c->keterangan);
+            $sheet->setCellValue('H' . $row, $c->keterangan ?? '-');
             $row++;
         }
 
@@ -239,5 +304,37 @@ class InternetController extends Controller
         $writer->save($temp);
 
         return response()->download($temp, $filename)->deleteFileAfterSend(true);
+    }
+
+    private function toPaymentClientArray($p): array
+    {
+        return [
+            'id' => $p->id ?? null,
+            'nama_internet' => $p->nama_internet ?? null,
+            'provider' => $p->provider ?? null,
+            'pic' => $p->pic ?? null,
+            'jabatan' => $p->jabatan ?? null,
+            'masa_tenggang' => $p->masa_tenggang ? $p->masa_tenggang->toISOString() : null,
+            'hari' => $p->hari ?? $p->hari_internet ?? '-',
+            'biaya' => (float) ($p->biaya ?? 0),
+            'status' => $p->status ?? null,
+            'tgl_bayar' => $p->tgl_bayar ? $p->tgl_bayar->toISOString() : null,
+            'keterangan' => $p->keterangan ?? null,
+            'creator' => ['name' => $p->creator?->name],
+        ];
+    }
+
+    private function toCheckClientArray($c): array
+    {
+        return [
+            'id' => $c->id ?? null,
+            'ruangan' => $c->ruangan ?? null,
+            'hari' => $c->hari ?? null,
+            'tanggal' => $c->tanggal ? $c->tanggal->toISOString() : null,
+            'penggunaan_wifi' => (float) ($c->penggunaan_wifi ?? 0),
+            'penggunaan_ethernet' => (float) ($c->penggunaan_ethernet ?? 0),
+            'keterangan' => $c->keterangan ?? null,
+            'checker' => ['name' => $c->checker?->name],
+        ];
     }
 }

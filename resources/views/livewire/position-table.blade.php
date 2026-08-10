@@ -1,3 +1,10 @@
+@push('topbar-left')
+    <div>
+        <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Jabatan</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400">Kelola struktur jabatan dan hierarki di perusahaan</p>
+    </div>
+@endpush
+
 @php
 $tabColors = [
     'primary' => ['border' => 'border-primary-600', 'text' => 'text-primary-700', 'dark-border' => 'dark:border-primary-400', 'dark-text' => 'dark:text-primary-400'],
@@ -64,12 +71,12 @@ $hoverTabColors = [
         </div>
 
         <div class="flex items-center gap-2">
-            @can('create-data')
+            @if(auth()->user()->canCreateData() && ! auth()->user()->isGmCeo())
             <button wire:click="openCreateModal" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Jabatan
             </button>
-            @endcan
+            @endif
         </div>
     </div>
 
@@ -100,7 +107,9 @@ $hoverTabColors = [
                     <th class="px-6 py-3">Bawahan</th>
                     <th class="px-6 py-3">Deskripsi</th>
                     <th class="px-6 py-3 text-center">Status</th>
+                    @unless(auth()->user()->isGmCeo())
                     <th class="px-6 py-3 text-center">Aksi</th>
+                    @endunless
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -132,6 +141,13 @@ $hoverTabColors = [
                         </td>
                         <td class="table-cell text-gray-600 dark:text-gray-400 max-w-xs truncate">{{ $pos->deskripsi ?? '-' }}</td>
                         <td class="table-cell text-center">
+                            @if(auth()->user()->isGmCeo())
+                                @if($pos->is_active)
+                                    <span class="badge-success">Aktif</span>
+                                @else
+                                    <span class="badge-danger">Nonaktif</span>
+                                @endif
+                            @else
                             <button wire:click="toggleActive({{ $pos->id }})" class="inline-flex items-center gap-1.5">
                                 @if($pos->is_active)
                                     <span class="badge-success">Aktif</span>
@@ -139,7 +155,9 @@ $hoverTabColors = [
                                     <span class="badge-danger">Nonaktif</span>
                                 @endif
                             </button>
+                            @endif
                         </td>
+                        @unless(auth()->user()->isGmCeo())
                         <td class="table-cell text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
                                 <button wire:click="openEditModal({{ $pos->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
@@ -152,22 +170,23 @@ $hoverTabColors = [
                                 </button>
                             </div>
                         </td>
+                        @endunless
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-16 text-center">
+                        <td colspan="{{ auth()->user()->isGmCeo() ? 7 : 8 }}" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center justify-center">
                                 <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                     <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
                                 </div>
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data jabatan</h3>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tambah jabatan pertama untuk memulai</p>
-                                @can('create-data')
+                                @if(auth()->user()->canCreateData() && ! auth()->user()->isGmCeo())
                                 <button wire:click="openCreateModal" class="btn-primary mt-4 text-xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                                     Tambah Jabatan
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                         </td>
                     </tr>

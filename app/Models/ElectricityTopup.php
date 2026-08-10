@@ -9,8 +9,10 @@ class ElectricityTopup extends Model
 {
     protected $fillable = [
         'tanggal_bayar', 'periode', 'jumlah_kwh',
-        'nominal', 'created_by', 'catatan',
+        'nominal', 'created_by', 'catatan', 'bukti',
     ];
+
+    protected $appends = ['bukti_url'];
 
     protected function casts(): array
     {
@@ -24,5 +26,10 @@ class ElectricityTopup extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function getBuktiUrlAttribute(): ?string
+    {
+        return $this->bukti ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->bukti) : null;
     }
 }

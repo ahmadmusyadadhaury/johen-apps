@@ -20,7 +20,6 @@ use App\Http\Controllers\ItTicketController;
 use App\Http\Controllers\JadwalMaintenanceController;
 use App\Http\Controllers\JobdeskController;
 use App\Http\Controllers\MeetingController;
-use App\Http\Controllers\PaymentSubmissionController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PayrollImportController;
 use App\Http\Controllers\PayrollPreviewController;
@@ -198,24 +197,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/export', [IplRukoController::class, 'export'])->name('export');
     });
 
-    Route::prefix('payment-submissions')->name('payment-submissions.')->group(function () {
-        Route::get('/tagihan', [PaymentSubmissionController::class, 'tagihan'])->name('tagihan');
-        Route::get('/pengajuan', [PaymentSubmissionController::class, 'pengajuan'])->name('pengajuan');
-        Route::get('/persetujuan', [PaymentSubmissionController::class, 'persetujuan'])->name('persetujuan');
-        Route::post('/', [PaymentSubmissionController::class, 'store'])->name('store');
-        Route::patch('/{paymentSubmission}/approve', [PaymentSubmissionController::class, 'approve'])->name('approve');
-        Route::patch('/{paymentSubmission}/reject', [PaymentSubmissionController::class, 'reject'])->name('reject');
-        Route::post('/{paymentSubmission}/upload-bukti', [PaymentSubmissionController::class, 'uploadBukti'])->name('upload-bukti');
-        Route::patch('/{paymentSubmission}/mark-paid', [PaymentSubmissionController::class, 'markPaid'])->name('mark-paid');
-        Route::delete('/{paymentSubmission}', [PaymentSubmissionController::class, 'destroy'])->name('destroy');
-        Route::get('/export/tagihan', [PaymentSubmissionController::class, 'exportTagihan'])->name('export.tagihan');
-        Route::get('/export/pengajuan', [PaymentSubmissionController::class, 'exportPengajuan'])->name('export.pengajuan');
-        Route::get('/export/persetujuan', [PaymentSubmissionController::class, 'exportPersetujuan'])->name('export.persetujuan');
-        Route::get('/data/tagihan', [PaymentSubmissionController::class, 'dataTagihan'])->name('data.tagihan');
-        Route::get('/data/pengajuan', [PaymentSubmissionController::class, 'dataPengajuan'])->name('data.pengajuan');
-        Route::get('/data/persetujuan', [PaymentSubmissionController::class, 'dataPersetujuan'])->name('data.persetujuan');
-    });
-
     Route::prefix('assets')->name('assets.')->group(function () {
         Route::get('/', [AssetViewController::class, 'index'])->name('index');
         Route::get('/{asset}/detail', [AssetViewController::class, 'detail'])->name('detail');
@@ -253,7 +234,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin');
-    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin');
+    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin,gm_ceo');
 });
 
 Route::middleware('auth')->group(function () {

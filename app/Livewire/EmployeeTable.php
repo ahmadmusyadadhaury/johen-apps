@@ -138,7 +138,7 @@ class EmployeeTable extends Component
 
     public function openCreateModal(): void
     {
-        Gate::authorize('create-data');
+        $this->authorizeWrite('create-data');
         $this->resetForm();
         $this->step = 1;
         $this->showCreateModal = true;
@@ -146,7 +146,7 @@ class EmployeeTable extends Component
 
     public function openEditModal(int $id): void
     {
-        Gate::authorize('update-data');
+        $this->authorizeWrite('update-data');
         $emp = Employee::with('positions', 'divisions')->findOrFail($id);
         $this->editId = $emp->id;
         $this->nik = $emp->nik;
@@ -227,7 +227,7 @@ class EmployeeTable extends Component
 
     public function save(): void
     {
-        Gate::authorize('create-data');
+        $this->authorizeWrite('create-data');
         $rules = $this->rules();
         $rules['nik'] = ['required', 'string', 'max:30', 'unique:employees,nik'];
         $this->validate($rules);
@@ -250,7 +250,7 @@ class EmployeeTable extends Component
 
     public function update(): void
     {
-        Gate::authorize('update-data');
+        $this->authorizeWrite('update-data');
         $emp = Employee::findOrFail($this->editId);
 
         $rules = $this->rules();
@@ -275,7 +275,7 @@ class EmployeeTable extends Component
 
     public function confirmDelete(int $id): void
     {
-        Gate::authorize('delete-data');
+        $this->authorizeWrite('delete-data');
         $this->deleteId = $id;
         $this->showDeleteConfirm = true;
     }
@@ -283,7 +283,7 @@ class EmployeeTable extends Component
     public function executeDelete(): void
     {
         if (!$this->deleteId) return;
-        Gate::authorize('delete-data');
+        $this->authorizeWrite('delete-data');
         Employee::findOrFail($this->deleteId)->delete();
         $this->dispatch('notify', type: 'success', message: 'Karyawan berhasil dihapus.');
         $this->cancelDelete();
@@ -293,6 +293,15 @@ class EmployeeTable extends Component
     {
         $this->showDeleteConfirm = false;
         $this->deleteId = null;
+    }
+
+    private function authorizeWrite(string $ability): void
+    {
+        if (auth()->user()->isGmCeo()) {
+            abort(403);
+        }
+
+        Gate::authorize($ability);
     }
 
     public function render()

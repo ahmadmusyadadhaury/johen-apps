@@ -62,14 +62,14 @@ class DivisionTable extends Component
 
     public function openCreateModal(): void
     {
-        Gate::authorize('create-data');
+        $this->authorizeWrite('create-data');
         $this->resetForm();
         $this->showCreateModal = true;
     }
 
     public function openEditModal(int $id): void
     {
-        Gate::authorize('update-data');
+        $this->authorizeWrite('update-data');
         $div = Division::findOrFail($id);
         $this->editId = $div->id;
         $this->nama = $div->nama;
@@ -89,7 +89,7 @@ class DivisionTable extends Component
 
     public function save(): void
     {
-        Gate::authorize('create-data');
+        $this->authorizeWrite('create-data');
         $this->validate($this->rules());
 
         Division::create($this->buildData());
@@ -100,7 +100,7 @@ class DivisionTable extends Component
 
     public function update(): void
     {
-        Gate::authorize('update-data');
+        $this->authorizeWrite('update-data');
         $div = Division::findOrFail($this->editId);
 
         $this->validate($this->rules());
@@ -113,7 +113,7 @@ class DivisionTable extends Component
 
     public function confirmDelete(int $id): void
     {
-        Gate::authorize('delete-data');
+        $this->authorizeWrite('delete-data');
         $this->deleteId = $id;
         $this->showDeleteConfirm = true;
     }
@@ -121,7 +121,7 @@ class DivisionTable extends Component
     public function executeDelete(): void
     {
         if (!$this->deleteId) return;
-        Gate::authorize('delete-data');
+        $this->authorizeWrite('delete-data');
         $div = Division::withCount('employees')->findOrFail($this->deleteId);
 
         if ($div->employees_count > 0) {
@@ -141,9 +141,18 @@ class DivisionTable extends Component
         $this->deleteId = null;
     }
 
+    private function authorizeWrite(string $ability): void
+    {
+        if (auth()->user()->isGmCeo()) {
+            abort(403);
+        }
+
+        Gate::authorize($ability);
+    }
+
     public function toggleActive(int $id): void
     {
-        Gate::authorize('update-data');
+        $this->authorizeWrite('update-data');
         $div = Division::findOrFail($id);
         $div->update(['is_active' => !$div->is_active]);
         $this->dispatch('notify', type: 'success', message: 'Status divisi berhasil diubah.');

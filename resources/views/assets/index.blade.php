@@ -1,29 +1,17 @@
-﻿<x-app-layout :title="$selectedCategory ? ucfirst($selectedCategory) : 'Data Asset'">
+﻿<x-app-layout :title="$isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset')">
     @push('topbar-left')
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-                {{ $selectedCategory ? ucfirst($selectedCategory) : 'Data Asset' }}
+                {{ $isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset') }}
             </h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Kelola data asset perusahaan</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $isMyAssets ? 'Menampilkan aset dengan PIC atas nama Anda' : 'Kelola data asset perusahaan' }}</p>
         </div>
     @endpush
 
     <div class="space-y-6" x-data="assetDetailModal()">
-        @if(!$selectedCategory)
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('assets.index') }}"
-               class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 {{ !$selectedCategory ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' }}">
-                Semua
-            </a>
-            @foreach($categories as $cat)
-                <a href="{{ route('assets.category', strtolower($cat->name)) }}"
-                   class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 {{ $selectedCategory && strtolower($cat->name) === strtolower($selectedCategory) ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' }}">
-                    {{ $cat->name }}
-                </a>
-            @endforeach
-        </div>
-        @endif
-
+        @php
+            $startNo = $assets instanceof \Illuminate\Pagination\LengthAwarePaginator ? ($assets->firstItem() ?: 1) : 1;
+        @endphp
         @if($isSimCard)
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
@@ -382,7 +370,7 @@
                         @forelse($assets as $a)
                         @php $m = (array) ($a->metadata ?? []); @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $a->code }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ $a->name }}</td>
                             <td class="table-cell text-center">{{ $m['jumlah'] ?? '-' }}</td>
@@ -458,7 +446,7 @@
                             }
                         @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $a->code }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $sim['PIC'] ?? '-' }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $sim['Atasan'] ?? '-' }}</td>
@@ -524,7 +512,7 @@
                         @forelse($assets as $a)
                         @php $v = (array) ($a->metadata ?? []); @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ $v['nama_kendaraan'] ?? $a->name }}</td>
                             <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $v['plat_nomor'] ?? '-' }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $v['jenis_kendaraan'] ?? '-' }}</td>
@@ -589,7 +577,7 @@
                         @forelse($assets as $a)
                         @php $s = (array) ($a->metadata ?? []); @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $s['username'] ?? $a->code }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $s['nama'] ?? '-' }}</td>
                             <td class="table-cell text-center tabular-nums text-gray-700 dark:text-gray-300">{{ ($s['followers'] ?? null) !== null && $s['followers'] !== '-' ? $s['followers'] : '-' }}</td>
@@ -653,7 +641,7 @@
                             }
                         @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors" @if($isAssetMes) x-show="mesTab === '{{ $isPutri ? 'putri' : 'putra' }}'" @endif>
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ $m['nama_aset'] ?? $a->name }}</td>
                             @if($isAssetMes)
                             <td class="table-cell">
@@ -719,7 +707,7 @@
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                         @forelse($assets as $a)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400">{{ $a->code }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $a->name }}</td>
                             <td class="table-cell">

@@ -45,7 +45,14 @@ class AssetViewController extends Controller
 
         $categories = AssetCategory::active()->get();
 
+        $isMyAssets = $request->boolean('mine');
+        $userName = $isMyAssets ? auth()->user()->name : null;
+
         $query = Asset::with(['category', 'creator']);
+
+        if ($isMyAssets) {
+            $query->where('metadata->pic', 'like', '%'.$userName.'%');
+        }
 
         if ($category) {
             $query->whereHas('category', function ($q) use ($category) {
@@ -62,6 +69,10 @@ class AssetViewController extends Controller
         }
 
         $statsQuery = Asset::query();
+
+        if ($isMyAssets) {
+            $statsQuery->where('metadata->pic', 'like', '%'.$userName.'%');
+        }
 
         if ($category) {
             $statsQuery->whereHas('category', function ($q) use ($category) {
@@ -169,10 +180,10 @@ class AssetViewController extends Controller
 
         $assets = ($isAssetMes || $isAsetTim)
             ? $query->latest()->get()
-            : $query->latest()->paginate(20);
+            : $query->latest()->paginate(20)->withQueryString();
         $selectedCategory = $category;
 
-        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan', 'isSosialMedia', 'isAssetMes', 'isAsetTim'));
+        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan', 'isSosialMedia', 'isAssetMes', 'isAsetTim', 'isMyAssets'));
     }
 
 public function detail(Asset $asset)

@@ -63,12 +63,12 @@
                 </h2>
 
                 <div class="flex items-center gap-2 flex-wrap">
-                    <div class="relative" x-data="{ search: '' }">
-                        <input type="text" x-model="search" @input.debounce="loadPayments(search)" placeholder="Cari..." class="input-field w-40 text-xs pl-8 py-2">
+                    <div class="relative">
+                        <input type="text" x-model="search" @input.debounce="loadPayments(search, statusFilter)" placeholder="Cari..." class="input-field w-40 text-xs pl-8 py-2">
                         <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
 
-                    <select x-data="{ status: 'semua' }" @change="loadPayments(search, status)" x-model="status" class="input-field text-xs py-2 w-32">
+                    <select @change="loadPayments(search, statusFilter)" x-model="statusFilter" class="input-field text-xs py-2 w-32">
                         <option value="semua">Semua Status</option>
                         <option value="lunas">Lunas</option>
                         <option value="menunggu">Menunggu</option>
@@ -78,11 +78,6 @@
                     <a href="{{ route('internet.export.payments') }}" class="btn-ghost p-2" title="Download Excel">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                     </a>
-
-                    <button @click="$dispatch('open-modal', { name: 'internet-payment-modal' })" class="btn-primary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                        Tambah Tagihan
-                    </button>
                 </div>
             </div>
 
@@ -96,13 +91,13 @@
                             <th class="px-4 py-3">PIC</th>
                             <th class="px-4 py-3">Jabatan</th>
                             <th class="px-4 py-3 text-center">Masa Tenggang</th>
+                            <th class="px-4 py-3 text-center">Hari</th>
                             <th class="px-4 py-3 text-right">Biaya</th>
                             <th class="px-4 py-3 text-center">Status</th>
                             <th class="px-4 py-3 text-center">Tgl Bayar</th>
-                            <th class="px-4 py-3 text-center w-24">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800" id="payments-table-body">
                         @forelse($payments as $p)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
                             <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
@@ -111,10 +106,11 @@
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $p->pic }}</td>
                             <td class="table-cell text-gray-500 dark:text-gray-400">{{ $p->jabatan ?? '-' }}</td>
                             <td class="table-cell text-center whitespace-nowrap">
-                                <span class="{{ $p->masa_tenggang < now() && $p->status !== 'lunas' ? 'text-red-600 font-semibold' : 'text-gray-600 dark:text-gray-400' }}">
-                                    {{ $p->masa_tenggang->format('d/m/Y') }}
+                                <span class="{{ $p->masa_tenggang && $p->masa_tenggang < now() && $p->status !== 'lunas' ? 'text-red-600 font-semibold' : 'text-gray-600 dark:text-gray-400' }}">
+                                    {{ $p->masa_tenggang?->format('d/m/Y') ?? '-' }}
                                 </span>
                             </td>
+                            <td class="table-cell text-center text-gray-600 dark:text-gray-400">{{ $p->hari ?? '-' }}</td>
                             <td class="table-cell text-right font-semibold text-gray-900 dark:text-gray-100">Rp {{ number_format($p->biaya, 0, ',', '.') }}</td>
                             <td class="table-cell text-center">
                                 @php
@@ -125,34 +121,9 @@
                                         default => 'badge-info',
                                     };
                                 @endphp
-                                <span class="{{ $badge }}">{{ ucfirst($p->status) }}</span>
+                                <span class="{{ $badge }}">{{ $p->status ? ucfirst($p->status) : '-' }}</span>
                             </td>
                             <td class="table-cell text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $p->tgl_bayar?->format('d/m/Y') ?? '-' }}</td>
-                            <td class="table-cell text-center">
-                                <div class="flex items-center justify-center gap-1">
-                                    <button @click="$dispatch('open-detail', { id: {{ $p->id }} })" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Lihat Detail">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                    </button>
-                                    <div class="relative" x-data="{ open: false }">
-                                        <button @click="open = !open" @click.outside="open = false" class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Aksi">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-                                        </button>
-                                        <div x-show="open" x-cloak @click="open = false"
-                                             x-transition:enter="transition ease-out duration-200"
-                                             x-transition:enter-start="opacity-0 -translate-y-2"
-                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                             class="absolute right-0 top-full mt-1 min-w-[140px] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1.5 z-50">
-                                            <form method="POST" action="{{ route('internet.destroy.payment', $p) }}" @submit.prevent="$store.confirmModal.show('Hapus Tagihan', 'Apakah Anda yakin ingin menghapus tagihan ini?', () => $el.submit())">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-                                                    Hapus
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
                         </tr>
                         @empty
                         <tr>
@@ -169,6 +140,13 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+            <div class="px-6 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end">
+                <div class="flex gap-1" x-show="paymentsMeta && paymentsMeta.last_page > 1" x-cloak>
+                    <template x-for="p in paymentsMeta.last_page" :key="p">
+                        <button @click="loadPayments(search, statusFilter, p)" :class="p === paymentsMeta.current_page ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'" class="px-3 py-1 text-xs font-semibold rounded-lg transition-all">p</button>
+                    </template>
+                </div>
             </div>
         </div>
 
@@ -188,18 +166,13 @@
                     <a href="{{ route('internet.export.checks', ['month' => now()->month, 'year' => now()->year]) }}" class="btn-ghost p-2" title="Download Excel">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                     </a>
-
-                    <button @click="$dispatch('open-modal', { name: 'internet-check-modal' })" class="btn-primary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                        Input Usage
-                    </button>
                 </div>
             </div>
 
             <div class="px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
                 <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
-                    Lakukan pengecekan usage internet per ruangan setiap hari.
+                    Data pengecekan usage internet per ruangan.
                 </p>
             </div>
 
@@ -215,32 +188,23 @@
                             <th class="px-4 py-3 text-right">Penggunaan Ethernet/Hari</th>
                             <th class="px-4 py-3">Pengecek</th>
                             <th class="px-4 py-3">Keterangan</th>
-                            <th class="px-4 py-3 text-center w-20">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800" id="checks-table-body">
                         @forelse($checks as $c)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
                             <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $c->ruangan }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $c->hari }}</td>
-                            <td class="table-cell text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $c->tanggal->format('d/m/Y') }}</td>
+                            <td class="table-cell text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $c->tanggal?->format('d/m/Y') ?? '-' }}</td>
                             <td class="table-cell text-right font-semibold text-gray-900 dark:text-gray-100">{{ number_format($c->penggunaan_wifi, 1) }}</td>
                             <td class="table-cell text-right font-semibold text-gray-900 dark:text-gray-100">{{ number_format($c->penggunaan_ethernet, 1) }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $c->checker?->name }}</td>
                             <td class="table-cell text-gray-500 dark:text-gray-400 max-w-[150px] truncate">{{ $c->keterangan ?? '-' }}</td>
-                            <td class="table-cell text-center">
-                                <form method="POST" action="{{ route('internet.destroy.check', $c) }}" @submit.prevent="$store.confirmModal.show('Hapus Pengecekan', 'Apakah Anda yakin ingin menghapus data pengecekan ini?', () => $el.submit())" class="inline">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Hapus">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-                                    </button>
-                                </form>
-                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-16 text-center">
+                            <td colspan="8" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                         <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
@@ -254,165 +218,115 @@
                     </tbody>
                 </table>
             </div>
+            <div class="px-6 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end">
+                <div class="flex gap-1" x-show="checkMeta && checkMeta.last_page > 1" x-cloak>
+                    <template x-for="p in checkMeta.last_page" :key="p">
+                        <button @click="loadChecks(p)" :class="p === checkMeta.current_page ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'" class="px-3 py-1 text-xs font-semibold rounded-lg transition-all">p</button>
+                    </template>
+                </div>
+            </div>
         </div>
     </div>
-
-    {{-- Modal: Tambah Tagihan Internet --}}
-    <x-modal name="internet-payment-modal" maxWidth="lg">
-        <form method="POST" action="{{ route('internet.store.payment') }}" class="p-6">
-            @csrf
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tambah Tagihan Internet</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Isi data tagihan WiFi / internet</p>
-                </div>
-                <button type="button" @click="$dispatch('close-modal', { name: 'internet-payment-modal' })" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="nama_internet">Nama Internet</x-input-label>
-                        <x-text-input id="nama_internet" name="nama_internet" class="w-full mt-1" required placeholder="WiFi 1" />
-                    </div>
-                    <div>
-                        <x-input-label for="provider">Provider</x-input-label>
-                        <x-text-input id="provider" name="provider" class="w-full mt-1" required placeholder="Indosat" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="pic">PIC</x-input-label>
-                        <x-text-input id="pic" name="pic" class="w-full mt-1" required placeholder="Nama penanggung jawab" />
-                    </div>
-                    <div>
-                        <x-input-label for="jabatan">Jabatan</x-input-label>
-                        <x-text-input id="jabatan" name="jabatan" class="w-full mt-1" placeholder="Koordinator" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="masa_tenggang">Masa Tenggang</x-input-label>
-                        <x-text-input id="masa_tenggang" name="masa_tenggang" type="date" class="w-full mt-1" required />
-                    </div>
-                    <div>
-                        <x-input-label for="biaya">Biaya (Rp)</x-input-label>
-                        <x-text-input id="biaya" name="biaya" type="number" step="0.01" min="0" class="w-full mt-1" required placeholder="0" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="status">Status</x-input-label>
-                        <select id="status" name="status" class="input-field w-full mt-1">
-                            <option value="menunggu">Menunggu</option>
-                            <option value="lunas">Lunas</option>
-                            <option value="terlambat">Terlambat</option>
-                        </select>
-                    </div>
-                    <div>
-                        <x-input-label for="tgl_bayar">Tgl Bayar</x-input-label>
-                        <x-text-input id="tgl_bayar" name="tgl_bayar" type="date" class="w-full mt-1" />
-                    </div>
-                </div>
-
-                <div>
-                    <x-input-label for="keterangan">Keterangan</x-input-label>
-                    <textarea id="keterangan" name="keterangan" rows="2" class="input-field w-full mt-1" placeholder="Opsional"></textarea>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <button type="button" @click="$dispatch('close-modal', { name: 'internet-payment-modal' })" class="btn-secondary">Batal</button>
-                <button type="submit" class="btn-primary">Simpan</button>
-            </div>
-        </form>
-    </x-modal>
-
-    {{-- Modal: Input Usage Internet --}}
-    <x-modal name="internet-check-modal" maxWidth="lg">
-        <form method="POST" action="{{ route('internet.store.check') }}" class="p-6">
-            @csrf
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Input Usage Internet</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Catat penggunaan internet per ruangan</p>
-                </div>
-                <button type="button" @click="$dispatch('close-modal', { name: 'internet-check-modal' })" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="ruangan">Ruangan</x-input-label>
-                        <x-text-input id="ruangan" name="ruangan" class="w-full mt-1" required placeholder="Ruang Server" />
-                    </div>
-                    <div>
-                        <x-input-label for="hari">Hari</x-input-label>
-                        <select id="hari" name="hari" class="input-field w-full mt-1" required>
-                            <option value="Senin">Senin</option>
-                            <option value="Selasa">Selasa</option>
-                            <option value="Rabu">Rabu</option>
-                            <option value="Kamis">Kamis</option>
-                            <option value="Jumat">Jumat</option>
-                            <option value="Sabtu">Sabtu</option>
-                            <option value="Minggu">Minggu</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <x-input-label for="tanggal">Tanggal</x-input-label>
-                    <x-text-input id="tanggal" name="tanggal" type="date" class="w-full mt-1" value="{{ now()->format('Y-m-d') }}" required />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="penggunaan_wifi">Penggunaan Wifi (GB)</x-input-label>
-                        <x-text-input id="penggunaan_wifi" name="penggunaan_wifi" type="number" step="0.01" min="0" class="w-full mt-1" required placeholder="0" />
-                    </div>
-                    <div>
-                        <x-input-label for="penggunaan_ethernet">Penggunaan Ethernet (GB)</x-input-label>
-                        <x-text-input id="penggunaan_ethernet" name="penggunaan_ethernet" type="number" step="0.01" min="0" class="w-full mt-1" required placeholder="0" />
-                    </div>
-                </div>
-
-                <div>
-                    <x-input-label for="keterangan_check">Keterangan</x-input-label>
-                    <textarea id="keterangan_check" name="keterangan" rows="2" class="input-field w-full mt-1" placeholder="Opsional"></textarea>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <button type="button" @click="$dispatch('close-modal', { name: 'internet-check-modal' })" class="btn-secondary">Batal</button>
-                <button type="submit" class="btn-primary">Simpan</button>
-            </div>
-        </form>
-    </x-modal>
 
     @push('scripts')
     <script>
         function internetApp() {
             return {
-                init() {},
-                async loadPayments(search = '', status = 'semua') {
+                paymentsMeta: null,
+                checkMeta: null,
+                search: '',
+                statusFilter: 'semua',
+                init() {
+                    this.loadPayments();
+                    this.loadChecks();
+                },
+                async loadPayments(search = '', status = 'semua', page = 1) {
                     try {
-                        const params = new URLSearchParams({ search, status });
+                        const params = new URLSearchParams({ search, status, page });
                         if (!search) params.delete('search');
                         const res = await fetch(`{{ route('internet.payments.data') }}?${params}`, {
                             headers: { 'Accept': 'application/json' }
                         });
                         const json = await res.json();
-                        const tbody = document.querySelector('#payments-table-body');
-                        // ... would update table dynamically
+                        const tbody = document.getElementById('payments-table-body');
+                        if (!tbody) return;
+
+                        this.paymentsMeta = json.meta;
+
+                        if (json.data.length === 0) {
+                            tbody.innerHTML = `<tr><td colspan="10" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m9 0l-2.25 2.25m4.5 0l-2.25-2.25M12 3v1.5m0 0l-2.25-2.25M12 4.5l2.25-2.25M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum Ada Tagihan</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Belum ada data pembayaran internet.</p>
+                                </div>
+                            </td></tr>`;
+                            return;
+                        }
+
+                        tbody.innerHTML = json.data.map((p, i) => {
+                            const badge = p.status === 'lunas' ? 'badge-success' : p.status === 'menunggu' ? 'badge-warning' : p.status === 'terlambat' ? 'badge-danger' : 'badge-info';
+                            const label = p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : '-';
+                            const masa = p.masa_tenggang ? new Date(p.masa_tenggang).toLocaleDateString('id-ID') : '-';
+                            const tglBayar = p.tgl_bayar ? new Date(p.tgl_bayar).toLocaleDateString('id-ID') : '-';
+                            return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
+                                <td class="table-cell text-center text-gray-500 dark:text-gray-400">${(json.meta.current_page - 1) * json.meta.per_page + i + 1}</td>
+                                <td class="table-cell font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">${p.nama_internet || '-'}</td>
+                                <td class="table-cell text-gray-600 dark:text-gray-400">${p.provider || '-'}</td>
+                                <td class="table-cell text-gray-600 dark:text-gray-400">${p.pic || '-'}</td>
+                                <td class="table-cell text-gray-500 dark:text-gray-400">${p.jabatan || '-'}</td>
+                                <td class="table-cell text-center whitespace-nowrap">${masa}</td>
+                                <td class="table-cell text-center text-gray-600 dark:text-gray-400">${p.hari || '-'}</td>
+                                <td class="table-cell text-right font-semibold text-gray-900 dark:text-gray-100">Rp ${Number(p.biaya).toLocaleString('id-ID')}</td>
+                                <td class="table-cell text-center"><span class="${badge}">${label}</span></td>
+                                <td class="table-cell text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">${tglBayar}</td>
+                            </tr>`;
+                        }).join('');
                     } catch (e) {
                         console.error('Failed to load payments:', e);
+                    }
+                },
+                async loadChecks(page = 1) {
+                    try {
+                        const res = await fetch(`{{ route('internet.checks.data') }}?page=${page}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const json = await res.json();
+                        const tbody = document.getElementById('checks-table-body');
+                        if (!tbody) return;
+
+                        this.checkMeta = json.meta;
+
+                        if (json.data.length === 0) {
+                            tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
+                                    </div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum Ada Pengecekan</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lakukan pengecekan usage internet setiap hari.</p>
+                                </div>
+                            </td></tr>`;
+                            return;
+                        }
+
+                        tbody.innerHTML = json.data.map((c, i) => {
+                            const tanggal = c.tanggal ? new Date(c.tanggal).toLocaleDateString('id-ID') : '-';
+                            return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
+                                <td class="table-cell text-center text-gray-500 dark:text-gray-400">${(json.meta.current_page - 1) * json.meta.per_page + i + 1}</td>
+                                <td class="table-cell font-medium text-gray-900 dark:text-gray-100">${c.ruangan || '-'}</td>
+                                <td class="table-cell text-gray-600 dark:text-gray-400">${c.hari || '-'}</td>
+                                <td class="table-cell text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">${tanggal}</td>
+                                <td class="table-cell text-right font-semibold text-gray-900 dark:text-gray-100">${Number(c.penggunaan_wifi).toLocaleString('id-ID')}</td>
+                                <td class="table-cell text-right font-semibold text-gray-900 dark:text-gray-100">${Number(c.penggunaan_ethernet).toLocaleString('id-ID')}</td>
+                                <td class="table-cell text-gray-600 dark:text-gray-400">${c.checker?.name || '-'}</td>
+                                <td class="table-cell text-gray-500 dark:text-gray-400 max-w-[150px] truncate">${c.keterangan || '-'}</td>
+                            </tr>`;
+                        }).join('');
+                    } catch (e) {
+                        console.error('Failed to load checks:', e);
                     }
                 }
             }

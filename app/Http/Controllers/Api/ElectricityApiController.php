@@ -6,17 +6,33 @@ use App\Http\Controllers\Controller;
 use App\Models\ElectricitySetting;
 use App\Models\ElectricityTokenCheck;
 use App\Models\ElectricityTopup;
+use App\Services\ElectricityApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ElectricityApiController extends Controller
 {
+    public function __construct(private ElectricityApiService $api)
+    {
+    }
+
     public function stats()
     {
         $setting = ElectricitySetting::firstOrCreate(['id' => 1], ['kapasitas_kwh' => 3000]);
-        $lastTopup = ElectricityTopup::with('creator')->latest()->first();
+        $apiTopups = $this->api->topups()
+            ->sortByDesc(fn ($t) => $t->tanggal_bayar)
+            ->values();
+        $lastTopup = $apiTopups->first()
+            ?? ElectricityTopup::with('creator')->latest()->first();
         $lastCheck = ElectricityTokenCheck::with('checker')->latest()->first();
-        $totalTerpakai = ElectricityTokenCheck::sum('terpakai');
-        $sisaToken = $lastCheck?->sisa_kwh ?? 0;
+
+        $apiChecks = $this->api->checks();
+        $totalTerpakai = $apiChecks->isNotEmpty()
+            ? $apiChecks->sum('terpakai')
+            : ElectricityTokenCheck::sum('terpakai');
+
+        $sisaApi = $this->api->sisaToken();
+        $sisaToken = $sisaApi ?? $lastCheck?->sisa_kwh ?? 0;
 
         return response()->json([
             'success' => true,
@@ -32,26 +48,55 @@ class ElectricityApiController extends Controller
 
     public function topups(Request $request)
     {
-        $query = ElectricityTopup::with('creator');
+        $topups = $this->api->topups();
 
-        if ($filter = $request->filter) {
-            $query = match ($filter) {
-                'harian' => $query->whereDate('created_at', today()),
-                'mingguan' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
-                default => $query,
-            };
+        if ($topups->isEmpty()) {
+            $topups = ElectricityTopup::with('creator')->latest()->get();
         }
 
-        $topups = $query->latest()->paginate($request->per_page ?? 20);
+        if ($filter = $request->filter) {
+            $topups = $topups->filter(function ($t) use ($filter) {
+                $tanggal = $t->tanggal_bayar;
+
+                if (! $tanggal) {
+                    return false;
+                }
+
+                return match ($filter) {
+                    'harian' => $tanggal->isToday(),
+                    'mingguan' => $tanggal->between(now()->startOfWeek(), now()->endOfWeek()),
+                    default => true,
+                };
+            });
+        }
+
+        $topups = $topups
+            ->sortByDesc(fn ($t) => $t->tanggal_bayar)
+            ->values();
+
+        $perPage = (int) ($request->per_page ?? 20);
+        $total = $topups->count();
+        $page = max(1, (int) $request->page);
 
         return response()->json([
             'success' => true,
-            'data' => $topups->items(),
+            'data' => $topups->forPage($page, $perPage)->values()
+                ->map(fn ($t) => [
+                    'id' => $t->id ?? null,
+                    'tanggal_bayar' => $t->tanggal_bayar ? $t->tanggal_bayar->toISOString() : null,
+                    'periode' => $t->periode ?? '-',
+                    'jumlah_kwh' => (float) ($t->jumlah_kwh ?? 0),
+                    'nominal' => (float) ($t->nominal ?? 0),
+                    'creator' => ['name' => $t->creator?->name],
+                    'catatan' => $t->catatan ?? null,
+                    'bukti' => $t->bukti,
+                    'bukti_url' => $t->bukti_url,
+                ])->all(),
             'meta' => [
-                'current_page' => $topups->currentPage(),
-                'last_page' => $topups->lastPage(),
-                'total' => $topups->total(),
-                'per_page' => $topups->perPage(),
+                'current_page' => $page,
+                'last_page' => (int) ceil($total / $perPage),
+                'per_page' => $perPage,
+                'total' => $total,
             ],
         ]);
     }
@@ -64,9 +109,15 @@ class ElectricityApiController extends Controller
             'jumlah_kwh' => 'required|numeric|min:0',
             'nominal' => 'required|numeric|min:0',
             'catatan' => 'nullable|string',
+            'bukti' => 'nullable|image|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $validated['created_by'] = $request->user()->id;
+
+        if ($request->hasFile('bukti')) {
+            $validated['bukti'] = $request->file('bukti')->store('bukti-token', 'public');
+        }
+
         $topup = ElectricityTopup::create($validated);
 
         return response()->json([
@@ -78,6 +129,10 @@ class ElectricityApiController extends Controller
 
     public function destroyTopup(ElectricityTopup $electricityTopup)
     {
+        if ($electricityTopup->bukti && Storage::disk('public')->exists($electricityTopup->bukti)) {
+            Storage::disk('public')->delete($electricityTopup->bukti);
+        }
+
         $electricityTopup->delete();
 
         return response()->json([

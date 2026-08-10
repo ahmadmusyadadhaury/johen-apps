@@ -579,6 +579,16 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_assets'] }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Data Aset</p>
         </div>
+        <a href="{{ route('hris.cuti-izin') }}" class="group rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-300">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                </div>
+                <span class="badge-warning">Menunggu</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $pendingLeaveCount }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan Menunggu</p>
+        </a>
         @else
         <a href="{{ route('hris.cuti-izin') }}" class="stat-card group">
             <div class="flex items-center justify-between mb-3">

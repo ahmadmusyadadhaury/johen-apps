@@ -78,7 +78,7 @@ $activeMenu = match (true) {
     request()->routeIs('bonus.*', 'reimbursement') => auth()->user()->isManager() ? 'operasional' : '',
     request()->routeIs('it.tickets.*') && !auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() && !auth()->user()->isHeadOfStore2() => 'operasional',
     request()->routeIs('meeting.*') => 'meeting',
-    request()->routeIs('assets.*') => auth()->user()->canViewAll() && !auth()->user()->isKoordinator() ? (request()->routeIs('assets.index') ? 'sdm' : 'asset') : 'sdm',
+    request()->routeIs('assets.*', 'digital-registries.*') => auth()->user()->canViewAll() && !auth()->user()->isKoordinator() ? (request()->routeIs('assets.index') ? 'sdm' : 'asset') : 'sdm',
     request()->routeIs('electricity.*', 'internet.*', 'ipl.*', 'payment-submissions.*', 'digital.*') => 'pembayaran',
     request()->routeIs('kelola-jabatan') => 'sdm',
     default => '',
@@ -149,7 +149,7 @@ if ($divisionViewUser) {
                             <a href="{{ route('hris.divisions.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.divisions.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Divisi
                             </a>
-                            @if(auth()->user()->isSuperAdmin())
+                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isGmCeo())
                             <a href="{{ route('kelola-jabatan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('kelola-jabatan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Jabatan
                             </a>
@@ -168,7 +168,7 @@ if ($divisionViewUser) {
                                 Informasi saya
                             </a>
                             @endif
-                            <a href="{{ route('assets.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('assets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                            <a href="{{ route('assets.index', ['mine' => 1]) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('assets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Asset Saya
                             </a>
                         </div>
@@ -198,7 +198,7 @@ if ($divisionViewUser) {
                                 Informasi saya
                             </a>
                             @endif
-                            <a href="{{ route('assets.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('assets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                            <a href="{{ route('assets.index', ['mine' => 1]) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('assets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Asset Saya
                             </a>
                         </div>
@@ -693,15 +693,6 @@ if ($divisionViewUser) {
                             </a>
                             <a href="{{ route('ipl.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('ipl.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 IPL Ruko
-                            </a>
-                            <a href="{{ route('payment-submissions.tagihan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('payment-submissions.tagihan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                Tagihan Pembayaran
-                            </a>
-                            <a href="{{ route('payment-submissions.pengajuan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('payment-submissions.pengajuan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                Status Pengajuan
-                            </a>
-                            <a href="{{ route('payment-submissions.persetujuan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('payment-submissions.persetujuan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                Persetujuan
                             </a>
                         </div>
                     </div>

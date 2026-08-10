@@ -54,6 +54,7 @@ return [
     'digital_asset_api' => [
         'url' => env('KENDARAAN_API_URL'),
         'path' => env('DIGITAL_API_PATH', '/api/digital-assets'),
+        'payments_path' => env('DIGITAL_API_PAYMENTS_PATH', '/api/pembayaran/digital-asset-payments'),
         'token' => env('KENDARAAN_API_TOKEN'),
         'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
     ],
@@ -98,6 +99,29 @@ return [
         'path' => env('ASET_TIM_API_PATH', '/api/aset-tim'),
         'token' => env('KENDARAAN_API_TOKEN'),
         'verify_ssl' => env('KENDARAAN_API_VERIFY_SSL', true),
+    ],
+
+    'electricity_api' => [
+        'url' => env('ELECTRICITY_API_URL', env('KENDARAAN_API_URL')),
+        'topups_path' => env('ELECTRICITY_API_TOPUPS_PATH', '/api/pembayaran/token-topups'),
+        'readings_path' => env('ELECTRICITY_API_READINGS_PATH', '/api/pembayaran/token-readings'),
+        'token' => env('ELECTRICITY_API_TOKEN', env('KENDARAAN_API_TOKEN')),
+        'verify_ssl' => env('ELECTRICITY_API_VERIFY_SSL', env('KENDARAAN_API_VERIFY_SSL', true)),
+    ],
+
+    'internet_api' => [
+        'url' => env('INTERNET_API_URL', env('KENDARAAN_API_URL')),
+        'payments_path' => env('INTERNET_API_PAYMENTS_PATH', '/api/pembayaran/internet-payments'),
+        'checks_path' => env('INTERNET_API_CHECKS_PATH', '/api/pembayaran/internet-checks'),
+        'token' => env('INTERNET_API_TOKEN', env('KENDARAAN_API_TOKEN')),
+        'verify_ssl' => env('INTERNET_API_VERIFY_SSL', env('KENDARAAN_API_VERIFY_SSL', true)),
+    ],
+
+    'ipl_ruko_api' => [
+        'url' => env('IPL_RUKO_API_URL', env('KENDARAAN_API_URL')),
+        'payments_path' => env('IPL_RUKO_API_PAYMENTS_PATH', '/api/pembayaran/ipl-ruko-payments'),
+        'token' => env('IPL_RUKO_API_TOKEN', env('KENDARAAN_API_TOKEN')),
+        'verify_ssl' => env('IPL_RUKO_API_VERIFY_SSL', env('KENDARAAN_API_VERIFY_SSL', true)),
     ],
 
 ];
