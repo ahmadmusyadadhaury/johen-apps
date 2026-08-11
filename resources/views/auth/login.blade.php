@@ -3,25 +3,7 @@
         {{-- Logo --}}
         <div class="text-center mb-10">
             <div class="inline-flex items-center justify-center mb-5">
-                <div x-data="logoAnimation()" class="relative cursor-pointer select-none"
-                    @mouseenter="glowIntensity = 0.6"
-                    @mouseleave="glowIntensity = 0.3">
-                    {{-- Glow behind logo --}}
-                    <div class="absolute inset-0 rounded-2xl transition-all duration-1000 ease-out"
-                        x-bind:style="`background: radial-gradient(circle, rgba(9,135,245,${glowIntensity}), rgba(124,58,237,${glowIntensity * 0.6}), transparent 70%); filter: blur(12px); transform: scale(${1 + glowIntensity * 0.3})`">
-                    </div>
-                    {{-- Light sweep overlay --}}
-                    <div class="absolute inset-0 rounded-2xl overflow-hidden">
-                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-black/10 to-transparent dark:via-white/25"
-                            x-bind:style="`transform: translateX(${sweepX}%); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)`">
-                        </div>
-                    </div>
-                    {{-- Logo dengan 3D flip --}}
-                    <div class="relative transition-transform duration-700 ease-out"
-                        x-bind:style="`transform: perspective(400px) rotateY(${flipAngle}deg)`">
-                        <img src="{{ asset('logo.png') }}" alt="Johen Sukses Abadi" width="64" height="64" class="h-16 w-auto relative">
-                    </div>
-                </div>
+                <img src="{{ asset('logo.png') }}" alt="Johen Sukses Abadi" width="64" height="64" class="h-16 w-auto">
             </div>
             <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white tracking-tight">Masuk</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Masuk ke akun Johen Anda</p>

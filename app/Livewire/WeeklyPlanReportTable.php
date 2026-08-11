@@ -226,7 +226,7 @@ class WeeklyPlanReportTable extends Component
                 $subordinateIds = $this->getSubordinateIds($employee);
                 $visibleIds = array_merge($visibleIds, $subordinateIds);
                 $hideCreateButton = true;
-            } elseif ($user->isKoordinatorCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
+            } elseif ($user->isKoordinatorCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) {
                 $subordinateIds = $this->getSubordinateIds($employee);
                 $visibleIds = array_merge($visibleIds, $subordinateIds);
             }

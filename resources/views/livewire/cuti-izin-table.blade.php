@@ -7,7 +7,7 @@
 
 <div x-data="{ confirmAction: false, confirmTitle: '', confirmMessage: '', confirmHandler: null }">
 
-    @if(!auth()->user()->isGmCeo() && (auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isKoordinatorFcMobile() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin()))
+    @if(!auth()->user()->isGmCeo() && (auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isKoordinatorFcMobile() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin()))
     {{-- Tab Navigation --}}
     <div class="mb-6">
         <div class="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
@@ -41,15 +41,21 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Pengajuan</p>
             </div>
 
-            <div class="stat-card group">
+            <div class="stat-card group relative overflow-hidden">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"/></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8.25v-1.5m0 1.5c-1.355 0-2.25-.895-2.25-2.25s.895-2.25 2.25-2.25 2.25.895 2.25 2.25-.895 2.25-2.25 2.25m0 6.75c-1.355 0-2.25-.895-2.25-2.25s.895-2.25 2.25-2.25 2.25.895 2.25 2.25-.895 2.25-2.25 2.2m-6.75 0c-1.355 0-2.25-.895-2.25-2.25s.895-2.25 2.25-2.25 2.25.895 2.25 2.25-.895 2.25-2.25 2.25M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                    <span class="badge-success">Cuti</span>
+                    <span class="badge-success text-[10px]">Tahunan</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalCuti }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cuti Tahunan</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $sisaCuti }}</span>
+                    <span class="text-sm font-medium text-gray-400">/ {{ $jatahCuti }} hari</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Cuti Tahunan</p>
+                    <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $jatahCuti > 0 ? ($sisaCuti / $jatahCuti) * 100 : 0 }}%"></div>
+                    </div>
             </div>
 
             <div class="stat-card group">
@@ -134,7 +140,9 @@
                             <th class="px-6 py-3">Persetujuan Atasan 1</th>
                             <th class="px-6 py-3">Persetujuan Atasan 2</th>
                             <th class="px-6 py-3">Persetujuan HR</th>
+                            @unless($hideAksi)
                             <th class="px-6 py-3">Aksi</th>
+                            @endunless
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -144,7 +152,7 @@
                                 $isAtasan2 = $userEmployee && $userEmployee->id === $lr->atasan2_id;
                                 $canApproveKoor = $isAtasan;
                                 $canApproveAtasan2 = $isAtasan2 && (!$user->isManager() || $lr->persetujuan_koor === 'disetujui');
-                                $canApproveHr = $lihatSemua && !$user->isGmCeo() && !$user->isKoordinatorIt() && !$user->isKoordinatorAdmin() && !$user->isKoordinatorPubg() && !$user->isKoordinatorFf() && !$user->isKoordinatorMlbb() && !$user->isKoordinatorEfootball() && !$user->isKoordinatorValorant() && $lr->persetujuan_atasan2 === 'disetujui' && ($lr->tanggal_selesai->isPast() || $user->isSuperAdmin());
+                                $canApproveHr = $lihatSemua && !$user->isGmCeo() && !$user->isKoordinatorIt() && !$user->isKoordinatorAdmin() && !$user->isKoordinatorStock() && !$user->isKoordinatorPubg() && !$user->isKoordinatorFf() && !$user->isKoordinatorMlbb() && !$user->isKoordinatorEfootball() && !$user->isKoordinatorValorant() && $lr->persetujuan_atasan2 === 'disetujui' && ($lr->tanggal_selesai->isPast() || $user->isSuperAdmin());
                                 $requiresPin = $user->requiresPinApproval();
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
@@ -258,6 +266,7 @@
                                     @endif
                                 </td>
                                 <td class="table-cell">
+                                    @unless($hideAksi)
                                     @if($user->isSuperAdmin())
                                     <button wire:click="confirmDelete({{ $lr->id }})"
                                             class="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
@@ -265,6 +274,7 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                                     </button>
                                     @endif
+                                    @endunless
                                 </td>
                             </tr>
                         @empty

@@ -247,18 +247,6 @@
                                           class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
                                           placeholder="Evaluasi untuk jabatan ini..."></textarea>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Komitmen</label>
-                                <textarea wire:model="komitmen" rows="2"
-                                          class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                                          placeholder="Komitmen..."></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Rekomendasi Jenjang</label>
-                                <textarea wire:model="rekomendasi_jenjang" rows="2"
-                                          class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                                          placeholder="Rekomendasi jenjang..."></textarea>
-                            </div>
                             <div class="flex items-center justify-end gap-2 pt-1">
                                 <button @click="$dispatch('close-modal', { name: 'note-modal' })"
                                         class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Batal</button>
@@ -450,14 +438,6 @@
                             <div>
                                 <label class="block text-[11px] font-medium text-gray-500 mb-1">Catatan</label>
                                 <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ $noteDetail['evaluasi'] ?: '(tidak ada)' }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-medium text-gray-500 mb-1">Komitmen</label>
-                                <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ $noteDetail['komitmen'] ?: '(tidak ada)' }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-medium text-gray-500 mb-1">Rekomendasi Jenjang</label>
-                                <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ $noteDetail['rekomendasi_jenjang'] ?: '(tidak ada)' }}</p>
                             </div>
                         </div>
                     </div>

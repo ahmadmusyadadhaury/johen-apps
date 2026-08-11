@@ -66,6 +66,7 @@ class User extends Authenticatable
             self::ROLE_KOORDINATOR_VALORANT,
             self::ROLE_KOORDINATOR_ROBLOX,
             self::ROLE_KOORDINATOR_MONKEY_PUBG,
+            self::ROLE_KOORDINATOR_STOCK,
             self::ROLE_MANAGER,
             self::ROLE_GM_CEO,
         ]);

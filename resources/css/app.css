@@ -86,6 +86,7 @@ html.dark {
 
     .dark .input-field {
         @apply bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500 focus:ring-primary-900 focus:border-primary-500;
+        color-scheme: dark;
     }
 
     .badge {

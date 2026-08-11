@@ -31,6 +31,7 @@
                     <option value="staff_it">Staff IT</option>
                     <option value="koordinator_creative">Koordinator Creative</option>
                     <option value="koordinator_admin">Koordinator Admin</option>
+                    <option value="koordinator_stock">Koordinator Admin Stock</option>
                     <option value="koordinator_pubg">Koordinator Johen PUBG</option>
                     <option value="koordinator_ff">Koordinator FF</option>
                     <option value="koordinator_mlbb">Koordinator MLBB</option>
@@ -47,6 +48,7 @@
                     <option value="staff_host_roblox">Staff Host Roblox</option>
                     <option value="staff_host_monkey_pubg">Staff Host Monkey PUBG</option>
                     <option value="staff_admin">Staff Admin</option>
+                    <option value="staff_stock">Staff Admin Stock</option>
                 </select>
             </div>
 
@@ -94,6 +96,8 @@
                                     <span class="badge-secondary">Koordinator Creative</span>
                                 @elseif($u->role === 'koordinator_admin')
                                     <span class="badge-secondary">Koordinator Admin</span>
+                                @elseif($u->role === 'koordinator_stock')
+                                    <span class="badge-secondary">Koordinator Admin Stock</span>
                                 @elseif($u->role === 'koordinator_pubg')
                                     <span class="badge-secondary">Koordinator Johen PUBG</span>
                                 @elseif($u->role === 'koordinator_ff')
@@ -126,6 +130,8 @@
                                     <span class="badge-secondary">Staff Host Monkey PUBG</span>
                                 @elseif($u->role === 'staff_admin')
                                     <span class="badge-secondary">Staff Admin</span>
+                                @elseif($u->role === 'staff_stock')
+                                    <span class="badge-secondary">Staff Admin Stock</span>
                                 @else
                                     <span class="badge-secondary">Staff</span>
                                 @endif
@@ -225,6 +231,7 @@
                     <option value="staff_it">Staff IT</option>
                         <option value="koordinator_creative">Koordinator Creative</option>
                         <option value="koordinator_admin">Koordinator Admin</option>
+                    <option value="koordinator_stock">Koordinator Admin Stock</option>
                         <option value="koordinator_pubg">Koordinator Johen PUBG</option>
                         <option value="koordinator_ff">Koordinator FF</option>
                         <option value="koordinator_mlbb">Koordinator MLBB</option>
@@ -241,6 +248,7 @@
                         <option value="staff_host_roblox">Staff Host Roblox</option>
                         <option value="staff_host_monkey_pubg">Staff Host Monkey PUBG</option>
                         <option value="staff_admin">Staff Admin</option>
+                    <option value="staff_stock">Staff Admin Stock</option>
                         <option value="koordinator">Koordinator</option>
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>
@@ -320,6 +328,7 @@
                     <option value="staff_it">Staff IT</option>
                         <option value="koordinator_creative">Koordinator Creative</option>
                         <option value="koordinator_admin">Koordinator Admin</option>
+                    <option value="koordinator_stock">Koordinator Admin Stock</option>
                         <option value="koordinator_pubg">Koordinator Johen PUBG</option>
                         <option value="koordinator_ff">Koordinator FF</option>
                         <option value="koordinator_mlbb">Koordinator MLBB</option>
@@ -336,6 +345,7 @@
                         <option value="staff_host_roblox">Staff Host Roblox</option>
                         <option value="staff_host_monkey_pubg">Staff Host Monkey PUBG</option>
                         <option value="staff_admin">Staff Admin</option>
+                    <option value="staff_stock">Staff Admin Stock</option>
                         <option value="koordinator">Koordinator</option>
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>

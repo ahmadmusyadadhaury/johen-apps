@@ -17,8 +17,6 @@ class StrukturOrganisasi extends Component
 
     public string $situasi = '';
     public string $evaluasi = '';
-    public string $komitmen = '';
-    public string $rekomendasi_jenjang = '';
 
     public int $bulan;
     public int $tahun;
@@ -74,8 +72,6 @@ class StrukturOrganisasi extends Component
         $this->existingNote = $note?->toArray();
         $this->situasi = $note?->situasi ?? '';
         $this->evaluasi = $note?->evaluasi ?? '';
-        $this->komitmen = $note?->komitmen ?? '';
-        $this->rekomendasi_jenjang = $note?->rekomendasi_jenjang ?? '';
 
         $this->notesHistory = PositionNote::with('fromPosition', 'creator.employee')
             ->where('to_position_id', $this->selectedPositionId)
@@ -163,8 +159,6 @@ class StrukturOrganisasi extends Component
         $this->showForm = true;
         $this->situasi = '';
         $this->evaluasi = '';
-        $this->komitmen = '';
-        $this->rekomendasi_jenjang = '';
         $this->existingNote = null;
         $this->noteComments = [];
         $this->selectedNoteId = null;
@@ -267,8 +261,6 @@ class StrukturOrganisasi extends Component
             'selectedPositionId' => ['required', 'exists:positions,id'],
             'situasi' => ['nullable', 'string', 'max:5000'],
             'evaluasi' => ['nullable', 'string', 'max:5000'],
-            'komitmen' => ['nullable', 'string', 'max:5000'],
-            'rekomendasi_jenjang' => ['nullable', 'string', 'max:5000'],
             'bulan' => ['required', 'integer', 'min:1', 'max:12'],
             'tahun' => ['required', 'integer', 'min:2020', 'max:2099'],
         ]);
@@ -296,8 +288,6 @@ class StrukturOrganisasi extends Component
             [
                 'situasi' => $this->situasi,
                 'evaluasi' => $this->evaluasi,
-                'komitmen' => $this->komitmen,
-                'rekomendasi_jenjang' => $this->rekomendasi_jenjang,
                 'created_by' => auth()->id(),
             ]
         );

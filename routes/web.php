@@ -42,6 +42,10 @@ use App\Livewire\KontrakKerjaTable;
 use App\Livewire\ManualBookTable;
 use App\Livewire\PositionTable;
 use App\Livewire\PubgDailyTrackingTable;
+use App\Livewire\RekapStokTable;
+use App\Livewire\StockDailyTrackingTable;
+use App\Livewire\StokKetersediaanTable;
+use App\Livewire\StokTargetTable;
 use App\Livewire\UserTable;
 use Illuminate\Support\Facades\Route;
 
@@ -106,6 +110,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/weekly-report', [WeeklyReportController::class, 'index'])->name('weekly-report');
         Route::get('/daily-tracking', [DailyTrackingController::class, 'index'])->name('daily-tracking');
         Route::get('/daily-tracking-admin', AdminDailyTrackingTable::class)->name('daily-tracking-admin');
+        Route::get('/daily-tracking-stock', StockDailyTrackingTable::class)->name('daily-tracking-stock');
+        Route::get('/rekap-stok', RekapStokTable::class)->name('rekap-stok')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock');
+        Route::redirect('/stok-masuk', '/hris/rekap-stok');
+        Route::redirect('/stok-keluar', '/hris/rekap-stok');
+        Route::get('/stok-ketersediaan', StokKetersediaanTable::class)->name('stok-ketersediaan')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock');
+        Route::get('/stok-target', StokTargetTable::class)->name('stok-target')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock');
         Route::get('/activity-competitor', [ActivityCompetitorController::class, 'index'])->name('activity-competitor');
         Route::get('/content-plan', ContentPlanTable::class)->name('content-plan');
 
