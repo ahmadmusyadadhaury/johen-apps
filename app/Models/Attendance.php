@@ -13,6 +13,7 @@ class Attendance extends Model
         'time_in',
         'time_out',
         'status',
+        'method',
     ];
 
     protected $appends = ['duration', 'display_status'];
@@ -40,7 +41,7 @@ class Attendance extends Model
     public function getDisplayStatusAttribute(): string
     {
         return match ($this->status) {
-            'hadir' => $this->time_in && $this->time_in > '09:00:00' ? 'terlambat' : 'tepat waktu',
+            'hadir' => $this->time_in && $this->time_in > ($this->employee?->jamMasukCutoff() ?? '09:00:00') ? 'terlambat' : 'tepat waktu',
             'izin' => 'izin',
             'sakit' => 'sakit',
             'alpha' => 'tidak hadir',

@@ -507,6 +507,10 @@
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jam Kerja</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jam_kerja ?? '-' }}</span>
                             </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jam Masuk (acuan telat)</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jam_masuk ? substr($employee->jam_masuk, 0, 5) : '09:00' }}</span>
+                            </div>
                             <div class="px-5 py-3 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jobdesk</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jobdesk ?? '-' }}</span>

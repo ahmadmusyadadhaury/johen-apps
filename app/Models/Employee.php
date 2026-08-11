@@ -10,6 +10,7 @@ class Employee extends Model
 {
     protected $fillable = [
         'nik',
+        'device_user_id',
         'nama',
         'email',
         'no_hp',
@@ -24,6 +25,7 @@ class Employee extends Model
         'lokasi_kerja',
         'jenis_kerja',
         'jam_kerja',
+        'jam_masuk',
         'jobdesk',
         'no_kontak_darurat1',
         'hubungan_darurat1',
@@ -111,6 +113,18 @@ class Employee extends Model
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    public function jamMasukCutoff(): string
+    {
+        if ($this->jam_masuk) {
+            $parts = explode(':', $this->jam_masuk);
+            $h = str_pad((int)($parts[0] ?? 0), 2, '0', STR_PAD_LEFT);
+            $i = str_pad((int)($parts[1] ?? 0), 2, '0', STR_PAD_LEFT);
+            return $h . ':' . $i . ':00';
+        }
+
+        return '09:00:00';
     }
 
     public function meetingRequests(): HasMany

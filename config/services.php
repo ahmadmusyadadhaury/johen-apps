@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'attendance_machine' => [
+        'host' => env('ATTENDANCE_MACHINE_HOST', '192.168.0.209'),
+        'port' => env('ATTENDANCE_MACHINE_PORT', 4370),
+        'comm_key' => env('ATTENDANCE_MACHINE_COMM_KEY', 0),
+        'timeout' => env('ATTENDANCE_MACHINE_TIMEOUT', 5),
+    ],
+
     'meeting' => [
         'url' => env('MEETING_API_URL'),
         'login_path' => env('MEETING_API_LOGIN_PATH', '/api/login'),

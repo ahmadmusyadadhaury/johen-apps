@@ -117,13 +117,14 @@ class AbsensiTable extends Component
                 ->orderBy('date', 'desc')
                 ->paginate(10);
 
-            $semuaAbsensi = Attendance::where('employee_id', $employee->id)->get();
+            $semuaAbsensi = Attendance::with('employee')->where('employee_id', $employee->id)->get();
             $totalAbsensi = $semuaAbsensi->count();
+            $cutoff = $employee->jamMasukCutoff();
             $tepatWaktu = $semuaAbsensi->filter(fn($a) =>
-                $a->status === 'hadir' && (!$a->time_in || $a->time_in <= '09:00:00')
+                $a->status === 'hadir' && (!$a->time_in || $a->time_in <= $cutoff)
             )->count();
             $terlambat = $semuaAbsensi->filter(fn($a) =>
-                $a->status === 'hadir' && $a->time_in && $a->time_in > '09:00:00'
+                $a->status === 'hadir' && $a->time_in && $a->time_in > $cutoff
             )->count();
             $totalHadir = $tepatWaktu + $terlambat;
             $attendanceHariIni = Attendance::where('employee_id', $employee->id)
@@ -172,14 +173,14 @@ class AbsensiTable extends Component
         $totalKaryawan = (clone $employeeQuery)->count();
 
         $teamIds = (clone $employeeQuery)->pluck('id')->toArray();
-        $teamAttendances = $attendances->only($teamIds);
+        $teamAttendances = $attendances->filter(fn($a) => in_array($a->employee_id, $teamIds));
 
         $hadir = $teamAttendances->filter(fn($a) =>
-            $a->status === 'hadir' && (!$a->time_in || $a->time_in <= '09:00:00')
+            $a->status === 'hadir' && (!$a->time_in || $a->time_in <= ($a->employee?->jamMasukCutoff() ?? '09:00:00'))
         )->count();
 
         $terlambat = $teamAttendances->filter(fn($a) =>
-            $a->status === 'hadir' && $a->time_in && $a->time_in > '09:00:00'
+            $a->status === 'hadir' && $a->time_in && $a->time_in > ($a->employee?->jamMasukCutoff() ?? '09:00:00')
         )->count();
 
         $totalHadir = $hadir + $terlambat;

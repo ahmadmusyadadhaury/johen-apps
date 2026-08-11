@@ -348,6 +348,10 @@
                             <x-input-label for="create-jam_kerja" value="Jam Kerja" />
                             <x-text-input id="create-jam_kerja" wire:model="jam_kerja" type="text" class="mt-1 block w-full" placeholder="Contoh: 08:00 - 17:00" />
                         </div>
+                        <div>
+                            <x-input-label for="create-jam_masuk" value="Jam Masuk (acuan telat)" />
+                            <x-text-input id="create-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
+                        </div>
                         <div class="sm:col-span-2">
                             <x-input-label for="create-jobdesk" value="Jobdesk" />
                             <textarea id="create-jobdesk" wire:model="jobdesk" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Deskripsi jobdesk..."></textarea>
@@ -630,6 +634,10 @@
                             <x-input-label for="edit-jam_kerja" value="Jam Kerja" />
                             <x-text-input id="edit-jam_kerja" wire:model="jam_kerja" type="text" class="mt-1 block w-full" />
                         </div>
+                        <div>
+                            <x-input-label for="edit-jam_masuk" value="Jam Masuk (acuan telat)" />
+                            <x-text-input id="edit-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
+                        </div>
                         <div class="sm:col-span-2">
                             <x-input-label for="edit-jobdesk" value="Jobdesk" />
                             <textarea id="edit-jobdesk" wire:model="jobdesk" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"></textarea>
@@ -793,6 +801,7 @@
                         <div class="preview-field"><span class="preview-label">Lokasi Kerja</span><span class="preview-value">{{ $lokasi_kerja ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kerja</span><span class="preview-value">{{ $jenis_kerja ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jam Kerja</span><span class="preview-value">{{ $jam_kerja ?: '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Jam Masuk</span><span class="preview-value">{{ $jam_masuk ?: '-' }}</span></div>
                         <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Jobdesk</span><span class="preview-value">{{ $jobdesk ?: '-' }}</span></div>
                     </div>
                 </div>

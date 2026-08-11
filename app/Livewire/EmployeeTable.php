@@ -49,6 +49,7 @@ class EmployeeTable extends Component
     public string $lokasi_kerja = '';
     public string $jenis_kerja = '';
     public string $jam_kerja = '';
+    public string $jam_masuk = '';
     public string $jobdesk = '';
     public bool $showDeleteConfirm = false;
     public ?int $deleteId = null;
@@ -68,6 +69,7 @@ class EmployeeTable extends Component
     {
         if ($value === 'Office') {
             $this->jam_kerja = 'Senin - Jumat 08.00-17.00, Sabtu 08.00-12.00';
+            $this->jam_masuk = '08:00';
         }
     }
 
@@ -96,6 +98,7 @@ class EmployeeTable extends Component
             'lokasi_kerja' => 'nullable|in:Summarecon,Baleendah',
             'jenis_kerja' => 'nullable|in:Office,Operasional',
             'jam_kerja' => 'nullable|string|max:255',
+            'jam_masuk' => 'nullable|date_format:H:i',
             'jobdesk' => 'nullable|string',
             'no_hp' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
@@ -168,6 +171,7 @@ class EmployeeTable extends Component
         $this->lokasi_kerja = $emp->lokasi_kerja ?? '';
         $this->jenis_kerja = $emp->jenis_kerja ?? '';
         $this->jam_kerja = $emp->jam_kerja ?? '';
+        $this->jam_masuk = $emp->jam_masuk ? substr($emp->jam_masuk, 0, 5) : '';
         $this->jobdesk = $emp->jobdesk ?? '';
         $this->no_hp = $emp->no_hp ?? '';
         $this->email = $emp->email ?? '';
@@ -361,6 +365,7 @@ class EmployeeTable extends Component
             'lokasi_kerja' => $this->lokasi_kerja ?: null,
             'jenis_kerja' => $this->jenis_kerja ?: null,
             'jam_kerja' => $this->jam_kerja ?: null,
+            'jam_masuk' => $this->jam_masuk ? $this->jam_masuk . ':00' : null,
             'jobdesk' => $this->jobdesk ?: null,
             'no_kontak_darurat1' => $this->no_kontak_darurat1 ?: null,
             'hubungan_darurat1' => $this->hubungan_darurat1 ?: null,
@@ -395,6 +400,7 @@ class EmployeeTable extends Component
         $this->lokasi_kerja = '';
         $this->jenis_kerja = '';
         $this->jam_kerja = '';
+        $this->jam_masuk = '';
         $this->jobdesk = '';
         $this->no_hp = '';
         $this->email = '';

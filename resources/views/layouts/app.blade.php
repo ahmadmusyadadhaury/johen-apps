@@ -74,7 +74,7 @@ $activeMenu = match (true) {
     request()->routeIs('hris.daily-tracking-admin') => '',
     request()->routeIs('hris.daily-tracking-stock', 'hris.rekap-stok', 'hris.stok-ketersediaan', 'hris.stok-target', 'hris.weekly-report') && (auth()->user()->isKoordinatorStock() || auth()->user()->isStaffStock()) => '',
     request()->routeIs('hris.influencer', 'hris.kalender-event', 'hris.content-plan') => '',
-    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.birthday-wishes*', 'history.*') => 'operasional',
+    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.machine-sync', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.daily-tracking', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.birthday-wishes*', 'history.*') => 'operasional',
     request()->routeIs('hris.*') => 'sdm',
     request()->routeIs('bonus.*', 'reimbursement') => auth()->user()->isManager() ? 'operasional' : '',
     request()->routeIs('it.tickets.*') && !auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() && !auth()->user()->isHeadOfStore2() => 'operasional',
@@ -228,6 +228,11 @@ if ($divisionViewUser) {
                             <a href="{{ route('hris.absensi') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.absensi') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Presensi
                             </a>
+                            @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('hris.machine-sync') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.machine-sync') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Sinkron Absen Mesin
+                            </a>
+                            @endif
                             <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.cuti-izin') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 <a href="{{ route('hris.cuti-izin') }}" class="flex-1">Cuti dan Izin</a>
                                 <livewire:sidebar-leave-badge />

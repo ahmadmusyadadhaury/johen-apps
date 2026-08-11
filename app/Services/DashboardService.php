@@ -431,7 +431,7 @@ class DashboardService
             ->whereBetween('date', [$now->startOfMonth()->format('Y-m-d'), $now->endOfMonth()->format('Y-m-d')])
             ->where('status', 'hadir')
             ->whereNotNull('time_in')
-            ->where('time_in', '>', '09:00:00')
+            ->where('time_in', '>', $employee->jamMasukCutoff())
             ->count();
 
         $attendanceToday = Attendance::where('employee_id', $employeeId)
