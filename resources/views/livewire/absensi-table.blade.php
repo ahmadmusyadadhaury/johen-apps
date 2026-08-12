@@ -6,7 +6,7 @@
 @endpush
 
 <div>
-    @if(auth()->user()->isKoordinator() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore())
+    @if(auth()->user()->isKoordinator() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin())
     {{-- Tab Navigation --}}
     <div class="mb-6">
         <div class="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
@@ -20,11 +20,20 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                 Presensi Tim
             </button>
+            @if(auth()->user()->isSuperAdmin())
+            <button wire:click="$set('tab', 'sinkron')"
+                class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'sinkron' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                Sinkron Mesin
+            </button>
+            @endif
         </div>
     </div>
     @endif
 
-    @if($karyawanView || isset($koordinatorView))
+    @if($sinkronView ?? false)
+        <livewire:machine-user-sync-table />
+    @elseif($karyawanView || isset($koordinatorView))
         {{-- Karyawan Stats --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
             <div class="stat-card group">
@@ -355,6 +364,12 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                                 Detail Karyawan
                                             </a>
+                                            @if(auth()->user()->isAnyKoordinator() && $tab === 'tim')
+                                            <button wire:click="openJamKerjaModal({{ $emp->id }})" @click="open = false" class="flex w-full items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Edit Jam Kerja
+                                            </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -382,6 +397,50 @@
                 </div>
             @endif
         </div>
+    @endif
+
+    {{-- ============ JAM KERJA MODAL ============ --}}
+    @if(auth()->user()->isAnyKoordinator() && $tab === 'tim')
+    <template x-teleport="body">
+    <div x-data="{ open: $wire.entangle('showJamKerjaModal') }"
+         x-show="open"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         @click="open = false">
+        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Jam Kerja</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Atur jam kerja anggota tim</p>
+                </div>
+                <button wire:click="closeJamKerjaModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form wire:submit.prevent="saveJamKerja" class="space-y-4">
+                <div>
+                    <x-input-label for="edit-jam_kerja" value="Jam Kerja" />
+                    <x-text-input id="edit-jam_kerja" wire:model="jam_kerja" type="text" placeholder="Contoh: Senin - Jumat 08.00-17.00, Sabtu 08.00-12.00" class="mt-1 block w-full" />
+                    @error('jam_kerja') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="edit-jam_masuk" value="Jam Masuk (acuan telat)" />
+                    <x-text-input id="edit-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
+                    @error('jam_masuk') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex items-center justify-end pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">
+                    <button type="button" wire:click="closeJamKerjaModal" class="btn-secondary text-xs mr-2">Batal</button>
+                    <button type="submit" class="btn-primary text-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </template>
     @endif
 
 </div>

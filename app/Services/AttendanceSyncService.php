@@ -48,6 +48,30 @@ class AttendanceSyncService
         return ['status' => 'ok', 'employee_id' => $employee->id, 'machine_user_id' => $machineUserId];
     }
 
+    public function backfillForUser(string $machineUserId): array
+    {
+        $employee = Employee::where('device_user_id', $machineUserId)->first();
+        if (!$employee) {
+            return ['processed' => 0, 'unmatched' => 1];
+        }
+
+        $punches = AttendancePunch::where('machine_user_id', $machineUserId)
+            ->whereNull('employee_id')
+            ->get();
+
+        foreach ($punches as $punch) {
+            $this->recordPunch(
+                $punch->machine_user_id,
+                $punch->punch_at->format('Y-m-d H:i:s'),
+                $punch->method,
+                $punch->machine_serial,
+                $punch->raw_data,
+            );
+        }
+
+        return ['processed' => $punches->count(), 'unmatched' => 0];
+    }
+
     private function applyToAttendance(Employee $employee, Carbon $punchAt, string $method): void
     {
         $date = $punchAt->toDateString();

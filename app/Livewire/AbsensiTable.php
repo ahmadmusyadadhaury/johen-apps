@@ -21,6 +21,11 @@ class AbsensiTable extends Component
     public bool $showAbsenModal = false;
     public string $absenStatus = 'hadir';
 
+    public bool $showJamKerjaModal = false;
+    public ?int $jamKerjaEmployeeId = null;
+    public string $jam_kerja = '';
+    public string $jam_masuk = '';
+
     public function mount(): void
     {
         $this->date = now()->format('Y-m-d');
@@ -75,10 +80,75 @@ class AbsensiTable extends Component
         $this->dispatch('notify', type: 'success', message: 'Absensi berhasil dicatat.');
     }
 
+    public function openJamKerjaModal(int $employeeId): void
+    {
+        $user = auth()->user();
+
+        if (!$user->isAnyKoordinator() || $this->tab !== 'tim') {
+            abort(403);
+        }
+
+        $ids = $this->getSubordinateEmployeeIds();
+        if (!in_array($employeeId, $ids)) {
+            abort(403);
+        }
+
+        $emp = Employee::findOrFail($employeeId);
+        $this->jamKerjaEmployeeId = $emp->id;
+        $this->jam_kerja = $emp->jam_kerja ?? '';
+        $this->jam_masuk = $emp->jam_masuk ? substr($emp->jam_masuk, 0, 5) : '';
+        $this->showJamKerjaModal = true;
+    }
+
+    public function closeJamKerjaModal(): void
+    {
+        $this->showJamKerjaModal = false;
+        $this->jamKerjaEmployeeId = null;
+        $this->jam_kerja = '';
+        $this->jam_masuk = '';
+        $this->resetErrorBag();
+    }
+
+    public function saveJamKerja(): void
+    {
+        $user = auth()->user();
+
+        if (!$user->isAnyKoordinator() || $this->tab !== 'tim') {
+            abort(403);
+        }
+
+        $ids = $this->getSubordinateEmployeeIds();
+        if (!$this->jamKerjaEmployeeId || !in_array($this->jamKerjaEmployeeId, $ids)) {
+            abort(403);
+        }
+
+        $this->validate([
+            'jam_kerja' => 'nullable|string|max:255',
+            'jam_masuk' => 'nullable|date_format:H:i',
+        ]);
+
+        $emp = Employee::findOrFail($this->jamKerjaEmployeeId);
+        $emp->update([
+            'jam_kerja' => $this->jam_kerja ?: null,
+            'jam_masuk' => $this->jam_masuk ? $this->jam_masuk . ':00' : null,
+        ]);
+
+        $this->closeJamKerjaModal();
+        $this->dispatch('notify', type: 'success', message: 'Jam kerja ' . $emp->nama . ' berhasil diperbarui.');
+    }
+
     public function render()
     {
         $user = auth()->user();
         $today = $this->date;
+
+        if ($user->isSuperAdmin() && $this->tab === 'sinkron') {
+            return view('livewire.absensi-table', [
+                'sinkronView' => true,
+                'tab' => $this->tab,
+                'today' => $today,
+            ]);
+        }
 
         $ownView = $user->isStaff()
             || $user->isStaffIt()

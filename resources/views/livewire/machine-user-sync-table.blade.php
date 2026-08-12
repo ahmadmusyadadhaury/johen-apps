@@ -1,10 +1,3 @@
-@push('topbar-left')
-    <div>
-        <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Sinkron Absen Mesin</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Petakan User ID mesin absen ke karyawan (NIK)</p>
-    </div>
-@endpush
-
 <div>
     {{-- Statistik --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">

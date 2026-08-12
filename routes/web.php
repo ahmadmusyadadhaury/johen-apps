@@ -39,7 +39,6 @@ use App\Livewire\CutiIzinTable;
 use App\Livewire\FreelanceTable;
 use App\Livewire\KalenderEventTable;
 use App\Livewire\KontrakKerjaTable;
-use App\Livewire\MachineUserSyncTable;
 use App\Livewire\ManualBookTable;
 use App\Livewire\PositionTable;
 use App\Livewire\PubgDailyTrackingTable;
@@ -93,7 +92,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/divisions', [DivisionController::class, 'index'])->name('divisions.index');
         Route::get('/struktur-organisasi', [StrukturOrganisasiController::class, 'index'])->name('struktur-organisasi');
         Route::get('/absensi', AbsensiTable::class)->name('absensi');
-        Route::get('/sinkron-absen-mesin', MachineUserSyncTable::class)->name('machine-sync')->middleware('role:super_admin');
         Route::get('/cuti-izin', CutiIzinTable::class)->name('cuti-izin');
         Route::get('/kontrak-kerja', KontrakKerjaTable::class)->name('kontrak-kerja');
         Route::get('/freelance', FreelanceTable::class)->name('freelance');

@@ -92,8 +92,14 @@ class MachineUserSyncTable extends Component
         $employee->device_user_id = $userId;
         $employee->save();
 
+        $result = app(AttendanceSyncService::class)->backfillForUser($userId);
+
         $this->closeMapModal();
-        $this->dispatch('notify', type: 'success', message: "User ID {$userId} dipetakan ke {$employee->nama}.");
+        $message = "User ID {$userId} dipetakan ke {$employee->nama}. ";
+        $message .= $result['processed'] > 0
+            ? "{$result['processed']} punch riwayat diproses."
+            : 'Belum ada punch tersimpan. Riwayat otomatis terhubung setelah tap berikutnya.';
+        $this->dispatch('notify', type: 'success', message: $message);
     }
 
     public function unmapMapping(string $machineUserId): void
