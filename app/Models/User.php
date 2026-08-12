@@ -109,10 +109,21 @@ class User extends Authenticatable
     public const ROLE_STAFF_HOST_MONKEY_PUBG = 'staff_host_monkey_pubg';
     public const ROLE_KOORDINATOR_STOCK = 'koordinator_stock';
     public const ROLE_STAFF_STOCK = 'staff_stock';
+    public const ROLE_STAFF_HR = 'staff_hr';
 
     public function isSuperAdmin(): bool
     {
         return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isStaffHr(): bool
+    {
+        return $this->role === self::ROLE_STAFF_HR;
+    }
+
+    public function isSuperAdminLike(): bool
+    {
+        return $this->isSuperAdmin() || $this->isStaffHr();
     }
 
     public function isGmCeo(): bool
@@ -535,6 +546,7 @@ class User extends Authenticatable
             $this->isKoordinator() => 'Koordinator',
             $this->isStaff() => 'Staff',
             $this->isSuperAdmin() => 'Super Admin',
+            $this->isStaffHr() => 'Staff HR',
             $this->isGmCeo() => 'GM / CEO',
             default => $this->employee?->position,
         };
@@ -554,6 +566,7 @@ class User extends Authenticatable
             $this->isKoordinatorIt(), $this->isStaffIt() => 'IT',
             $this->isKoordinatorCreative(), $this->isStaffCreative() => 'Creative',
             $this->isKoordinatorStock(), $this->isStaffStock() => 'Stock',
+            $this->isStaffHr() => 'HR',
             default => $this->employee?->divisionNames() ?: null,
         };
     }
@@ -567,26 +580,26 @@ class User extends Authenticatable
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
     }
 
     public function canUpdateData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_STAFF_HR]);
     }
 
     public function canDeleteData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
     }
 
     public function canViewAll(): bool
     {
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_KOORDINATOR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_KOORDINATOR, self::ROLE_STAFF_HR]);
     }
 
     /**

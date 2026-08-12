@@ -411,10 +411,12 @@
                     <span class="text-xs font-semibold text-white/80">Divisi</span>
                     <span class="text-sm font-bold text-white">{{ $stats['total_divisions'] }}</span>
                 </div>
+                @if(!auth()->user()->isStaffHr())
                 <div class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
                     <span class="text-xs font-semibold text-white/80">Pengajuan Menunggu</span>
                     <span class="text-sm font-bold text-white">{{ $pendingLeaveCount }}</span>
                 </div>
+                @endif
                 <div class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
                     <span class="text-xs font-semibold text-white/80">Total Meeting</span>
                     <span class="text-sm font-bold text-white">{{ $meetingStats['total_meetings'] }}</span>
@@ -579,6 +581,7 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_assets'] }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Data Aset</p>
         </div>
+        @if(!auth()->user()->isStaffHr())
         <a href="{{ route('hris.cuti-izin') }}" class="group rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-300">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
@@ -589,7 +592,9 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $pendingLeaveCount }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan Menunggu</p>
         </a>
+        @endif
         @else
+        @if(!auth()->user()->isStaffHr())
         <a href="{{ route('hris.cuti-izin') }}" class="stat-card group">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
@@ -600,6 +605,7 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $pendingLeaveCount }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan Menunggu</p>
         </a>
+        @endif
         @endif
         @endunless
 
@@ -911,7 +917,7 @@
         @endif
         @endunless
 
-        @unless(auth()->user()->isGmCeo())
+        @unless(auth()->user()->isGmCeo() || auth()->user()->isStaffHr())
         {{-- Pengajuan Cuti & Izin --}}
         <div x-data="{ openCutiModal: false }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">

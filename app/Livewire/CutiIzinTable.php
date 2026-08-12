@@ -158,6 +158,9 @@ class CutiIzinTable extends Component
         }
 
         $lr->update([$level => 'disetujui']);
+        if ($level === 'persetujuan_atasan2') {
+            $lr->syncAttendance();
+        }
         $this->showRekomendasiIfHost($lr, $level);
         $this->dispatch('leave-request-updated');
         $this->dispatch('notify', type: 'success', message: 'Pengajuan disetujui.');
@@ -242,6 +245,9 @@ class CutiIzinTable extends Component
         $lr->update($updateData);
 
         if ($this->pendingAction === 'setujui') {
+            if ($this->pendingLevel === 'persetujuan_atasan2') {
+                $lr->syncAttendance();
+            }
             $this->showRekomendasiIfHost($lr, $this->pendingLevel);
         }
 
@@ -270,7 +276,7 @@ class CutiIzinTable extends Component
                 abort(403, 'Hanya atasan 2 yang dapat menyetujui pengajuan ini.');
             }
         } elseif ($level === 'persetujuan_hr') {
-            if ($user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || (!$user->isSuperAdmin() && !$user->isGmCeo() && $user->id !== 4 && !$this->isHr($user))) {
+            if ($user->isStaffHr() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || (!$user->isSuperAdmin() && !$user->isGmCeo() && $user->id !== 4 && !$this->isHr($user))) {
                 abort(403, 'Hanya HR yang dapat menyetujui persetujuan HR.');
             }
         } else {
@@ -416,7 +422,7 @@ class CutiIzinTable extends Component
         $isHr = $userEmployee && $userEmployee->positions()->whereIn('nama', [
             'Human Resource Generalist', 'Admin HR', 'Admin GA', 'Office Boy'
         ])->exists();
-        $lihatSemua = $user->isSuperAdmin() || $user->isGmCeo() || $user->id === 4 || $isHr;
+        $lihatSemua = !$user->isStaffHr() && ($user->isSuperAdmin() || $user->isGmCeo() || $user->id === 4 || $isHr);
 
         $baseQuery = LeaveRequest::query();
 
@@ -533,6 +539,7 @@ class CutiIzinTable extends Component
 
         $hideAksi = $user->isAnyKoordinator()
             || $user->isStaff()
+            || $user->isStaffHr()
             || $user->isStaffIt()
             || $user->isStaffCreative()
             || $user->isStaffAdmin()

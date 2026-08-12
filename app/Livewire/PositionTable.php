@@ -49,14 +49,14 @@ class PositionTable extends Component
 
     public function openCreateModal(): void
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $this->resetForm();
         $this->showCreateModal = true;
     }
 
     public function openEditModal(int $id): void
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $pos = Position::findOrFail($id);
         $this->editId = $pos->id;
         $this->nama = $pos->nama;
@@ -77,7 +77,7 @@ class PositionTable extends Component
 
     public function save(): void
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $this->validate($this->rules());
 
         Position::create($this->buildData());
@@ -88,7 +88,7 @@ class PositionTable extends Component
 
     public function update(): void
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $pos = Position::findOrFail($this->editId);
 
         $this->validate($this->rules());
@@ -101,7 +101,7 @@ class PositionTable extends Component
 
     public function confirmDelete(int $id): void
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $this->deleteId = $id;
         $this->showDeleteConfirm = true;
     }
@@ -109,7 +109,7 @@ class PositionTable extends Component
     public function executeDelete(): void
     {
         if (!$this->deleteId) return;
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $pos = Position::withCount('employees', 'children')->findOrFail($this->deleteId);
 
         if ($pos->employees_count > 0) {
@@ -137,7 +137,7 @@ class PositionTable extends Component
 
     public function toggleActive(int $id): void
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
         $pos = Position::findOrFail($id);
         $pos->update(['is_active' => !$pos->is_active]);
         $this->dispatch('notify', type: 'success', message: 'Status jabatan berhasil diubah.');

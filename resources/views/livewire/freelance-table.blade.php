@@ -18,7 +18,7 @@
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Data Freelance</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daftar karyawan freelance</p>
             </div>
-            @if(auth()->user()->isSuperAdmin())
+            @if(auth()->user()->isSuperAdminLike())
             <button wire:click="openNew" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Data
@@ -33,7 +33,7 @@
                         <th class="px-6 py-3 text-center w-12">No</th>
                         <th class="px-6 py-3">Nama</th>
                         <th class="px-6 py-3">Host</th>
-                        @if(auth()->user()->isSuperAdmin())
+                        @if(auth()->user()->isSuperAdminLike())
                         <th class="px-6 py-3">No. WhatsApp</th>
                         @endif
                         <th class="px-6 py-3 text-center w-24">Aksi</th>
@@ -45,7 +45,7 @@
                             <td class="table-cell text-center text-gray-500">{{ $items->firstItem() + $loop->index }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->host_position }}</td>
-                            @if(auth()->user()->isSuperAdmin())
+                            @if(auth()->user()->isSuperAdminLike())
                             <td class="table-cell text-gray-600 dark:text-gray-400">
                                 @if($item->no_whatsapp)
                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $item->no_whatsapp) }}" target="_blank" rel="noopener noreferrer" class="text-primary-600 dark:text-primary-400 hover:underline inline-flex items-center gap-1">
@@ -72,7 +72,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->isSuperAdmin() ? 5 : 4 }}" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="{{ auth()->user()->isSuperAdminLike() ? 5 : 4 }}" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                     <p class="font-medium">Belum ada data freelance</p>

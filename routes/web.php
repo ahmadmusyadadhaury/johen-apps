@@ -97,8 +97,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/freelance', FreelanceTable::class)->name('freelance');
         Route::get('/manual-book', ManualBookTable::class)->name('manual-book');
         Route::get('/pengumuman', AnnouncementTable::class)->name('announcements');
-        Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin');
-        Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin');
+        Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin,staff_hr');
+        Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin,staff_hr');
         Route::post('/pengumuman/{announcement}/dibaca', [AnnouncementController::class, 'markRead'])->name('announcements.mark-read');
         Route::get('/buku-panduan', function () {
             return view('buku-panduan.index');
@@ -111,11 +111,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/daily-tracking', [DailyTrackingController::class, 'index'])->name('daily-tracking');
         Route::get('/daily-tracking-admin', AdminDailyTrackingTable::class)->name('daily-tracking-admin');
         Route::get('/daily-tracking-stock', StockDailyTrackingTable::class)->name('daily-tracking-stock');
-        Route::get('/rekap-stok', RekapStokTable::class)->name('rekap-stok')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock');
+        Route::get('/rekap-stok', RekapStokTable::class)->name('rekap-stok')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock,staff_hr');
         Route::redirect('/stok-masuk', '/hris/rekap-stok');
         Route::redirect('/stok-keluar', '/hris/rekap-stok');
-        Route::get('/stok-ketersediaan', StokKetersediaanTable::class)->name('stok-ketersediaan')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock');
-        Route::get('/stok-target', StokTargetTable::class)->name('stok-target')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock');
+        Route::get('/stok-ketersediaan', StokKetersediaanTable::class)->name('stok-ketersediaan')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock,staff_hr');
+        Route::get('/stok-target', StokTargetTable::class)->name('stok-target')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock,staff_hr');
         Route::get('/activity-competitor', [ActivityCompetitorController::class, 'index'])->name('activity-competitor');
         Route::get('/content-plan', ContentPlanTable::class)->name('content-plan');
 
@@ -244,7 +244,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin');
-    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin,gm_ceo');
+    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin,gm_ceo,staff_hr');
 });
 
 Route::middleware('auth')->group(function () {

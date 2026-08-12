@@ -56,6 +56,10 @@ class SidebarOperasionalBadge extends Component
 
     private function countLeaveRequests(User $user): int
     {
+        if ($user->isStaffHr()) {
+            return 0;
+        }
+
         if ($user->isSuperAdmin() || $user->isGmCeo()) {
             return LeaveRequest::where('persetujuan_hr', 'menunggu')->count();
         }

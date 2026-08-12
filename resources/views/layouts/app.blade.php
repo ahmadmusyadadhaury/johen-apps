@@ -150,7 +150,7 @@ if ($divisionViewUser) {
                             <a href="{{ route('hris.divisions.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.divisions.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Divisi
                             </a>
-                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isGmCeo())
+                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isGmCeo() || auth()->user()->isStaffHr())
                             <a href="{{ route('kelola-jabatan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('kelola-jabatan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Jabatan
                             </a>
@@ -240,7 +240,7 @@ if ($divisionViewUser) {
                                 Ticketing IT
                             </a>
                             @endif
-                            @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isSuperAdmin())
+                            @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isSuperAdminLike())
                             <a href="{{ route('hris.manual-book') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.manual-book') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Manual Book
                             </a>
@@ -268,7 +268,7 @@ if ($divisionViewUser) {
                                 Reimbursement
                             </a>
                             @endif
-                            @if(auth()->user()->isSuperAdmin())
+                            @if(auth()->user()->isSuperAdminLike())
                             <a href="{{ route('hris.announcements') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.announcements') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Pengumuman
                             </a>
@@ -894,8 +894,33 @@ if ($divisionViewUser) {
             </div>
         </div>
 
+        {{-- Idle timeout form (RTO): auto logout after inactivity --}}
+        <form id="idle-logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
+            @csrf
+        </form>
+
         @livewireScripts
         @stack('scripts')
+        <script>
+            function idleTimeout() {
+                const TIMEOUT_MS = 15 * 60 * 1000;
+                const idleForm = document.getElementById('idle-logout-form');
+                if (!idleForm) return;
+
+                let timer;
+                const reset = () => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => idleForm.submit(), TIMEOUT_MS);
+                };
+
+                ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'click'].forEach(evt => {
+                    window.addEventListener(evt, reset, { passive: true });
+                });
+
+                reset();
+            }
+            document.addEventListener('DOMContentLoaded', idleTimeout);
+        </script>
         <script>
             function themeToggle() {
                 return {

@@ -16,7 +16,7 @@
         <div>
             <p class="text-sm text-gray-500 dark:text-gray-400">Koleksi panduan & dokumentasi</p>
         </div>
-        @if(auth()->user()->isSuperAdmin())
+        @if(auth()->user()->isSuperAdminLike())
         <button wire:click="openNew" class="btn-primary text-xs py-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Tambah Buku
@@ -54,7 +54,7 @@
                 @if($book->deskripsi)
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ $book->deskripsi }}</p>
                 @endif
-                @if(auth()->user()->isSuperAdmin())
+                @if(auth()->user()->isSuperAdminLike())
                 <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                     <button wire:click="openEdit({{ $book->id }})" class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">Edit</button>
                     <button wire:click="delete({{ $book->id }})" wire:confirm="Hapus manual book ini?" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 font-medium">Hapus</button>

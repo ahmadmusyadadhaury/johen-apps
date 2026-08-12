@@ -24,6 +24,7 @@
                     <option value="">Semua Role</option>
                     <option value="super_admin">Super Admin</option>
                     <option value="gm_ceo">GM / CEO</option>
+                    <option value="staff_hr">Staff HR</option>
                     <option value="manager">Manager</option>
                     <option value="koordinator">Koordinator</option>
                     <option value="staff">Staff</option>
@@ -132,6 +133,8 @@
                                     <span class="badge-secondary">Staff Admin</span>
                                 @elseif($u->role === 'staff_stock')
                                     <span class="badge-secondary">Staff Admin Stock</span>
+                                @elseif($u->role === 'staff_hr')
+                                    <span class="badge-info">Staff HR</span>
                                 @else
                                     <span class="badge-secondary">Staff</span>
                                 @endif
@@ -253,6 +256,7 @@
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>
                         <option value="super_admin">Super Admin</option>
+                        <option value="staff_hr">Staff HR</option>
                     </select>
                     @error('role') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -350,6 +354,7 @@
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>
                         <option value="super_admin">Super Admin</option>
+                        <option value="staff_hr">Staff HR</option>
                     </select>
                 </div>
 

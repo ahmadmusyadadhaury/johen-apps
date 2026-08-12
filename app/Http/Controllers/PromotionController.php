@@ -16,7 +16,7 @@ class PromotionController extends Controller
 
     public function store(Request $request, Employee $employee)
     {
-        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        abort_unless(auth()->user()?->isSuperAdminLike(), 403);
         $validated = $request->validate([
             'nomor_surat' => 'nullable|string|max:100',
             'posisi_baru' => 'required|string|max:255',
@@ -51,7 +51,7 @@ class PromotionController extends Controller
 
     public function destroy(Employee $employee, Promotion $promotion)
     {
-        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        abort_unless(auth()->user()?->isSuperAdminLike(), 403);
         if ($promotion->employee_id !== $employee->id) {
             abort(404);
         }

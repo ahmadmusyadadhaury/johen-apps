@@ -217,7 +217,7 @@ class StrukturOrganisasi extends Component
         $user = auth()->user();
         if (!$user) return false;
 
-        if ($user->isSuperAdmin() || $user->isGmCeo()) {
+        if ($user->isSuperAdminLike() || $user->isGmCeo()) {
             return true;
         }
 

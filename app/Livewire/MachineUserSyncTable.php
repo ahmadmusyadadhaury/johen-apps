@@ -117,6 +117,18 @@ class MachineUserSyncTable extends Component
         $this->dispatch('notify', type: 'success', message: "Mapping User ID {$machineUserId} dilepas dari {$employee->nama}.");
     }
 
+    public function deleteMachineUser(string $machineUserId): void
+    {
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
+
+        DB::transaction(function () use ($machineUserId) {
+            AttendancePunch::where('machine_user_id', $machineUserId)->delete();
+            MachineUser::where('machine_user_id', $machineUserId)->delete();
+        });
+
+        $this->dispatch('notify', type: 'success', message: "User ID mesin {$machineUserId} beserta seluruh punch-nya berhasil dihapus.");
+    }
+
     public function backfill(): void
     {
         $sync = app(AttendanceSyncService::class);
@@ -190,7 +202,7 @@ class MachineUserSyncTable extends Component
 
     public function render()
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
 
         $query = DB::table('attendance_punches as p')
             ->leftJoin('employees as e', 'e.device_user_id', '=', 'p.machine_user_id')

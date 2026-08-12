@@ -142,7 +142,7 @@ class AbsensiTable extends Component
         $user = auth()->user();
         $today = $this->date;
 
-        if ($user->isSuperAdmin() && $this->tab === 'sinkron') {
+        if ($user->isSuperAdminLike() && $this->tab === 'sinkron') {
             return view('livewire.absensi-table', [
                 'sinkronView' => true,
                 'tab' => $this->tab,
@@ -159,6 +159,7 @@ class AbsensiTable extends Component
             || $user->isStaffHostEfootball()
             || $user->isStaffHostValorant()
             || $user->isStaffAdmin()
+            || ($user->isSuperAdminLike() && $this->tab === 'saya')
             || ($user->isKoordinator() && $this->tab === 'saya')
             || (($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) && $this->tab === 'saya')
             || ($user->isHeadOfStore() && $this->tab === 'saya');

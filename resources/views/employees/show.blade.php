@@ -1,7 +1,7 @@
 @php
     $isOwnView = $isOwnView ?? false;
-    $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdmin() ?? false);
-    $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdmin() ?? false);
+    $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
+    $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
 @endphp
 
 @push('topbar-left')

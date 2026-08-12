@@ -378,6 +378,6 @@ class EmployeeController extends Controller
 
     private function authorizeManageEmployeeData(): void
     {
-        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        abort_unless(auth()->user()?->isSuperAdminLike(), 403);
     }
 }

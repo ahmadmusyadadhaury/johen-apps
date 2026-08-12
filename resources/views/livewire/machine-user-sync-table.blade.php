@@ -1,22 +1,49 @@
 <div>
     {{-- Statistik --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-        <div class="card p-4">
-            <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">User ID Mesin</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{{ number_format($totalIds, 0, ',', '.') }}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+                </div>
+                <span class="badge-info">Total</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($totalIds, 0, ',', '.') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">User ID Mesin</p>
         </div>
-        <div class="card p-4">
-            <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">Terpetakan</p>
-            <p class="text-2xl font-bold text-emerald-600 mt-1">{{ number_format($mappedIds, 0, ',', '.') }}</p>
+
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-success text-[10px]">Terpetakan</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($mappedIds, 0, ',', '.') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">User Terpetakan Karyawan</p>
         </div>
-        <div class="card p-4">
-            <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">Belum Terpetakan</p>
-            <p class="text-2xl font-bold text-amber-600 mt-1">{{ number_format($totalIds - $mappedIds, 0, ',', '.') }}</p>
+
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-warning">Belum</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($totalIds - $mappedIds, 0, ',', '.') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Belum Terpetakan</p>
         </div>
-        <div class="card p-4">
-            <p class="text-xs text-gray-400 dark:text-gray-500 font-medium">Punch Belum Diproses</p>
-            <p class="text-2xl font-bold text-red-600 mt-1">{{ number_format($pendingPunches, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">dari {{ number_format($totalPunches, 0, ',', '.') }} total punch</p>
+
+        <div class="stat-card group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                </div>
+                <span class="badge-warning">Pending</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($pendingPunches, 0, ',', '.') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Punch Belum Diproses</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">dari {{ number_format($totalPunches, 0, ',', '.') }} total punch</p>
         </div>
     </div>
 
@@ -93,12 +120,20 @@
                             </td>
                             <td class="table-cell text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-1">
+                                    @if(!$m->employee_id)
                                     <button wire:click="openMapModal('{{ $m->machine_user_id }}')" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        {{ $m->employee_id ? 'Ganti' : 'Map' }}
+                                        Map
                                     </button>
+                                    @endif
+                                    @if(auth()->user()->isSuperAdminLike())
+                                    <button wire:click="deleteMachineUser('{{ $m->machine_user_id }}')" wire:confirm="Hapus User ID mesin {{ $m->machine_user_id }} beserta seluruh punch-nya? Tindakan ini tidak dapat dibatalkan." class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Hapus User ID">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                        Hapus
+                                    </button>
+                                    @endif
                                     @if($m->employee_id)
-                                    <button wire:click="unmapMapping('{{ $m->machine_user_id }}')" wire:confirm="Lepas mapping User ID {{ $m->machine_user_id }} dari {{ $m->employee_nama }}?" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                                    <button wire:click="unmapMapping('{{ $m->machine_user_id }}')" wire:confirm="Lepas mapping User ID {{ $m->machine_user_id }} dari {{ $m->employee_nama }}?" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         Unmap
                                     </button>

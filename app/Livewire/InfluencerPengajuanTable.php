@@ -202,7 +202,7 @@ class InfluencerPengajuanTable extends Component
 
         $query = InfluencerPengajuan::with('pengaju', 'approverHos1', 'approverGm', 'rejector');
 
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdminLike()) {
             // lihat semua
         } elseif ($isHos1) {
             $query->where(function ($q) {

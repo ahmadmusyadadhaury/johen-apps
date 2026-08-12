@@ -12,7 +12,7 @@ class MeetingController extends Controller
     public function jadwal(Request $request, ExternalMeetingService $externalMeetingService)
     {
         $user = auth()->user();
-        $isAdvancedView = $user->isGmCeo() || $user->isManager() || $user->isSuperAdmin();
+        $isAdvancedView = $user->isGmCeo() || $user->isManager() || $user->isSuperAdminLike();
 
         $month = (int) ($request->month ?? now()->month);
         $year = (int) ($request->year ?? now()->year);
