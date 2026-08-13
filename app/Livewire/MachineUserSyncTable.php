@@ -16,11 +16,15 @@ class MachineUserSyncTable extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $filterStatus = '';
 
     public bool $showMapModal = false;
+
     public ?string $mapMachineUserId = null;
+
     public ?int $selectedEmployeeId = null;
+
     public string $mapSearch = '';
 
     public function updatingSearch(): void
@@ -59,7 +63,7 @@ class MachineUserSyncTable extends Component
 
     public function saveMapping(): void
     {
-        if (!$this->mapMachineUserId || !$this->selectedEmployeeId) {
+        if (! $this->mapMachineUserId || ! $this->selectedEmployeeId) {
             $this->addError('selectedEmployeeId', 'Pilih karyawan terlebih dahulu.');
 
             return;
@@ -76,14 +80,14 @@ class MachineUserSyncTable extends Component
         }
 
         $employee = Employee::find($this->selectedEmployeeId);
-        if (!$employee) {
+        if (! $employee) {
             $this->addError('selectedEmployeeId', 'Karyawan tidak ditemukan.');
 
             return;
         }
 
         if ($employee->device_user_id && $employee->device_user_id !== $this->mapMachineUserId) {
-            $this->addError('selectedEmployeeId', 'Karyawan ini sudah terpetakan ke User ID ' . $employee->device_user_id . '. Lepas mapping yang lama terlebih dahulu.');
+            $this->addError('selectedEmployeeId', 'Karyawan ini sudah terpetakan ke User ID '.$employee->device_user_id.'. Lepas mapping yang lama terlebih dahulu.');
 
             return;
         }
@@ -105,7 +109,7 @@ class MachineUserSyncTable extends Component
     public function unmapMapping(string $machineUserId): void
     {
         $employee = Employee::where('device_user_id', $machineUserId)->first();
-        if (!$employee) {
+        if (! $employee) {
             $this->dispatch('notify', type: 'error', message: 'Mapping tidak ditemukan.');
 
             return;
@@ -139,7 +143,7 @@ class MachineUserSyncTable extends Component
 
         foreach ($punches as $punch) {
             $employee = Employee::where('device_user_id', $punch->machine_user_id)->first();
-            if (!$employee) {
+            if (! $employee) {
                 $unmatched++;
 
                 continue;
@@ -166,7 +170,7 @@ class MachineUserSyncTable extends Component
         $timeout = (int) config('services.attendance_machine.timeout', 5);
 
         $client = new ZkClient($host, $port, $commKey, $timeout);
-        if (!$client->connect()) {
+        if (! $client->connect()) {
             $this->dispatch('notify', type: 'error', message: "Tidak dapat terhubung ke mesin absen ({$host}:{$port}).");
 
             return;
@@ -197,6 +201,8 @@ class MachineUserSyncTable extends Component
             $saved++;
         }
 
+        MachineUser::whereNotIn('machine_user_id', array_map('strval', array_keys($users)))->delete();
+
         $this->dispatch('notify', type: 'success', message: "Nama user mesin berhasil diambil: {$saved} user.");
     }
 
@@ -211,7 +217,7 @@ class MachineUserSyncTable extends Component
             ->groupBy('p.machine_user_id');
 
         if ($this->search) {
-            $query->where('p.machine_user_id', 'like', '%' . $this->search . '%');
+            $query->where('p.machine_user_id', 'like', '%'.$this->search.'%');
         }
 
         if ($this->filterStatus === 'mapped') {
@@ -235,12 +241,12 @@ class MachineUserSyncTable extends Component
             $mapEmployees = Employee::query()
                 ->where(function ($q) {
                     $q->whereNull('device_user_id')
-                      ->orWhere('device_user_id', $this->mapMachineUserId);
+                        ->orWhere('device_user_id', $this->mapMachineUserId);
                 })
                 ->when($this->mapSearch, function ($q) {
                     $q->where(function ($q2) {
-                        $q2->where('nama', 'like', '%' . $this->mapSearch . '%')
-                           ->orWhere('nik', 'like', '%' . $this->mapSearch . '%');
+                        $q2->where('nama', 'like', '%'.$this->mapSearch.'%')
+                            ->orWhere('nik', 'like', '%'.$this->mapSearch.'%');
                     });
                 })
                 ->orderBy('nama')

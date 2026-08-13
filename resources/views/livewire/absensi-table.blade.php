@@ -220,7 +220,8 @@
     </template>
     @else
         {{-- Admin/Direksi Stats --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6"
+             x-data="{ showStats: false, statsType: 'tepat', dateLabel: @js(\Carbon\Carbon::parse($today)->translatedFormat('D, d MMM Y')), list: @js($statsMembers) }">
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
@@ -232,7 +233,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Karyawan</p>
             </div>
 
-            <div class="stat-card group">
+            <div @click="showStats = true; statsType = 'tepat'" class="stat-card group cursor-pointer">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -243,7 +244,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tepat Waktu</p>
             </div>
 
-            <div class="stat-card group">
+            <div @click="showStats = true; statsType = 'terlambat'" class="stat-card group cursor-pointer">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
@@ -263,6 +264,77 @@
                 </div>
                 <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalHadir }}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Hadir</p>
+            </div>
+
+            {{-- Modal: Detail Tepat Waktu / Terlambat --}}
+            <div x-show="showStats" x-cloak
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-[999] flex items-center justify-center p-5 bg-gray-900/60 backdrop-blur-sm"
+                 @click="showStats = false">
+                <div @click.stop
+                     class="relative w-full max-w-lg rounded-3xl bg-white dark:bg-gray-900 ring-1 ring-black/5 dark:ring-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div class="sticky top-0 z-10 px-5 py-4 pt-5 shrink-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold font-display text-gray-900 dark:text-gray-100" x-text="statsType === 'tepat' ? 'Karyawan Tepat Waktu' : 'Karyawan Terlambat'"></h3>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5" x-text="'Presensi · ' + dateLabel"></p>
+                        </div>
+                        <button @click="showStats = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="px-5 py-3 shrink-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                        <p class="text-xs text-gray-400 dark:text-gray-500">
+                            Total <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="list[statsType].length"></span> karyawan
+                            <span x-show="statsType === 'terlambat'" class="text-amber-600 dark:text-amber-400">terlambat</span>
+                            <span x-show="statsType === 'tepat'" class="text-emerald-600 dark:text-emerald-400">tepat waktu</span>
+                        </p>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto px-5 py-4">
+                        <div class="space-y-3" x-show="list[statsType].length > 0">
+                            <template x-for="(m, i) in list[statsType]" :key="m.nama + i">
+                                <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-100 dark:border-gray-800 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 text-white text-xs font-bold shadow-md">
+                                            <span x-text="m.nama.charAt(0).toUpperCase()"></span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" x-text="m.nama"></p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 truncate" x-text="m.jabatan"></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 shrink-0">
+                                        <div class="text-right">
+                                            <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                <span x-show="m.time_in !== '-'" x-text="m.time_in"></span>
+                                                <span x-show="m.time_in === '-'" class="text-gray-400">-</span>
+                                            </p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500" x-text="'cutoff ' + m.cutoff"></p>
+                                        </div>
+                                        <span class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-lg"
+                                              :class="statsType === 'terlambat' ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30' : 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'"
+                                              x-text="statsType === 'terlambat' ? 'Terlambat' : 'Tepat'"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="list[statsType].length === 0" class="text-center py-8">
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada karyawan pada tanggal ini.</p>
+                        </div>
+                    </div>
+
+                    <div class="sticky bottom-0 z-10 px-5 py-3 shrink-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+                        <button @click="showStats = false" class="w-full rounded-xl bg-gray-100 dark:bg-gray-800 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -428,6 +500,11 @@
                     <x-input-label for="edit-jam_masuk" value="Jam Masuk (acuan telat)" />
                     <x-text-input id="edit-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
                     @error('jam_masuk') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label for="edit-effective_date" value="Berlaku Mulai" />
+                    <x-text-input id="edit-effective_date" wire:model="effective_date" type="date" class="mt-1 block w-full" />
+                    @error('effective_date') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center justify-end pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">

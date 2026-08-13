@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\AttendanceSession;
 use App\Models\BonusHostLive;
 use App\Models\Division;
 use App\Models\Employee;
@@ -16,32 +17,55 @@ class BonusHostLiveTable extends Component
     use WithFileUploads, WithPagination;
 
     public string $search = '';
+
     public string $bulan = '';
+
     public string $divisiFilter = '';
+
     public string $sortField = 'tanggal';
+
     public string $sortDirection = 'desc';
 
     public bool $showCreateModal = false;
+
     public bool $showEditModal = false;
+
     public ?int $editId = null;
+
     public bool $showDeleteConfirm = false;
+
     public ?int $deleteId = null;
 
     public string $tanggal = '';
+
     public string $jam_mulai = '';
+
     public string $jam_selesai = '';
+
     public string $nik = '';
+
     public string $nama = '';
+
     public string $jabatan = '';
+
     public string $divisi = '';
+
     public string $sesi = '';
+
     public string $ach_sold = '';
+
     public string $ach_view = '';
+
     public string $peak_view = '';
+
     public string $catatan = '';
+
     public $foto_statistik;
+
     public $foto_bukti_live;
+
     public string $fotoStatistikPath = '';
+
     public string $fotoBuktiLivePath = '';
 
     protected $updatesQueryString = ['search'];
@@ -90,12 +114,23 @@ class BonusHostLiveTable extends Component
 
     public function updatedNik(string $value): void
     {
-        if (!$value) return;
+        if (! $value) {
+            return;
+        }
         $employee = Employee::with('divisions')->where('nik', $value)->first();
         if ($employee) {
             $this->nama = $employee->nama;
             $this->jabatan = $employee->position;
             $this->divisi = $employee->divisions->first()?->nama ?? '';
+        }
+    }
+
+    public function updatedSesi(string $value): void
+    {
+        $config = AttendanceSession::sessionConfigByNama($value);
+        if ($config) {
+            $this->jam_mulai = $config['mulai'];
+            $this->jam_selesai = $config['selesai'];
         }
     }
 
@@ -230,7 +265,9 @@ class BonusHostLiveTable extends Component
 
     public function executeDelete(): void
     {
-        if (!$this->deleteId) return;
+        if (! $this->deleteId) {
+            return;
+        }
         Gate::authorize('delete-data');
         $item = BonusHostLive::findOrFail($this->deleteId);
         if ($item->foto_statistik) {
@@ -255,19 +292,19 @@ class BonusHostLiveTable extends Component
         $items = BonusHostLive::when($this->search, function ($query) {
             $query->where(function ($q) {
                 $q->where('nama', 'like', "%{$this->search}%")
-                  ->orWhere('nik', 'like', "%{$this->search}%")
-                  ->orWhere('sesi', 'like', "%{$this->search}%");
+                    ->orWhere('nik', 'like', "%{$this->search}%")
+                    ->orWhere('sesi', 'like', "%{$this->search}%");
             });
         })
-        ->when($this->bulan, function ($query) {
-            $query->whereYear('tanggal', substr($this->bulan, 0, 4))
-                  ->whereMonth('tanggal', substr($this->bulan, 5, 2));
-        })
-        ->when($this->divisiFilter, function ($query) {
-            $query->where('divisi', $this->divisiFilter);
-        })
-        ->orderBy($this->sortField, $this->sortDirection)
-        ->paginate(10);
+            ->when($this->bulan, function ($query) {
+                $query->whereYear('tanggal', substr($this->bulan, 0, 4))
+                    ->whereMonth('tanggal', substr($this->bulan, 5, 2));
+            })
+            ->when($this->divisiFilter, function ($query) {
+                $query->where('divisi', $this->divisiFilter);
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->paginate(10);
 
         $employees = Employee::with('divisions')
             ->where('position', 'like', 'Host%')

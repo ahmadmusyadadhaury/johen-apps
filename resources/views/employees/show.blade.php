@@ -564,6 +564,8 @@
                         </div>
                     </div>
                 </div>
+
+                @livewire('shift-schedule-table', ['employee' => $employee])
             </div>
 
             {{-- Panel: Dokumen --}}

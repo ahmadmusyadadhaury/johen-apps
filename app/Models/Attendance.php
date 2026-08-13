@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,21 +28,28 @@ class Attendance extends Model
 
     public function getDurationAttribute(): ?string
     {
-        if (!$this->time_in || !$this->time_out) {
+        if (! $this->time_in || ! $this->time_out) {
             return null;
         }
 
-        $in = \Carbon\Carbon::parse($this->time_in);
-        $out = \Carbon\Carbon::parse($this->time_out);
+        $in = Carbon::parse($this->time_in);
+        $out = Carbon::parse($this->time_out);
+
+        if ($out->lt($in)) {
+            $out->addDay();
+        }
+
         $diff = $in->diff($out);
 
-        return $diff->h . 'j ' . $diff->i . 'm';
+        return $diff->h.'j '.$diff->i.'m';
     }
 
     public function getDisplayStatusAttribute(): string
     {
+        $cutoff = $this->employee?->jamMasukCutoff($this->date?->toDateString()) ?? '09:00:00';
+
         return match ($this->status) {
-            'hadir' => $this->time_in && $this->time_in > ($this->employee?->jamMasukCutoff() ?? '09:00:00') ? 'terlambat' : 'tepat waktu',
+            'hadir' => $this->time_in && $this->time_in > $cutoff ? 'terlambat' : 'tepat waktu',
             'izin' => 'izin',
             'sakit' => 'sakit',
             'alpha' => 'tidak hadir',

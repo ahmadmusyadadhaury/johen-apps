@@ -14,9 +14,13 @@ class EmployeeTable extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $sortField = 'nik';
+
     public string $sortDirection = 'asc';
+
     public string $filterDivision = '';
+
     public string $filterStatus = '';
 
     public function mount(): void
@@ -25,44 +29,77 @@ class EmployeeTable extends Component
     }
 
     public bool $showCreateModal = false;
+
     public bool $showEditModal = false;
+
     public bool $showPreview = false;
+
     public ?int $editId = null;
+
     public int $step = 1;
 
     public string $nik = '';
+
     public string $nama = '';
+
     public string $tempat_lahir = '';
+
     public string $tanggal_lahir = '';
+
     public string $jenis_kelamin = '';
+
     public string $alamat = '';
+
     public string $status = 'aktif';
 
     public string $position = '';
+
     public array $position_ids = [];
+
     public string $main_position_id = '';
+
     public array $division_ids = [];
+
     public string $atasan = '';
+
     public string $atasan2 = '';
+
     public string $tanggal_masuk = '';
+
     public string $jenis_karyawan = '';
+
     public string $lokasi_kerja = '';
+
     public string $jenis_kerja = '';
+
     public string $jam_kerja = '';
+
     public string $jam_masuk = '';
+
+    public string $jam_kerja_effective = '';
+
     public string $jobdesk = '';
+
     public bool $showDeleteConfirm = false;
+
     public ?int $deleteId = null;
 
     public string $no_hp = '';
+
     public string $email = '';
+
     public string $no_kontak_darurat1 = '';
+
     public string $hubungan_darurat1 = '';
+
     public string $no_kontak_darurat2 = '';
+
     public string $hubungan_darurat2 = '';
+
     public string $no_bpjs = '';
 
     public string $tanggal_resign = '';
+
     public string $catatan = '';
 
     public function updatedJenisKerja($value): void
@@ -99,6 +136,7 @@ class EmployeeTable extends Component
             'jenis_kerja' => 'nullable|in:Office,Operasional',
             'jam_kerja' => 'nullable|string|max:255',
             'jam_masuk' => 'nullable|date_format:H:i',
+            'jam_kerja_effective' => 'nullable|date|after_or_equal:2000-01-01',
             'jobdesk' => 'nullable|string',
             'no_hp' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
@@ -172,6 +210,7 @@ class EmployeeTable extends Component
         $this->jenis_kerja = $emp->jenis_kerja ?? '';
         $this->jam_kerja = $emp->jam_kerja ?? '';
         $this->jam_masuk = $emp->jam_masuk ? substr($emp->jam_masuk, 0, 5) : '';
+        $this->jam_kerja_effective = now()->toDateString();
         $this->jobdesk = $emp->jobdesk ?? '';
         $this->no_hp = $emp->no_hp ?? '';
         $this->email = $emp->email ?? '';
@@ -238,7 +277,15 @@ class EmployeeTable extends Component
 
         $employee = Employee::create($this->buildData());
 
-        if (!empty($this->position_ids)) {
+        if ($employee->jam_kerja || $employee->jam_masuk) {
+            $employee->setJamKerja(
+                $employee->jam_kerja,
+                $employee->jam_masuk,
+                $employee->tanggal_masuk?->toDateString() ?? now()->toDateString()
+            );
+        }
+
+        if (! empty($this->position_ids)) {
             $syncData = [];
             foreach ($this->position_ids as $pid) {
                 $syncData[$pid] = ['is_main' => $pid == (int) $this->main_position_id];
@@ -258,12 +305,22 @@ class EmployeeTable extends Component
         $emp = Employee::findOrFail($this->editId);
 
         $rules = $this->rules();
-        $rules['nik'] = ['required', 'string', 'max:30', 'unique:employees,nik,' . $this->editId];
+        $rules['nik'] = ['required', 'string', 'max:30', 'unique:employees,nik,'.$this->editId];
         $this->validate($rules);
+
+        $oldJamKerja = $emp->jam_kerja;
+        $oldJamMasuk = $emp->jam_masuk;
 
         $emp->update($this->buildData());
 
-        if (!empty($this->position_ids)) {
+        $newJamKerja = $this->jam_kerja ?: null;
+        $newJamMasuk = $this->jam_masuk ? $this->jam_masuk.':00' : null;
+
+        if ($newJamKerja !== $oldJamKerja || $newJamMasuk !== $oldJamMasuk) {
+            $emp->setJamKerja($newJamKerja, $newJamMasuk, $this->jam_kerja_effective ?: now()->toDateString());
+        }
+
+        if (! empty($this->position_ids)) {
             $syncData = [];
             foreach ($this->position_ids as $pid) {
                 $syncData[$pid] = ['is_main' => $pid == (int) $this->main_position_id];
@@ -286,7 +343,9 @@ class EmployeeTable extends Component
 
     public function executeDelete(): void
     {
-        if (!$this->deleteId) return;
+        if (! $this->deleteId) {
+            return;
+        }
         $this->authorizeWrite('delete-data');
         Employee::findOrFail($this->deleteId)->delete();
         $this->dispatch('notify', type: 'success', message: 'Karyawan berhasil dihapus.');
@@ -314,19 +373,19 @@ class EmployeeTable extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nik', 'like', "%{$this->search}%")
-                      ->orWhere('nama', 'like', "%{$this->search}%")
-                      ->orWhere('email', 'like', "%{$this->search}%")
-                      ->orWhere('no_hp', 'like', "%{$this->search}%");
+                        ->orWhere('nama', 'like', "%{$this->search}%")
+                        ->orWhere('email', 'like', "%{$this->search}%")
+                        ->orWhere('no_hp', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->filterDivision, function ($query) {
-                $query->whereHas('divisions', fn($q) => $q->where('divisions.id', $this->filterDivision));
+                $query->whereHas('divisions', fn ($q) => $q->where('divisions.id', $this->filterDivision));
             })
             ->when($this->filterStatus, function ($query) {
                 $query->where('status', $this->filterStatus);
             })
             ->when($this->sortField === 'nik', function ($query) {
-                $query->orderByRaw('CAST(nik AS UNSIGNED) ' . ($this->sortDirection === 'asc' ? 'asc' : 'desc'));
+                $query->orderByRaw('CAST(nik AS UNSIGNED) '.($this->sortDirection === 'asc' ? 'asc' : 'desc'));
             }, function ($query) {
                 $query->orderBy($this->sortField, $this->sortDirection);
             })
@@ -334,6 +393,7 @@ class EmployeeTable extends Component
 
         $divisions = Division::where('is_active', true)->orderBy('nama')->get();
         $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
+
         return view('livewire.employee-table', [
             'employees' => $employees,
             'divisions' => $divisions,
@@ -344,10 +404,10 @@ class EmployeeTable extends Component
     private function buildData(): array
     {
         $positionNames = [];
-        if (!empty($this->position_ids)) {
+        if (! empty($this->position_ids)) {
             $positionNames = Position::whereIn('id', $this->position_ids)->pluck('nama')->toArray();
         }
-        $posStr = !empty($positionNames) ? implode(' & ', $positionNames) : ($this->position ?: null);
+        $posStr = ! empty($positionNames) ? implode(' & ', $positionNames) : ($this->position ?: null);
 
         return [
             'nik' => $this->nik,
@@ -365,7 +425,7 @@ class EmployeeTable extends Component
             'lokasi_kerja' => $this->lokasi_kerja ?: null,
             'jenis_kerja' => $this->jenis_kerja ?: null,
             'jam_kerja' => $this->jam_kerja ?: null,
-            'jam_masuk' => $this->jam_masuk ? $this->jam_masuk . ':00' : null,
+            'jam_masuk' => $this->jam_masuk ? $this->jam_masuk.':00' : null,
             'jobdesk' => $this->jobdesk ?: null,
             'no_kontak_darurat1' => $this->no_kontak_darurat1 ?: null,
             'hubungan_darurat1' => $this->hubungan_darurat1 ?: null,
@@ -401,6 +461,7 @@ class EmployeeTable extends Component
         $this->jenis_kerja = '';
         $this->jam_kerja = '';
         $this->jam_masuk = '';
+        $this->jam_kerja_effective = '';
         $this->jobdesk = '';
         $this->no_hp = '';
         $this->email = '';

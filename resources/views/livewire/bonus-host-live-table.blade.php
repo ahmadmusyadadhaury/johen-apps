@@ -169,10 +169,10 @@
                         <x-input-label for="create-sesi" value="Sesi *" />
                         <select id="create-sesi" wire:model="sesi" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                             <option value="">-- Pilih Sesi --</option>
-                            <option value="Pagi">Pagi</option>
-                            <option value="Siang">Siang</option>
-                            <option value="Malam">Malam</option>
-                            <option value="Subuh">Subuh</option>
+                            <option value="Pagi">Sesi 1 - Pagi (07.00 - 12.00)</option>
+                            <option value="Siang">Sesi 2 - Siang (13.00 - 18.00)</option>
+                            <option value="Malam">Sesi 3 - Malam (19.00 - 24.00)</option>
+                            <option value="Subuh">Sesi 4 - Subuh (01.00 - 06.00)</option>
                         </select>
                         @error('sesi') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -293,10 +293,10 @@
                         <x-input-label for="edit-sesi" value="Sesi *" />
                         <select id="edit-sesi" wire:model="sesi" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                             <option value="">-- Pilih Sesi --</option>
-                            <option value="Pagi">Pagi</option>
-                            <option value="Siang">Siang</option>
-                            <option value="Malam">Malam</option>
-                            <option value="Subuh">Subuh</option>
+                            <option value="Pagi">Sesi 1 - Pagi (07.00 - 12.00)</option>
+                            <option value="Siang">Sesi 2 - Siang (13.00 - 18.00)</option>
+                            <option value="Malam">Sesi 3 - Malam (19.00 - 24.00)</option>
+                            <option value="Subuh">Sesi 4 - Subuh (01.00 - 06.00)</option>
                         </select>
                         @error('sesi') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>

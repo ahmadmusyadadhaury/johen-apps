@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\ActivityCompetitor;
+use App\Models\Announcement;
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\Attendance;
-use App\Models\Announcement;
-use App\Models\ActivityCompetitor;
 use App\Models\BonusPubg;
 use App\Models\Division;
 use App\Models\EmailLog;
@@ -19,6 +19,7 @@ use App\Models\PayrollDetail;
 use App\Models\PayrollImport;
 use App\Models\Position;
 use App\Models\WeeklyPlanReport;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -41,7 +42,7 @@ class DashboardService
         return AssetCategory::withCount('assets')
             ->orderByDesc('assets_count')
             ->get()
-            ->map(fn($cat) => [
+            ->map(fn ($cat) => [
                 'id' => $cat->id,
                 'nama' => $cat->name,
                 'total' => $cat->assets_count,
@@ -71,7 +72,7 @@ class DashboardService
         return Division::withCount('employees')
             ->orderByDesc('employees_count')
             ->get()
-            ->map(fn($d) => [
+            ->map(fn ($d) => [
                 'id' => $d->id,
                 'nama' => $d->nama,
                 'total' => $d->employees_count,
@@ -95,11 +96,11 @@ class DashboardService
             ->latest()
             ->take($limit)
             ->get()
-            ->map(fn($lr) => [
+            ->map(fn ($lr) => [
                 'id' => $lr->id,
                 'employee' => $lr->employee?->nama ?? '-',
                 'jenis' => $lr->jenis === 'cuti_tahunan' ? 'Cuti' : 'Izin',
-                'tanggal' => $lr->tanggal_mulai->isoFormat('D MMM') . ' - ' . $lr->tanggal_selesai->isoFormat('D MMM YYYY'),
+                'tanggal' => $lr->tanggal_mulai->isoFormat('D MMM').' - '.$lr->tanggal_selesai->isoFormat('D MMM YYYY'),
                 'durasi' => $lr->durasi,
             ])
             ->toArray();
@@ -107,11 +108,11 @@ class DashboardService
 
     private function applyPendingLeaveFilter($query, $user)
     {
-        if (!$user || !$user->employee) {
+        if (! $user || ! $user->employee) {
             return $query->where(function ($q) {
                 $q->where('persetujuan_koor', 'menunggu')
-                  ->orWhere('persetujuan_atasan2', 'menunggu')
-                  ->orWhere('persetujuan_hr', 'menunggu');
+                    ->orWhere('persetujuan_atasan2', 'menunggu')
+                    ->orWhere('persetujuan_hr', 'menunggu');
             });
         }
 
@@ -122,33 +123,33 @@ class DashboardService
         if ($user->isManager()) {
             return $query->where(function ($q) use ($userEmployee) {
                 $q->where('atasan_id', $userEmployee->id)
-                  ->where('persetujuan_koor', 'menunggu')
-                  ->orWhere(function ($q2) use ($userEmployee) {
-                      $q2->where('atasan2_id', $userEmployee->id)
-                         ->where('persetujuan_atasan2', 'menunggu');
-                  });
+                    ->where('persetujuan_koor', 'menunggu')
+                    ->orWhere(function ($q2) use ($userEmployee) {
+                        $q2->where('atasan2_id', $userEmployee->id)
+                            ->where('persetujuan_atasan2', 'menunggu');
+                    });
             });
         }
 
-        $lihatSemua = $user->id === 4 || ($user->canViewAll() && !$user->isKoordinator()) || in_array($userEmployee->position, [
-            'Human Resource Generalist', 'Admin HR', 'Admin GA', 'OB'
+        $lihatSemua = $user->id === 4 || ($user->canViewAll() && ! $user->isKoordinator()) || in_array($userEmployee->position, [
+            'Human Resource Generalist', 'Admin HR', 'Admin GA', 'OB',
         ]);
 
-        if (!$isKoordinatorRole && $lihatSemua) {
+        if (! $isKoordinatorRole && $lihatSemua) {
             return $query->where(function ($q) {
                 $q->where('persetujuan_koor', 'menunggu')
-                  ->orWhere('persetujuan_atasan2', 'menunggu')
-                  ->orWhere('persetujuan_hr', 'menunggu');
+                    ->orWhere('persetujuan_atasan2', 'menunggu')
+                    ->orWhere('persetujuan_hr', 'menunggu');
             });
         }
 
         return $query->where(function ($q) use ($userEmployee) {
             $q->where('atasan_id', $userEmployee->id)
-              ->where('persetujuan_koor', 'menunggu')
-              ->orWhere(function ($q2) use ($userEmployee) {
-                  $q2->where('atasan2_id', $userEmployee->id)
-                     ->where('persetujuan_atasan2', 'menunggu');
-              });
+                ->where('persetujuan_koor', 'menunggu')
+                ->orWhere(function ($q2) use ($userEmployee) {
+                    $q2->where('atasan2_id', $userEmployee->id)
+                        ->where('persetujuan_atasan2', 'menunggu');
+                });
         });
     }
 
@@ -205,7 +206,7 @@ class DashboardService
             ->where('status', 'berlaku')
             ->orderBy('tanggal_berakhir')
             ->get()
-            ->map(fn($c) => [
+            ->map(fn ($c) => [
                 'id' => $c->id,
                 'employee' => $c->employee->nama,
                 'posisi' => $c->posisi,
@@ -224,12 +225,12 @@ class DashboardService
         ];
 
         $employee = $user?->employee;
-        if (!$employee || !$user?->isManager()) {
+        if (! $employee || ! $user?->isManager()) {
             return $empty;
         }
 
         $position = $employee->mainPosition();
-        if (!$position) {
+        if (! $position) {
             return $empty;
         }
 
@@ -245,7 +246,7 @@ class DashboardService
             $efootball = Position::where('nama', 'Koordinator E-football')->first();
             if ($efootball) {
                 $efootballPositionIds = $this->getDescendantPositionIds($efootball->id);
-                $efootballIds = Employee::whereHas('positions', fn($q) => $q->whereIn('position_id', $efootballPositionIds))
+                $efootballIds = Employee::whereHas('positions', fn ($q) => $q->whereIn('position_id', $efootballPositionIds))
                     ->pluck('id')->toArray();
                 $dailySubordinateIds = array_diff($dailySubordinateIds, $efootballIds);
             }
@@ -257,36 +258,36 @@ class DashboardService
             ->where('status', 'disetujui')
             ->whereNotNull('approved_by')
             ->whereIn('divisi', $divisionNames)
-            ->where(fn($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
+            ->where(fn ($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
             ->with('employee');
 
         $dailyCount = (clone $dailyQuery)->count();
-        $dailyItems = (clone $dailyQuery)->latest('tanggal')->take(3)->get()->map(fn($b) => [
+        $dailyItems = (clone $dailyQuery)->latest('tanggal')->take(3)->get()->map(fn ($b) => [
             'id' => $b->id,
             'employee' => $b->employee?->nama ?? $b->nama,
-            'subtitle' => ($b->divisi ?: '-') . ' • ' . $b->tanggal->isoFormat('D MMM'),
+            'subtitle' => ($b->divisi ?: '-').' • '.$b->tanggal->isoFormat('D MMM'),
         ])->toArray();
 
         $weeklyQuery = WeeklyPlanReport::whereIn('employee_id', $subordinateIds)
-            ->where(fn($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
+            ->where(fn ($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
             ->with('employee');
 
         $weeklyCount = (clone $weeklyQuery)->count();
-        $weeklyItems = (clone $weeklyQuery)->latest('tanggal')->take(3)->get()->map(fn($w) => [
+        $weeklyItems = (clone $weeklyQuery)->latest('tanggal')->take(3)->get()->map(fn ($w) => [
             'id' => $w->id,
             'employee' => $w->employee?->nama ?? '-',
-            'subtitle' => ($w->kategori ?: '-') . ' • ' . $w->tanggal->isoFormat('D MMM'),
+            'subtitle' => ($w->kategori ?: '-').' • '.$w->tanggal->isoFormat('D MMM'),
         ])->toArray();
 
         $activityQuery = ActivityCompetitor::whereIn('employee_id', $subordinateIds)
-            ->where(fn($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
+            ->where(fn ($q) => $q->whereNull('feedback_atasan')->orWhere('feedback_atasan', ''))
             ->with('employee');
 
         $activityCount = (clone $activityQuery)->count();
-        $activityItems = (clone $activityQuery)->latest('tanggal_analysis')->take(3)->get()->map(fn($a) => [
+        $activityItems = (clone $activityQuery)->latest('tanggal_analysis')->take(3)->get()->map(fn ($a) => [
             'id' => $a->id,
             'employee' => $a->employee?->nama ?? '-',
-            'subtitle' => ($a->jenis ?: '-') . ' • ' . $a->tanggal_analysis->isoFormat('D MMM'),
+            'subtitle' => ($a->jenis ?: '-').' • '.$a->tanggal_analysis->isoFormat('D MMM'),
         ])->toArray();
 
         return [
@@ -307,8 +308,8 @@ class DashboardService
 
         return Employee::whereIn('id', function ($q) use ($descendantIds) {
             $q->select('employee_id')
-              ->from('employee_position')
-              ->whereIn('position_id', $descendantIds);
+                ->from('employee_position')
+                ->whereIn('position_id', $descendantIds);
         })->pluck('id')->toArray();
     }
 
@@ -319,6 +320,7 @@ class DashboardService
         foreach ($children as $childId) {
             $ids = array_merge($ids, $this->getDescendantPositionIds($childId));
         }
+
         return $ids;
     }
 
@@ -326,7 +328,7 @@ class DashboardService
     {
         $descendantIds = $this->getDescendantPositionIds($position->id);
         $names = Position::whereIn('id', $descendantIds)->pluck('nama')
-            ->map(fn($n) => strtolower($n))->toArray();
+            ->map(fn ($n) => strtolower($n))->toArray();
 
         $map = [
             'PUBG' => 'koordinator johen pubg',
@@ -359,7 +361,7 @@ class DashboardService
         $tahunIni = $now->year;
         $employee = Employee::with('divisions')->find($employeeId);
 
-        if (!$employee) {
+        if (! $employee) {
             return [];
         }
 
@@ -369,17 +371,17 @@ class DashboardService
             ->where('persetujuan_koor', 'disetujui');
 
         $isKoordinator = $employee->user && $employee->user->isAnyKoordinator();
-        if (!$isKoordinator) {
+        if (! $isKoordinator) {
             $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
         }
 
         $skipHrApproval = $employee->user && ($employee->user->isAnyKoordinator() || $employee->user->isStaffAdmin() || $employee->user->isStaffHostPubg() || $employee->user->isStaffHostFf() || $employee->user->isStaffIt() || $employee->user->isStaffHostMlbb() || $employee->user->isStaffHostEfootball() || $employee->user->isStaffHostValorant() || $employee->user->isStaffHostRoblox() || $employee->user->isStaffHostMonkeyPubg());
-        if (!$skipHrApproval) {
+        if (! $skipHrApproval) {
             $usedCutiQuery->where('persetujuan_hr', 'disetujui');
         }
 
         $usedCuti = $usedCutiQuery->get()
-            ->sum(fn($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+            ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
 
         $jatahCuti = 12;
         $sisaCuti = max(0, $jatahCuti - $usedCuti);
@@ -387,18 +389,18 @@ class DashboardService
         $pendingCount = LeaveRequest::where('employee_id', $employeeId)
             ->where(function ($q) {
                 $q->where('persetujuan_koor', 'menunggu')
-                  ->orWhere('persetujuan_atasan2', 'menunggu')
-                  ->orWhere('persetujuan_hr', 'menunggu');
+                    ->orWhere('persetujuan_atasan2', 'menunggu')
+                    ->orWhere('persetujuan_hr', 'menunggu');
             })->count();
 
         $pendingRequests = LeaveRequest::where('employee_id', $employeeId)
             ->latest()
             ->take(5)
             ->get()
-            ->map(fn($lr) => [
+            ->map(fn ($lr) => [
                 'id' => $lr->id,
                 'jenis' => $lr->jenis === 'cuti_tahunan' ? 'Cuti Tahunan' : 'Izin',
-                'tanggal' => $lr->tanggal_mulai->isoFormat('D MMM') . ' - ' . $lr->tanggal_selesai->isoFormat('D MMM YYYY'),
+                'tanggal' => $lr->tanggal_mulai->isoFormat('D MMM').' - '.$lr->tanggal_selesai->isoFormat('D MMM YYYY'),
                 'durasi' => $lr->durasi,
                 'status_koor' => $lr->persetujuan_koor,
                 'status_atasan2' => $lr->persetujuan_atasan2,
@@ -410,13 +412,21 @@ class DashboardService
             ->latest('date')
             ->take(5)
             ->get()
-            ->map(fn($a) => [
+            ->map(fn ($a) => [
                 'date' => $a->date->isoFormat('D MMM YYYY'),
                 'status' => $a->display_status,
-                'time_in' => $a->time_in ? \Carbon\Carbon::parse($a->time_in)->format('H:i') : '-',
-                'time_out' => $a->time_out ? \Carbon\Carbon::parse($a->time_out)->format('H:i') : '-',
+                'time_in' => $a->time_in ? Carbon::parse($a->time_in)->format('H:i') : '-',
+                'time_out' => $a->time_out ? Carbon::parse($a->time_out)->format('H:i') : '-',
                 'work_duration' => $a->time_in && $a->time_out
-                    ? \Carbon\Carbon::parse($a->time_in)->diff(\Carbon\Carbon::parse($a->time_out))->format('%h Jam %i Menit')
+                    ? (function () use ($a) {
+                        $in = Carbon::parse($a->time_in);
+                        $out = Carbon::parse($a->time_out);
+                        if ($out->lt($in)) {
+                            $out->addDay();
+                        }
+
+                        return $in->diff($out)->format('%h Jam %i Menit');
+                    })()
                     : '-',
             ]);
 
@@ -427,11 +437,13 @@ class DashboardService
             })
             ->count();
 
-        $totalTerlambat = Attendance::where('employee_id', $employeeId)
+        $totalTerlambat = Attendance::with('employee')
+            ->where('employee_id', $employeeId)
             ->whereBetween('date', [$now->startOfMonth()->format('Y-m-d'), $now->endOfMonth()->format('Y-m-d')])
             ->where('status', 'hadir')
             ->whereNotNull('time_in')
-            ->where('time_in', '>', $employee->jamMasukCutoff())
+            ->get()
+            ->filter(fn ($a) => $a->time_in > ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
             ->count();
 
         $attendanceToday = Attendance::where('employee_id', $employeeId)
@@ -446,7 +458,7 @@ class DashboardService
             ->latest()
             ->take(5)
             ->get()
-            ->map(fn($mr) => [
+            ->map(fn ($mr) => [
                 'title' => $mr->title,
                 'status' => $mr->status,
                 'date' => $mr->date->isoFormat('D MMM YYYY'),
@@ -493,8 +505,8 @@ class DashboardService
             'total_hadir_bulan_ini' => $totalHadir,
             'total_terlambat_bulan_ini' => $totalTerlambat,
             'attendance_today' => $attendanceToday ? [
-                'time_in' => $attendanceToday->time_in ? \Carbon\Carbon::parse($attendanceToday->time_in)->format('H:i') : '-',
-                'time_out' => $attendanceToday->time_out ? \Carbon\Carbon::parse($attendanceToday->time_out)->format('H:i') : '-',
+                'time_in' => $attendanceToday->time_in ? Carbon::parse($attendanceToday->time_in)->format('H:i') : '-',
+                'time_out' => $attendanceToday->time_out ? Carbon::parse($attendanceToday->time_out)->format('H:i') : '-',
                 'status' => $attendanceToday->display_status,
                 'location' => $attendanceToday->location ?? '-',
                 'method' => $attendanceToday->method ?? 'GPS',
@@ -532,7 +544,7 @@ class DashboardService
             $timeline[] = [
                 'time' => $import->created_at->addMinutes(1),
                 'icon' => 'check',
-                'title' => "Data berhasil divalidasi",
+                'title' => 'Data berhasil divalidasi',
                 'description' => "{$import->total_employee} karyawan",
             ];
 
@@ -550,7 +562,7 @@ class DashboardService
                     'time' => $import->created_at->addMinutes(3),
                     'icon' => 'alert',
                     'title' => "{$failedCount} slip gagal",
-                    'description' => "Perlu generate ulang",
+                    'description' => 'Perlu generate ulang',
                 ];
             }
         }
