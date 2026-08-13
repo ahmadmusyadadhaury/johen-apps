@@ -2,15 +2,17 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AttendancePunch;
 use App\Services\AttendanceSyncService;
 use App\Services\ZkMachine\ZkClient;
+use Carbon\Carbon;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use RuntimeException;
 use Throwable;
 
-#[Signature('attendance:listen {--once : Jalankan satu siklus koneksi lalu keluar} {--max-events=0 : Berhenti setelah N event (0 = tanpa batas)} {--dry-run : Proses tanpa menulis ke database}')]
+#[Signature('attendance:listen {--once : Jalankan satu siklus koneksi lalu keluar} {--max-events=0 : Berhenti setelah N event (0 = tanpa batas)} {--dry-run : Proses tanpa menulis ke database} {--since= : Tarik log tertinggal sejak tanggal (Y-m-d), default tanggal punch terakhir di DB}')]
 #[Description('Daemon realtime: menerima event tap dari mesin absensi dan mencatat ke database')]
 class AttendanceListen extends Command
 {
@@ -25,6 +27,8 @@ class AttendanceListen extends Command
 
         $events = 0;
         $startedAt = now();
+        $lastCatchUpAt = null;
+        $catchUpEvery = 5;
 
         $this->info("Daemon absensi dimulai ({$host}:{$port}, comm key {$commKey}). Ctrl+C untuk berhenti.");
 
@@ -38,6 +42,8 @@ class AttendanceListen extends Command
                     continue;
                 }
 
+                $this->maybeCatchUp($sync, $client, $lastCatchUpAt, $catchUpEvery, $dryRun);
+
                 if (!$client->enableRealtime()) {
                     $this->warn('[' . now()->format('H:i:s') . "] Registrasi realtime gagal, reconnect...");
                     $client->disconnect();
@@ -48,7 +54,9 @@ class AttendanceListen extends Command
                 $this->info('[' . now()->format('H:i:s') . '] Terkoneksi. Menunggu event tap...');
 
                 while (true) {
-                    $event = $client->readRealtimeEvent(30);
+                    $this->maybeCatchUp($sync, $client, $lastCatchUpAt, $catchUpEvery, $dryRun);
+
+                    $event = $client->readRealtimeEvent(5);
 
                     if ($event === null) {
                         if (!$client->isConnected()) {
@@ -79,6 +87,67 @@ class AttendanceListen extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function maybeCatchUp(AttendanceSyncService $sync, ZkClient $client, ?Carbon &$lastCatchUpAt, int $every, bool $dryRun): void
+    {
+        if ($lastCatchUpAt !== null && $lastCatchUpAt->diffInSeconds(now()) < $every) {
+            return;
+        }
+
+        $lastCatchUpAt = now();
+        $this->catchUp($sync, $client, $this->option('since'), $dryRun);
+    }
+
+    private function catchUp(AttendanceSyncService $sync, ZkClient $client, ?string $since, bool $dryRun): void
+    {
+        $last = AttendancePunch::max('punch_at');
+        $sinceTs = $since
+            ? strtotime($since . ' 00:00:00')
+            : strtotime(($last ? substr($last, 0, 10) : now()->toDateString()) . ' 00:00:00');
+
+        $logs = $client->getAttendanceLogs();
+        if ($logs === []) {
+            return;
+        }
+
+        $new = 0;
+        $dup = 0;
+        $unmatched = 0;
+        $skipped = 0;
+
+        foreach ($logs as $log) {
+            if (strtotime($log['record_time']) < $sinceTs) {
+                $skipped++;
+                continue;
+            }
+
+            $result = $dryRun
+                ? ['status' => 'dry-run']
+                : $sync->recordPunch($log['user_id'], $log['record_time'], 'mesin');
+
+            match ($result['status']) {
+                'ok' => $new++,
+                'duplicate' => $dup++,
+                'unmatched' => $unmatched++,
+                default => null,
+            };
+        }
+
+        if ($new > 0 || $dup > 0 || $unmatched > 0) {
+            $this->line(sprintf(
+                '[%s] Catch-up: %d baru, %d duplikat, %d belum termapping, %d dilewati.',
+                now()->format('H:i:s'),
+                $new,
+                $dup,
+                $unmatched,
+                $skipped
+            ));
+        }
+
+        if ($unmatched > 0) {
+            $this->warn('Ada user mesin yang belum dipetakan ke karyawan. Jalankan `attendance:sync-users` untuk melihat daftarnya.');
+        }
     }
 
     private function processEvent(AttendanceSyncService $sync, array $event, bool $dryRun, ZkClient $client): void

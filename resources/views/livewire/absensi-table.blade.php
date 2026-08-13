@@ -5,7 +5,7 @@
     </div>
 @endpush
 
-<div>
+<div wire:poll.5s>
     @if(auth()->user()->isKoordinator() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdminLike())
     {{-- Tab Navigation --}}
     <div class="mb-6">
