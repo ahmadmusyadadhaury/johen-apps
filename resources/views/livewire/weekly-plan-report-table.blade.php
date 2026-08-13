@@ -161,7 +161,7 @@
     </div>
 
     {{-- Modal Tambah WPR (W-1) --}}
-    <div wire:ignore.self class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+    <div wire:ignore.self class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          x-data="{ open: false }"
          x-init="$watch('$wire.showModal', value => open = value)"
          x-show="open" x-cloak
@@ -179,7 +179,7 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl m-auto">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tambah Weekly Plan Report</h3>
