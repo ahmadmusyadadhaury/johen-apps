@@ -57,6 +57,7 @@ class AttendanceSyncService
 
         $punches = AttendancePunch::where('machine_user_id', $machineUserId)
             ->whereNull('employee_id')
+            ->orderBy('punch_at')
             ->get();
 
         foreach ($punches as $punch) {
@@ -74,11 +75,33 @@ class AttendanceSyncService
 
     private function applyToAttendance(Employee $employee, Carbon $punchAt, string $method): void
     {
-        $date = $punchAt->toDateString();
+        $punchDate = $punchAt->toDateString();
         $time = $punchAt->format('H:i:s');
 
+        // 1. Cari sesi presensi yang masih terbuka (sudah ada jam masuk, belum
+        //    ada jam keluar) untuk karyawan ini.
+        $open = Attendance::where('employee_id', $employee->id)
+            ->whereNotNull('time_in')
+            ->whereNull('time_out')
+            ->where('status', 'hadir')
+            ->orderByDesc('date')
+            ->first();
+
+        // 2. Jika sesi terbuka berasal dari tanggal lebih awal dan scan baru
+        //    masih dalam "jendela lintas malam", scan itu adalah JAM KELUAR dari
+        //    sesi tersebut (mis. masuk 01-08 22:00, pulang 02-08 02:00), bukan
+        //    absen masuk baru hanya karena tanggal kalendernya sudah berganti.
+        if ($open && $open->date->toDateString() < $punchDate && $this->isWithinOvernightWindow($employee, $open, $punchAt)) {
+            $open->time_out = $time;
+            $open->method = $method;
+            $open->save();
+
+            return;
+        }
+
+        // 3. Logic hari yang sama (perilaku lama dipertahankan).
         $attendance = Attendance::where('employee_id', $employee->id)
-            ->where('date', $date)
+            ->whereDate('date', $punchDate)
             ->first();
 
         // Dobel tap: punch kedua dalam waktu berdekatan (mis. 00:46:21 / 00:46:23)
@@ -87,32 +110,10 @@ class AttendanceSyncService
             return;
         }
 
-        // Shift Malam (datang siang, pulang lewat tengah malam): punch dini hari
-        // (00:00 - 06:00) adalah clock-out hari sebelumnya, bukan clock-in tanggal punch.
-        if ($this->isMalamShift($employee, $punchAt) && $time >= '00:00:00' && $time < '06:00:00') {
-            $prevDate = $punchAt->copy()->subDay()->toDateString();
-            $prev = Attendance::where('employee_id', $employee->id)
-                ->where('date', $prevDate)
-                ->first();
-
-            if ($prev && $prev->status === 'hadir') {
-                if ($prev->time_in === null) {
-                    $prev->time_in = $time;
-                } elseif ($prev->time_out === null) {
-                    $prev->time_out = $time;
-                }
-
-                $prev->method = $method;
-                $prev->save();
-
-                return;
-            }
-        }
-
         if (! $attendance) {
             Attendance::create([
                 'employee_id' => $employee->id,
-                'date' => $date,
+                'date' => $punchDate,
                 'time_in' => $time,
                 'time_out' => null,
                 'status' => 'hadir',
@@ -140,25 +141,48 @@ class AttendanceSyncService
         $attendance->save();
     }
 
-    private function isMalamShift(Employee $employee, Carbon $punchAt): bool
+    /**
+     * Menentukan apakah scan baru masih wajar menjadi JAM KELUAR dari sesi
+     * terbuka yang dimulai pada tanggal/ jam masuk sebelumnya.
+     *
+     * Memakai datetime penuh (tanggal + jam), bukan hanya jam atau tanggal,
+     * dan memakai konfigurasi jam kerja/shift karyawan yang berlaku pada
+     * tanggal sesi tersebut dimulai.
+     */
+    private function isWithinOvernightWindow(Employee $employee, Attendance $open, Carbon $punchAt): bool
     {
-        $position = (string) ($employee->position ?? '');
-        if (str_contains($position, '(Malam)')) {
-            return true;
+        $sessionStart = Carbon::parse($open->date->toDateString().' '.$open->time_in);
+
+        // Scan sebelum sesi dimulai bukan jam keluar dari sesi tersebut.
+        if ($punchAt->lte($sessionStart)) {
+            return false;
         }
 
-        $jamKerja = $employee->shiftOn($punchAt->toDateString())['jam_kerja'];
-        $jamKerja = (string) ($jamKerja ?? '');
-        if (preg_match('/^\s*(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})\s*$/', $jamKerja, $m)) {
-            $start = (int) $m[1] * 60 + (int) $m[2];
-            $end = (int) $m[3] * 60 + (int) $m[4];
+        $shift = $employee->shiftOn($open->date->toDateString());
+        $endMinutes = Employee::shiftEndFrom($shift['jam_kerja']);
 
-            if ($start >= 10 * 60 && $start <= 18 * 60 && $end >= 22 * 60) {
-                return true;
+        if ($endMinutes !== null) {
+            $maxEnd = Carbon::parse($open->date->toDateString().' 00:00:00')
+                ->addMinutes($endMinutes)
+                ->addMinutes((int) config('attendance.overnight_buffer_minutes', 60));
+
+            // Shift yang melewati tengah malam (mis. "22:00-06:00"): waktu
+            // selesainya berada pada hari berikutnya tanggal masuk.
+            $startMinutes = Employee::shiftStartFrom(
+                $shift['jam_kerja'],
+                $shift['jam_masuk'],
+                str_contains((string) $employee->position, '(Malam)'),
+            );
+            if ($endMinutes < $startMinutes) {
+                $maxEnd->addDay();
             }
+        } else {
+            // Tanpa konfigurasi jam kerja, gunakan batas aman yang mudah
+            // diubah lewat config('attendance.max_session_hours').
+            $maxEnd = $sessionStart->copy()->addHours((int) config('attendance.max_session_hours', 16));
         }
 
-        return false;
+        return $punchAt->lte($maxEnd);
     }
 
     private function isDoubleTap(Attendance $attendance, string $time): bool

@@ -136,7 +136,9 @@ class MachineUserSyncTable extends Component
     public function backfill(): void
     {
         $sync = app(AttendanceSyncService::class);
-        $punches = AttendancePunch::whereNull('employee_id')->get();
+        $punches = AttendancePunch::whereNull('employee_id')
+            ->orderBy('punch_at')
+            ->get();
 
         $processed = 0;
         $unmatched = 0;

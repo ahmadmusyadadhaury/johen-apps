@@ -136,7 +136,7 @@ class MachineUserSyncTest extends TestCase
         $this->assertSame($emp->id, $p2->fresh()->employee_id);
         $this->assertNull($unmatched->fresh()->employee_id);
 
-        $attendance = Attendance::where('employee_id', $emp->id)->where('date', '2026-08-11')->first();
+        $attendance = Attendance::where('employee_id', $emp->id)->whereDate('date', '2026-08-11')->first();
         $this->assertNotNull($attendance);
         $this->assertSame('07:00:00', $attendance->time_in);
         $this->assertSame('17:00:00', $attendance->time_out);

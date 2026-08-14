@@ -203,6 +203,21 @@ class Employee extends Model
         return 9 * 60;
     }
 
+    public static function shiftEndFrom(?string $jamKerja): ?int
+    {
+        $jamKerja = (string) ($jamKerja ?? '');
+        if (preg_match('/[-–—]\s*(\d{1,2})[.:](\d{2})\s*$/', $jamKerja, $m)) {
+            $hour = (int) $m[1];
+            $min = (int) $m[2];
+
+            if ($hour >= 0 && $hour <= 23 && $min <= 59) {
+                return $hour * 60 + $min;
+            }
+        }
+
+        return null;
+    }
+
     private function shiftForDate(?string $date): ?EmployeeShiftHistory
     {
         $histories = $this->loadedShiftHistories();

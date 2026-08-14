@@ -111,6 +111,11 @@ class AttendanceListen extends Command
             return;
         }
 
+        // Pairing presensi bergantung pada urutan kronologis (punch pulang dini
+        // hari dipasangkan ke sesi masuk sebelumnya), jadi proses log dari yang
+        // paling lama ke yang paling baru.
+        usort($logs, fn ($a, $b) => strcmp($a['record_time'], $b['record_time']));
+
         $new = 0;
         $dup = 0;
         $unmatched = 0;
