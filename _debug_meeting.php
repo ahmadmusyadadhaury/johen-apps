@@ -8,25 +8,33 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
-config(['services.meeting.verify_ssl' => false]);
-config(['services.meeting.username' => 'gm']);
-config(['services.meeting.password' => 'password']);
-Cache::flush();
+Cache::forget('external_meetings');
+Cache::forget('external_meeting_token');
 
-$login = Http::withoutVerifying()->post('https://icing-geriatric-idiom.ngrok-free.dev/api/login', [
-    'username' => 'gm',
-    'password' => 'password',
-]);
-var_dump('login status', $login->status(), data_get($login->json(), 'data.token'));
+$url = config('services.meeting.url');
+$token = config('services.meeting.token');
+$path = config('services.meeting.path');
 
-$token = data_get($login->json(), 'data.token');
+var_dump('url', $url, 'has token', (bool) $token);
 
-$meetings = Http::withoutVerifying()->withToken($token)->acceptJson()->get('https://icing-geriatric-idiom.ngrok-free.dev/api/meetings');
-var_dump('meetings status', $meetings->status());
+$request = Http::timeout(5)->acceptJson();
+
+if (! config('services.meeting.verify_ssl')) {
+    $request = $request->withoutVerifying();
+}
+
+$meetings = $token
+    ? $request->withToken($token)->get($url . $path)
+    : $request->post($url . config('services.meeting.login_path'), [
+        'username' => config('services.meeting.username'),
+        'password' => config('services.meeting.password'),
+    ]);
+
+var_dump('api status', $meetings->status());
 
 $svc = app(App\Services\ExternalMeetingService::class);
-$list = $svc->fetch();
+$list = $svc->fetch(true);
 var_dump('service count', $list->count());
-foreach ($list->take(3) as $m) {
-    var_dump($m->title, $m->date?->toDateTimeString(), $m->recurring_type, $m->recurring_day);
+foreach ($list as $m) {
+    var_dump($m->id, $m->title, $m->date?->toDateString(), $m->start_time, $m->recurring_type, $m->recurring_day);
 }

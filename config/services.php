@@ -48,7 +48,9 @@ return [
         'path' => env('MEETING_API_PATH', '/api/meetings'),
         'username' => env('MEETING_API_USERNAME'),
         'password' => env('MEETING_API_PASSWORD'),
+        'token' => env('MEETING_API_TOKEN', env('KENDARAAN_API_TOKEN')),
         'verify_ssl' => env('MEETING_API_VERIFY_SSL', true),
+        'cache_ttl' => env('MEETING_CACHE_TTL', 60),
     ],
 
     'vehicle_api' => [

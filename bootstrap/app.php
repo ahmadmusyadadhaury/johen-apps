@@ -26,4 +26,5 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('attendance:pull')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('meetings:sync')->everyMinute()->withoutOverlapping();
     })->create();

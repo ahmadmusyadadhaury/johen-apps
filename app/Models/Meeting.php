@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Meeting extends Model
 {
     protected $fillable = [
+        'external_id',
         'title',
         'recurring_type',
         'recurring_day',

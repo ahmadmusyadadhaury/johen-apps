@@ -51,6 +51,12 @@ class MeetingController extends Controller
             return $m->date->month === $month && $m->date->year === $year;
         });
 
+        $localSignatures = $meetings->map(fn ($m) => $this->meetingSignature($m))->toArray();
+
+        $externalMeetings = $externalMeetings->reject(
+            fn ($m) => in_array($this->meetingSignature($m), $localSignatures, true)
+        );
+
         $meetings = $meetings->merge($externalMeetings);
 
         $meetings = $meetings->map(function ($m) {
@@ -83,6 +89,21 @@ class MeetingController extends Controller
             'meetings', 'recurring', 'nonRecurring', 'month', 'year', 'view',
             'isAdvancedView', 'focus', 'weekStart', 'weekEnd'
         ));
+    }
+
+    private function meetingSignature(object $m): string
+    {
+        $date = $m->date;
+        $dateStr = $date
+            ? ($date instanceof \Carbon\Carbon ? $date->format('Y-m-d') : (string) $date)
+            : 'recurring';
+
+        $time = (string) ($m->start_time ?? '');
+        if (preg_match('/(\d{1,2}):(\d{2})/', $time, $matches)) {
+            $time = sprintf('%02d:%02d', (int) $matches[1], (int) $matches[2]);
+        }
+
+        return strtolower((string) $m->title) . '|' . $dateStr . '|' . $time;
     }
 
     public function permintaan(Request $request)
