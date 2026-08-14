@@ -68,6 +68,10 @@ class Employee extends Model
 
     public function getFotoUrlAttribute(): ?string
     {
+        if (! array_key_exists('foto', $this->attributes) && array_key_exists('foto_is_base64', $this->attributes)) {
+            return $this->foto_is_base64 ? route('hris.employees.photo', $this).'?'.$this->updated_at->timestamp : null;
+        }
+
         if (! $this->foto) {
             return null;
         }

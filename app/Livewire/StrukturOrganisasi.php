@@ -298,21 +298,26 @@ class StrukturOrganisasi extends Component
 
     public function render()
     {
-        $allPositions = Position::where('is_active', true)->with('employees')->get();
+        $allPositions = Position::where('is_active', true)
+            ->with(['employees' => function ($q) {
+                $q->selectRaw("employees.id, employees.nama, employees.nik, employees.updated_at, employees.created_at, CASE WHEN employees.foto LIKE 'base64:%' THEN 1 ELSE 0 END AS foto_is_base64");
+            }])
+            ->get();
 
         $roots = $this->buildTree($allPositions, null);
         $roots = $this->splitMonkeyDexNodes($roots);
         $roots = $this->sortTreeByName($roots);
 
         $flatPositions = $allPositions->mapWithKeys(function ($pos) {
-            $emp = $pos->employees->first();
             return [$pos->id => [
                 'id' => $pos->id,
                 'nama' => $pos->nama,
                 'parent_id' => $pos->parent_id,
-                'employee_nama' => $emp?->nama,
-                'employee_nik' => $emp?->nik,
-                'employee_foto' => $emp?->foto_url,
+                'employees' => $pos->employees->map(fn ($emp) => [
+                    'nama' => $emp->nama,
+                    'nik' => $emp->nik,
+                    'foto_url' => $emp->foto_url,
+                ])->values()->toArray(),
             ]];
         });
 
@@ -342,7 +347,7 @@ class StrukturOrganisasi extends Component
                 return [
                     'id' => $pos->id,
                     'nama' => $pos->nama,
-                    'employee' => $pos->employees->first(),
+                    'employees' => $pos->employees,
                     'children' => $this->buildTree($positions, $pos->id),
                 ];
             })->values();
