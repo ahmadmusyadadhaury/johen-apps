@@ -75,8 +75,18 @@ class AttendanceSyncService
 
     private function applyToAttendance(Employee $employee, Carbon $punchAt, string $method): void
     {
-        $punchDate = $punchAt->toDateString();
         $time = $punchAt->format('H:i:s');
+
+        // Sesi Subuh (punch 00:00-06:59) untuk karyawan shift Subuh tercatat
+        // pada tanggal HARI SEBELUMNYA (ikut malam sebelumnya), mengikuti
+        // konvensi sesi host live (config/hostlive.php). Contoh: masuk 00:24
+        // tanggal 15 tercatat sebagai absen tanggal 14, bukan tanggal 15.
+        $isSubuhPunch = $this->isSubuhShift($employee, $punchAt)
+            && (int) $punchAt->format('G') < 7;
+
+        $punchDate = $isSubuhPunch
+            ? $punchAt->copy()->subDay()->toDateString()
+            : $punchAt->toDateString();
 
         // 1. Cari sesi presensi yang masih terbuka (sudah ada jam masuk, belum
         //    ada jam keluar) untuk karyawan ini.
@@ -183,6 +193,51 @@ class AttendanceSyncService
         }
 
         return $punchAt->lte($maxEnd);
+    }
+
+    /**
+     * Menentukan apakah karyawan bekerja pada shift Subuh (pagi buta setelah
+     * tengah malam). Sesi Subuh dianggap ikut malam sebelumnya, sehingga
+     * punch 00:00-06:59 milik mereka tercatat pada tanggal hari sebelumnya.
+     */
+    private function isSubuhShift(Employee $employee, Carbon $punchAt): bool
+    {
+        if (str_contains((string) $employee->position, '(Subuh)')) {
+            return true;
+        }
+
+        $shift = $employee->shiftOn($punchAt->toDateString());
+        $startMinutes = Employee::shiftStartFrom(
+            $shift['jam_kerja'],
+            $shift['jam_masuk'],
+            str_contains((string) $employee->position, '(Malam)'),
+        );
+
+        return $startMinutes < 7 * 60;
+    }
+
+    /**
+     * Rekonstruksi ulang seluruh catatan presensi seorang karyawan dari
+     * punch mesin secara kronologis. Dipakai untuk memperbaiki data lama
+     * setelah ada perubahan aturan atribusi tanggal (mis. sesi Subuh).
+     */
+    public function rebuildEmployeeAttendance(Employee $employee): int
+    {
+        Attendance::where('employee_id', $employee->id)->delete();
+
+        $punches = AttendancePunch::where('employee_id', $employee->id)
+            ->orderBy('punch_at')
+            ->get();
+
+        foreach ($punches as $punch) {
+            $this->applyToAttendance(
+                $employee,
+                Carbon::parse($punch->punch_at),
+                $punch->method,
+            );
+        }
+
+        return $punches->count();
     }
 
     private function isDoubleTap(Attendance $attendance, string $time): bool

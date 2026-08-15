@@ -205,4 +205,79 @@ class AttendanceOvernightTest extends TestCase
         $this->assertNull($att1->time_out);
         $this->assertSame('08:30:00', $att2->time_in);
     }
+
+    public function test_subuh_shift_attendance_belongs_to_previous_day(): void
+    {
+        $emp = $this->employee('001', '1', position: 'Host Johen PUBG (Subuh)');
+
+        $this->record('1', '2026-08-15 00:24:00');
+        $this->record('1', '2026-08-15 06:42:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-14');
+        $this->assertNotNull($att);
+        $this->assertSame('00:24:00', $att->time_in);
+        $this->assertSame('06:42:00', $att->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-15'));
+    }
+
+    public function test_subuh_shift_consecutive_days(): void
+    {
+        $emp = $this->employee('001', '1', position: 'Host Johen PUBG (Subuh)');
+
+        $this->record('1', '2026-08-14 00:31:00');
+        $this->record('1', '2026-08-14 06:25:00');
+        $this->record('1', '2026-08-15 00:24:00');
+        $this->record('1', '2026-08-15 06:42:00');
+
+        $this->assertSame(2, Attendance::where('employee_id', $emp->id)->count());
+        $att1 = $this->attendance($emp->id, '2026-08-13');
+        $att2 = $this->attendance($emp->id, '2026-08-14');
+        $this->assertSame('00:31:00', $att1->time_in);
+        $this->assertSame('06:25:00', $att1->time_out);
+        $this->assertSame('00:24:00', $att2->time_in);
+        $this->assertSame('06:42:00', $att2->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-15'));
+    }
+
+    public function test_subuh_shift_employee_with_jam_kerja_also_shifts_to_previous_day(): void
+    {
+        $emp = $this->employee('001', '1', jamKerja: '01:00-06:00');
+
+        $this->record('1', '2026-08-15 01:10:00');
+        $this->record('1', '2026-08-15 05:50:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-14');
+        $this->assertNotNull($att);
+        $this->assertSame('01:10:00', $att->time_in);
+        $this->assertSame('05:50:00', $att->time_out);
+    }
+
+    public function test_regular_employee_early_morning_punch_stays_on_same_day(): void
+    {
+        $emp = $this->employee('001', '1');
+
+        $this->record('1', '2026-08-15 05:00:00');
+
+        $att = $this->attendance($emp->id, '2026-08-15');
+        $this->assertNotNull($att);
+        $this->assertSame('05:00:00', $att->time_in);
+        $this->assertNull($this->attendance($emp->id, '2026-08-14'));
+    }
+
+    public function test_malam_position_early_morning_checkout_still_belongs_to_previous_session(): void
+    {
+        $emp = $this->employee('001', '1', position: 'Admin Johen PUBG (Malam)');
+
+        $this->record('1', '2026-08-14 22:00:00');
+        $this->record('1', '2026-08-15 02:00:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-14');
+        $this->assertNotNull($att);
+        $this->assertSame('22:00:00', $att->time_in);
+        $this->assertSame('02:00:00', $att->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-15'));
+    }
 }

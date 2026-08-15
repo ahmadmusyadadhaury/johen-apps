@@ -28,6 +28,24 @@ class MachineUserSyncTable extends Component
 
     public string $mapSearch = '';
 
+    public bool $showUnmapModal = false;
+
+    public ?string $unmapMachineUserId = null;
+
+    public string $unmapEmployeeName = '';
+
+    public bool $showDeleteModal = false;
+
+    public ?string $deleteMachineUserId = null;
+
+    public string $deleteMachineName = '';
+
+    public bool $showSuccessModal = false;
+
+    public string $successTitle = '';
+
+    public string $successMessage = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -104,11 +122,46 @@ class MachineUserSyncTable extends Component
         $message .= $result['processed'] > 0
             ? "{$result['processed']} punch riwayat diproses."
             : 'Belum ada punch tersimpan. Riwayat otomatis terhubung setelah tap berikutnya.';
-        $this->dispatch('notify', type: 'success', message: $message);
+        $this->showSuccessModal = true;
+        $this->successTitle = 'Mapping Berhasil';
+        $this->successMessage = $message;
     }
 
-    public function unmapMapping(string $machineUserId): void
+    public function closeSuccessModal(): void
     {
+        $this->showSuccessModal = false;
+        $this->successTitle = '';
+        $this->successMessage = '';
+    }
+
+    public function openUnmapModal(string $machineUserId): void
+    {
+        $employee = Employee::findByMachineUserId($machineUserId);
+        if (! $employee) {
+            $this->dispatch('notify', type: 'error', message: 'Mapping tidak ditemukan.');
+
+            return;
+        }
+
+        $this->unmapMachineUserId = $machineUserId;
+        $this->unmapEmployeeName = $employee->nama;
+        $this->showUnmapModal = true;
+    }
+
+    public function closeUnmapModal(): void
+    {
+        $this->showUnmapModal = false;
+        $this->unmapMachineUserId = null;
+        $this->unmapEmployeeName = '';
+    }
+
+    public function confirmUnmap(): void
+    {
+        $machineUserId = $this->unmapMachineUserId;
+        if (! $machineUserId) {
+            return;
+        }
+
         $employee = Employee::findByMachineUserId($machineUserId);
         if (! $employee) {
             $this->dispatch('notify', type: 'error', message: 'Mapping tidak ditemukan.');
@@ -123,18 +176,43 @@ class MachineUserSyncTable extends Component
 
         EmployeeMachineUser::where('machine_user_id', $machineUserId)->delete();
 
-        $this->dispatch('notify', type: 'success', message: "Mapping User ID {$machineUserId} dilepas dari {$employee->nama}.");
+        $this->closeUnmapModal();
+        $this->showSuccessModal = true;
+        $this->successTitle = 'Mapping Dilepas';
+        $this->successMessage = "Mapping User ID {$machineUserId} berhasil dilepas dari {$employee->nama}. Punch mesin tetap tersimpan di riwayat.";
     }
 
-    public function deleteMachineUser(string $machineUserId): void
+    public function openDeleteModal(string $machineUserId): void
     {
         abort_unless(auth()->user()->isSuperAdminLike(), 403);
+
+        $this->deleteMachineUserId = $machineUserId;
+        $this->deleteMachineName = MachineUser::where('machine_user_id', $machineUserId)->value('name') ?? $machineUserId;
+        $this->showDeleteModal = true;
+    }
+
+    public function closeDeleteModal(): void
+    {
+        $this->showDeleteModal = false;
+        $this->deleteMachineUserId = null;
+        $this->deleteMachineName = '';
+    }
+
+    public function confirmDelete(): void
+    {
+        abort_unless(auth()->user()->isSuperAdminLike(), 403);
+
+        $machineUserId = $this->deleteMachineUserId;
+        if (! $machineUserId) {
+            return;
+        }
 
         DB::transaction(function () use ($machineUserId) {
             AttendancePunch::where('machine_user_id', $machineUserId)->delete();
             MachineUser::where('machine_user_id', $machineUserId)->delete();
         });
 
+        $this->closeDeleteModal();
         $this->dispatch('notify', type: 'success', message: "User ID mesin {$machineUserId} beserta seluruh punch-nya berhasil dihapus.");
     }
 
@@ -261,10 +339,12 @@ class MachineUserSyncTable extends Component
         if ($this->showMapModal) {
             $mapEmployees = Employee::query()
                 ->where(function ($q) {
-                    $q->whereNot(function ($q2) {
-                        $q2->where('device_user_id', $this->mapMachineUserId)
-                            ->orWhereHas('machineUserMappings', fn ($q3) => $q3->where('machine_user_id', $this->mapMachineUserId));
-                    })->orWhere('id', $this->selectedEmployeeId);
+                    $q->where(function ($q2) {
+                        $q2->whereNull('device_user_id')
+                            ->orWhere('device_user_id', '!=', $this->mapMachineUserId);
+                    })
+                    ->whereDoesntHave('machineUserMappings', fn ($q3) => $q3->where('machine_user_id', $this->mapMachineUserId))
+                    ->orWhere('id', $this->selectedEmployeeId);
                 })
                 ->when($this->mapSearch, function ($q) {
                     $q->where(function ($q2) {
@@ -273,7 +353,6 @@ class MachineUserSyncTable extends Component
                     });
                 })
                 ->orderBy('nama')
-                ->limit(50)
                 ->get();
         }
 

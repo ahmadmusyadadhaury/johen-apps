@@ -164,7 +164,8 @@ class MachineUserSyncTest extends TestCase
 
         Livewire::actingAs($this->admin())
             ->test(MachineUserSyncTable::class)
-            ->call('unmapMapping', '58');
+            ->call('openUnmapModal', '58')
+            ->call('confirmUnmap');
 
         $this->assertSame('59', $emp->fresh()->device_user_id);
         $this->assertDatabaseMissing('employee_machine_users', [
@@ -180,7 +181,8 @@ class MachineUserSyncTest extends TestCase
 
         Livewire::actingAs($this->admin())
             ->test(MachineUserSyncTable::class)
-            ->call('unmapMapping', '58');
+            ->call('openUnmapModal', '58')
+            ->call('confirmUnmap');
 
         $this->assertNull($emp->fresh()->device_user_id);
     }

@@ -822,9 +822,17 @@
                             </div>
                         </div>
                         <template x-if="barcode()">
-                            <div class="relative mt-4 flex w-fit flex-col items-center gap-1.5 rounded-2xl bg-white/95 px-6 py-3 shadow-lg ring-1 ring-white/30 backdrop-blur">
-                                <svg class="h-14 w-full max-w-[220px]" x-cloak x-init="JsBarcode($el, barcode(), { format: 'CODE128', displayValue: false, margin: 0, background: 'transparent', lineColor: '#0f172a' })"></svg>
-                                <span class="font-mono text-[10px] font-semibold tracking-[0.22em] text-slate-600" x-text="barcode()"></span>
+                            <div class="relative mt-4 flex w-fit items-center gap-4 rounded-2xl bg-white/95 px-6 py-3 shadow-lg ring-1 ring-white/30 backdrop-blur">
+                                <div class="flex flex-col items-center gap-1.5">
+                                    <svg class="h-14 w-full max-w-[220px]" x-cloak x-init="JsBarcode($el, barcode(), { format: 'CODE128', displayValue: false, margin: 0, background: 'transparent', lineColor: '#0f172a' })"></svg>
+                                    <span class="font-mono text-[10px] font-semibold tracking-[0.22em] text-slate-600" x-text="barcode()"></span>
+                                </div>
+                                <template x-if="qrUrl()">
+                                    <div class="flex flex-col items-center gap-1.5 border-l border-slate-200 pl-4">
+                                        <canvas class="h-[88px] w-[88px]" x-cloak x-init="QRCode.toCanvas($el, qrUrl(), { width: 88, margin: 0, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } })"></canvas>
+                                        <span class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Scan</span>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>
@@ -926,6 +934,11 @@
                     if (!Array.isArray(d.fields)) return null;
                     const f = d.fields.find((x) => x.label === 'Barcode');
                     return f && f.value ? f.value : null;
+                },
+                qrUrl() {
+                    const d = this.d || {};
+                    if (!d.code) return null;
+                    return @json(rtrim(config('app.url'), '/')) + '/aset/' + encodeURIComponent(d.code);
                 },
                 rows() {
                     const d = this.d || {};

@@ -30,6 +30,10 @@ export default defineConfig(({ mode }) => {
             host: '0.0.0.0',
             port: 5174,
             origin: `http://${hmrHost}:5174`,
+            cors: {
+                origin: true,
+                methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+            },
             hmr: {
                 host: hmrHost,
             },

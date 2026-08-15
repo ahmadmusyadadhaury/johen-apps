@@ -5,9 +5,11 @@
 // Jika ada kode Alpine custom, gunakan window.Alpine yang disediakan Livewire.
 
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 
 // Ekspos ke window agar bisa dipakai di directive x-init "@barcode" pada halaman Asset.
 window.JsBarcode = JsBarcode;
+window.QRCode = QRCode;
 
 document.addEventListener('alpine:init', () => {
     // Toast notifications (top-right)

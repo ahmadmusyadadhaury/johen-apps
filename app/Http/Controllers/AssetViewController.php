@@ -188,6 +188,28 @@ class AssetViewController extends Controller
 
 public function detail(Asset $asset)
     {
+        return response()->json($this->detailPayload($asset));
+    }
+
+    public function publicShow(string $code)
+    {
+        $asset = Asset::query()
+            ->with(['category', 'creator'])
+            ->where('code', $code)
+            ->first();
+
+        if (! $asset) {
+            abort(404);
+        }
+
+        return view('assets.public', [
+            'asset' => $asset,
+            'detail' => $this->detailPayload($asset),
+        ]);
+    }
+
+    private function detailPayload(Asset $asset): array
+    {
         $asset->load(['category', 'creator']);
 
         $response = [
@@ -233,7 +255,7 @@ public function detail(Asset $asset)
             $response['description'] = null;
         }
 
-        return response()->json($response);
+        return $response;
     }
 
     private function sosialMediaFields(?array $metadata): array

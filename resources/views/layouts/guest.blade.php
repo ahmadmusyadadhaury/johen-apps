@@ -137,6 +137,7 @@
         </style>
 
         @livewireScripts
+        @stack('scripts')
 
         <script>
             function themeToggle() {

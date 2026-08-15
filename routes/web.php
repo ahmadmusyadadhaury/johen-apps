@@ -259,4 +259,6 @@ Route::middleware('auth')->group(function () {
 
 });
 
+Route::get('/aset/{code}', [AssetViewController::class, 'publicShow'])->name('aset.public');
+
 require __DIR__.'/auth.php';

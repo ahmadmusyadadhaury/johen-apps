@@ -273,7 +273,7 @@ class AbsensiTable extends Component
                         ->orWhere('nama', 'like', "%{$this->search}%");
                 });
             })
-            ->orderBy('nama')
+            ->orderByRaw('CAST(nik AS UNSIGNED) ASC')
             ->paginate(10);
 
         return view('livewire.absensi-table', compact(
