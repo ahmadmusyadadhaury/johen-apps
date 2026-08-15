@@ -43,6 +43,11 @@ class AbsensiTable extends Component
         $this->resetPage();
     }
 
+    public function updatingDate(): void
+    {
+        $this->resetPage();
+    }
+
     public function openAbsenModal(): void
     {
         $this->showAbsenModal = true;

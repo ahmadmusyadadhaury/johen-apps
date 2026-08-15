@@ -77,6 +77,14 @@ class AttendanceSyncService
     {
         $time = $punchAt->format('H:i:s');
 
+        // Dobel tap: punch yang datang <90 detik setelah punch terakhir
+        // karyawan ini diabaikan. Mencakup dobel tap saat masuk, maupun saat
+        // pulang lintas malam (mis. scan 00:44:52 menutup sesi tgl-14, lalu
+        // scan dobel 00:44:55 tidak boleh membuat rekap palsu di tgl-15).
+        if ($this->isDoubleTapFromLastPunch($employee, $punchAt)) {
+            return;
+        }
+
         // Sesi Subuh (punch 00:00-06:59) untuk karyawan shift Subuh tercatat
         // pada tanggal HARI SEBELUMNYA (ikut malam sebelumnya), mengikuti
         // konvensi sesi host live (config/hostlive.php). Contoh: masuk 00:24
@@ -113,12 +121,6 @@ class AttendanceSyncService
         $attendance = Attendance::where('employee_id', $employee->id)
             ->whereDate('date', $punchDate)
             ->first();
-
-        // Dobel tap: punch kedua dalam waktu berdekatan (mis. 00:46:21 / 00:46:23)
-        // akan membuat durasi 0j 0m. Abaikan punch yang masih dalam rentang waktu itu.
-        if ($attendance && $this->isDoubleTap($attendance, $time)) {
-            return;
-        }
 
         if (! $attendance) {
             Attendance::create([
@@ -213,7 +215,34 @@ class AttendanceSyncService
             str_contains((string) $employee->position, '(Malam)'),
         );
 
-        return $startMinutes < 7 * 60;
+        if ($startMinutes < 7 * 60) {
+            return true;
+        }
+
+        // Fallback pola punch: karyawan yang secara konsisten scan hanya pada
+        // 00:00-06:59 (sesi Subuh) tetapi jabatan/jam kerjanya tidak
+        // mencantumkan "(Subuh)" harus tetap dianggap shift Subuh. Karyawan
+        // Malam biasa punya punch sore (in) + dini hari (out), sehingga
+        // fraksi scan <07:00 tidak sampai sebesar ini.
+        $from = $punchAt->copy()->subDays((int) config('attendance.subuh_pattern_days', 45))->startOfDay();
+        $total = AttendancePunch::where('employee_id', $employee->id)
+            ->where('punch_at', '>=', $from->toDateTimeString())
+            ->where('punch_at', '<', $punchAt->toDateTimeString())
+            ->count();
+
+        if ($total >= (int) config('attendance.subuh_pattern_min_punches', 10)) {
+            $early = AttendancePunch::where('employee_id', $employee->id)
+                ->where('punch_at', '>=', $from->toDateTimeString())
+                ->where('punch_at', '<', $punchAt->toDateTimeString())
+                ->whereRaw('TIME(punch_at) < "07:00:00"')
+                ->count();
+
+            if ($early / $total >= (float) config('attendance.subuh_pattern_threshold', 0.65)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -240,19 +269,22 @@ class AttendanceSyncService
         return $punches->count();
     }
 
-    private function isDoubleTap(Attendance $attendance, string $time): bool
+    /**
+     * Menentukan apakah scan baru adalah dobel tap dari punch terakhir
+     * karyawan yang sama (selisih <90 detik). Punch seperti itu diabaikan
+     * agar tidak menciptakan sesi rekap palsu atau durasi 0j 0m.
+     */
+    private function isDoubleTapFromLastPunch(Employee $employee, Carbon $punchAt): bool
     {
-        if ($attendance->time_in === null || $attendance->time_out !== null) {
+        $lastPunch = AttendancePunch::where('employee_id', $employee->id)
+            ->where('punch_at', '<', $punchAt->toDateTimeString())
+            ->orderByDesc('punch_at')
+            ->first();
+
+        if (! $lastPunch) {
             return false;
         }
 
-        $in = strtotime($attendance->time_in);
-        $punch = strtotime($time);
-
-        if ($in === false || $punch === false) {
-            return false;
-        }
-
-        return abs($punch - $in) < 90;
+        return abs($punchAt->getTimestamp() - $lastPunch->punch_at->getTimestamp()) < 90;
     }
 }
