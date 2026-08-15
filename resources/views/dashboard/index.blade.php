@@ -496,7 +496,7 @@
 
     {{-- Ringkasan Menu --}}
     <div x-data="{ openDivisiModal: false, openMeetingModal: false, openAssetModal: false }">
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6">
+    <div class="grid {{ auth()->user()->isSuperAdmin() ? 'grid-cols-2' : 'grid-cols-1' }} md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6">
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
         <div @click="openDivisiModal = true" class="group cursor-pointer rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300">
             <div class="flex items-center gap-3 mb-4">

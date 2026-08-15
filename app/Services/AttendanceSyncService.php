@@ -12,7 +12,7 @@ class AttendanceSyncService
     public function recordPunch(string $machineUserId, string $punchAt, string $method = 'finger', ?string $machineSerial = null, ?array $raw = null): array
     {
         $punchAt = Carbon::parse($punchAt);
-        $employee = Employee::where('device_user_id', $machineUserId)->first();
+        $employee = Employee::findByMachineUserId($machineUserId);
 
         $duplicate = AttendancePunch::where('machine_user_id', $machineUserId)
             ->where('punch_at', $punchAt->format('Y-m-d H:i:s'))
@@ -50,7 +50,7 @@ class AttendanceSyncService
 
     public function backfillForUser(string $machineUserId): array
     {
-        $employee = Employee::where('device_user_id', $machineUserId)->first();
+        $employee = Employee::findByMachineUserId($machineUserId);
         if (! $employee) {
             return ['processed' => 0, 'unmatched' => 1];
         }

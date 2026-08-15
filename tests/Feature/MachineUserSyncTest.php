@@ -6,6 +6,7 @@ use App\Livewire\MachineUserSyncTable;
 use App\Models\Attendance;
 use App\Models\AttendancePunch;
 use App\Models\Employee;
+use App\Models\EmployeeMachineUser;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -43,10 +44,14 @@ class MachineUserSyncTest extends TestCase
         ]);
     }
 
-    public function test_only_super_admin_can_open_page(): void
+    public function test_only_super_admin_can_access_sync_component(): void
     {
-        $this->actingAs($this->admin())->get('/hris/sinkron-absen-mesin')->assertOk();
-        $this->actingAs($this->staff())->get('/hris/sinkron-absen-mesin')->assertForbidden();
+        Livewire::actingAs($this->admin())
+            ->test(MachineUserSyncTable::class)
+            ->assertOk();
+        Livewire::actingAs($this->staff())
+            ->test(MachineUserSyncTable::class)
+            ->assertForbidden();
     }
 
     public function test_machine_user_list_is_displayed_with_tap_stats(): void
@@ -92,7 +97,7 @@ class MachineUserSyncTest extends TestCase
         $this->assertNull($empB->fresh()->device_user_id);
     }
 
-    public function test_mapping_is_rejected_when_employee_already_mapped_to_another_user(): void
+    public function test_mapping_allows_second_machine_id_for_employee(): void
     {
         $emp = $this->employee('26030001', 'Karyawan Satu');
         $emp->update(['device_user_id' => '59']);
@@ -102,9 +107,70 @@ class MachineUserSyncTest extends TestCase
             ->call('openMapModal', '58')
             ->set('selectedEmployeeId', $emp->id)
             ->call('saveMapping')
-            ->assertHasErrors('selectedEmployeeId');
+            ->assertHasNoErrors();
 
         $this->assertSame('59', $emp->fresh()->device_user_id);
+        $this->assertDatabaseHas('employee_machine_users', [
+            'employee_id' => $emp->id,
+            'machine_user_id' => '58',
+        ]);
+    }
+
+    public function test_mapping_sets_primary_id_when_employee_has_none(): void
+    {
+        $emp = $this->employee('26030001', 'Karyawan Satu');
+
+        Livewire::actingAs($this->admin())
+            ->test(MachineUserSyncTable::class)
+            ->call('openMapModal', '58')
+            ->set('selectedEmployeeId', $emp->id)
+            ->call('saveMapping')
+            ->assertHasNoErrors();
+
+        $this->assertSame('58', $emp->fresh()->device_user_id);
+        $this->assertDatabaseMissing('employee_machine_users', [
+            'employee_id' => $emp->id,
+            'machine_user_id' => '58',
+        ]);
+    }
+
+    public function test_backfill_links_punches_for_secondary_machine_id(): void
+    {
+        $emp = $this->employee('26030001', 'Karyawan Satu');
+        $emp->update(['device_user_id' => '59']);
+
+        $p1 = $this->punch('58', '2026-08-11 07:00:00');
+        $p2 = $this->punch('58', '2026-08-11 17:00:00');
+
+        Livewire::actingAs($this->admin())
+            ->test(MachineUserSyncTable::class)
+            ->call('openMapModal', '58')
+            ->set('selectedEmployeeId', $emp->id)
+            ->call('saveMapping')
+            ->call('backfill');
+
+        $this->assertSame($emp->id, $p1->fresh()->employee_id);
+        $this->assertSame($emp->id, $p2->fresh()->employee_id);
+
+        $attendance = Attendance::where('employee_id', $emp->id)->whereDate('date', '2026-08-11')->first();
+        $this->assertNotNull($attendance);
+    }
+
+    public function test_unmap_secondary_machine_id_keeps_primary(): void
+    {
+        $emp = $this->employee('26030001', 'Karyawan Satu');
+        $emp->update(['device_user_id' => '59']);
+        EmployeeMachineUser::create(['employee_id' => $emp->id, 'machine_user_id' => '58']);
+
+        Livewire::actingAs($this->admin())
+            ->test(MachineUserSyncTable::class)
+            ->call('unmapMapping', '58');
+
+        $this->assertSame('59', $emp->fresh()->device_user_id);
+        $this->assertDatabaseMissing('employee_machine_users', [
+            'employee_id' => $emp->id,
+            'machine_user_id' => '58',
+        ]);
     }
 
     public function test_unmap_clears_device_user_id(): void

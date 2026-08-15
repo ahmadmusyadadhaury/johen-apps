@@ -333,9 +333,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Status</label>
                                         <select name="status" x-model="detail.status" :disabled="!detail.can_edit" @change="if (detail.status === 'diproses' || detail.status === 'dilanjutkan') { if (!detail.mulai) detail.mulai = Math.floor(Date.now() / 1000); } else { detail.mulai = 0; } if (detail.status === 'dijeda') detail.jeda_dipilih = true;" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60">
                                             @foreach($statusLabels as $value => $label)
-                                                <option value="{{ $value }}">{{ $label }}</option>
+                                                <option value="{{ $value }}" @if($value === 'menunggu') x-show="detail.status === 'menunggu'" @endif>{{ $label }}</option>
                                             @endforeach
                                         </select>
+                                        <p x-show="detail.can_edit && detail.status !== 'menunggu'" class="mt-1 text-[10px] font-medium text-gray-400">Setelah tiket diproses, status tidak dapat dikembalikan ke Menunggu.</p>
                                         <p x-show="!detail.can_edit" x-text="detail.status === 'selesai' ? 'Tiket sudah selesai dan tidak dapat diubah.' : 'Hanya PIC yang ditugaskan yang dapat mengubah status dan catatan.'" class="mt-1 text-[10px] font-medium text-gray-400"></p>
                                     </div>
                                     <div x-show="detail.status === 'dijeda' && detail.jeda_dipilih">

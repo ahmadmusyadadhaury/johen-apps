@@ -98,6 +98,10 @@ class ItTicketController extends Controller
             $data['catatan_it'] = $ticket->catatan_it;
         }
 
+        if ($data['status'] === 'menunggu' && $ticket->status !== 'menunggu') {
+            abort(403, 'Tiket yang sudah diproses tidak dapat dikembalikan ke status Menunggu.');
+        }
+
         if ($data['status'] === 'dijeda') {
             $data['alasan_jeda'] = trim((string) ($data['alasan_jeda'] ?? ''));
             if ($data['alasan_jeda'] === '') {
@@ -133,8 +137,31 @@ class ItTicketController extends Controller
             $data['selesai_at'] = $now;
         }
 
+        $oldAssigneeId = $ticket->assignee_id;
+
         $ticket->update($data);
-        return back()->with('success', 'Tiket ' . $ticket->kode . ' diperbarui.');
+
+        $isItRole = $user->isKoordinatorIt() || $user->isStaffIt();
+        $accepting = $isItRole
+            && ($data['assignee_id'] ?? null)
+            && (int) $data['assignee_id'] === (int) $user->id
+            && (int) $oldAssigneeId !== (int) $user->id;
+
+        if ($accepting) {
+            $message = in_array($data['status'], ['diproses', 'dilanjutkan'])
+                ? 'Tiket ' . $ticket->kode . ' berhasil diterima dan sedang ditangani.'
+                : 'Tiket ' . $ticket->kode . ' berhasil diterima.';
+        } else {
+            $message = match ($data['status']) {
+                'selesai' => 'Tiket ' . $ticket->kode . ' berhasil diselesaikan.',
+                'dijeda' => 'Tiket ' . $ticket->kode . ' dihentikan sementara.',
+                'dilanjutkan' => 'Tiket ' . $ticket->kode . ' dilanjutkan kembali.',
+                'ditolak' => 'Tiket ' . $ticket->kode . ' ditolak.',
+                default => 'Tiket ' . $ticket->kode . ' berhasil diperbarui.',
+            };
+        }
+
+        return back()->with('success', $message);
     }
 
     public function destroy(Request $request, ItTicket $ticket): RedirectResponse

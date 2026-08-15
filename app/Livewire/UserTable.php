@@ -175,7 +175,7 @@ class UserTable extends Component
     {
         abort_unless(auth()->user()->isSuperAdmin(), 403);
 
-        $users = User::with('employee')
+        $users = User::with('employee:id,nama')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', "%{$this->search}%")
@@ -199,7 +199,7 @@ class UserTable extends Component
                 WHEN 'koordinator_monkey_pubg' THEN 4
                 ELSE 5
             END, name")->paginate(20);
-        $allEmployees = Employee::where('status', 'aktif')->orderBy('nama')->get();
+        $allEmployees = Employee::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'nik']);
         return view('livewire.user-table', compact('users', 'allEmployees'));
     }
 

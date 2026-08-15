@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Employee;
+use App\Models\EmployeeMachineUser;
 use App\Services\ZkMachine\ZkClient;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -40,7 +41,13 @@ class AttendanceSyncUsers extends Command
             return self::SUCCESS;
         }
 
-        $employees = Employee::query()->get()->keyBy('device_user_id');
+        $employees = collect();
+        foreach (EmployeeMachineUser::with('employee')->get() as $mapping) {
+            $employees->put($mapping->machine_user_id, $mapping->employee);
+        }
+        foreach (Employee::query()->whereNotNull('device_user_id')->get() as $employee) {
+            $employees->put($employee->device_user_id, $employee);
+        }
         $nameIndex = [];
         foreach ($employees as $employee) {
             $nameIndex[strtolower(trim($employee->nama))] = $employee;

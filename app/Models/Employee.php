@@ -56,6 +56,32 @@ class Employee extends Model
         return $this->hasMany(User::class, 'employee_id');
     }
 
+    public function machineUserMappings(): HasMany
+    {
+        return $this->hasMany(EmployeeMachineUser::class);
+    }
+
+    public function allMachineUserIds(): array
+    {
+        $ids = $this->device_user_id ? [$this->device_user_id] : [];
+        $ids = array_merge($ids, $this->machineUserMappings()->pluck('machine_user_id')->all());
+
+        return array_values(array_unique($ids));
+    }
+
+    public static function findByMachineUserId(string $machineUserId): ?self
+    {
+        $employee = static::where('device_user_id', $machineUserId)->first();
+        if ($employee) {
+            return $employee;
+        }
+
+        return EmployeeMachineUser::query()
+            ->where('machine_user_id', $machineUserId)
+            ->first()
+            ?->employee;
+    }
+
     public function birthdayWishes(): HasMany
     {
         return $this->hasMany(BirthdayWish::class, 'employee_id');

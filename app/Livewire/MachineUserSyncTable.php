@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\AttendancePunch;
 use App\Models\Employee;
+use App\Models\EmployeeMachineUser;
 use App\Models\MachineUser;
 use App\Services\AttendanceSyncService;
 use App\Services\ZkMachine\ZkClient;
@@ -44,7 +45,7 @@ class MachineUserSyncTable extends Component
         $this->selectedEmployeeId = null;
         $this->resetErrorBag();
 
-        $mapped = Employee::where('device_user_id', $machineUserId)->first();
+        $mapped = Employee::findByMachineUserId($machineUserId);
         if ($mapped) {
             $this->selectedEmployeeId = $mapped->id;
         }
@@ -69,11 +70,8 @@ class MachineUserSyncTable extends Component
             return;
         }
 
-        $conflict = Employee::where('device_user_id', $this->mapMachineUserId)
-            ->where('id', '!=', $this->selectedEmployeeId)
-            ->exists();
-
-        if ($conflict) {
+        $existing = Employee::findByMachineUserId($this->mapMachineUserId);
+        if ($existing && $existing->id !== $this->selectedEmployeeId) {
             $this->addError('selectedEmployeeId', 'User ID mesin ini sudah terpetakan ke karyawan lain.');
 
             return;
@@ -86,16 +84,19 @@ class MachineUserSyncTable extends Component
             return;
         }
 
-        if ($employee->device_user_id && $employee->device_user_id !== $this->mapMachineUserId) {
-            $this->addError('selectedEmployeeId', 'Karyawan ini sudah terpetakan ke User ID '.$employee->device_user_id.'. Lepas mapping yang lama terlebih dahulu.');
+        if (! $employee->device_user_id) {
+            $employee->device_user_id = $this->mapMachineUserId;
+            $employee->save();
+        }
 
-            return;
+        if ($employee->device_user_id !== $this->mapMachineUserId) {
+            EmployeeMachineUser::updateOrCreate(
+                ['machine_user_id' => $this->mapMachineUserId],
+                ['employee_id' => $employee->id],
+            );
         }
 
         $userId = $this->mapMachineUserId;
-        $employee->device_user_id = $userId;
-        $employee->save();
-
         $result = app(AttendanceSyncService::class)->backfillForUser($userId);
 
         $this->closeMapModal();
@@ -108,15 +109,19 @@ class MachineUserSyncTable extends Component
 
     public function unmapMapping(string $machineUserId): void
     {
-        $employee = Employee::where('device_user_id', $machineUserId)->first();
+        $employee = Employee::findByMachineUserId($machineUserId);
         if (! $employee) {
             $this->dispatch('notify', type: 'error', message: 'Mapping tidak ditemukan.');
 
             return;
         }
 
-        $employee->device_user_id = null;
-        $employee->save();
+        if ($employee->device_user_id === $machineUserId) {
+            $employee->device_user_id = null;
+            $employee->save();
+        }
+
+        EmployeeMachineUser::where('machine_user_id', $machineUserId)->delete();
 
         $this->dispatch('notify', type: 'success', message: "Mapping User ID {$machineUserId} dilepas dari {$employee->nama}.");
     }
@@ -144,7 +149,7 @@ class MachineUserSyncTable extends Component
         $unmatched = 0;
 
         foreach ($punches as $punch) {
-            $employee = Employee::where('device_user_id', $punch->machine_user_id)->first();
+            $employee = Employee::findByMachineUserId($punch->machine_user_id);
             if (! $employee) {
                 $unmatched++;
 
@@ -212,8 +217,18 @@ class MachineUserSyncTable extends Component
     {
         abort_unless(auth()->user()->isSuperAdminLike(), 403);
 
+        $employeeMap = DB::table('employees')
+            ->selectRaw('device_user_id as machine_user_id, id as employee_id')
+            ->whereNotNull('device_user_id')
+            ->union(
+                DB::table('employee_machine_users')->select('machine_user_id', 'employee_id')
+            );
+
         $query = DB::table('attendance_punches as p')
-            ->leftJoin('employees as e', 'e.device_user_id', '=', 'p.machine_user_id')
+            ->leftJoinSub($employeeMap, 'em', function ($join) {
+                $join->on('em.machine_user_id', '=', 'p.machine_user_id');
+            })
+            ->leftJoin('employees as e', 'e.id', '=', 'em.employee_id')
             ->leftJoin('machine_users as mu', 'mu.machine_user_id', '=', 'p.machine_user_id')
             ->selectRaw('p.machine_user_id, count(*) as total_taps, min(p.punch_at) as pertama, max(p.punch_at) as terakhir, max(e.nama) as employee_nama, max(e.nik) as employee_nik, max(e.id) as employee_id, max(mu.name) as machine_name')
             ->groupBy('p.machine_user_id');
@@ -232,9 +247,13 @@ class MachineUserSyncTable extends Component
 
         $machineIdSub = DB::table('attendance_punches')->distinct()->select('machine_user_id');
         $totalIds = DB::table('attendance_punches')->distinct()->count('machine_user_id');
-        $mappedIds = Employee::whereNotNull('device_user_id')
-            ->whereIn('device_user_id', $machineIdSub)
-            ->count();
+        $mappedIds = DB::table('attendance_punches as p')
+            ->leftJoinSub($employeeMap, 'em', function ($join) {
+                $join->on('em.machine_user_id', '=', 'p.machine_user_id');
+            })
+            ->whereNotNull('em.employee_id')
+            ->distinct()
+            ->count('p.machine_user_id');
         $totalPunches = AttendancePunch::count();
         $pendingPunches = AttendancePunch::whereNull('employee_id')->count();
 
@@ -242,8 +261,10 @@ class MachineUserSyncTable extends Component
         if ($this->showMapModal) {
             $mapEmployees = Employee::query()
                 ->where(function ($q) {
-                    $q->whereNull('device_user_id')
-                        ->orWhere('device_user_id', $this->mapMachineUserId);
+                    $q->whereNot(function ($q2) {
+                        $q2->where('device_user_id', $this->mapMachineUserId)
+                            ->orWhereHas('machineUserMappings', fn ($q3) => $q3->where('machine_user_id', $this->mapMachineUserId));
+                    })->orWhere('id', $this->selectedEmployeeId);
                 })
                 ->when($this->mapSearch, function ($q) {
                     $q->where(function ($q2) {
