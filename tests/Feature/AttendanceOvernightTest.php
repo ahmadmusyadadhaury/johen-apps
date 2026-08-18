@@ -311,6 +311,80 @@ class AttendanceOvernightTest extends TestCase
         $this->assertSame('17:00:00', $att->time_out);
     }
 
+    public function test_checkout_only_then_next_day_arrival_is_split(): void
+    {
+        $emp = $this->employee('001', '1');
+
+        $this->record('1', '2026-08-17 16:06:07');
+        $this->record('1', '2026-08-18 07:58:52');
+
+        $this->assertSame(2, Attendance::where('employee_id', $emp->id)->count());
+        $att1 = $this->attendance($emp->id, '2026-08-17');
+        $att2 = $this->attendance($emp->id, '2026-08-18');
+        $this->assertNotNull($att1);
+        $this->assertNotNull($att2);
+        $this->assertNull($att1->time_in);
+        $this->assertSame('16:06:07', $att1->time_out);
+        $this->assertSame('07:58:52', $att2->time_in);
+        $this->assertNull($att2->time_out);
+    }
+
+    public function test_far_afternoon_punch_is_checkout_not_checkin(): void
+    {
+        $emp = $this->employee('001', '1');
+
+        $this->record('1', '2026-08-17 16:06:07');
+        $this->record('1', '2026-08-18 07:58:52');
+        $this->record('1', '2026-08-18 16:30:00');
+
+        $this->assertSame(2, Attendance::where('employee_id', $emp->id)->count());
+        $att1 = $this->attendance($emp->id, '2026-08-17');
+        $att2 = $this->attendance($emp->id, '2026-08-18');
+        $this->assertNull($att1->time_in);
+        $this->assertSame('16:06:07', $att1->time_out);
+        $this->assertSame('07:58:52', $att2->time_in);
+        $this->assertSame('16:30:00', $att2->time_out);
+    }
+
+    public function test_overnight_checkout_before_seven_am_still_belongs_to_previous_session(): void
+    {
+        $emp = $this->employee('001', '1');
+
+        $this->record('1', '2026-08-17 22:00:00');
+        $this->record('1', '2026-08-18 06:30:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-17');
+        $this->assertNotNull($att);
+        $this->assertSame('22:00:00', $att->time_in);
+        $this->assertSame('06:30:00', $att->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-18'));
+    }
+
+    public function test_rebuild_replays_checkout_only_split(): void
+    {
+        $emp = $this->employee('001', '1');
+
+        $this->record('1', '2026-08-15 07:58:00');
+        $this->record('1', '2026-08-15 15:57:49');
+        $this->record('1', '2026-08-17 16:06:07');
+        $this->record('1', '2026-08-18 07:58:52');
+
+        $rebuilt = app(AttendanceSyncService::class)->rebuildEmployeeAttendance($emp);
+
+        $this->assertSame(4, $rebuilt);
+        $this->assertSame(3, Attendance::where('employee_id', $emp->id)->count());
+        $att15 = $this->attendance($emp->id, '2026-08-15');
+        $att17 = $this->attendance($emp->id, '2026-08-17');
+        $att18 = $this->attendance($emp->id, '2026-08-18');
+        $this->assertSame('07:58:00', $att15->time_in);
+        $this->assertSame('15:57:49', $att15->time_out);
+        $this->assertNull($att17->time_in);
+        $this->assertSame('16:06:07', $att17->time_out);
+        $this->assertSame('07:58:52', $att18->time_in);
+        $this->assertNull($att18->time_out);
+    }
+
     public function test_rebuild_replays_malam_sessions_on_checkin_date(): void
     {
         $emp = $this->employee('001', '1', position: 'Host Free Fire (Malam)');

@@ -107,6 +107,7 @@
                         <tr class="table-header">
                             <th class="px-6 py-3 w-12 text-center">No</th>
                             <th class="px-6 py-3">Tanggal</th>
+                            <th class="px-6 py-3">Hari</th>
                             <th class="px-6 py-3">Jam Masuk</th>
                             <th class="px-6 py-3">Jam Keluar</th>
                             <th class="px-6 py-3">Durasi Kerja</th>
@@ -118,6 +119,7 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $riwayat->firstItem() + $loop->index }}</td>
                                 <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}</td>
+                                <td class="table-cell text-gray-600 dark:text-gray-400">{{ \Carbon\Carbon::parse($att->date)->locale('id')->isoFormat('dddd') }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_in ? \Carbon\Carbon::parse($att->time_in)->format('H:i') : '-' }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->duration ?? '-' }}</td>
@@ -142,7 +144,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-6 py-16 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                             <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>

@@ -73,6 +73,34 @@ class AttendanceSyncService
         return ['processed' => $punches->count(), 'unmatched' => 0];
     }
 
+    /**
+     * Deteksi karyawan yang datanya terkena bug "tap pulang saja": ada rekap
+     * dengan jam masuk yang tidak masuk akal sebagai absen datang (mis. sore
+     * hari) namun jam keluar sudah terisi — hasil tap pulang yang keliru
+     * terekam sebagai masuk lalu scan keesokan harinya tertelan jadi jam
+     * pulang. Karyawan shift Malam dikecualikan karena sesinya memang lintas
+     * tengah malam (pulang lebih awal dari masuk).
+     */
+    public function hasCheckoutOnlyMisPairing(Employee $employee): bool
+    {
+        if (str_contains((string) $employee->position, '(Malam)')) {
+            return false;
+        }
+
+        return Attendance::where('employee_id', $employee->id)
+            ->where('status', 'hadir')
+            ->whereNotNull('time_in')
+            ->whereNotNull('time_out')
+            ->get()
+            ->contains(function (Attendance $a) use ($employee) {
+                if ($a->time_out >= $a->time_in) {
+                    return false;
+                }
+
+                return ! $this->isPlausibleCheckInForShift($employee, $a->date, $a->time_in);
+            });
+    }
+
     private function applyToAttendance(Employee $employee, Carbon $punchAt, string $method): void
     {
         $time = $punchAt->format('H:i:s');
@@ -105,16 +133,36 @@ class AttendanceSyncService
             ->orderByDesc('date')
             ->first();
 
-        // 2. Jika sesi terbuka berasal dari tanggal lebih awal dan scan baru
-        //    masih dalam "jendela lintas malam", scan itu adalah JAM KELUAR dari
-        //    sesi tersebut (mis. masuk 01-08 22:00, pulang 02-08 02:00), bukan
-        //    absen masuk baru hanya karena tanggal kalendernya sudah berganti.
-        if ($open && $open->date->toDateString() < $punchDate && $this->isWithinOvernightWindow($employee, $open, $punchAt)) {
-            $open->time_out = $time;
-            $open->method = $method;
-            $open->save();
+        // 2. Jika sesi terbuka berasal dari tanggal lebih awal, tentukan dulu
+        //    apakah sesi itu "palsu" (hasil tap pulang saja yang keliru terekam
+        //    sebagai absen datang, mis. pulang 17-08 16:06 tanpa absen datang).
+        //    Sesi palsu diubah menjadi rekap "absen pulang saja" (time_in kosong)
+        //    dan scan baru dilanjutkan sebagai absen datang hari baru. Karyawan
+        //    shift Malam dikecualikan: tap malam hari bagi mereka adalah absen
+        //    datang yang sah.
+        //
+        //    Baru setelah itu, sesi yang sah (masuknya masuk akal) dicek ke
+        //    "jendela lintas malam": scan pagi dini hari yang masih dalam
+        //    jendela itu adalah JAM KELUAR dari sesi tersebut (mis. masuk
+        //    01-08 22:00, pulang 02-08 02:00), bukan absen masuk baru hanya
+        //    karena tanggal kalendernya sudah berganti.
+        if ($open && $open->date->toDateString() < $punchDate) {
+            $isFabricated = ! str_contains((string) $employee->position, '(Malam)')
+                && ! $this->isPlausibleCheckInForShift($employee, $open->date, $open->time_in);
 
-            return;
+            if ($isFabricated) {
+                $pulang = $open->time_in;
+                $open->time_in = null;
+                $open->time_out = $pulang;
+                $open->method = $method;
+                $open->save();
+            } elseif ($this->isWithinOvernightWindow($employee, $open, $punchAt)) {
+                $open->time_out = $time;
+                $open->method = $method;
+                $open->save();
+
+                return;
+            }
         }
 
         // 3. Logic hari yang sama (perilaku lama dipertahankan).
@@ -139,7 +187,15 @@ class AttendanceSyncService
             return;
         }
 
-        if ($attendance->time_in === null) {
+        if ($attendance->time_in === null && $attendance->time_out !== null) {
+            // Rekap "absen pulang saja" (time_in kosong): scan yang lebih awal
+            // dianggap absen datang, scan yang lebih telat memperbarui jam pulang.
+            if ($time < $attendance->time_out) {
+                $attendance->time_in = $time;
+            } else {
+                $attendance->time_out = $time;
+            }
+        } elseif ($attendance->time_in === null) {
             $attendance->time_in = $time;
         } elseif ($time < $attendance->time_in) {
             $attendance->time_in = $time;
@@ -190,11 +246,49 @@ class AttendanceSyncService
             }
         } else {
             // Tanpa konfigurasi jam kerja, gunakan batas aman yang mudah
-            // diubah lewat config('attendance.max_session_hours').
+            // diubah lewat config('attendance.max_session_hours'). Scan pada
+            // hari berikutnya yang jamnya sudah melewati batas jam checkout
+            // (overnight_latest_checkout_hour, default 07:00) dianggap absen
+            // datang baru, bukan jam pulang sesi kemarin.
+            if ((int) $punchAt->format('G') >= (int) config('attendance.overnight_latest_checkout_hour', 7)) {
+                return false;
+            }
+
             $maxEnd = $sessionStart->copy()->addHours((int) config('attendance.max_session_hours', 16));
         }
 
         return $punchAt->lte($maxEnd);
+    }
+
+    /**
+     * Menentukan apakah jam masuk sebuah sesi masuk akal sebagai ABSEN DATANG
+     * untuk karyawan tersebut (berdasarkan shift yang berlaku pada tanggal
+     * sesi itu dimulai). Dipakai untuk mendeteksi sesi "palsu" yang terbentuk
+     * dari tap pulang saja (tanpa absen datang).
+     *
+     * Jam masuk sebelum 07:00 dianggap selalu masuk akal (bisa absen datang
+     * shift Subuh maupun jam pulang lintas malam). Jam masuk 18:00 ke atas
+     * juga dianggap masuk akal karena tidak bisa dibedakan dari absen datang
+     * shift malam/sore. Hanya jam di antara keduanya yang dicek ke rentang
+     * jam mulai shift karyawan.
+     */
+    private function isPlausibleCheckInForShift(Employee $employee, Carbon $sessionDate, string $timeIn): bool
+    {
+        $parts = explode(':', $timeIn);
+        $minutes = ((int) ($parts[0] ?? 0) * 60) + (int) ($parts[1] ?? 0);
+
+        if ($minutes < 7 * 60 || $minutes >= 18 * 60) {
+            return true;
+        }
+
+        $shift = $employee->shiftOn($sessionDate->toDateString());
+        $isMalam = str_contains((string) $employee->position, '(Malam)');
+        $start = Employee::shiftStartFrom($shift['jam_kerja'], $shift['jam_masuk'], $isMalam);
+
+        $min = $start - (int) config('attendance.checkin_early_arrival_minutes', 120);
+        $max = $start + (int) config('attendance.checkin_late_tolerance_minutes', 240);
+
+        return $minutes >= $min && $minutes <= $max;
     }
 
     /**
@@ -249,10 +343,20 @@ class AttendanceSyncService
      * Rekonstruksi ulang seluruh catatan presensi seorang karyawan dari
      * punch mesin secara kronologis. Dipakai untuk memperbaiki data lama
      * setelah ada perubahan aturan atribusi tanggal (mis. sesi Subuh).
+     *
+     * Bila $preserveManual true, record yang bukan berasal dari mesin
+     * (method != 'mesin', atau status selain hadir) TIDAK dihapus, sehingga
+     * absen manual/izin/sakit/alpha/cuti tetap dipertahankan.
      */
-    public function rebuildEmployeeAttendance(Employee $employee): int
+    public function rebuildEmployeeAttendance(Employee $employee, bool $preserveManual = false): int
     {
-        Attendance::where('employee_id', $employee->id)->delete();
+        $query = Attendance::where('employee_id', $employee->id);
+
+        if ($preserveManual) {
+            $query->where('status', 'hadir')->where('method', 'mesin')->delete();
+        } else {
+            $query->delete();
+        }
 
         $punches = AttendancePunch::where('employee_id', $employee->id)
             ->orderBy('punch_at')
