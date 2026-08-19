@@ -44,6 +44,7 @@ use App\Livewire\PositionTable;
 use App\Livewire\PresensiHostLive;
 use App\Livewire\PresensiHostRekap;
 use App\Livewire\PubgDailyTrackingTable;
+use App\Livewire\RunningRateDashboard;
 use App\Livewire\RekapStokTable;
 use App\Livewire\StockDailyTrackingTable;
 use App\Livewire\StokKetersediaanTable;
@@ -245,9 +246,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('pubg')->name('pubg.')->group(function () {
         Route::get('/daily-tracking', PubgDailyTrackingTable::class)->name('daily-tracking');
-        Route::get('/running-rate', function () {
-            return view('running-rate.index');
-        })->name('running-rate');
+        Route::get('/running-rate', RunningRateDashboard::class)->name('running-rate');
     });
 
     Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin');

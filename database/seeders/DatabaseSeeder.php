@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             StrukturOrganisasiSeeder::class,
             AttendanceSeeder::class,
             AssetCategorySeeder::class,
+            RunningRateSeeder::class,
         ]);
     }
 }
