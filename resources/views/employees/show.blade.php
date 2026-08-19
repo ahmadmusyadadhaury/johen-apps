@@ -34,6 +34,7 @@
             'status' => $c->status,
             'keterangan' => $c->keterangan,
             'is_addendum' => $c->is_addendum ?? false,
+            'file' => $c->file,
             'created_at' => $c->created_at,
             'updated_at' => $c->updated_at,
         ])->values()) }}"
@@ -63,8 +64,9 @@
             'pdf_path' => $p->pdf_path,
         ])->values()) }}"
           data-position-success="{{ session('position_success') }}"
-          data-promotion-success="{{ session('promotion_success') }}"
-          data-payroll-details="{{ json_encode($payrollDetails) }}"
+data-promotion-success="{{ session('promotion_success') }}"
+         data-positions="{{ $allPositions->map(fn($p) => ['id' => $p->id, 'nama' => $p->nama])->values() }}"
+         data-payroll-details="{{ json_encode($payrollDetails) }}"
           data-payroll-stats="{{ json_encode($stats) }}"
           class="hidden"></div>
 
@@ -80,15 +82,19 @@
         showSuccess: false,
         successMessage: '',
         documents: [],
+        allPositions: [],
+        posisiCari: '',
+        openPos: false,
         kontrakModal: false,
         tambahKontrakModal: false,
         editKontrakModal: false,
         deleteKontrakId: null,
         viewKontrak: null,
-        formKontrakJenis: '',
+        viewSuratKontrak: null,
         formKontrakMulai: '',
         formKontrakBerakhir: '',
-        formKontrakPosisi: '',
+        formKontrakPosisi: [],
+        formKontrakPosisiLabel: '',
         formKontrakAtasan: '',
         formKontrakId: null,
         contracts: [],
@@ -113,9 +119,8 @@
         formPromosiDivisi: '',
         formPromosiAtasan: '',
         formPromosiTanggal: '',
-        formPromosiAlasan: '',
-        formPromosiNomor: '',
         hapusPromosiId: null,
+        viewSuratPromosi: null,
         payrollList: [],
         payrollStats: { gaji_pokok: 0, total_tunjangan: 0, total_potongan: 0, gaji_bersih: 0 },
         tabs: ['dasar', 'dokumen', 'kontrak', 'jabatan', 'payroll'],
@@ -125,6 +130,9 @@
                 try {
                     this.documents = JSON.parse(data.dataset.documents || '[]');
                 } catch (e) { this.documents = []; }
+                try {
+                    this.allPositions = JSON.parse(data.dataset.positions || '[]');
+                } catch (e) { this.allPositions = []; }
                 try {
                     this.contracts = JSON.parse(data.dataset.contracts || '[]');
                 } catch (e) { this.contracts = []; }
@@ -197,6 +205,23 @@
             if (months < 1) return 'Kurang dari 1 bulan';
             return months + ' Bulan';
         },
+        get suratKontrakUrl() {
+            return this.viewSuratKontrak?.file ? '/storage/contracts/' + this.viewSuratKontrak.file : null;
+        },
+        get suratPromosiUrl() {
+            return this.viewSuratPromosi?.pdf_path ? '/storage/' + this.viewSuratPromosi.pdf_path : null;
+        },
+        formatTanggalIndo(dateStr) {
+            if (!dateStr) return '-';
+            const parts = String(dateStr).split('-');
+            if (parts.length !== 3) return dateStr;
+            const y = Number(parts[0]);
+            const m = Number(parts[1]);
+            const d = Number(parts[2]);
+            const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            if (!y || !m || !d || m < 1 || m > 12) return dateStr;
+            return d + ' ' + bulan[m - 1] + ' ' + y;
+        },
         daysUntilEnd(k) {
             if (!k?.tanggal_berakhir || this.isKontrakSelesai(k)) return null;
             const end = new Date(k.tanggal_berakhir + 'T23:59:59');
@@ -213,13 +238,40 @@
             return false;
         },
         editKontrak(k) {
-            this.formKontrakJenis = k.jenis_kontrak;
             this.formKontrakMulai = k.tanggal_mulai;
             this.formKontrakBerakhir = k.tanggal_berakhir;
-            this.formKontrakPosisi = k.posisi;
+            const names = (k.posisi || '').split(' & ').map(s => s.trim()).filter(Boolean);
+            this.formKontrakPosisi = this.allPositions.filter(p => names.includes(p.nama)).map(p => p.id);
+            this.formKontrakPosisiLabel = k.posisi || '';
             this.formKontrakAtasan = k.atasan || '';
             this.formKontrakId = k.id;
+            this.posisiCari = '';
+            this.openPos = false;
             this.editKontrakModal = true;
+        },
+        openTambahKontrak() {
+            this.formKontrakMulai = '';
+            this.formKontrakBerakhir = '';
+            this.formKontrakPosisi = [];
+            this.formKontrakPosisiLabel = '';
+            this.formKontrakAtasan = '';
+            this.formKontrakId = null;
+            this.posisiCari = '';
+            this.openPos = false;
+            this.tambahKontrakModal = true;
+        },
+        get filteredPositions() {
+            if (!this.posisiCari) return this.allPositions;
+            const q = this.posisiCari.toLowerCase();
+            return this.allPositions.filter(p => p.nama.toLowerCase().includes(q));
+        },
+        togglePosisi(id) {
+            if (this.formKontrakPosisi.includes(id)) {
+                this.formKontrakPosisi = this.formKontrakPosisi.filter(x => x !== id);
+            } else {
+                this.formKontrakPosisi = [...this.formKontrakPosisi, id];
+            }
+            this.formKontrakPosisiLabel = this.allPositions.filter(p => this.formKontrakPosisi.includes(p.id)).map(p => p.nama).join(' & ');
         },
         openEditJabatan(j) {
             this.formJabatanId = j.id;
@@ -240,8 +292,6 @@
             this.formPromosiAtasan = currentPosisi ? '' : '';
             this.formPromosiTanggal = new Date().toISOString().split('T')[0];
             this.formPromosiJenis = 'promosi';
-            this.formPromosiAlasan = '';
-            this.formPromosiNomor = '';
             this.promosiModal = true;
         },
     }" class="space-y-5">
@@ -429,6 +479,18 @@
                                     @endif
                                 </span>
                             </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Ukuran Baju</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->ukuran_baju ?? '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Agama</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->agama ? ucfirst($employee->agama) : '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Pendidikan Terakhir</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->pendidikan_terakhir ? ucfirst($employee->pendidikan_terakhir) : '-' }}</span>
+                            </div>
                             <div class="px-5 py-3 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Alamat Lengkap</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 leading-relaxed">{{ $employee->alamat ?? '-' }}</span>
@@ -559,7 +621,18 @@
                             </div>
                             <div class="px-5 py-3 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">BPJS Kesehatan</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->no_bpjs ?? '-' }}</span>
+                                <span class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->no_bpjs ?? '-' }}</span>
+                                    @if($employee->status_bpjs === 'aktif')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400">Aktif</span>
+                                    @elseif($employee->status_bpjs === 'tidak aktif')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400">Tidak Aktif</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="px-5 py-3 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Informasi Lowongan</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->informasi_lowongan ? ucfirst($employee->informasi_lowongan) : '-' }}</span>
                             </div>
                         </div>
                     </div>
@@ -843,7 +916,7 @@
                         Riwayat Kontrak
                     </div>
                     @if($canManageEmployeeData)
-                    <button @click="tambahKontrakModal = true"
+                    <button @click="openTambahKontrak()"
                             class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                         Tambah Kontrak
@@ -875,8 +948,8 @@
                                                 <span x-show="k.is_addendum" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Addendum</span>
                                             </div>
                                             <div class="flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                                <span>Mulai: <b class="text-gray-700 dark:text-gray-300 font-semibold" x-text="k.tanggal_mulai"></b></span>
-                                                <span>Berakhir: <b class="text-gray-700 dark:text-gray-300 font-semibold" x-text="k.tanggal_berakhir"></b></span>
+<span>Mulai: <b class="text-gray-700 dark:text-gray-300 font-semibold" x-text="formatTanggalIndo(k.tanggal_mulai)"></b></span>
+                                                 <span>Berakhir: <b class="text-gray-700 dark:text-gray-300 font-semibold" x-text="formatTanggalIndo(k.tanggal_berakhir)"></b></span>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
@@ -901,6 +974,12 @@
                                                     class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
                                                 Lihat Kontrak
+                                            </button>
+                                            <button x-show="k.file" @click="viewSuratKontrak = k"
+                                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-all"
+                                                    title="Lihat surat kontrak (PDF)">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                                                Surat Kontrak
                                             </button>
                                             @if($canManageEmployeeData)
                                             <button @click="editKontrak(k)"
@@ -1022,8 +1101,7 @@
                                         <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tanggal Efektif</th>
                                         <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jenis</th>
                                         <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Posisi</th>
-                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Alasan</th>
-                                        <th class="text-center px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Surat</th>
+                                        <th class="text-center px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Surat Adendum</th>
                                         <th class="text-center px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider w-16">Aksi</th>
                                     </tr>
                                 </thead>
@@ -1042,14 +1120,12 @@
                                                 <svg class="w-4 h-4 inline mx-1 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                                                 <span class="font-bold" x-text="p.posisi_baru"></span>
                                             </td>
-                                            <td class="px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate" x-text="p.alasan || '—'"></td>
                                             <td class="px-4 py-3.5 text-center">
-                                                <a x-show="p.pdf_path"
-                                                   :href="'{{ route('hris.employees.download-promotion-pdf', [$employee, '__PROMOID__']) }}'.replace('__PROMOID__', p.id)"
-                                                   class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 transition-all">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
-                                                    PDF
-                                                </a>
+                                                <button x-show="p.pdf_path" @click="viewSuratPromosi = p"
+                                                        class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 transition-all">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 3h4a1 1 0 0 1 1 1v4"/><path d="M9.5 13.5 11 12l4 4-1.5 1.5a2.12 2.12 0 0 1-3-3z"/><path d="m13.5 8.5-4 4a2.12 2.12 0 0 0 0 3l3 3a2.12 2.12 0 0 0 3 0l4-4a2.12 2.12 0 0 0 0-3l-3-3a2.12 2.12 0 0 0-3 0z"/></svg>
+                                                    Lihat Surat
+                                                </button>
                                                 <span x-show="!p.pdf_path" class="text-xs text-gray-400 dark:text-gray-500">—</span>
                                             </td>
                                             <td class="px-4 py-3.5 text-center">
@@ -1290,61 +1366,224 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              @click.stop
-             class="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+             class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+
+            {{-- Header --}}
+            <div class="relative shrink-0 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600"></div>
+                <div class="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl"></div>
+                <div class="relative px-7 py-6 flex items-start justify-between gap-4">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="h-12 w-12 shrink-0 rounded-2xl bg-white/15 ring-1 ring-white/30 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <h3 class="text-lg font-bold text-white truncate" x-text="viewKontrak?.jenis_kontrak"></h3>
+                                <span x-show="viewKontrak?.is_addendum" class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-400 text-amber-900">
+                                    Addendum
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/95"
+                                      :class="isKontrakSelesai(viewKontrak) ? 'text-emerald-700' : 'text-blue-700'">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="isKontrakSelesai(viewKontrak) ? 'bg-emerald-500' : 'bg-blue-500'"></span>
+                                    <span x-text="isKontrakSelesai(viewKontrak) ? 'Selesai' : 'Berlaku'"></span>
+                                </span>
+                            </div>
+                            <p class="text-sm text-white/80 mt-1.5 truncate">Perjanjian kerja <span class="font-semibold" x-text="viewKontrak?.posisi"></span></p>
+                        </div>
+                    </div>
+                    <button @click="viewKontrak = null" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 text-white hover:bg-white/25 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Body --}}
+            <div class="flex-1 overflow-y-auto p-7 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="h-12 w-12 shrink-0 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                        {{ strtoupper(substr($employee->nama, 0, 1)) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                            NIK {{ $employee->nik }}
+                            <span class="text-gray-300 dark:text-gray-600 mx-1.5">•</span>
+                            <span x-text="viewKontrak?.posisi"></span>
+                        </div>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <div class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Periode</div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-0.5 whitespace-nowrap">
+                            <span x-text="formatTanggalIndo(viewKontrak?.tanggal_mulai)"></span>
+                            <span class="text-gray-300 dark:text-gray-500 mx-1.5">→</span>
+                            <span x-text="formatTanggalIndo(viewKontrak?.tanggal_berakhir)"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-gray-800/40 p-4">
+                        <div class="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                            Mulai
+                        </div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="formatTanggalIndo(viewKontrak?.tanggal_mulai)"></div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-gray-800/40 p-4">
+                        <div class="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+                            Berakhir
+                        </div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="formatTanggalIndo(viewKontrak?.tanggal_berakhir)"></div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-gray-800/40 p-4">
+                        <div class="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            Durasi
+                        </div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="kontrakDurasi"></div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-gray-800/40 p-4">
+                        <div class="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            Atasan
+                        </div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="viewKontrak?.atasan || '—'"></div>
+                    </div>
+                </div>
+
+                <div x-show="viewKontrak?.keterangan" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/20 p-4">
+                    <div class="flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>
+                        Keterangan
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300" x-text="viewKontrak?.keterangan"></p>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="shrink-0 px-7 py-5 border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row sm:items-center gap-3">
+                <button @click="viewKontrak = null"
+                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    Tutup
+                </button>
+                <div class="flex items-center gap-2.5 flex-wrap sm:ml-auto">
+                    <button x-show="viewKontrak?.file" @click="viewSuratKontrak = viewKontrak"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                        Lihat Surat
+                    </button>
+                    @if($canManageEmployeeData)
+                    <button @click="viewKontrak = null; editKontrak(viewKontrak)"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                        Edit
+                    </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Lihat Surat Kontrak (PDF) --}}
+    <div x-show="viewSuratKontrak" x-cloak
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-gray-900/50 backdrop-blur-sm"
+         @click="viewSuratKontrak = null">
+        <div x-show="viewSuratKontrak" x-cloak
+             x-transition:enter="transition-all ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition-all ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.stop
+             class="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
                 <div>
-                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100" x-text="viewKontrak?.jenis_kontrak"></h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
-                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                              :class="isKontrakSelesai(viewKontrak) ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'"
-                              x-text="isKontrakSelesai(viewKontrak) ? 'Selesai' : 'Berlaku'"></span>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Surat Kontrak</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span x-text="viewSuratKontrak?.jenis_kontrak"></span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1">—</span>
+                        <span x-text="viewSuratKontrak?.posisi"></span>
                     </p>
                 </div>
-                <button @click="viewKontrak = null" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
+                <button @click="viewSuratKontrak = null" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-2 gap-5">
-                    <div>
-                        <div class="text-[11.5px] font-medium text-gray-400 dark:text-gray-500 mb-0.5">Nama Karyawan</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</div>
-                    </div>
-                    <div>
-                        <div class="text-[11.5px] font-medium text-gray-400 dark:text-gray-500 mb-0.5">Posisi / Jabatan</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="viewKontrak?.posisi"></div>
-                    </div>
-                    <div>
-                        <div class="text-[11.5px] font-medium text-gray-400 dark:text-gray-500 mb-0.5">Mulai</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="viewKontrak?.tanggal_mulai"></div>
-                    </div>
-                    <div>
-                        <div class="text-[11.5px] font-medium text-gray-400 dark:text-gray-500 mb-0.5">Berakhir</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="viewKontrak?.tanggal_berakhir"></div>
-                    </div>
-                    <div>
-                        <div class="text-[11.5px] font-medium text-gray-400 dark:text-gray-500 mb-0.5">Durasi</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="kontrakDurasi"></div>
-                    </div>
-                </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-gray-800/60">
+                <iframe :src="suratKontrakUrl" class="w-full h-[70vh] rounded-xl bg-white border border-gray-200 dark:border-gray-600"></iframe>
             </div>
-            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                <button @click="viewKontrak = null"
+            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700 shrink-0">
+                <button @click="viewSuratKontrak = null"
                         class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                     Tutup
                 </button>
-                @if($canManageEmployeeData)
-                <button @click="viewKontrak = null; editKontrak(viewKontrak)"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                    Edit
+                <a :href="viewSuratKontrak?.id ? '{{ route('hris.employees.download-contract', [$employee, '__CID__']) }}'.replace('__CID__', viewSuratKontrak.id) : '#'
+                   class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+                    Unduh PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Lihat Surat Adendum --}}
+    <div x-show="viewSuratPromosi" x-cloak
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-gray-900/50 backdrop-blur-sm"
+         @click="viewSuratPromosi = null">
+        <div x-show="viewSuratPromosi" x-cloak
+             x-transition:enter="transition-all ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition-all ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.stop
+             class="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Surat Adendum</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                              :class="viewSuratPromosi?.jenis === 'promosi' ? 'bg-green-50 text-green-700' : (viewSuratPromosi?.jenis === 'demosi' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700')"
+                              x-text="viewSuratPromosi?.jenis"></span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1.5">—</span>
+                        <span x-text="viewSuratPromosi?.posisi_lama"></span>
+                        <svg class="w-3.5 h-3.5 inline mx-1 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        <span class="font-semibold" x-text="viewSuratPromosi?.posisi_baru"></span>
+                    </p>
+                </div>
+                <button @click="viewSuratPromosi = null" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
                 </button>
-                <button x-show="!isKontrakSelesai(viewKontrak)"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    Perpanjang Kontrak
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-gray-800/60">
+                <iframe :src="suratPromosiUrl" class="w-full h-[70vh] rounded-xl bg-white border border-gray-200 dark:border-gray-600"></iframe>
+            </div>
+            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700 shrink-0">
+                <button @click="viewSuratPromosi = null"
+                        class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                    Tutup
                 </button>
-                @endif
+                <a :href="viewSuratPromosi?.id ? '{{ route('hris.employees.download-promotion-pdf', [$employee, '__PROMOID__']) }}'.replace('__PROMOID__', viewSuratPromosi.id) : '#'
+                   class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+                    Unduh PDF
+                </a>
             </div>
         </div>
     </div>
@@ -1377,18 +1616,13 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
                 </button>
             </div>
-            <form action="{{ route('hris.employees.store-contract', $employee) }}" method="POST" class="overflow-y-auto p-6 space-y-4">
+            <form action="{{ route('hris.employees.store-contract', $employee) }}" method="POST" enctype="multipart/form-data" class="overflow-y-auto p-6 space-y-4">
                 @csrf
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Jenis Kontrak <span class="text-red-500">*</span></label>
-                    <select name="jenis_kontrak" required
-                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
-                        <option value="">Pilih jenis kontrak</option>
-                        <option value="Karyawan Kontrak">Karyawan Kontrak</option>
-                        <option value="Karyawan Tetap">Karyawan Tetap</option>
-                        <option value="Magang">Magang</option>
-                        <option value="Freelance">Freelance</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Surat Kontrak (PDF) <span class="text-gray-400 font-normal">(opsional, maks. 10MB)</span></label>
+                    <input type="file" name="file" accept="application/pdf,.pdf"
+                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-blue-700 dark:file:text-blue-300 file:cursor-pointer">
+                    @error('file') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
@@ -1404,8 +1638,32 @@
                 </div>
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Jabatan <span class="text-red-500">*</span></label>
-                    <input type="text" name="posisi" required placeholder="Contoh: IT Staff"
-                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                    <div class="relative" @click.outside="openPos = false">
+                        <input type="hidden" name="posisi" :value="formKontrakPosisiLabel">
+                        <button type="button" @click="openPos = !openPos"
+                                class="w-full flex items-center justify-between gap-2 border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                            <span x-text="formKontrakPosisiLabel || 'Pilih jabatan'" :class="formKontrakPosisiLabel ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'"></span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': openPos }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <div x-show="openPos" x-cloak
+                             class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+                            <div class="p-2 border-b border-gray-100 dark:border-gray-700">
+                                <input type="text" x-model="posisiCari" placeholder="Cari jabatan..."
+                                       class="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+                            </div>
+                            <div class="max-h-48 overflow-y-auto p-1.5 space-y-0.5">
+                                <template x-for="p in filteredPositions" :key="p.id">
+                                    <label class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                                           :class="formKontrakPosisi.includes(p.id) ? 'bg-blue-50 dark:bg-blue-950/40' : ''">
+                                        <input type="checkbox" :checked="formKontrakPosisi.includes(p.id)" @change="togglePosisi(p.id)"
+                                               class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300" x-text="p.nama"></span>
+                                    </label>
+                                </template>
+                                <div x-show="filteredPositions.length === 0" class="px-2.5 py-3 text-center text-xs text-gray-400">Jabatan tidak ditemukan</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Atasan</label>
@@ -1454,20 +1712,14 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
                 </button>
             </div>
-            <form :action="`/hris/employees/{{ $employee->id }}/contracts/${formKontrakId}`" method="POST" class="overflow-y-auto p-6 space-y-4">
+            <form :action="`/hris/employees/{{ $employee->id }}/contracts/${formKontrakId}`" method="POST" enctype="multipart/form-data" class="overflow-y-auto p-6 space-y-4">
                 @csrf
                 @method('PUT')
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-700">Jenis Kontrak <span class="text-red-500">*</span></label>
-                    <select name="jenis_kontrak" required
-                            x-model="formKontrakJenis"
-                            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
-                        <option value="">Pilih jenis kontrak</option>
-                        <option value="Karyawan Kontrak">Karyawan Kontrak</option>
-                        <option value="Karyawan Tetap">Karyawan Tetap</option>
-                        <option value="Magang">Magang</option>
-                        <option value="Freelance">Freelance</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-gray-700">Surat Kontrak (PDF) <span class="text-gray-400 font-normal">(opsional, maks. 10MB)</span></label>
+                    <input type="file" name="file" accept="application/pdf,.pdf"
+                           class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-blue-700 file:cursor-pointer">
+                    @error('file') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
@@ -1483,8 +1735,32 @@
                 </div>
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700">Jabatan <span class="text-red-500">*</span></label>
-                    <input type="text" name="posisi" required placeholder="Contoh: IT Staff" x-model="formKontrakPosisi"
-                           class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                    <div class="relative" @click.outside="openPos = false">
+                        <input type="hidden" name="posisi" :value="formKontrakPosisiLabel">
+                        <button type="button" @click="openPos = !openPos"
+                                class="w-full flex items-center justify-between gap-2 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-white outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                            <span x-text="formKontrakPosisiLabel || 'Pilih jabatan'" :class="formKontrakPosisiLabel ? 'text-gray-900' : 'text-gray-400'"></span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': openPos }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <div x-show="openPos" x-cloak
+                             class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                            <div class="p-2 border-b border-gray-100">
+                                <input type="text" x-model="posisiCari" placeholder="Cari jabatan..."
+                                       class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+                            </div>
+                            <div class="max-h-48 overflow-y-auto p-1.5 space-y-0.5">
+                                <template x-for="p in filteredPositions" :key="p.id">
+                                    <label class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                           :class="formKontrakPosisi.includes(p.id) ? 'bg-blue-50' : ''">
+                                        <input type="checkbox" :checked="formKontrakPosisi.includes(p.id)" @change="togglePosisi(p.id)"
+                                               class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700" x-text="p.nama"></span>
+                                    </label>
+                                </template>
+                                <div x-show="filteredPositions.length === 0" class="px-2.5 py-3 text-center text-xs text-gray-400">Jabatan tidak ditemukan</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700">Atasan</label>
@@ -1751,40 +2027,50 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              @click.stop
-             class="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
-                <div>
-                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Promosi / Mutasi / Demosi</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Terapkan perubahan jabatan karyawan</p>
+             class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-7 pt-5 pb-16 shrink-0 relative">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,rgba(255,255,255,0.18),transparent_55%)] pointer-events-none"></div>
+                <div class="flex items-start justify-between relative z-10">
+                    <div class="flex items-center gap-4">
+                        <div class="h-12 w-12 shrink-0 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-bold text-white">Perubahan Jabatan</h3>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold text-white uppercase tracking-wide"
+                                      x-text="formPromosiJenis"></span>
+                            </div>
+                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} · NIK {{ $employee->nik }}</p>
+                        </div>
+                    </div>
+                    <button @click="promosiModal = false" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 text-white hover:bg-white/25 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+                    </button>
                 </div>
-                <button @click="promosiModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
-                </button>
             </div>
-            <form action="{{ route('hris.employees.store-promotion', $employee) }}" method="POST" class="overflow-y-auto p-6 space-y-4">
+            <form id="promosi-form" action="{{ route('hris.employees.store-promotion', $employee) }}" method="POST" enctype="multipart/form-data" class="flex-1 overflow-y-auto px-7 py-6 -mt-8 space-y-5">
                 @csrf
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Jenis <span class="text-red-500">*</span></label>
-                        <select name="jenis" required x-model="formPromosiJenis
-                                class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
-                            <option value="promosi">Promosi</option>
-                            <option value="mutasi">Mutasi</option>
-                            <option value="demosi">Demosi</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Tanggal Efektif <span class="text-red-500">*</span></label>
-                        <input type="date" name="tanggal_efektif" required x-model="formPromosiTanggal"
-                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
-                    </div>
+
+                {{-- Jenis --}}
+                <div class="grid grid-cols-3 gap-2 rounded-xl bg-gray-100 dark:bg-gray-800 p-1.5">
+                    <template x-for="jt in ['promosi', 'mutasi', 'demosi']" :key="jt">
+                        <button type="button" @click="formPromosiJenis = jt"
+                                class="rounded-lg py-2 text-sm font-semibold capitalize transition-all"
+                                :class="formPromosiJenis === jt
+                                    ? 'bg-white dark:bg-gray-900 text-violet-700 dark:text-violet-300 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                x-text="jt"></button>
+                    </template>
+                    <input type="hidden" name="jenis" :value="formPromosiJenis">
                 </div>
 
+                {{-- Posisi Baru --}}
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Posisi Baru <span class="text-red-500">*</span></label>
                     <input type="text" name="posisi_baru" required x-model="formPromosiPosisi"
                            placeholder="Contoh: IT Manager"
-                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.25)] transition-all">
                     <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
                         Posisi saat ini: <b>{{ $employee->position ?? '—' }}</b>
                     </p>
@@ -1792,41 +2078,42 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi</label>
-                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-                            Saat ini: <b>{{ $employee->divisionNames() ?: '—' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
-                        </p>
-                        <div class="mt-1.5 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-xl p-2 space-y-0.5">
-                            @foreach($divisions as $division)
-                                <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ $employee->divisions->contains('id', $division->id) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
-                                    <input type="checkbox" name="division_ids[]" value="{{ $division->id }}"
-                                           {{ $employee->divisions->contains('id', $division->id) ? 'checked' : '' }}
-                                           class="rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500">
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ $division->nama }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Tanggal Efektif <span class="text-red-500">*</span></label>
+                        <input type="date" name="tanggal_efektif" required x-model="formPromosiTanggal"
+                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.25)] transition-all">
                     </div>
                     <div class="space-y-1">
                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Atasan Baru</label>
                         <input type="text" name="atasan_baru" x-model="formPromosiAtasan"
                                placeholder="Nama atasan baru"
-                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                               class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.25)] transition-all">
                     </div>
                 </div>
 
+                {{-- Divisi --}}
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Nomor Surat</label>
-                    <input type="text" name="nomor_surat" x-model="formPromosiNomor"
-                           placeholder="Contoh: 001/SK-PROMOSI/JSA/VI/2026"
-                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi</label>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                        Saat ini: <b>{{ $employee->divisionNames() ?: '—' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
+                    </p>
+                    <div class="mt-1.5 grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto rounded-xl bg-gray-50 dark:bg-gray-800/50 p-2">
+                        @foreach($divisions as $division)
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white dark:hover:bg-gray-700 cursor-pointer transition-colors {{ $employee->divisions->contains('id', $division->id) ? 'bg-white dark:bg-gray-700 ring-1 ring-violet-200 dark:ring-violet-900' : '' }}">
+                                <input type="checkbox" name="division_ids[]" value="{{ $division->id }}"
+                                       {{ $employee->divisions->contains('id', $division->id) ? 'checked' : '' }}
+                                       class="rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $division->nama }}</span>
+                            </label>
+                        @endforeach
+                    </div>
                 </div>
 
+                {{-- Surat Adendum --}}
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Alasan</label>
-                    <textarea name="alasan" x-model="formPromosiAlasan" rows="3"
-                              placeholder="Alasan promosi/mutasi/demosi..."
-                              class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all resize-none"></textarea>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Surat Adendum (PDF) <span class="text-gray-400 font-normal">(opsional, maks. 10MB)</span></label>
+                    <input type="file" name="file" accept="application/pdf,.pdf"
+                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.25)] transition-all file:mr-3 file:rounded-lg file:border-0 file:bg-violet-50 dark:file:bg-violet-950 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-violet-700 dark:file:text-violet-300 file:cursor-pointer">
+                    @error('file') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-4">
@@ -1837,23 +2124,22 @@
                             • Posisi karyawan akan diperbarui<br>
                             • Riwayat jabatan lama otomatis ditutup<br>
                             • Kontrak addendum baru dibuat (tgl berakhir ikut kontrak lama)<br>
-                            • Surat keputusan promosi/mutasi/demosi akan digenerate dalam format PDF
+                            • Surat adendum yang diunggah tersedia di tab Riwayat Jabatan
                         </div>
                     </div>
                 </div>
-
-                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <button type="button" @click="promosiModal = false"
-                            class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                        Batal
-                    </button>
-                    <button type="submit"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-all shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                        Simpan Promosi
-                    </button>
-                </div>
             </form>
+            <div class="flex items-center justify-end gap-2.5 px-7 py-4 border-t border-gray-100 dark:border-gray-700 shrink-0">
+                <button type="button" @click="promosiModal = false"
+                        class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                    Batal
+                </button>
+                <button type="submit" form="promosi-form"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    Simpan Perubahan
+                </button>
+            </div>
         </div>
     </div>
 

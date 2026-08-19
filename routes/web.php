@@ -83,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/employees/{employee}/contracts/{contract}', [EmployeeController::class, 'getContract'])->name('employees.get-contract');
         Route::delete('/employees/{employee}/contracts/{contract}', [EmployeeController::class, 'destroyContract'])->name('employees.destroy-contract');
         Route::put('/employees/{employee}/contracts/{contract}', [EmployeeController::class, 'updateContract'])->name('employees.update-contract');
+        Route::get('/employees/{employee}/contracts/{contract}/download', [EmployeeController::class, 'downloadContract'])->name('employees.download-contract');
 
         Route::post('/employees/{employee}/position-histories', [EmployeeController::class, 'storePositionHistory'])->name('employees.store-position-history');
         Route::put('/employees/{employee}/position-histories/{positionHistory}', [EmployeeController::class, 'updatePositionHistory'])->name('employees.update-position-history');

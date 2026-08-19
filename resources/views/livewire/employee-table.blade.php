@@ -255,6 +255,37 @@
                             </select>
                             @error('status') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
+                        <div>
+                            <x-input-label for="create-ukuran_baju" value="Ukuran Baju" />
+                            <select id="create-ukuran_baju" wire:model="ukuran_baju" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="create-agama" value="Agama" />
+                            <select id="create-agama" wire:model="agama" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="islam">Islam</option>
+                                <option value="kristen">Kristen</option>
+                                <option value="protestan">Protestan</option>
+                                <option value="hindu">Hindu</option>
+                                <option value="budha">Budha</option>
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="create-pendidikan_terakhir" value="Pendidikan Terakhir" />
+                            <select id="create-pendidikan_terakhir" wire:model="pendidikan_terakhir" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="sekolah menengah atas (SMA)">Sekolah Menengah Atas (SMA)</option>
+                                <option value="sekolah menengah kejuruan (SMK)">Sekolah Menengah Kejuruan (SMK)</option>
+                                <option value="Sarjana">Sarjana</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <x-input-label for="create-alamat" value="Alamat Lengkap" />
@@ -373,6 +404,17 @@
                             <x-text-input id="create-email" wire:model="email" type="email" class="mt-1 block w-full" placeholder="john@company.com" />
                             @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
+                        <div>
+                            <x-input-label for="create-informasi_lowongan" value="Informasi Lowongan" />
+                            <select id="create-informasi_lowongan" wire:model="informasi_lowongan" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="kitalulus">Kitalulus</option>
+                                <option value="loker bandung">Loker Bandung</option>
+                                <option value="jobstreet">Jobstreet</option>
+                                <option value="glints">Glints</option>
+                                <option value="kerabat">Kerabat</option>
+                            </select>
+                        </div>
                     </div>
                     <hr class="border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Kontak Darurat</p>
@@ -414,6 +456,14 @@
                         <div>
                             <x-input-label for="create-no_bpjs" value="No. BPJS" />
                             <x-text-input id="create-no_bpjs" wire:model="no_bpjs" type="text" class="mt-1 block w-full" placeholder="0001234567890" />
+                        </div>
+                        <div>
+                            <x-input-label for="create-status_bpjs" value="Status BPJS" />
+                            <select id="create-status_bpjs" wire:model="status_bpjs" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="tidak aktif">Tidak Aktif</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -541,6 +591,37 @@
                             </select>
                             @error('status') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
+                        <div>
+                            <x-input-label for="edit-ukuran_baju" value="Ukuran Baju" />
+                            <select id="edit-ukuran_baju" wire:model="ukuran_baju" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="edit-agama" value="Agama" />
+                            <select id="edit-agama" wire:model="agama" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="islam">Islam</option>
+                                <option value="kristen">Kristen</option>
+                                <option value="protestan">Protestan</option>
+                                <option value="hindu">Hindu</option>
+                                <option value="budha">Budha</option>
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="edit-pendidikan_terakhir" value="Pendidikan Terakhir" />
+                            <select id="edit-pendidikan_terakhir" wire:model="pendidikan_terakhir" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="sekolah menengah atas (SMA)">Sekolah Menengah Atas (SMA)</option>
+                                <option value="sekolah menengah kejuruan (SMK)">Sekolah Menengah Kejuruan (SMK)</option>
+                                <option value="Sarjana">Sarjana</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <x-input-label for="edit-alamat" value="Alamat Lengkap" />
@@ -664,6 +745,17 @@
                             <x-text-input id="edit-email" wire:model="email" type="email" class="mt-1 block w-full" />
                             @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
+                        <div>
+                            <x-input-label for="edit-informasi_lowongan" value="Informasi Lowongan" />
+                            <select id="edit-informasi_lowongan" wire:model="informasi_lowongan" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="kitalulus">Kitalulus</option>
+                                <option value="loker bandung">Loker Bandung</option>
+                                <option value="jobstreet">Jobstreet</option>
+                                <option value="glints">Glints</option>
+                                <option value="kerabat">Kerabat</option>
+                            </select>
+                        </div>
                     </div>
                     <hr class="border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Kontak Darurat</p>
@@ -705,6 +797,14 @@
                         <div>
                             <x-input-label for="edit-no_bpjs" value="No. BPJS" />
                             <x-text-input id="edit-no_bpjs" wire:model="no_bpjs" type="text" class="mt-1 block w-full" />
+                        </div>
+                        <div>
+                            <x-input-label for="edit-status_bpjs" value="Status BPJS" />
+                            <select id="edit-status_bpjs" wire:model="status_bpjs" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="tidak aktif">Tidak Aktif</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -775,6 +875,9 @@
                         <div class="preview-field"><span class="preview-label">Tanggal Lahir</span><span class="preview-value">{{ $tanggal_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kelamin</span><span class="preview-value">{{ $jenis_kelamin == 'L' ? 'Laki-laki' : ($jenis_kelamin == 'P' ? 'Perempuan' : '-') }}</span></div>
                         <div class="preview-field"><span class="preview-label">Status</span><span class="preview-value">{{ ucfirst($status) }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Ukuran Baju</span><span class="preview-value">{{ $ukuran_baju ?: '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Agama</span><span class="preview-value">{{ $agama ? ucfirst($agama) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Pendidikan Terakhir</span><span class="preview-value">{{ $pendidikan_terakhir ? ucfirst($pendidikan_terakhir) : '-' }}</span></div>
                         <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Alamat</span><span class="preview-value">{{ $alamat ?: '-' }}</span></div>
                     </div>
                 </div>
@@ -821,6 +924,16 @@
                         <div class="preview-field"><span class="preview-label">No. Telepon</span><span class="preview-value">{{ $no_hp ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Email</span><span class="preview-value">{{ $email ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">No. BPJS</span><span class="preview-value">{{ $no_bpjs ?: '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Status BPJS</span><span class="preview-value">
+                            @if($status_bpjs === 'aktif')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700">Aktif</span>
+                            @elseif($status_bpjs === 'tidak aktif')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700">Tidak Aktif</span>
+                            @else
+                                -
+                            @endif
+                        </span></div>
+                        <div class="preview-field"><span class="preview-label">Informasi Lowongan</span><span class="preview-value">{{ $informasi_lowongan ? ucfirst($informasi_lowongan) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kontak Darurat 1</span><span class="preview-value">{{ $no_kontak_darurat1 ? $no_kontak_darurat1 . ' (' . $hubungan_darurat1 . ')' : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kontak Darurat 2</span><span class="preview-value">{{ $no_kontak_darurat2 ? $no_kontak_darurat2 . ' (' . $hubungan_darurat2 . ')' : '-' }}</span></div>
                     </div>

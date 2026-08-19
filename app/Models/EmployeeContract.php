@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class EmployeeContract extends Model
 {
@@ -17,6 +19,7 @@ class EmployeeContract extends Model
         'status',
         'keterangan',
         'is_addendum',
+        'file',
     ];
 
     protected function casts(): array
@@ -31,5 +34,15 @@ class EmployeeContract extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(ContractEvaluation::class, 'contract_id');
+    }
+
+    public function evaluation(): HasOne
+    {
+        return $this->hasOne(ContractEvaluation::class, 'contract_id')->latestOfMany();
     }
 }

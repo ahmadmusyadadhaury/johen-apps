@@ -48,6 +48,14 @@ class EmployeeTable extends Component
 
     public string $jenis_kelamin = '';
 
+    public string $ukuran_baju = '';
+
+    public string $agama = '';
+
+    public string $pendidikan_terakhir = '';
+
+    public string $informasi_lowongan = '';
+
     public string $alamat = '';
 
     public string $status = 'aktif';
@@ -98,6 +106,8 @@ class EmployeeTable extends Component
 
     public string $no_bpjs = '';
 
+    public string $status_bpjs = '';
+
     public string $tanggal_resign = '';
 
     public string $catatan = '';
@@ -120,6 +130,10 @@ class EmployeeTable extends Component
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
             'jenis_kelamin' => 'nullable|in:L,P',
+            'ukuran_baju' => 'nullable|in:S,M,L,XL,XXL',
+            'agama' => 'nullable|string|max:50',
+            'pendidikan_terakhir' => 'nullable|string|max:100',
+            'informasi_lowongan' => 'nullable|string|max:100',
             'alamat' => 'nullable|string',
             'status' => 'required|in:aktif,nonaktif,resign',
             'position' => 'nullable|string|max:255',
@@ -145,6 +159,7 @@ class EmployeeTable extends Component
             'no_kontak_darurat2' => 'nullable|string|max:30',
             'hubungan_darurat2' => 'nullable|string|max:50',
             'no_bpjs' => 'nullable|string|max:30',
+            'status_bpjs' => 'nullable|in:aktif,tidak aktif',
             'tanggal_resign' => 'nullable|date',
             'catatan' => 'nullable|string',
         ];
@@ -195,6 +210,10 @@ class EmployeeTable extends Component
         $this->tempat_lahir = $emp->tempat_lahir ?? '';
         $this->tanggal_lahir = $emp->tanggal_lahir?->format('Y-m-d') ?? '';
         $this->jenis_kelamin = $emp->jenis_kelamin ?? '';
+        $this->ukuran_baju = $emp->ukuran_baju ?? '';
+        $this->agama = $emp->agama ?? '';
+        $this->pendidikan_terakhir = $emp->pendidikan_terakhir ?? '';
+        $this->informasi_lowongan = $emp->informasi_lowongan ?? '';
         $this->alamat = $emp->alamat ?? '';
         $this->status = $emp->status;
         $this->position = $emp->position ?? '';
@@ -219,6 +238,7 @@ class EmployeeTable extends Component
         $this->no_kontak_darurat2 = $emp->no_kontak_darurat2 ?? '';
         $this->hubungan_darurat2 = $emp->hubungan_darurat2 ?? '';
         $this->no_bpjs = $emp->no_bpjs ?? '';
+        $this->status_bpjs = $emp->status_bpjs ?? '';
         $this->tanggal_resign = $emp->tanggal_resign?->format('Y-m-d') ?? '';
         $this->catatan = $emp->catatan ?? '';
         $this->step = 1;
@@ -418,6 +438,10 @@ class EmployeeTable extends Component
             'tempat_lahir' => $this->tempat_lahir ?: null,
             'tanggal_lahir' => $this->tanggal_lahir ?: null,
             'jenis_kelamin' => $this->jenis_kelamin ?: null,
+            'ukuran_baju' => $this->ukuran_baju ?: null,
+            'agama' => $this->agama ?: null,
+            'pendidikan_terakhir' => $this->pendidikan_terakhir ?: null,
+            'informasi_lowongan' => $this->informasi_lowongan ?: null,
             'position' => $posStr,
             'atasan' => $this->atasan ?: null,
             'atasan2' => $this->atasan2 ?: null,
@@ -432,6 +456,7 @@ class EmployeeTable extends Component
             'no_kontak_darurat2' => $this->no_kontak_darurat2 ?: null,
             'hubungan_darurat2' => $this->hubungan_darurat2 ?: null,
             'no_bpjs' => $this->no_bpjs ?: null,
+            'status_bpjs' => $this->status_bpjs ?: null,
             'status' => $this->status,
             'tanggal_masuk' => $this->tanggal_masuk ?: null,
             'tanggal_resign' => $this->tanggal_resign ?: null,
@@ -447,6 +472,10 @@ class EmployeeTable extends Component
         $this->tempat_lahir = '';
         $this->tanggal_lahir = '';
         $this->jenis_kelamin = '';
+        $this->ukuran_baju = '';
+        $this->agama = '';
+        $this->pendidikan_terakhir = '';
+        $this->informasi_lowongan = '';
         $this->alamat = '';
         $this->status = 'aktif';
         $this->position = '';
@@ -470,6 +499,7 @@ class EmployeeTable extends Component
         $this->no_kontak_darurat2 = '';
         $this->hubungan_darurat2 = '';
         $this->no_bpjs = '';
+        $this->status_bpjs = '';
         $this->tanggal_resign = '';
         $this->catatan = '';
         $this->step = 1;

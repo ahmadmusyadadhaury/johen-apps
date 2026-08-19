@@ -32,7 +32,6 @@ class PromotionService
 
             $promotion = Promotion::create([
                 'employee_id' => $employee->id,
-                'nomor_surat' => $data['nomor_surat'] ?? null,
                 'posisi_lama' => $posisiLama ?? '—',
                 'posisi_baru' => $data['posisi_baru'],
                 'divisi_lama' => $divisiLama,
@@ -41,7 +40,6 @@ class PromotionService
                 'atasan_baru' => $data['atasan_baru'] ?? $atasanLama,
                 'tanggal_efektif' => $data['tanggal_efektif'],
                 'jenis' => $data['jenis'],
-                'alasan' => $data['alasan'] ?? null,
                 'created_by' => auth()->id(),
             ]);
 
@@ -94,12 +92,31 @@ class PromotionService
                 ]);
             }
 
-            $pdfPath = $this->generatePdf($promotion, $employee);
+            $pdfPath = isset($data['file'])
+                ? $this->storeUploadedFile($data['file'], $employee)
+                : $this->generatePdf($promotion, $employee);
 
             $promotion->update(['pdf_path' => $pdfPath]);
 
             return $promotion;
         });
+    }
+
+    protected function storeUploadedFile($file, Employee $employee): string
+    {
+        $extension = $file->getClientOriginalExtension() ?: 'pdf';
+        $filename = sprintf(
+            'surat_adendum_%s_%s.%s',
+            $employee->nik,
+            now()->format('Ymd_His'),
+            $extension
+        );
+
+        $path = "promotions/{$employee->id}/{$filename}";
+
+        $file->storeAs("promotions/{$employee->id}", $filename, 'public');
+
+        return $path;
     }
 
     public function generatePdf(Promotion $promotion, ?Employee $employee = null): string

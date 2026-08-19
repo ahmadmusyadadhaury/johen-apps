@@ -114,7 +114,7 @@ class ExportController extends Controller
         $row = 2;
         foreach ($contracts as $idx => $ct) {
             $sisaHari = now()->startOfDay()->diffInDays($ct->tanggal_berakhir, false);
-            $isAkanBerakhir = $sisaHari <= 30 && $sisaHari >= 0 && $ct->status === 'berlaku';
+            $isAkanBerakhir = $sisaHari <= 14 && $sisaHari >= 0 && $ct->status === 'berlaku';
             $statusLabel = $ct->status === 'selesai' ? 'Selesai' : ($isAkanBerakhir ? 'Akan Berakhir' : 'Aktif');
 
             $sheet->setCellValue('A' . $row, $idx + 1);

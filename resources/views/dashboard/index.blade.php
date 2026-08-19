@@ -826,7 +826,7 @@
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                 <div>
                     <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Kontrak Akan Berakhir</h3>
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">7 hari ke depan</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">14 hari ke depan</p>
                 </div>
                 <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -887,7 +887,7 @@
                     <div class="flex items-center justify-between mb-6">
                         <div>
                             <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Kontrak Akan Berakhir</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $expiringContractCount }} kontrak berakhir dalam 7 hari ke depan</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $expiringContractCount }} kontrak berakhir dalam 14 hari ke depan</p>
                         </div>
                         <button @click="openKontrakModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

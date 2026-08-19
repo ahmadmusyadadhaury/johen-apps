@@ -241,23 +241,24 @@ class EmployeeController extends Controller
     {
         $this->authorizeManageEmployeeData();
         $request->validate([
-            'jenis_kontrak' => 'required|string|max:100',
             'posisi' => 'required|string|max:255',
             'atasan' => 'nullable|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date|after:tanggal_mulai',
             'keterangan' => 'nullable|string|max:500',
+            'file' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
         EmployeeContract::create([
             'employee_id' => $employee->id,
-            'jenis_kontrak' => $request->jenis_kontrak,
+            'jenis_kontrak' => 'Karyawan Kontrak',
             'posisi' => $request->posisi,
             'atasan' => $request->atasan,
             'tanggal_mulai' => $request->tanggal_mulai,
             'tanggal_berakhir' => $request->tanggal_berakhir,
             'status' => 'berlaku',
             'keterangan' => $request->keterangan,
+            'file' => $this->storeContractFile($request, $employee->id),
         ]);
 
         return redirect(route('hris.employees.show', $employee) . '#kontrak')
@@ -272,6 +273,7 @@ class EmployeeController extends Controller
     public function destroyContract(Employee $employee, EmployeeContract $contract)
     {
         $this->authorizeManageEmployeeData();
+        $this->deleteContractFile($contract);
         $contract->delete();
 
         return redirect(route('hris.employees.show', $employee) . '#kontrak')
@@ -342,29 +344,67 @@ class EmployeeController extends Controller
     {
         $this->authorizeManageEmployeeData();
         $request->validate([
-            'jenis_kontrak' => 'required|string|max:100',
             'posisi' => 'required|string|max:255',
             'atasan' => 'nullable|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date',
             'keterangan' => 'nullable|string|max:500',
+            'file' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
         $contract->update(['status' => 'selesai']);
 
         EmployeeContract::create([
             'employee_id' => $employee->id,
-            'jenis_kontrak' => $request->jenis_kontrak,
+            'jenis_kontrak' => 'Karyawan Kontrak',
             'posisi' => $request->posisi,
             'atasan' => $request->atasan,
             'tanggal_mulai' => $request->tanggal_mulai,
             'tanggal_berakhir' => $request->tanggal_berakhir,
             'status' => 'berlaku',
             'keterangan' => $request->keterangan,
+            'file' => $this->storeContractFile($request, $employee->id),
         ]);
 
         return redirect(route('hris.employees.show', $employee) . '#kontrak')
             ->with('contract_success', 'Kontrak berhasil diperbarui. Kontrak lama otomatis ditandai selesai.');
+    }
+
+    public function downloadContract(Employee $employee, EmployeeContract $contract)
+    {
+        $filePath = 'contracts/' . $contract->file;
+
+        if (!$contract->file || !Storage::disk('public')->exists($filePath)) {
+            return redirect()->route('hris.employees.show', $employee)
+                ->with('error', 'File surat kontrak tidak ditemukan.');
+        }
+
+        return Storage::disk('public')->download($filePath, 'surat-kontrak-' . $employee->nik . '.pdf');
+    }
+
+    private function storeContractFile(Request $request, int $employeeId): ?string
+    {
+        if (!$request->hasFile('file')) {
+            return null;
+        }
+
+        $file = $request->file('file');
+        $filename = 'contract_' . $employeeId . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->storeAs('contracts', $filename, 'public');
+
+        return $filename;
+    }
+
+    private function deleteContractFile(EmployeeContract $contract): void
+    {
+        if (!$contract->file) {
+            return;
+        }
+
+        $filePath = 'contracts/' . $contract->file;
+        if (Storage::disk('public')->exists($filePath)) {
+            Storage::disk('public')->delete($filePath);
+        }
     }
 
     public function destroy(Employee $employee)

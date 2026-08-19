@@ -126,6 +126,27 @@ class User extends Authenticatable
         return $this->isSuperAdmin() || $this->isStaffHr();
     }
 
+    public function canEvaluateContract(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_GM_CEO,
+            self::ROLE_MANAGER,
+            self::ROLE_KOORDINATOR,
+            self::ROLE_KOORDINATOR_IT,
+            self::ROLE_KOORDINATOR_CREATIVE,
+            self::ROLE_KOORDINATOR_ADMIN,
+            self::ROLE_KOORDINATOR_PUBG,
+            self::ROLE_KOORDINATOR_FF,
+            self::ROLE_KOORDINATOR_MLBB,
+            self::ROLE_KOORDINATOR_EFOOTBALL,
+            self::ROLE_KOORDINATOR_VALORANT,
+            self::ROLE_KOORDINATOR_ROBLOX,
+            self::ROLE_KOORDINATOR_MONKEY_PUBG,
+            self::ROLE_KOORDINATOR_STOCK,
+        ]);
+    }
+
     public function isGmCeo(): bool
     {
         return $this->role === self::ROLE_GM_CEO;

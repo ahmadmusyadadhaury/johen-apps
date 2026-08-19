@@ -157,10 +157,10 @@ class DashboardService
     {
         $active = Employee::where('status', 'aktif')->count();
         $nonActive = Employee::where('status', '!=', 'aktif')->count();
-        $kontrak = EmployeeContract::whereBetween('tanggal_berakhir', [now(), now()->addDays(10)])
+        $kontrak = EmployeeContract::whereBetween('tanggal_berakhir', [now(), now()->addDays(14)])
             ->where('status', 'berlaku')
             ->count();
-        $expiringSoon = EmployeeContract::whereBetween('tanggal_berakhir', [now(), now()->addDays(30)])
+        $expiringSoon = EmployeeContract::whereBetween('tanggal_berakhir', [now(), now()->addDays(14)])
             ->where('status', 'berlaku')
             ->count();
 
@@ -202,7 +202,7 @@ class DashboardService
     public function getExpiringContracts(): array
     {
         return EmployeeContract::with('employee')
-            ->whereBetween('tanggal_berakhir', [now(), now()->addDays(7)])
+            ->whereBetween('tanggal_berakhir', [now(), now()->addDays(14)])
             ->where('status', 'berlaku')
             ->orderBy('tanggal_berakhir')
             ->get()

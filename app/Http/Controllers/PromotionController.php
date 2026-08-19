@@ -18,20 +18,19 @@ class PromotionController extends Controller
     {
         abort_unless(auth()->user()?->isSuperAdminLike(), 403);
         $validated = $request->validate([
-            'nomor_surat' => 'nullable|string|max:100',
             'posisi_baru' => 'required|string|max:255',
             'division_ids' => 'nullable|array',
             'division_ids.*' => 'exists:divisions,id',
             'atasan_baru' => 'nullable|string|max:255',
             'tanggal_efektif' => 'required|date',
             'jenis' => 'required|in:promosi,demosi,mutasi',
-            'alasan' => 'nullable|string|max:500',
+            'file' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
         $promotion = $this->promotionService->apply($validated, $employee);
 
         return redirect(route('hris.employees.show', $employee) . '#jabatan')
-            ->with('promotion_success', 'Promosi berhasil diterapkan. Surat promosi telah dibuat.');
+            ->with('promotion_success', 'Perubahan jabatan berhasil diterapkan. Surat adendum telah dilampirkan.');
     }
 
     public function downloadPdf(Employee $employee, Promotion $promotion)
