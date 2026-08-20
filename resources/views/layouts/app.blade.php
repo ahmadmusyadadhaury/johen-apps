@@ -127,6 +127,15 @@ if ($divisionViewUser) {
                         Dashboard
                     </x-nav-link>
 
+                    @if(auth()->user()->isAnyKoordinator() || auth()->user()->isManager())
+                    <x-nav-link href="{{ route('hris.kontrak-kerja') }}" :active="request()->routeIs('hris.kontrak-kerja')">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8.25v-1.5m0 1.5c-1.355 0-2.25.75-2.25 1.5 0 1.5 2.25 1.5 2.25 3 0 .75-.895 1.5-2.25 1.5m2.25-6h2.25M12 12h-2.25m2.25 3h2.25M15 6.75h1.5a4.5 4.5 0 010 9h-1.5M3.75 21h16.5"/></svg>
+                        </x-slot>
+                        Evaluasi Kontrak
+                    </x-nav-link>
+                    @endif
+
                     @can('view-all')
                     <div class="mt-4">
                         <button @click="openMenu = openMenu === 'sdm' ? null : 'sdm'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'sdm' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
@@ -155,9 +164,11 @@ if ($divisionViewUser) {
                                 Jabatan
                             </a>
                             @endif
+                            @unless(auth()->user()->isAnyKoordinator() || auth()->user()->isManager())
                             <a href="{{ route('hris.kontrak-kerja') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.kontrak-kerja') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Kontrak Kerja
                             </a>
+                            @endunless
                             <a href="{{ route('hris.freelance') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.freelance') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Freelance
                             </a>

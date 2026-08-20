@@ -358,33 +358,40 @@ class DashboardService
     public function getKaryawanDashboard(int $employeeId): array
     {
         $now = now();
-        $tahunIni = $now->year;
         $employee = Employee::with('divisions')->find($employeeId);
 
         if (! $employee) {
             return [];
         }
 
-        $usedCutiQuery = LeaveRequest::where('employee_id', $employeeId)
-            ->where('jenis', 'cuti_tahunan')
-            ->whereYear('tanggal_mulai', $tahunIni)
-            ->where('persetujuan_koor', 'disetujui');
+        $accrual = $employee->cutiAccrual($now);
+        $cutiAktif = $accrual['eligible'];
+        $cutiAktifDate = $employee->cutiEligibleDate();
+        $terakumulasiCuti = $accrual['earned'];
 
-        $isKoordinator = $employee->user && $employee->user->isAnyKoordinator();
-        if (! $isKoordinator) {
-            $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
+        $usedCuti = 0;
+        if ($cutiAktif && $accrual['cycle_start']) {
+            $usedCutiQuery = LeaveRequest::where('employee_id', $employeeId)
+                ->where('jenis', 'cuti_tahunan')
+                ->where('tanggal_mulai', '>=', $accrual['cycle_start'])
+                ->where('persetujuan_koor', 'disetujui');
+
+            $isKoordinator = $employee->user && $employee->user->isAnyKoordinator();
+            if (! $isKoordinator) {
+                $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
+            }
+
+            $skipHrApproval = $employee->user && ($employee->user->isAnyKoordinator() || $employee->user->isStaffAdmin() || $employee->user->isStaffHostPubg() || $employee->user->isStaffHostFf() || $employee->user->isStaffIt() || $employee->user->isStaffHostMlbb() || $employee->user->isStaffHostEfootball() || $employee->user->isStaffHostValorant() || $employee->user->isStaffHostRoblox() || $employee->user->isStaffHostMonkeyPubg());
+            if (! $skipHrApproval) {
+                $usedCutiQuery->where('persetujuan_hr', 'disetujui');
+            }
+
+            $usedCuti = $usedCutiQuery->get()
+                ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
-
-        $skipHrApproval = $employee->user && ($employee->user->isAnyKoordinator() || $employee->user->isStaffAdmin() || $employee->user->isStaffHostPubg() || $employee->user->isStaffHostFf() || $employee->user->isStaffIt() || $employee->user->isStaffHostMlbb() || $employee->user->isStaffHostEfootball() || $employee->user->isStaffHostValorant() || $employee->user->isStaffHostRoblox() || $employee->user->isStaffHostMonkeyPubg());
-        if (! $skipHrApproval) {
-            $usedCutiQuery->where('persetujuan_hr', 'disetujui');
-        }
-
-        $usedCuti = $usedCutiQuery->get()
-            ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
 
         $jatahCuti = 12;
-        $sisaCuti = max(0, $jatahCuti - $usedCuti);
+        $sisaCuti = max(0, $terakumulasiCuti - $usedCuti);
 
         $pendingCount = LeaveRequest::where('employee_id', $employeeId)
             ->where(function ($q) {
@@ -499,6 +506,9 @@ class DashboardService
             'sisa_cuti' => $sisaCuti,
             'jatah_cuti' => $jatahCuti,
             'used_cuti' => $usedCuti,
+            'terakumulasi_cuti' => $terakumulasiCuti,
+            'cuti_aktif' => $cutiAktif,
+            'cuti_aktif_date' => $cutiAktifDate?->toDateString(),
             'pending_count' => $pendingCount,
             'pending_requests' => $pendingRequests,
             'recent_attendance' => $recentAttendance,

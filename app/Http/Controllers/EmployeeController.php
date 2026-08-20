@@ -246,7 +246,7 @@ class EmployeeController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date|after:tanggal_mulai',
             'keterangan' => 'nullable|string|max:500',
-            'file' => 'nullable|file|mimes:pdf|max:10240',
+            'file' => 'nullable|file|mimes:pdf',
         ]);
 
         EmployeeContract::create([
@@ -349,7 +349,7 @@ class EmployeeController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date',
             'keterangan' => 'nullable|string|max:500',
-            'file' => 'nullable|file|mimes:pdf|max:10240',
+            'file' => 'nullable|file|mimes:pdf',
         ]);
 
         $contract->update(['status' => 'selesai']);
@@ -380,6 +380,17 @@ class EmployeeController extends Controller
         }
 
         return Storage::disk('public')->download($filePath, 'surat-kontrak-' . $employee->nik . '.pdf');
+    }
+
+    public function previewContract(Employee $employee, EmployeeContract $contract)
+    {
+        $filePath = 'contracts/' . $contract->file;
+
+        if (!$contract->file || !Storage::disk('public')->exists($filePath)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->response($filePath, 'surat-kontrak-' . $employee->nik . '.pdf');
     }
 
     private function storeContractFile(Request $request, int $employeeId): ?string

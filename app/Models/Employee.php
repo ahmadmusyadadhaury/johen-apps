@@ -135,6 +135,52 @@ class Employee extends Model
         return $this->hasMany(EmployeeContract::class);
     }
 
+    public function firstContractStart(): ?\Illuminate\Support\Carbon
+    {
+        return $this->contracts()->orderBy('tanggal_mulai', 'asc')->first()?->tanggal_mulai;
+    }
+
+    public function cutiEligibleDate(): ?\Illuminate\Support\Carbon
+    {
+        $start = $this->firstContractStart();
+
+        return $start?->copy()->addYear()->startOfDay();
+    }
+
+    public function isCutiEligible(): bool
+    {
+        $eligibleDate = $this->cutiEligibleDate();
+
+        return $eligibleDate !== null && $eligibleDate->lte(now());
+    }
+
+    /**
+     * Akumulasi cuti tahunan: mulai 1 pada tanggal cuti aktif (bulan pertama),
+     * bertambah 1 hari per bulan mengikuti tanggal cuti aktif, cap 12,
+     * dan reset ke 1 tiap ulang tahun cuti.
+     *
+     * @return array{eligible: bool, cycle_start: ?\Illuminate\Support\Carbon, earned: int}
+     */
+    public function cutiAccrual(?\Illuminate\Support\Carbon $now = null): array
+    {
+        $now = $now ?? now();
+        $eligibleDate = $this->cutiEligibleDate();
+
+        if ($eligibleDate === null) {
+            return ['eligible' => false, 'cycle_start' => null, 'earned' => 0];
+        }
+
+        if ($now->lt($eligibleDate)) {
+            return ['eligible' => false, 'cycle_start' => $eligibleDate, 'earned' => 0];
+        }
+
+        $years = (int) $eligibleDate->diffInYears($now);
+        $cycleStart = $eligibleDate->copy()->addYears($years)->startOfDay();
+        $earned = min(12, (int) $cycleStart->diffInMonths($now) + 1);
+
+        return ['eligible' => true, 'cycle_start' => $cycleStart, 'earned' => $earned];
+    }
+
     public function positionHistories(): HasMany
     {
         return $this->hasMany(PositionHistory::class);
@@ -318,5 +364,18 @@ class Employee extends Model
     public function positionNames(): string
     {
         return $this->positions->pluck('nama')->implode(' & ');
+    }
+
+    public function evaluationLevel(): int
+    {
+        $positionName = $this->mainPosition()?->nama ?: $this->position;
+        $name = strtolower((string) $positionName);
+
+        if ($name === 'ceo') return 5;
+        if (str_contains($name, 'general manager')) return 4;
+        if (str_starts_with($name, 'head of store')) return 3;
+        if (str_starts_with($name, 'koordinator')) return 2;
+
+        return 1;
     }
 }

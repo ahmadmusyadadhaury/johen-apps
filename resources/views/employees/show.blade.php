@@ -2,6 +2,19 @@
     $isOwnView = $isOwnView ?? false;
     $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
     $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
+
+    $firstContractStart = $employee->firstContractStart();
+    $masaKerjaText = null;
+    if ($firstContractStart) {
+        $diff = $firstContractStart->diff(now());
+        $parts = [];
+        if ($diff->y > 0) $parts[] = $diff->y . ' tahun';
+        if ($diff->m > 0) $parts[] = $diff->m . ' bulan';
+        if ($diff->y === 0 && $diff->m === 0) $parts[] = max(1, $diff->d) . ' hari';
+        $masaKerjaText = implode(' ', $parts);
+    }
+    $cutiAktif = $employee->isCutiEligible();
+    $cutiAktifDate = $employee->cutiEligibleDate();
 @endphp
 
 @push('topbar-left')
@@ -206,7 +219,9 @@ data-promotion-success="{{ session('promotion_success') }}"
             return months + ' Bulan';
         },
         get suratKontrakUrl() {
-            return this.viewSuratKontrak?.file ? '/storage/contracts/' + this.viewSuratKontrak.file : null;
+            return this.viewSuratKontrak?.id
+                ? '{{ route('hris.employees.preview-contract', [$employee, '__CID__']) }}'.replace('__CID__', this.viewSuratKontrak.id)
+                : null;
         },
         get suratPromosiUrl() {
             return this.viewSuratPromosi?.pdf_path ? '/storage/' + this.viewSuratPromosi.pdf_path : null;
@@ -416,6 +431,88 @@ data-promotion-success="{{ session('promotion_success') }}"
                 </div>
             </div>
             </div>
+
+        @if($isOwnView && auth()->user())
+            @php
+                $desktopUser = auth()->user();
+                $desktopToken = $desktopUser->ensureDesktopToken();
+                $desktopServer = request()->getSchemeAndHttpHost();
+                $desktopInstallCmd = "powershell -ExecutionPolicy Bypass -Command \"& ([scriptblock]::Create((New-Object Net.WebClient).DownloadString('{$desktopServer}/desktop-agent/install.ps1'))) -ServerUrl '{$desktopServer}' -Token '{$desktopToken}'\"";
+                $desktopUninstallCmd = "powershell -Command \"irm {$desktopServer}/desktop-agent/uninstall.ps1 | iex\"";
+            @endphp
+        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
+            <div class="flex items-center gap-2.5 px-7 py-4 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700">
+                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200">
+                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6.5 8.5h11M6.5 12h8M6.5 15.5h11M3 4.5h18M3 19.5h18"/></svg>
+                </span>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Notifikasi Desktop (Windows)</h3>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Notif evaluasi muncul langsung di Windows, tanpa membuka browser</p>
+                </div>
+                <span class="ml-auto inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                    Setup sekali
+                </span>
+            </div>
+            <div class="p-7 space-y-4">
+                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Setiap ada evaluasi baru untuk jabatan Anda, notifikasi muncul di sudut kanan bawah layar Windows.
+                    Cukup jalankan perintah di bawah <b class="text-gray-700 dark:text-gray-200">satu kali</b> di PC ini — setelah itu agent berjalan otomatis setiap kali Anda login.
+                </p>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Perintah install — buka <b>PowerShell</b>, tempel, tekan Enter</label>
+                    <div class="flex items-center gap-2">
+                        <input id="desktop-install-cmd" type="text" readonly value="{{ $desktopInstallCmd }}"
+                               class="flex-1 min-w-0 text-[11px] font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2.5 focus:outline-none" />
+                        <button type="button" id="desktop-install-copy" onclick="copyDesktopText('desktop-install-cmd', 'desktop-install-copy')"
+                                class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/></svg>
+                            Salin
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Token perangkat Anda</label>
+                    <div class="flex items-center gap-2">
+                        <input id="desktop-token" type="text" readonly value="{{ $desktopToken }}"
+                               class="flex-1 min-w-0 text-[11px] font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2.5 focus:outline-none" />
+                        <button type="button" id="desktop-token-copy" onclick="copyDesktopText('desktop-token', 'desktop-token-copy')"
+                                class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                            Salin
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1.5">Token ini otomatis dipakai oleh perintah install di atas — tidak perlu disalin manual.</p>
+                </div>
+                <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3.5 py-2.5 text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                    <b>Catatan:</b> jalankan di PC kantor yang menyala saat jam kerja dan terhubung ke jaringan yang sama dengan server.
+                    Server saat ini: <span class="font-mono">{{ $desktopServer }}</span>.
+                    Untuk menonaktifkan: jalankan <span class="font-mono">{{ $desktopUninstallCmd }}</span>.
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function copyDesktopText(inputId, btnId) {
+                const input = document.getElementById(inputId);
+                const btn = document.getElementById(btnId);
+                if (!input) return;
+                input.focus();
+                input.select();
+                input.setSelectionRange(0, 99999);
+                const done = () => {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = 'Tersalin!';
+                    setTimeout(() => btn.innerHTML = orig, 1500);
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(input.value).then(done).catch(() => { document.execCommand('copy'); done(); });
+                } else {
+                    document.execCommand('copy');
+                    done();
+                }
+            }
+        </script>
+        @endif
 
         {{-- Tabs Card --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -923,6 +1020,48 @@ data-promotion-success="{{ session('promotion_success') }}"
                     </button>
                     @endif
                 </div>
+
+                @if($firstContractStart)
+                <div class="mb-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/40 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Masa Kerja</p>
+                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $masaKerjaText }}
+                                <span class="text-xs font-medium text-gray-400">sejak {{ $firstContractStart->isoFormat('D MMM YYYY') }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        @if($cutiAktif)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+                            Cuti Aktif
+                        </span>
+                        @else
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                            Cuti Belum Aktif
+                        </span>
+                        @if($cutiAktifDate)
+                        <span class="text-xs text-gray-500 dark:text-gray-400">aktif sejak {{ $cutiAktifDate->isoFormat('D MMM YYYY') }}</span>
+                        @endif
+                        @endif
+                    </div>
+                </div>
+                @else
+                <div class="mb-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/40 px-4 py-3.5 flex items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <div>
+                        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Masa Kerja</p>
+                        <p class="text-sm font-bold text-gray-500 dark:text-gray-400">Belum ada kontrak tercatat</p>
+                    </div>
+                </div>
+                @endif
 
                 <template x-if="contracts.length > 0">
                     <div class="flex flex-col gap-0 pl-11 relative">
@@ -1619,7 +1758,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             <form action="{{ route('hris.employees.store-contract', $employee) }}" method="POST" enctype="multipart/form-data" class="overflow-y-auto p-6 space-y-4">
                 @csrf
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Surat Kontrak (PDF) <span class="text-gray-400 font-normal">(opsional, maks. 10MB)</span></label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Surat Kontrak (PDF) <span class="text-gray-400 font-normal">(opsional, tanpa batas ukuran)</span></label>
                     <input type="file" name="file" accept="application/pdf,.pdf"
                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-blue-700 dark:file:text-blue-300 file:cursor-pointer">
                     @error('file') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
@@ -1716,7 +1855,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                 @csrf
                 @method('PUT')
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-700">Surat Kontrak (PDF) <span class="text-gray-400 font-normal">(opsional, maks. 10MB)</span></label>
+                    <label class="block text-xs font-semibold text-gray-700">Surat Kontrak (PDF) <span class="text-gray-400 font-normal">(opsional, tanpa batas ukuran)</span></label>
                     <input type="file" name="file" accept="application/pdf,.pdf"
                            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-blue-700 file:cursor-pointer">
                     @error('file') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror

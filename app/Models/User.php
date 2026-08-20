@@ -51,6 +51,16 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public function ensureDesktopToken(): string
+    {
+        if (empty($this->desktop_token)) {
+            $this->desktop_token = \Illuminate\Support\Str::random(40);
+            $this->save();
+        }
+
+        return $this->desktop_token;
+    }
+
     public function requiresPinApproval(): bool
     {
         return in_array($this->role, [
@@ -145,6 +155,29 @@ class User extends Authenticatable
             self::ROLE_KOORDINATOR_MONKEY_PUBG,
             self::ROLE_KOORDINATOR_STOCK,
         ]);
+    }
+
+    public function evaluationLevel(): int
+    {
+        return $this->isAnyKoordinator() ? 2 : $this->roleLevel();
+    }
+
+    public function canEvaluateContractFor(EmployeeContract $contract): bool
+    {
+        if (!$this->canEvaluateContract()) {
+            return false;
+        }
+
+        return $this->evaluationLevel() > ($contract->employee?->evaluationLevel() ?? 1);
+    }
+
+    public function canViewEvaluationDetail(): bool
+    {
+        if ($this->isAnyKoordinator()) {
+            return false;
+        }
+
+        return $this->canEvaluateContract() || $this->isSuperAdminLike();
     }
 
     public function isGmCeo(): bool

@@ -139,21 +139,24 @@
                                 @endif
                             </td>
                             <td class="table-cell text-center">
-                                @if($ct->evaluation)
-                                    <button wire:click="openDetail({{ $ct->id }})"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        Lihat Detail
-                                    </button>
-                                @elseif($canEvaluate)
-                                    <button wire:click="openEvaluasi({{ $ct->id }})"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
-                                        Evaluasi Kontrak
-                                    </button>
-                                @else
-                                    <span class="text-xs text-gray-400 dark:text-gray-500">—</span>
-                                @endif
+                                <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                    @if($ct->can_evaluate)
+                                        <button wire:click="openEvaluasi({{ $ct->id }})"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
+                                            Evaluasi
+                                        </button>
+                                    @endif
+                                    @if($canViewDetail && $ct->evaluations_count > 0)
+                                        <button wire:click="openDetail({{ $ct->id }})"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            Lihat Detail
+                                        </button>
+                                    @elseif(!$ct->can_evaluate)
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -187,6 +190,16 @@
              class="fixed bottom-6 right-6 z-[300] flex items-center gap-3 rounded-xl bg-emerald-600 text-white pl-4 pr-5 py-3 shadow-xl shadow-emerald-200">
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
             <p class="text-sm font-semibold">{{ session('eval_success') }}</p>
+        </div>
+    @endif
+
+    {{-- Flash error --}}
+    @if(session('eval_error'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"
+             x-transition.opacity.duration.300ms
+             class="fixed bottom-6 right-6 z-[300] flex items-center gap-3 rounded-xl bg-red-600 text-white pl-4 pr-5 py-3 shadow-xl shadow-red-200">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+            <p class="text-sm font-semibold">{{ session('eval_error') }}</p>
         </div>
     @endif
 
@@ -314,8 +327,9 @@
     @endif
 
     {{-- Modal Detail Evaluasi --}}
-    @if($evaluasiDetailModal && $selectedEvaluation)
-    <div x-data x-cloak
+    @if($evaluasiDetailModal && count($selectedEvaluations) > 0)
+    @php $evalSummary = $selectedEvaluations[0]; @endphp
+    <div x-data="{ active: null }" x-cloak
          x-transition:enter="transition-opacity ease-linear duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -325,7 +339,7 @@
              x-transition:enter="transition-all ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95 translate-y-4"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
+             class="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-7 pt-5 pb-16 shrink-0 relative">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,rgba(255,255,255,0.18),transparent_55%)] pointer-events-none"></div>
                 <div class="flex items-start justify-between relative z-10">
@@ -335,7 +349,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-bold text-white">Detail Evaluasi Kontrak</h3>
-                            <p class="text-xs text-white/80 mt-1 truncate">{{ $selectedEvaluation['employee'] }} · NIK {{ $selectedEvaluation['nik'] }}</p>
+                            <p class="text-xs text-white/80 mt-1 truncate">{{ $evalSummary['employee'] }} · NIK {{ $evalSummary['nik'] }}</p>
                         </div>
                     </div>
                     <button wire:click="$set('evaluasiDetailModal', false)" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 text-white hover:bg-white/25 transition-all">
@@ -344,100 +358,146 @@
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-7 py-6 -mt-8 space-y-5">
-                @php
-                    $avg = round((($selectedEvaluation['kinerja'] ?? 0) + ($selectedEvaluation['disiplin'] ?? 0) + ($selectedEvaluation['kerjasama'] ?? 0) + ($selectedEvaluation['kepatuhan'] ?? 0) + ($selectedEvaluation['keterampilan'] ?? 0)) / 5, 1);
-                    $rekomendasi = $selectedEvaluation['rekomendasi'] ?? '';
-                @endphp
+            <div class="flex-1 overflow-y-auto px-7 py-6 -mt-8">
 
-                {{-- Ringkasan + skor rata-rata --}}
-                <div class="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Posisi</p>
-                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-0.5">{{ $selectedEvaluation['posisi'] }}</p>
+                {{-- STEP 1: Daftar atasan yang memberikan evaluasi --}}
+                <div x-show="active === null" x-transition.opacity.duration.200ms>
+                    {{-- Info kontrak --}}
+                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50/60 dark:bg-gray-800/40 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-700">
+                        <div class="px-5 py-4">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Posisi</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1 leading-snug">{{ $evalSummary['posisi'] }}</p>
+                        </div>
+                        <div class="px-5 py-4">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Divisi</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1 leading-snug">{{ $evalSummary['divisi'] }}</p>
+                        </div>
+                        <div class="px-5 py-4">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Periode</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1 leading-snug">{{ $evalSummary['mulai'] }} — {{ $evalSummary['berakhir'] }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Divisi</p>
-                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-0.5">{{ $selectedEvaluation['divisi'] }}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Periode</p>
-                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-0.5">{{ $selectedEvaluation['mulai'] }} — {{ $selectedEvaluation['berakhir'] }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Rata-rata</p>
-                        <p class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ $avg }}<span class="text-sm font-semibold text-gray-400">/5</span></p>
-                    </div>
-                </div>
 
-                {{-- Rekomendasi badge --}}
-                <div class="flex items-center justify-between rounded-xl border p-4 {{ $rekomendasi === 'perpanjang' ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950' : ($rekomendasi === 'pertimbangkan' ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950') }}">
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Rekomendasi Kelanjutan</p>
-                        <p class="text-sm font-bold {{ $rekomendasi === 'perpanjang' ? 'text-emerald-700 dark:text-emerald-300' : ($rekomendasi === 'pertimbangkan' ? 'text-amber-700 dark:text-amber-300' : 'text-red-700 dark:text-red-300') }} mt-0.5">
-                            {{ $rekomendasi === 'perpanjang' ? 'Perpanjang Kontrak' : ($rekomendasi === 'pertimbangkan' ? 'Perlu Pertimbangan' : 'Tidak Diperpanjang') }}
-                        </p>
+                    {{-- Judul daftar penilai --}}
+                    <div class="mt-6 mb-3 flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Atasan yang memberikan evaluasi</span>
+                        <span class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/60 px-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">{{ count($selectedEvaluations) }}</span>
                     </div>
-                    <span class="text-2xl">{{ $rekomendasi === 'perpanjang' ? '✓' : ($rekomendasi === 'pertimbangkan' ? '?' : '✕') }}</span>
-                </div>
 
-                {{-- Kriteria --}}
-                @php
-                    $detailCriteria = [
-                        ['label' => 'Kinerja', 'value' => $selectedEvaluation['kinerja'] ?? 0],
-                        ['label' => 'Disiplin', 'value' => $selectedEvaluation['disiplin'] ?? 0],
-                        ['label' => 'Kerjasama', 'value' => $selectedEvaluation['kerjasama'] ?? 0],
-                        ['label' => 'Kepatuhan', 'value' => $selectedEvaluation['kepatuhan'] ?? 0],
-                        ['label' => 'Keterampilan', 'value' => $selectedEvaluation['keterampilan'] ?? 0],
-                    ];
-                @endphp
-                <div class="space-y-3">
-                    <p class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Komponen Penilaian</p>
-                    @foreach($detailCriteria as $c)
-                        <div class="flex items-center justify-between gap-4">
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300 w-32 shrink-0">{{ $c['label'] }}</p>
-                            <div class="flex items-center gap-0.5 flex-1">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <svg class="w-5 h-5 {{ $c['value'] >= $i ? 'text-amber-400' : 'text-gray-200 dark:text-gray-700' }}" fill="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
-                                @endfor
+                    <div class="space-y-2.5">
+                        @foreach($selectedEvaluations as $si => $eval)
+                        <button type="button" @click="active = {{ $si }}"
+                                class="group w-full flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3.5 text-left transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/40 hover:shadow-sm">
+                            <div class="flex items-center gap-3.5 min-w-0">
+                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold uppercase text-sm">{{ strtoupper(substr($eval['evaluator'] ?? '?', 0, 1)) }}</span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{{ $eval['evaluator'] }}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $eval['evaluator_role'] ?: 'Penilai' }} <span class="text-gray-300 dark:text-gray-600">•</span> {{ $eval['created_at'] }}</p>
+                                </div>
                             </div>
-                            <span class="text-sm font-bold text-gray-800 dark:text-gray-200 w-10 text-right">{{ $c['value'] }}/5</span>
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-400 transition-all group-hover:bg-emerald-600 group-hover:text-white">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                            </span>
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- STEP 2: Detail isi evaluasi yang diklik --}}
+                <div x-show="active !== null" x-transition.opacity.duration.200ms>
+                    @foreach($selectedEvaluations as $si => $eval)
+                        @php
+                            $avg = round(($eval['kinerja'] + $eval['disiplin'] + $eval['kerjasama'] + $eval['kepatuhan'] + $eval['keterampilan']) / 5, 1);
+                            $rekomendasi = $eval['rekomendasi'] ?? '';
+                            $detailCriteria = [
+                                ['label' => 'Kinerja', 'value' => $eval['kinerja'] ?? 0],
+                                ['label' => 'Disiplin', 'value' => $eval['disiplin'] ?? 0],
+                                ['label' => 'Kerjasama', 'value' => $eval['kerjasama'] ?? 0],
+                                ['label' => 'Kepatuhan', 'value' => $eval['kepatuhan'] ?? 0],
+                                ['label' => 'Keterampilan', 'value' => $eval['keterampilan'] ?? 0],
+                            ];
+                        @endphp
+                        <div x-show="active === {{ $si }}" class="space-y-5">
+                            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/40">
+                                    <div class="flex items-center gap-3.5 min-w-0">
+                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold uppercase text-sm">{{ strtoupper(substr($eval['evaluator'] ?? '?', 0, 1)) }}</span>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{{ $eval['evaluator'] }}</p>
+                                            <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $eval['evaluator_role'] ?: 'Penilai' }} <span class="text-gray-300 dark:text-gray-600">•</span> {{ $eval['created_at'] }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4 shrink-0">
+                                        <div class="text-right">
+                                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Rata-rata</p>
+                                            <p class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ $avg }}<span class="text-xs font-semibold text-gray-400">/5</span></p>
+                                        </div>
+                                        @if($eval['can_edit'])
+                                            <button type="button" wire:click="openEvaluasi({{ $eval['contract_id'] }})"
+                                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                Edit
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="p-5 space-y-5">
+                                    {{-- Rekomendasi badge --}}
+                                    <div class="flex items-center justify-between gap-4 rounded-xl border px-4 py-3.5 {{ $rekomendasi === 'perpanjang' ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950' : ($rekomendasi === 'pertimbangkan' ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950') }}">
+                                        <div>
+                                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Rekomendasi Kelanjutan</p>
+                                            <p class="text-sm font-bold {{ $rekomendasi === 'perpanjang' ? 'text-emerald-700 dark:text-emerald-300' : ($rekomendasi === 'pertimbangkan' ? 'text-amber-700 dark:text-amber-300' : 'text-red-700 dark:text-red-300') }} mt-1">
+                                                {{ $rekomendasi === 'perpanjang' ? 'Perpanjang Kontrak' : ($rekomendasi === 'pertimbangkan' ? 'Perlu Pertimbangan' : 'Tidak Diperpanjang') }}
+                                            </p>
+                                        </div>
+                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg {{ $rekomendasi === 'perpanjang' ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400' : ($rekomendasi === 'pertimbangkan' ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400' : 'bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400') }}">{{ $rekomendasi === 'perpanjang' ? '✓' : ($rekomendasi === 'pertimbangkan' ? '?' : '✕') }}</span>
+                                    </div>
+
+                                    {{-- Kriteria --}}
+                                    <div>
+                                        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Komponen Penilaian</p>
+                                        <div class="space-y-3">
+                                            @foreach($detailCriteria as $c)
+                                                <div class="grid grid-cols-[120px_1fr_48px] items-center gap-4">
+                                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $c['label'] }}</p>
+                                                    <div class="flex items-center gap-1">
+                                                        @for($i = 1; $i <= 5; $i++)
+                                                            <svg class="w-5 h-5 {{ $c['value'] >= $i ? 'text-amber-400' : 'text-gray-200 dark:text-gray-700' }}" fill="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
+                                                        @endfor
+                                                    </div>
+                                                    <span class="text-sm font-bold text-gray-800 dark:text-gray-200 text-right">{{ $c['value'] }}/5</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    {{-- Catatan --}}
+                                    @if($eval['catatan'])
+                                        <div>
+                                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Catatan Evaluasi</p>
+                                            <div class="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 p-4">
+                                                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{{ $eval['catatan'] }}</p>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     @endforeach
                 </div>
-
-                {{-- Catatan --}}
-                @if($selectedEvaluation['catatan'])
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 p-4">
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Catatan Evaluasi</p>
-                        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1.5 leading-relaxed whitespace-pre-line">{{ $selectedEvaluation['catatan'] }}</p>
-                    </div>
-                @endif
             </div>
 
             <div class="flex items-center justify-between gap-2.5 px-7 py-4 border-t border-gray-100 dark:border-gray-700 shrink-0">
-                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold uppercase text-[11px]">
-                        {{ strtoupper(substr($selectedEvaluation['evaluator'] ?? '?', 0, 1)) }}
-                    </span>
-                    <div>
-                        <p class="font-semibold text-gray-700 dark:text-gray-300">{{ $selectedEvaluation['evaluator'] }}</p>
-                        <p class="text-[11px] text-gray-400">{{ $selectedEvaluation['created_at'] }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2.5">
-                    @if($selectedEvaluation['can_edit'])
-                        <button type="button" wire:click="openEvaluasi({{ $selectedEvaluation['contract_id'] }})"
-                                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            Edit Evaluasi
-                        </button>
-                    @endif
-                    <button type="button" wire:click="$set('evaluasiDetailModal', false)"
-                            class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                        Tutup
-                    </button>
-                </div>
+                <button type="button" @click="active = null" x-show="active !== null" x-transition
+                        class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                    Kembali
+                </button>
+                <button type="button" wire:click="$set('evaluasiDetailModal', false)"
+                        class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                    Tutup
+                </button>
             </div>
         </div>
     </div>

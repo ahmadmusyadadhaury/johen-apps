@@ -24,6 +24,7 @@ class StrukturOrganisasi extends Component
     public ?array $existingNote = null;
     public array $notesHistory = [];
     public bool $isSuperior = false;
+    public bool $isSubordinate = false;
 
     public ?int $selectedNoteId = null;
     public ?array $noteDetail = null;
@@ -93,6 +94,7 @@ class StrukturOrganisasi extends Component
 
     $position = Position::find($this->selectedPositionId);
     $this->isSuperior = $this->checkIsSuperior($this->myPositionId, $position);
+    $this->isSubordinate = $this->checkIsSubordinate($this->myPositionId, $position);
     $this->canComment = $this->isSuperior || ($this->myPositionId && $this->myPositionId === $this->selectedPositionId);
 }
 
@@ -117,6 +119,7 @@ class StrukturOrganisasi extends Component
 
         $targetPosition = $note?->to_position_id;
         $this->isSuperior = $this->checkIsSuperior($this->myPositionId, Position::find($targetPosition));
+        $this->isSubordinate = $this->checkIsSubordinate($this->myPositionId, Position::find($targetPosition));
         $this->canComment = $this->isSuperior || ($this->myPositionId && $this->myPositionId === $targetPosition);
     }
 
@@ -230,6 +233,20 @@ class StrukturOrganisasi extends Component
         return false;
     }
 
+    private function checkIsSubordinate(?int $myPositionId, ?Position $targetPosition): bool
+    {
+        if (!$myPositionId || !$targetPosition) return false;
+
+        $current = $targetPosition;
+        while ($current->parent_id) {
+            $current = $current->parent;
+            if (!$current) break;
+            if ($current->id === $myPositionId) return true;
+        }
+
+        return false;
+    }
+
     private function getPositionDepth(Position $position): int
     {
         $depth = 0;
@@ -278,6 +295,10 @@ class StrukturOrganisasi extends Component
             return;
         }
 
+        if (!$this->checkIsSubordinate($this->myPositionId, $position)) {
+            $this->situasi = '';
+        }
+
         PositionNote::updateOrCreate(
             [
                 'from_position_id' => $this->myPositionId,
@@ -291,6 +312,24 @@ class StrukturOrganisasi extends Component
                 'created_by' => auth()->id(),
             ]
         );
+
+        if (trim($this->evaluasi) !== '' || trim($this->situasi) !== '') {
+            $note = PositionNote::where('from_position_id', $this->myPositionId)
+                ->where('to_position_id', $this->selectedPositionId)
+                ->where('bulan', $this->bulan)
+                ->where('tahun', $this->tahun)
+                ->first();
+
+            if ($note) {
+                $creator = auth()->user()->employee?->nama ?? 'Atasan';
+                app(\App\Services\DesktopNotificationService::class)->pushToPosition(
+                    $position,
+                    'Evaluasi Baru dari ' . $creator,
+                    'Anda mendapat evaluasi jabatan untuk periode ' . $this->bulan . '/' . $this->tahun . '.',
+                    ['position_note_id' => $note->id]
+                );
+            }
+        }
 
         $this->dispatch('notify', type: 'success', message: 'Evaluasi berhasil disimpan.');
         $this->loadNoteData();

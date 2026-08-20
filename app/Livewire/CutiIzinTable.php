@@ -49,7 +49,7 @@ class CutiIzinTable extends Component
     public function openPengajuanModal(): void
     {
         $this->showPengajuanModal = true;
-        $this->pengajuanJenis = 'cuti_tahunan';
+        $this->pengajuanJenis = auth()->user()->employee?->isCutiEligible() ? 'cuti_tahunan' : 'izin';
         $this->pengajuanTanggalMulai = '';
         $this->pengajuanTanggalSelesai = '';
         $this->pengajuanKeterangan = '';
@@ -91,6 +91,32 @@ class CutiIzinTable extends Component
         $mulai = \Carbon\Carbon::parse($this->pengajuanTanggalMulai);
         $selesai = \Carbon\Carbon::parse($this->pengajuanTanggalSelesai);
         $durasi = $mulai->diffInDays($selesai) + 1;
+
+        if ($this->pengajuanJenis === 'cuti_tahunan' && !$employee->isCutiEligible()) {
+            $this->dispatch('notify', type: 'error', message: 'Cuti belum aktif. Cuti dapat digunakan setelah karyawan bekerja minimal 1 tahun sejak kontrak pertama.');
+            return;
+        }
+
+        if ($this->pengajuanJenis === 'cuti_tahunan') {
+            $accrual = $employee->cutiAccrual();
+            $usedCutiQuery = LeaveRequest::where('employee_id', $employee->id)
+                ->where('jenis', 'cuti_tahunan')
+                ->where('tanggal_mulai', '>=', $accrual['cycle_start'])
+                ->where('persetujuan_koor', 'disetujui');
+            if (!$user->isAnyKoordinator()) {
+                $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
+            }
+            if (!$user->isAnyKoordinator() && !$user->isStaffAdmin() && !$user->isStaffHostPubg() && !$user->isStaffHostFf() && !$user->isStaffIt() && !$user->isStaffHostMlbb() && !$user->isStaffHostEfootball() && !$user->isStaffHostValorant() && !$user->isStaffHostRoblox() && !$user->isStaffHostMonkeyPubg() && !$user->isStaffStock()) {
+                $usedCutiQuery->where('persetujuan_hr', 'disetujui');
+            }
+            $usedCuti = $usedCutiQuery->get()
+                ->sum(fn($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+            $sisa = max(0, $accrual['earned'] - $usedCuti);
+            if ($durasi > $sisa) {
+                $this->dispatch('notify', type: 'error', message: "Saldo cuti tidak mencukupi. Sisa saldo Anda {$sisa} hari.");
+                return;
+            }
+        }
 
         $selectedPosition = $this->selectedPositionId
             ? Position::find($this->selectedPositionId)
@@ -507,11 +533,13 @@ class CutiIzinTable extends Component
             ->paginate(10);
 
         $jatahCuti = 12;
+        $accrual = $userEmployee?->cutiAccrual();
+        $terakumulasiCuti = $accrual['earned'] ?? 0;
         $usedCuti = 0;
-        if ($userEmployee) {
+        if ($userEmployee && ($accrual['eligible'] ?? false)) {
             $usedCutiQuery = LeaveRequest::where('employee_id', $userEmployee->id)
                 ->where('jenis', 'cuti_tahunan')
-                ->whereYear('tanggal_mulai', now()->year)
+                ->where('tanggal_mulai', '>=', $accrual['cycle_start'])
                 ->where('persetujuan_koor', 'disetujui');
 
             if (!$user->isAnyKoordinator()) {
@@ -525,7 +553,10 @@ class CutiIzinTable extends Component
             $usedCuti = $usedCutiQuery->get()
                 ->sum(fn($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
-        $sisaCuti = max(0, $jatahCuti - $usedCuti);
+        $sisaCuti = max(0, $terakumulasiCuti - $usedCuti);
+
+        $cutiEligible = $accrual['eligible'] ?? false;
+        $cutiEligibleDate = $userEmployee?->cutiEligibleDate();
 
         $timMenungguCount = $this->getTimMenungguCountProperty();
 
@@ -553,7 +584,7 @@ class CutiIzinTable extends Component
             || $user->isStaffHostMonkeyPubg();
 
         return view('livewire.cuti-izin-table', compact(
-            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi'
+            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'terakumulasiCuti', 'usedCuti', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
         ))->with('karyawanView', false);
     }
 

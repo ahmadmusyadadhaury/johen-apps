@@ -276,12 +276,14 @@
                     {{-- Form --}}
                     @if($isSuperior && !$readOnlyWorkspace)
                         <div class="space-y-3 mb-5">
+                            @if($isSubordinate)
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Situasi</label>
                                 <textarea wire:model="situasi" rows="2"
                                           class="w-full text-sm rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
                                           placeholder="Situasi jabatan..."></textarea>
                             </div>
+                            @endif
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Evaluasi</label>
                                 <textarea wire:model="evaluasi" rows="2"
@@ -472,10 +474,12 @@
                             @endif
                         </div>
                         <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 space-y-3">
+                            @if($isSubordinate)
                             <div>
                                 <label class="block text-[11px] font-medium text-gray-500 mb-1">Situasi</label>
                                 <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ $noteDetail['situasi'] ?: '(tidak ada)' }}</p>
                             </div>
+                            @endif
                             <div>
                                 <label class="block text-[11px] font-medium text-gray-500 mb-1">Catatan</label>
                                 <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ $noteDetail['evaluasi'] ?: '(tidak ada)' }}</p>

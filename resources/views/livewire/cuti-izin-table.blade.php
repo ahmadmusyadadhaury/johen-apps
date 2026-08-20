@@ -49,13 +49,27 @@
                     <span class="badge-success text-[10px]">Tahunan</span>
                 </div>
                 <div class="flex items-baseline gap-1">
+                    @if($cutiEligible)
                     <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $sisaCuti }}</span>
                     <span class="text-sm font-medium text-gray-400">/ {{ $jatahCuti }} hari</span>
+                    @else
+                    <span class="text-2xl font-bold font-display text-gray-400 dark:text-gray-500">—</span>
+                    <span class="text-sm font-medium text-gray-400">belum aktif</span>
+                    @endif
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Cuti Tahunan</p>
+                @if($cutiEligible)
+                    <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1">
+                        Akumulasi {{ $terakumulasiCuti }} hari &bull; Terpakai {{ $usedCuti }} hari
+                    </p>
                     <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                         <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $jatahCuti > 0 ? ($sisaCuti / $jatahCuti) * 100 : 0 }}%"></div>
                     </div>
+                @else
+                    <p class="mt-2 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                        Aktif setelah {{ $cutiEligibleDate ? $cutiEligibleDate->isoFormat('D MMM YYYY') : '1 tahun bekerja sejak kontrak pertama' }}
+                    </p>
+                @endif
             </div>
 
             <div class="stat-card group">
@@ -347,7 +361,7 @@
                 <div>
                     <x-input-label value="Jenis *" />
                     <div class="mt-2 grid grid-cols-2 gap-3">
-                        @if(isset($sisaCuti) && $sisaCuti > 0)
+                        @if($cutiEligible && $sisaCuti > 0)
                         <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
                                :class="'cuti_tahunan' === $wire.pengajuanJenis ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
                             <input type="radio" wire:model="pengajuanJenis" value="cuti_tahunan" class="sr-only">
@@ -356,9 +370,19 @@
                         </label>
                         @else
                         <div class="relative flex flex-col items-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-4 text-center text-sm font-medium text-gray-400 dark:text-gray-500 opacity-60 cursor-not-allowed">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"/></svg>
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"/></svg>
                             <span>Cuti Tahunan</span>
-                            <span class="text-[10px] text-red-500 font-semibold">Jatah cuti sudah habis</span>
+                            <span class="text-[10px] text-red-500 font-semibold">
+                                @if(!$cutiEligible)
+                                    @if($cutiEligibleDate)
+                                        Belum aktif — tersedia {{ $cutiEligibleDate->isoFormat('D MMM YYYY') }}
+                                    @else
+                                        Belum aktif — minimal 1 tahun sejak kontrak pertama
+                                    @endif
+                                @else
+                                    Saldo cuti belum mencukupi (tersedia {{ $sisaCuti }} hari)
+                                @endif
+                            </span>
                         </div>
                         @endif
                         <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
