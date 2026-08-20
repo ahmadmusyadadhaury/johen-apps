@@ -6,22 +6,6 @@
 @endpush
 
 @php
-$tabColors = [
-    'primary' => ['border' => 'border-primary-600', 'text' => 'text-primary-700', 'dark-border' => 'dark:border-primary-400', 'dark-text' => 'dark:text-primary-400'],
-    'purple' => ['border' => 'border-purple-600', 'text' => 'text-purple-700', 'dark-border' => 'dark:border-purple-400', 'dark-text' => 'dark:text-purple-400'],
-    'blue' => ['border' => 'border-blue-600', 'text' => 'text-blue-700', 'dark-border' => 'dark:border-blue-400', 'dark-text' => 'dark:text-blue-400'],
-    'green' => ['border' => 'border-green-600', 'text' => 'text-green-700', 'dark-border' => 'dark:border-green-400', 'dark-text' => 'dark:text-green-400'],
-    'orange' => ['border' => 'border-orange-600', 'text' => 'text-orange-700', 'dark-border' => 'dark:border-orange-400', 'dark-text' => 'dark:text-orange-400'],
-    'pink' => ['border' => 'border-pink-600', 'text' => 'text-pink-700', 'dark-border' => 'dark:border-pink-400', 'dark-text' => 'dark:text-pink-400'],
-    'indigo' => ['border' => 'border-indigo-600', 'text' => 'text-indigo-700', 'dark-border' => 'dark:border-indigo-400', 'dark-text' => 'dark:text-indigo-400'],
-    'teal' => ['border' => 'border-teal-600', 'text' => 'text-teal-700', 'dark-border' => 'dark:border-teal-400', 'dark-text' => 'dark:text-teal-400'],
-    'cyan' => ['border' => 'border-cyan-600', 'text' => 'text-cyan-700', 'dark-border' => 'dark:border-cyan-400', 'dark-text' => 'dark:text-cyan-400'],
-    'rose' => ['border' => 'border-rose-600', 'text' => 'text-rose-700', 'dark-border' => 'dark:border-rose-400', 'dark-text' => 'dark:text-rose-400'],
-    'amber' => ['border' => 'border-amber-600', 'text' => 'text-amber-700', 'dark-border' => 'dark:border-amber-400', 'dark-text' => 'dark:text-amber-400'],
-    'lime' => ['border' => 'border-lime-600', 'text' => 'text-lime-700', 'dark-border' => 'dark:border-lime-400', 'dark-text' => 'dark:text-lime-400'],
-    'emerald' => ['border' => 'border-emerald-600', 'text' => 'text-emerald-700', 'dark-border' => 'dark:border-emerald-400', 'dark-text' => 'dark:text-emerald-400'],
-];
-
 $badgeColors = [
     'primary' => 'bg-primary-50 text-primary-700 ring-primary-700/10',
     'purple' => 'bg-purple-50 text-purple-700 ring-purple-700/10',
@@ -38,20 +22,36 @@ $badgeColors = [
     'emerald' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10',
 ];
 
-$hoverTabColors = [
-    'primary' => 'hover:border-primary-300 hover:text-primary-600 dark:hover:border-primary-500',
-    'purple' => 'hover:border-purple-300 hover:text-purple-600 dark:hover:border-purple-500',
-    'blue' => 'hover:border-blue-300 hover:text-blue-600 dark:hover:border-blue-500',
-    'green' => 'hover:border-green-300 hover:text-green-600 dark:hover:border-green-500',
-    'orange' => 'hover:border-orange-300 hover:text-orange-600 dark:hover:border-orange-500',
-    'pink' => 'hover:border-pink-300 hover:text-pink-600 dark:hover:border-pink-500',
-    'indigo' => 'hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-500',
-    'teal' => 'hover:border-teal-300 hover:text-teal-600 dark:hover:border-teal-500',
-    'cyan' => 'hover:border-cyan-300 hover:text-cyan-600 dark:hover:border-cyan-500',
-    'rose' => 'hover:border-rose-300 hover:text-rose-600 dark:hover:border-rose-500',
-    'amber' => 'hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-500',
-    'lime' => 'hover:border-lime-300 hover:text-lime-600 dark:hover:border-lime-500',
-    'emerald' => 'hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-500',
+$fillTabColors = [
+    'primary' => 'bg-primary-600 text-white shadow-md',
+    'purple' => 'bg-purple-600 text-white shadow-md',
+    'blue' => 'bg-blue-600 text-white shadow-md',
+    'green' => 'bg-green-600 text-white shadow-md',
+    'orange' => 'bg-orange-600 text-white shadow-md',
+    'pink' => 'bg-pink-600 text-white shadow-md',
+    'indigo' => 'bg-indigo-600 text-white shadow-md',
+    'teal' => 'bg-teal-600 text-white shadow-md',
+    'cyan' => 'bg-cyan-600 text-white shadow-md',
+    'rose' => 'bg-rose-600 text-white shadow-md',
+    'amber' => 'bg-amber-600 text-white shadow-md',
+    'lime' => 'bg-lime-600 text-white shadow-md',
+    'emerald' => 'bg-emerald-600 text-white shadow-md',
+];
+
+$fillHoverTabColors = [
+    'primary' => 'hover:border-primary-300 dark:hover:border-primary-700',
+    'purple' => 'hover:border-purple-300 dark:hover:border-purple-700',
+    'blue' => 'hover:border-blue-300 dark:hover:border-blue-700',
+    'green' => 'hover:border-green-300 dark:hover:border-green-700',
+    'orange' => 'hover:border-orange-300 dark:hover:border-orange-700',
+    'pink' => 'hover:border-pink-300 dark:hover:border-pink-700',
+    'indigo' => 'hover:border-indigo-300 dark:hover:border-indigo-700',
+    'teal' => 'hover:border-teal-300 dark:hover:border-teal-700',
+    'cyan' => 'hover:border-cyan-300 dark:hover:border-cyan-700',
+    'rose' => 'hover:border-rose-300 dark:hover:border-rose-700',
+    'amber' => 'hover:border-amber-300 dark:hover:border-amber-700',
+    'lime' => 'hover:border-lime-300 dark:hover:border-lime-700',
+    'emerald' => 'hover:border-emerald-300 dark:hover:border-emerald-700',
 ];
 @endphp
 
@@ -81,15 +81,16 @@ $hoverTabColors = [
     </div>
 
     <div class="border-b border-gray-200 dark:border-gray-700">
-        <div class="flex overflow-x-auto px-6 gap-1">
+        <div class="flex flex-wrap items-center gap-2 px-6 py-4">
             <button wire:click="selectDivision(null)"
-                class="whitespace-nowrap px-4 py-3 text-xs font-medium border-b-2 transition-colors duration-200 {{ is_null($selectedDivision) ? 'border-primary-600 text-primary-700 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }}">
+                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ is_null($selectedDivision) ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
                 Semua Divisi
             </button>
             @foreach($divisions as $div)
-                @php $tc = $tabColors[$div->color]; $hc = $hoverTabColors[$div->color]; @endphp
+                @php $fc = $fillTabColors[$div->color] ?? 'bg-primary-600 text-white shadow-md'; $fh = $fillHoverTabColors[$div->color] ?? 'hover:border-primary-300 dark:hover:border-primary-700'; @endphp
                 <button wire:click="selectDivision({{ $div->id }})"
-                    class="whitespace-nowrap px-4 py-3 text-xs font-medium border-b-2 transition-colors duration-200 {{ $selectedDivision === $div->id ? "{$tc['border']} {$tc['text']} {$tc['dark-border']} {$tc['dark-text']}" : "border-transparent text-gray-500 dark:text-gray-400 {$hc}" }}">
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $selectedDivision === $div->id ? $fc : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 $fh" }}">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
                     {{ $div->nama }}
                 </button>
             @endforeach

@@ -59,21 +59,13 @@ class LeaveRequest extends Model
 
         $status = $this->jenis === 'cuti_tahunan' ? 'cuti' : 'izin';
 
-        $start = \Carbon\Carbon::parse($this->tanggal_mulai);
-        $end = \Carbon\Carbon::parse($this->tanggal_selesai);
-
-        $dates = [];
-        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            $dates[] = $d->toDateString();
-        }
-
         $existingDates = Attendance::where('employee_id', $this->employee_id)
-            ->whereIn('date', $dates)
+            ->whereIn('date', $this->dateRange())
             ->pluck('date')
             ->map(fn($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : $d)
             ->all();
 
-        foreach ($dates as $date) {
+        foreach ($this->dateRange() as $date) {
             if (in_array($date, $existingDates)) continue;
 
             Attendance::create([
@@ -82,6 +74,68 @@ class LeaveRequest extends Model
                 'status' => $status,
                 'method' => 'manual',
             ]);
+        }
+    }
+
+    /**
+     * Rentang tanggal cuti/izin yang dicakup pengajuan ini.
+     */
+    public function dateRange(): array
+    {
+        $start = \Carbon\Carbon::parse($this->tanggal_mulai);
+        $end = \Carbon\Carbon::parse($this->tanggal_selesai);
+
+        $dates = [];
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $dates[] = $d->toDateString();
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Membatalkan catatan absen (cuti/izin) yang dibuat oleh syncAttendance
+     * untuk pengajuan ini, lalu menerapkan ulang punch mesin pada tanggal yang
+     * terdampak agar absen masuk karyawan yang sebenarnya tercatat.
+     *
+     * Tanggal yang masih tercakup pengajuan cuti/izin lain yang disetujui
+     * dipertahankan (tidak dihapus).
+     */
+    public function unsyncAttendance(): void
+    {
+        if ($this->persetujuan_atasan2 !== 'disetujui') {
+            return;
+        }
+
+        $status = $this->jenis === 'cuti_tahunan' ? 'cuti' : 'izin';
+
+        $stillCovered = LeaveRequest::where('employee_id', $this->employee_id)
+            ->where('id', '!=', $this->id)
+            ->where('persetujuan_atasan2', 'disetujui')
+            ->get()
+            ->flatMap(fn ($lr) => $lr->dateRange())
+            ->all();
+
+        $deletedAny = false;
+        foreach ($this->dateRange() as $date) {
+            if (in_array($date, $stillCovered)) {
+                continue;
+            }
+
+            $deleted = Attendance::where('employee_id', $this->employee_id)
+                ->whereDate('date', $date)
+                ->where('status', $status)
+                ->where('method', 'manual')
+                ->delete();
+
+            if ($deleted) {
+                $deletedAny = true;
+            }
+        }
+
+        if ($deletedAny) {
+            app(\App\Services\AttendanceSyncService::class)
+                ->rebuildEmployeeAttendance($this->employee, preserveManual: true);
         }
     }
 }

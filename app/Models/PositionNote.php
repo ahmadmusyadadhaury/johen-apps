@@ -18,7 +18,28 @@ class PositionNote extends Model
         'bulan',
         'tahun',
         'created_by',
+        'seen_at',
     ];
+
+    public static function unseenCountForPositions(array $positionIds, int $excludeUserId): int
+    {
+        if (empty($positionIds)) return 0;
+
+        return static::whereIn('to_position_id', $positionIds)
+            ->whereNull('seen_at')
+            ->where('created_by', '!=', $excludeUserId)
+            ->count();
+    }
+
+    public static function markSeenForPositions(array $positionIds, int $excludeUserId): int
+    {
+        if (empty($positionIds)) return 0;
+
+        return static::whereIn('to_position_id', $positionIds)
+            ->whereNull('seen_at')
+            ->where('created_by', '!=', $excludeUserId)
+            ->update(['seen_at' => now()]);
+    }
 
     public function fromPosition(): BelongsTo
     {
@@ -38,5 +59,12 @@ class PositionNote extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(PositionNoteComment::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'seen_at' => 'datetime',
+        ];
     }
 }

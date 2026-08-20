@@ -13,11 +13,17 @@ class AbsensiTable extends Component
 {
     use WithPagination;
 
+    protected $queryString = ['date', 'search', 'tab'];
+
     public string $date = '';
 
     public string $search = '';
 
     public string $tab = 'saya';
+
+    public array $statsMembers = ['tepat' => [], 'terlambat' => []];
+
+    public string $statsDateLabel = '';
 
     public bool $showAbsenModal = false;
 
@@ -35,7 +41,18 @@ class AbsensiTable extends Component
 
     public function mount(): void
     {
-        $this->date = now()->format('Y-m-d');
+        if ($this->date === '') {
+            $this->date = now()->format('Y-m-d');
+        }
+
+        if ($this->tab === 'sinkron' && ! auth()->user()?->isSuperAdminLike()) {
+            $this->tab = 'tim';
+        }
+    }
+
+    public function updatedTab(): void
+    {
+        $this->resetPage();
     }
 
     public function updatingSearch(): void
@@ -158,7 +175,7 @@ class AbsensiTable extends Component
     public function render()
     {
         $user = auth()->user();
-        $today = $this->date;
+        $today = $this->date ?: now()->toDateString();
 
         if ($user->isSuperAdminLike() && $this->tab === 'sinkron') {
             return view('livewire.absensi-table', [
@@ -224,6 +241,7 @@ class AbsensiTable extends Component
 
         $attendances = Attendance::with('employee.divisions')
             ->whereDate('date', $today)
+            ->orderByRaw("CASE WHEN status = 'hadir' THEN 0 ELSE 1 END, id DESC")
             ->get()
             ->keyBy('employee_id');
 
@@ -270,6 +288,8 @@ class AbsensiTable extends Component
         $totalHadir = $hadir + $terlambat;
 
         $statsMembers = $this->buildStatsMembers($teamAttendances);
+        $this->statsMembers = $statsMembers;
+        $this->statsDateLabel = \Carbon\Carbon::parse($today)->isoFormat('ddd, D MMM Y');
 
         $employees = $employeeQuery
             ->when($this->search, function ($query) {

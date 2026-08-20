@@ -56,6 +56,14 @@ class StrukturOrganisasi extends Component
         $this->komentar = '';
         $this->loadNoteData();
         $this->dispatch('open-modal', name: 'note-modal');
+
+        $user = auth()->user();
+        if ($user && $user->employee) {
+            $positionIds = $user->employee->positions()->pluck('positions.id')->all();
+            if (in_array($positionId, $positionIds)) {
+                PositionNote::markSeenForPositions([$positionId], $user->id);
+            }
+        }
     }
 
     public function loadNoteData(): void
@@ -64,7 +72,7 @@ class StrukturOrganisasi extends Component
 
         $this->myPositionId = $this->getMyPositionId();
 
-        $note = PositionNote::with('fromPosition', 'creator.employee')
+        $note = PositionNote::with(['fromPosition', 'creator.employee' => fn ($q) => $q->select('id', 'nama')])
             ->where('to_position_id', $this->selectedPositionId)
             ->where('bulan', $this->bulan)
             ->where('tahun', $this->tahun)
@@ -74,7 +82,7 @@ class StrukturOrganisasi extends Component
         $this->situasi = $note?->situasi ?? '';
         $this->evaluasi = $note?->evaluasi ?? '';
 
-        $this->notesHistory = PositionNote::with('fromPosition', 'creator.employee')
+        $this->notesHistory = PositionNote::with(['fromPosition', 'creator.employee' => fn ($q) => $q->select('id', 'nama')])
             ->where('to_position_id', $this->selectedPositionId)
             ->orderBy('tahun', 'desc')
             ->orderBy('bulan', 'desc')
@@ -84,7 +92,7 @@ class StrukturOrganisasi extends Component
         $this->selectedNoteId = $note?->id;
 
         $this->noteComments = $note
-            ? PositionNoteComment::with('user.employee', 'replies.user.employee')
+            ? PositionNoteComment::with(['user.employee' => fn ($q) => $q->select('id', 'nama'), 'replies.user.employee' => fn ($q) => $q->select('id', 'nama')])
                 ->where('position_note_id', $note->id)
                 ->whereNull('parent_id')
                 ->orderBy('created_at', 'asc')
@@ -104,10 +112,10 @@ class StrukturOrganisasi extends Component
         $this->selectedNoteId = $noteId;
         $this->viewState = 'detail';
 
-        $note = PositionNote::with('fromPosition', 'creator.employee')->find($noteId);
+        $note = PositionNote::with(['fromPosition', 'creator.employee' => fn ($q) => $q->select('id', 'nama')])->find($noteId);
         $this->noteDetail = $note?->toArray();
 
-        $this->noteComments = PositionNoteComment::with('user.employee', 'replies.user.employee')
+        $this->noteComments = PositionNoteComment::with(['user.employee' => fn ($q) => $q->select('id', 'nama'), 'replies.user.employee' => fn ($q) => $q->select('id', 'nama')])
             ->where('position_note_id', $noteId)
             ->whereNull('parent_id')
             ->orderBy('created_at', 'asc')
@@ -198,7 +206,7 @@ class StrukturOrganisasi extends Component
 
         $this->dispatch('notify', type: 'success', message: 'Komentar berhasil dikirim.');
 
-        $this->noteComments = PositionNoteComment::with('user.employee', 'replies.user.employee')
+        $this->noteComments = PositionNoteComment::with(['user.employee' => fn ($q) => $q->select('id', 'nama'), 'replies.user.employee' => fn ($q) => $q->select('id', 'nama')])
             ->where('position_note_id', $this->selectedNoteId)
             ->whereNull('parent_id')
             ->orderBy('created_at', 'asc')
@@ -313,24 +321,6 @@ class StrukturOrganisasi extends Component
             ]
         );
 
-        if (trim($this->evaluasi) !== '' || trim($this->situasi) !== '') {
-            $note = PositionNote::where('from_position_id', $this->myPositionId)
-                ->where('to_position_id', $this->selectedPositionId)
-                ->where('bulan', $this->bulan)
-                ->where('tahun', $this->tahun)
-                ->first();
-
-            if ($note) {
-                $creator = auth()->user()->employee?->nama ?? 'Atasan';
-                app(\App\Services\DesktopNotificationService::class)->pushToPosition(
-                    $position,
-                    'Evaluasi Baru dari ' . $creator,
-                    'Anda mendapat evaluasi jabatan untuk periode ' . $this->bulan . '/' . $this->tahun . '.',
-                    ['position_note_id' => $note->id]
-                );
-            }
-        }
-
         $this->dispatch('notify', type: 'success', message: 'Evaluasi berhasil disimpan.');
         $this->loadNoteData();
     }
@@ -369,11 +359,24 @@ class StrukturOrganisasi extends Component
             return [$pos->id => $this->checkIsSuperior($this->myPositionId, $pos)];
         });
 
+        $authUser = auth()->user();
+        $myPositionIds = ($authUser && $authUser->employee)
+            ? $authUser->employee->positions()->pluck('positions.id')->all()
+            : [];
+
+        $unseenNotesByPosition = PositionNote::selectRaw('to_position_id, COUNT(*) as unseen')
+            ->whereNull('seen_at')
+            ->where('created_by', '!=', auth()->id())
+            ->when(count($myPositionIds) > 0, fn ($q) => $q->whereIn('to_position_id', $myPositionIds))
+            ->groupBy('to_position_id')
+            ->pluck('unseen', 'to_position_id');
+
         return view('livewire.struktur-organisasi', [
             'roots' => $roots,
             'flatPositions' => $flatPositions,
             'notesByPosition' => $notesByPosition,
             'canGiveNotesByPosition' => $canGiveNotesByPosition,
+            'unseenNotesByPosition' => $unseenNotesByPosition,
             'readOnlyWorkspace' => auth()->user()->isReadOnlyWorkspace(),
         ]);
     }

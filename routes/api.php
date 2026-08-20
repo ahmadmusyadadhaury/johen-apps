@@ -3,7 +3,6 @@
 use App\Http\Controllers\Api\AssetCategoryController;
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\DesktopNotificationController;
 use App\Http\Controllers\Api\MeetingApiController;
 use App\Http\Controllers\Api\DigitalAssetApiController;
 use App\Http\Controllers\Api\ElectricityApiController;
@@ -20,9 +19,6 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Public meeting schedule endpoint
 Route::get('/jadwal-meeting', [JadwalMeetingApiController::class, 'index'])->name('api.jadwal-meeting');
-
-// Desktop notifier agent polling (protected by per-user desktop_token)
-Route::get('/desktop/notifications', [DesktopNotificationController::class, 'index'])->name('api.desktop-notifications');
 
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {

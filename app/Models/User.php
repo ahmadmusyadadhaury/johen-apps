@@ -51,16 +51,6 @@ class User extends Authenticatable
         $this->save();
     }
 
-    public function ensureDesktopToken(): string
-    {
-        if (empty($this->desktop_token)) {
-            $this->desktop_token = \Illuminate\Support\Str::random(40);
-            $this->save();
-        }
-
-        return $this->desktop_token;
-    }
-
     public function requiresPinApproval(): bool
     {
         return in_array($this->role, [

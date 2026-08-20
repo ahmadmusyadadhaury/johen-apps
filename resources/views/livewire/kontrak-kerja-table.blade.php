@@ -140,7 +140,7 @@
                             </td>
                             <td class="table-cell text-center">
                                 <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                                    @if($ct->can_evaluate)
+                                    @if($ct->can_evaluate && !$ct->already_evaluated)
                                         <button wire:click="openEvaluasi({{ $ct->id }})"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
@@ -153,8 +153,6 @@
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                             Lihat Detail
                                         </button>
-                                    @elseif(!$ct->can_evaluate)
-                                        <span class="text-xs text-gray-400 dark:text-gray-500">—</span>
                                     @endif
                                 </div>
                             </td>
@@ -216,7 +214,7 @@
              x-transition:enter-start="opacity-0 scale-95 translate-y-4"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
              class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-7 pt-5 pb-16 shrink-0 relative">
+            <div class="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-600 px-7 pt-5 pb-8 shrink-0 relative">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,rgba(255,255,255,0.18),transparent_55%)] pointer-events-none"></div>
                 <div class="flex items-start justify-between relative z-10">
                     <div class="flex items-center gap-4">
@@ -234,7 +232,7 @@
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-7 py-6 -mt-8 space-y-5">
+            <div class="flex-1 overflow-y-auto px-7 pt-10 pb-6 -mt-4 space-y-5">
                 {{-- Ringkasan kontrak --}}
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
@@ -340,7 +338,7 @@
              x-transition:enter-start="opacity-0 scale-95 translate-y-4"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
              class="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-7 pt-5 pb-16 shrink-0 relative">
+            <div class="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-600 px-7 pt-5 pb-8 shrink-0 relative">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,rgba(255,255,255,0.18),transparent_55%)] pointer-events-none"></div>
                 <div class="flex items-start justify-between relative z-10">
                     <div class="flex items-center gap-4">
@@ -358,23 +356,23 @@
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-7 py-6 -mt-8">
+            <div class="flex-1 overflow-y-auto px-7 pt-10 pb-6 -mt-4">
 
                 {{-- STEP 1: Daftar atasan yang memberikan evaluasi --}}
                 <div x-show="active === null" x-transition.opacity.duration.200ms>
                     {{-- Info kontrak --}}
-                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50/60 dark:bg-gray-800/40 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-700">
-                        <div class="px-5 py-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-px rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700">
+                        <div class="bg-white dark:bg-gray-900 px-5 py-4">
                             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Posisi</p>
-                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1 leading-snug">{{ $evalSummary['posisi'] }}</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1.5 leading-snug">{{ $evalSummary['posisi'] }}</p>
                         </div>
-                        <div class="px-5 py-4">
+                        <div class="bg-white dark:bg-gray-900 px-5 py-4">
                             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Divisi</p>
-                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1 leading-snug">{{ $evalSummary['divisi'] }}</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1.5 leading-snug">{{ $evalSummary['divisi'] }}</p>
                         </div>
-                        <div class="px-5 py-4">
+                        <div class="bg-white dark:bg-gray-900 px-5 py-4">
                             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Periode</p>
-                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1 leading-snug">{{ $evalSummary['mulai'] }} — {{ $evalSummary['berakhir'] }}</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1.5 leading-snug">{{ $evalSummary['mulai'] }} — {{ $evalSummary['berakhir'] }}</p>
                         </div>
                     </div>
 

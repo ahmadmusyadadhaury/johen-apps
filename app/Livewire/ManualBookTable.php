@@ -16,11 +16,25 @@ class ManualBookTable extends Component
     public bool $showModal = false;
     public ?int $editId = null;
 
+    public bool $showDeleteConfirmModal = false;
+    public ?int $deleteId = null;
+
+    public bool $showSuccessModal = false;
+    public string $successMessage = '';
+
+    public string $filterKategori = '';
+
     public string $nama = '';
+    public string $kategori = '';
     public string $deskripsi = '';
     public $thumbnail = null;
     public $file_pdf = null;
     public $thumbnail_preview = null;
+
+    public function updatingFilterKategori(): void
+    {
+        $this->resetPage();
+    }
 
     public function openNew(): void
     {
@@ -33,6 +47,7 @@ class ManualBookTable extends Component
         $book = ManualBook::findOrFail($id);
         $this->editId = $book->id;
         $this->nama = $book->nama;
+        $this->kategori = $book->kategori ?? '';
         $this->deskripsi = $book->deskripsi ?? '';
         $this->thumbnail_preview = $book->thumbnail ? Storage::url($book->thumbnail) : null;
         $this->showModal = true;
@@ -42,6 +57,7 @@ class ManualBookTable extends Component
     {
         $rules = [
             'nama' => 'required|string|max:255',
+            'kategori' => ['required', 'in:' . implode(',', ManualBook::KATEGORI_OPTIONS)],
             'deskripsi' => 'nullable|string',
             'thumbnail' => $this->editId ? 'nullable|image|max:2048' : 'nullable|image|max:2048',
             'file_pdf' => $this->editId ? 'nullable|file|mimes:pdf|max:10240' : 'required|file|mimes:pdf|max:10240',
@@ -51,6 +67,7 @@ class ManualBookTable extends Component
 
         $data = [
             'nama' => $this->nama,
+            'kategori' => $this->kategori,
             'deskripsi' => $this->deskripsi ?: null,
         ];
 
@@ -65,23 +82,54 @@ class ManualBookTable extends Component
         if ($this->editId) {
             $book = ManualBook::findOrFail($this->editId);
             $book->update($data);
-            session()->flash('message', 'Manual book berhasil diperbarui.');
+            $this->successMessage = 'Manual book berhasil diperbarui.';
         } else {
             ManualBook::create($data);
-            session()->flash('message', 'Manual book berhasil ditambahkan.');
+            $this->successMessage = 'Manual book berhasil ditambahkan.';
         }
 
         $this->resetInput();
         $this->showModal = false;
+        $this->showSuccessModal = true;
     }
 
-    public function delete(int $id): void
+    public function confirmDelete(int $id): void
     {
-        $book = ManualBook::findOrFail($id);
+        if (! auth()->user()->isSuperAdminLike()) {
+            abort(403);
+        }
+
+        $this->deleteId = $id;
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function executeDelete(): void
+    {
+        if (! $this->deleteId) {
+            return;
+        }
+
+        $book = ManualBook::findOrFail($this->deleteId);
         if ($book->thumbnail) Storage::disk('public')->delete($book->thumbnail);
         if ($book->file_pdf) Storage::disk('public')->delete($book->file_pdf);
         $book->delete();
-        session()->flash('message', 'Manual book berhasil dihapus.');
+
+        $this->showDeleteConfirmModal = false;
+        $this->deleteId = null;
+        $this->successMessage = 'Manual book berhasil dihapus.';
+        $this->showSuccessModal = true;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->showDeleteConfirmModal = false;
+        $this->deleteId = null;
+    }
+
+    public function closeSuccessModal(): void
+    {
+        $this->showSuccessModal = false;
+        $this->successMessage = '';
     }
 
     public function close(): void
@@ -94,6 +142,7 @@ class ManualBookTable extends Component
     {
         $this->editId = null;
         $this->nama = '';
+        $this->kategori = '';
         $this->deskripsi = '';
         $this->thumbnail = null;
         $this->file_pdf = null;
@@ -102,7 +151,16 @@ class ManualBookTable extends Component
 
     public function render()
     {
-        $books = ManualBook::latest()->paginate(12);
-        return view('livewire.manual-book-table', ['books' => $books]);
+        $books = ManualBook::query()
+            ->when($this->filterKategori !== '', function ($query) {
+                $query->where('kategori', $this->filterKategori);
+            })
+            ->latest()
+            ->paginate(12);
+
+        return view('livewire.manual-book-table', [
+            'books' => $books,
+            'kategoriOptions' => ManualBook::KATEGORI_OPTIONS,
+        ]);
     }
 }

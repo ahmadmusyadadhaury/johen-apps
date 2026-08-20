@@ -13,6 +13,12 @@ class AnnouncementTable extends Component
     public bool $showModal = false;
     public ?int $editId = null;
 
+    public bool $showDeleteConfirmModal = false;
+    public ?int $deleteId = null;
+
+    public bool $showSuccessModal = false;
+    public string $successMessage = '';
+
     public string $title = '';
     public string $summary = '';
     public string $content = '';
@@ -54,21 +60,48 @@ class AnnouncementTable extends Component
         if ($this->editId) {
             $announcement = Announcement::findOrFail($this->editId);
             $announcement->update($data);
-            $this->dispatch('notify', type: 'success', message: 'Pengumuman berhasil diperbarui.');
+            $this->successMessage = 'Pengumuman berhasil diperbarui.';
         } else {
             Announcement::create($data);
-            $this->dispatch('notify', type: 'success', message: 'Pengumuman berhasil ditambahkan.');
+            $this->successMessage = 'Pengumuman berhasil ditambahkan.';
         }
 
         $this->resetInput();
         $this->showModal = false;
+        $this->showSuccessModal = true;
     }
 
-    public function delete(int $id): void
+    public function confirmDelete(int $id): void
     {
-        $announcement = Announcement::findOrFail($id);
+        $this->deleteId = $id;
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function executeDelete(): void
+    {
+        if (! $this->deleteId) {
+            return;
+        }
+
+        $announcement = Announcement::findOrFail($this->deleteId);
         $announcement->delete();
-        $this->dispatch('notify', type: 'success', message: 'Pengumuman berhasil dihapus.');
+
+        $this->showDeleteConfirmModal = false;
+        $this->deleteId = null;
+        $this->successMessage = 'Pengumuman berhasil dihapus.';
+        $this->showSuccessModal = true;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->showDeleteConfirmModal = false;
+        $this->deleteId = null;
+    }
+
+    public function closeSuccessModal(): void
+    {
+        $this->showSuccessModal = false;
+        $this->successMessage = '';
     }
 
     public function close(): void

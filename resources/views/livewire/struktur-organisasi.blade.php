@@ -127,10 +127,13 @@
                                   </button>
                               </template>
                               <template x-if="!canGiveNotes[focused.id] && focused.id === myPositionId">
-                                  <button @click.stop="$wire.openNoteModal(focused.id, 'history')"
-                                           class="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[10px] font-medium transition-colors">
+<button @click.stop="$wire.openNoteModal(focused.id, 'history')"
+                                            class="relative flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[10px] font-medium transition-colors">
                                        Lihat Evaluasi
-                                  </button>
+                                       <template x-if="(unseenNotes[focused.id] || 0) > 0">
+                                           <span class="inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white shadow-sm" x-text="unseenNotes[focused.id]"></span>
+                                       </template>
+                                   </button>
                               </template>
                           </div>
                      </div>
@@ -195,9 +198,12 @@
                                            </template>
                                             <template x-if="!canGiveNotes[card.id] && card.id === myPositionId">
                                                 <button @click.stop="$wire.openNoteModal(card.id, 'history')"
-                                                        class="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[10px] font-medium transition-colors">
+                                                        class="relative flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[10px] font-medium transition-colors">
                                                         Lihat Evaluasi
-                                                </button>
+                                                        <template x-if="(unseenNotes[card.id] || 0) > 0">
+                                                            <span class="inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white shadow-sm" x-text="unseenNotes[card.id]"></span>
+                                                        </template>
+                                                    </button>
                                             </template>
                                        </div>
                                  </div>
@@ -584,6 +590,7 @@
                 focusedId: @json($myPositionId) || null,
                 canGiveNotes: @json($canGiveNotesByPosition),
                 myPositionId: @json($myPositionId),
+                unseenNotes: @json($unseenNotesByPosition),
                 positions: @json($flatPositions),
                 get focused() {
                     return this.focusedId ? this.positions[this.focusedId] : null;

@@ -43,6 +43,7 @@ use App\Livewire\ManualBookTable;
 use App\Livewire\PositionTable;
 use App\Livewire\PresensiHostLive;
 use App\Livewire\PresensiHostRekap;
+use App\Livewire\PengarsipanTable;
 use App\Livewire\PubgDailyTrackingTable;
 use App\Livewire\RunningRateDashboard;
 use App\Livewire\RekapStokTable;
@@ -104,6 +105,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/freelance', FreelanceTable::class)->name('freelance');
         Route::get('/manual-book', ManualBookTable::class)->name('manual-book');
         Route::get('/pengumuman', AnnouncementTable::class)->name('announcements');
+        Route::get('/pengarsipan', PengarsipanTable::class)->name('pengarsipan')->middleware('role:super_admin');
         Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin,staff_hr');
         Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin,staff_hr');
         Route::post('/pengumuman/{announcement}/dibaca', [AnnouncementController::class, 'markRead'])->name('announcements.mark-read');

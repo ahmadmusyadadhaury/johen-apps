@@ -12,6 +12,7 @@ class DivisionTable extends Component
     use WithPagination;
 
     public string $search = '';
+    public string $filterStatus = '';
     public string $sortField = 'nama';
     public string $sortDirection = 'asc';
 
@@ -26,7 +27,7 @@ class DivisionTable extends Component
     public bool $showDeleteConfirm = false;
     public ?int $deleteId = null;
 
-    protected $updatesQueryString = ['search'];
+    protected $updatesQueryString = ['search', 'filterStatus'];
 
     protected function rules(): array
     {
@@ -56,6 +57,11 @@ class DivisionTable extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilterStatus(): void
     {
         $this->resetPage();
     }
@@ -165,6 +171,9 @@ class DivisionTable extends Component
                 $query->where(function ($q) {
                     $q->where('nama', 'like', "%{$this->search}%");
                 });
+            })
+            ->when($this->filterStatus !== '', function ($query) {
+                $query->where('is_active', $this->filterStatus === 'aktif');
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);

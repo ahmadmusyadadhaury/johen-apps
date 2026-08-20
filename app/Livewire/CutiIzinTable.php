@@ -329,6 +329,7 @@ class CutiIzinTable extends Component
         }
 
         $lr = LeaveRequest::findOrFail($this->deleteId);
+        $lr->unsyncAttendance();
         $lr->delete();
 
         $this->showDeleteConfirmModal = false;

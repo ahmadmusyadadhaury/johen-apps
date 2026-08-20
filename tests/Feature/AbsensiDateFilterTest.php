@@ -98,4 +98,50 @@ class AbsensiDateFilterTest extends TestCase
         $this->assertStringContainsString('wire:model.live="date"', $html);
         $this->assertMatchesRegularExpression('/<input[^>]*type="date"[^>]*>/', $html);
     }
+
+    public function test_cuti_attendance_shown_in_team_view(): void
+    {
+        $user = $this->superAdmin();
+        $this->actingAs($user);
+
+        $emp = $this->employee('001');
+
+        Attendance::create(['employee_id' => $emp->id, 'date' => '2026-08-14', 'status' => 'cuti', 'method' => 'manual']);
+
+        $component = Livewire::test(AbsensiTable::class)
+            ->set('tab', 'tim')
+            ->set('date', '2026-08-14');
+
+        $component->assertViewHas('attendances', function ($attendances) use ($emp) {
+            $att = $attendances->get($emp->id);
+
+            return $att && $att->status === 'cuti' && $att->display_status === 'cuti';
+        });
+    }
+
+    public function test_tab_switch_resets_pagination_page(): void
+    {
+        $user = $this->superAdmin();
+        $this->actingAs($user);
+
+        $component = Livewire::test(AbsensiTable::class)
+            ->set('tab', 'tim')
+            ->set('paginators.page', 3);
+
+        $component->set('tab', 'saya');
+
+        $component->assertSet('paginators.page', 1);
+    }
+
+    public function test_query_string_restores_date_and_tab_on_mount(): void
+    {
+        $user = $this->superAdmin();
+        $this->actingAs($user);
+
+        $component = Livewire::withQueryParams(['date' => '2026-08-14', 'tab' => 'tim'])
+            ->test(AbsensiTable::class);
+
+        $component->assertSet('date', '2026-08-14');
+        $component->assertSet('tab', 'tim');
+    }
 }

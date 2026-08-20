@@ -201,6 +201,8 @@ class KontrakKerjaTable extends Component
 
         $contracts->getCollection()->transform(function (EmployeeContract $contract) use ($user) {
             $contract->can_evaluate = $user?->canEvaluateContractFor($contract) ?? false;
+            $contract->already_evaluated = $user
+                && $contract->evaluations->contains(fn ($e) => $e->evaluator_id === $user->id);
 
             return $contract;
         });
