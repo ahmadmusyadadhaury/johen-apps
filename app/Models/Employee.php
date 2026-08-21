@@ -6,10 +6,90 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Carbon\Carbon;
 
 class Employee extends Model
 {
+    public const SHIFT_PAGI = 'Shift Pagi (07.00-12.00)';
+
+    public const SHIFT_SIANG = 'Shift Siang (13.00-18.00)';
+
+    public const SHIFT_MALAM = 'Shift Malam (19.00-24.00)';
+
+    public const SHIFT_SUBUH = 'Shift Subuh (01.00-06.00)';
+
+    public const SHIFT_ADMIN_PAGI = 'Shift Admin Pagi (07.00-18.00)';
+
+    public const SHIFT_ADMIN_MALAM = 'Shift Admin Malam (19.00-06.00)';
+
+    public const NON_SHIFT = 'Non Shift (08.00-17.00)';
+
+    public const JENIS_KERJA_OPERASIONAL = 'Operasional';
+
+    public const JENIS_KERJA_OFFICE = 'Office';
+
+    /**
+     * Opsi jenis kerja: label => keterangan pola hari kerja mingguan.
+     * Menjadi acuan hari libur: Operasional masuk Senin-Minggu sesuai jam
+     * kerja (tanpa libur mingguan), Office libur setiap hari Minggu.
+     */
+    public const JENIS_KERJA_OPTIONS = [
+        self::JENIS_KERJA_OPERASIONAL => 'Masuk Senin-Minggu sesuai jam kerja (tanpa libur mingguan)',
+        self::JENIS_KERJA_OFFICE => 'Libur mingguan setiap hari Minggu',
+    ];
+
+    /**
+     * Opsi jam kerja baku (dropdown): label => jam mulai (acuan status telat).
+     * Semua shift diberi toleransi keterlambatan +5 menit (lihat jamMasukCutoff).
+     */
+    public const SHIFT_OPTIONS = [
+        self::SHIFT_PAGI => '07:00',
+        self::SHIFT_SIANG => '13:00',
+        self::SHIFT_MALAM => '19:00',
+        self::SHIFT_SUBUH => '01:00',
+        self::SHIFT_ADMIN_PAGI => '07:00',
+        self::SHIFT_ADMIN_MALAM => '19:00',
+        self::NON_SHIFT => '08:00',
+    ];
+
     protected ?Collection $shiftHistoryCache = null;
+
+    /**
+     * Kolom ringan untuk query daftar/tabel: mengecualikan kolom foto karena
+     * bisa berisi gambar base64 berukuran besar (megabyte per baris) sehingga
+     * memuat banyak karyawan sekaligus dapat menghabiskan memori.
+     * Flag foto_is_base64 dipakai accessor fotoUrl agar foto tetap tampil
+     * melalui route streaming hris.employees.photo.
+     */
+    public const LIST_COLUMNS = [
+        'id',
+        'nik',
+        'nama',
+        'email',
+        'no_hp',
+        'position',
+        'position_id',
+        'atasan',
+        'atasan2',
+        'jenis_karyawan',
+        'lokasi_kerja',
+        'jenis_kerja',
+        'jam_kerja',
+        'jam_masuk',
+        'jobdesk',
+        'status',
+        'status_bpjs',
+        'tanggal_masuk',
+        'tanggal_resign',
+        'updated_at',
+    ];
+
+    public function scopeListSelect($query)
+    {
+        return $query
+            ->select(array_map(fn (string $col) => "employees.{$col}", self::LIST_COLUMNS))
+            ->selectRaw("CASE WHEN employees.foto LIKE 'base64:%' THEN 1 ELSE 0 END AS foto_is_base64");
+    }
 
     protected $fillable = [
         'nik',
@@ -262,6 +342,26 @@ class Employee extends Model
     public static function shiftStartFrom(?string $jamKerja, ?string $jamMasuk, bool $isMalamPosition): int
     {
         $jamKerja = (string) ($jamKerja ?? '');
+
+        // Label shift baku dari dropdown jam kerja, mis. "Shift Pagi (07.00-12.00)".
+        if (isset(self::SHIFT_OPTIONS[$jamKerja])) {
+            $parts = explode(':', self::SHIFT_OPTIONS[$jamKerja]);
+
+            return ((int) $parts[0] * 60) + (int) $parts[1];
+        }
+
+        // Rentang jam di mana pun dalam string: mencakup format lama yang
+        // dimulai angka ("08.00-17.00") maupun label berformat
+        // "Shift Pagi (07.00-12.00)" / "Senin - Jumat 08.00-17.00, ...".
+        if (preg_match('/(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})/', $jamKerja, $m)) {
+            $hour = (int) $m[1];
+            $min = (int) $m[2];
+
+            if ($hour >= 0 && $hour <= 23 && $min <= 59) {
+                return $hour * 60 + $min;
+            }
+        }
+
         if (preg_match('/^\s*(\d{1,2})[.:](\d{2})\s*[-–—]/', $jamKerja, $m)) {
             $hour = (int) $m[1];
             $min = (int) $m[2];
@@ -287,16 +387,75 @@ class Employee extends Model
     public static function shiftEndFrom(?string $jamKerja): ?int
     {
         $jamKerja = (string) ($jamKerja ?? '');
+
+        // Rentang jam di mana pun dalam string; jam 24 (24.00/24:00) sah
+        // sebagai tengah malam (= 1440 menit).
+        if (preg_match('/(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})/', $jamKerja, $m)) {
+            $hour = (int) $m[3];
+            $min = (int) $m[4];
+
+            if ($hour >= 0 && $hour <= 24 && $min <= 59 && ($hour < 24 || $min === 0)) {
+                return $hour * 60 + $min;
+            }
+        }
+
         if (preg_match('/[-–—]\s*(\d{1,2})[.:](\d{2})\s*$/', $jamKerja, $m)) {
             $hour = (int) $m[1];
             $min = (int) $m[2];
 
-            if ($hour >= 0 && $hour <= 23 && $min <= 59) {
+            if ($hour >= 0 && $hour <= 24 && $min <= 59 && ($hour < 24 || $min === 0)) {
                 return $hour * 60 + $min;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Apakah tanggal tertentu adalah hari libur mingguan karyawan,
+     * berdasarkan jenis kerja:
+     * - Operasional: tidak ada libur mingguan (masuk Senin-Minggu sesuai
+     *   jam kerja).
+     * - Office: libur setiap hari Minggu.
+     */
+    public function isWeeklyDayOff(?Carbon $date = null): bool
+    {
+        if (($this->jenis_kerja ?? '') !== self::JENIS_KERJA_OFFICE) {
+            return false;
+        }
+
+        $date = $date ?: now();
+
+        return (int) $date->format('N') === 7; // 7 = Minggu
+    }
+
+    public function isWorkday(?Carbon $date = null): bool
+    {
+        return ! $this->isWeeklyDayOff($date);
+    }
+
+    /**
+     * Tanggal kerja untuk sebuah saat punch/absen.
+     *
+     * Karyawan shift Subuh (mulai sebelum 05:00, mis. "Shift Subuh
+     * (01.00-06.00)") yang absen pada pukul 00:00-06:59 direkap pada tanggal
+     * HARI SEBELUMNYA (ikut malam sebelumnya), konsisten dengan konvensi
+     * sesi host live (config/hostlive.php) dan AttendanceSyncService.
+     * Contoh: masuk-pulang dini hari 22 Agustus tercatat sebagai presensi
+     * 21 Agustus.
+     */
+    public function resolveWorkDate(?Carbon $at = null): string
+    {
+        $at = $at ?: now();
+
+        $isSubuh = str_contains((string) $this->position, '(Subuh)')
+            || $this->shiftStartMinutes($at->toDateString()) < 5 * 60;
+
+        if ($isSubuh && (int) $at->format('G') < 7) {
+            return $at->copy()->subDay()->toDateString();
+        }
+
+        return $at->toDateString();
     }
 
     private function shiftForDate(?string $date): ?EmployeeShiftHistory

@@ -78,27 +78,41 @@ class AttendanceSyncService
      * dengan jam masuk yang tidak masuk akal sebagai absen datang (mis. sore
      * hari) namun jam keluar sudah terisi — hasil tap pulang yang keliru
      * terekam sebagai masuk lalu scan keesokan harinya tertelan jadi jam
-     * pulang. Karyawan shift Malam dikecualikan karena sesinya memang lintas
-     * tengah malam (pulang lebih awal dari masuk).
+     * pulang.
+     *
+     * Selain itu deteksi pola sebaliknya pada karyawan shift malam: tap
+     * pulang dini hari terekam sebagai absen masuk (karena malam
+     * sebelumnya dia tidak tap masuk sehingga tidak ada sesi terbuka yang
+     * bisa ditutup), lalu absen masuk malam harinya menutup rekaman itu
+     * sebagai jam keluar — menghasilkan durasi tidak wajar (mis.
+     * 00:58 -> 18:59 = 18 jam).
      */
     public function hasCheckoutOnlyMisPairing(Employee $employee): bool
     {
-        if (str_contains((string) $employee->position, '(Malam)')) {
-            return false;
-        }
-
-        return Attendance::where('employee_id', $employee->id)
+        $records = Attendance::where('employee_id', $employee->id)
             ->where('status', 'hadir')
             ->whereNotNull('time_in')
             ->whereNotNull('time_out')
-            ->get()
-            ->contains(function (Attendance $a) use ($employee) {
-                if ($a->time_out >= $a->time_in) {
-                    return false;
-                }
+            ->get();
 
-                return ! $this->isPlausibleCheckInForShift($employee, $a->date, $a->time_in);
-            });
+        return $records->contains(function (Attendance $a) use ($employee) {
+            $isMalamPosition = str_contains((string) $employee->position, '(Malam)');
+
+            if ($a->time_out < $a->time_in) {
+                // Pola lama: jam keluar lebih awal dari jam masuk. Karyawan
+                // shift Malam dikecualikan karena sesinya memang lintas
+                // tengah malam (pulang lebih awal dari masuk).
+                return ! $isMalamPosition
+                    && ! $this->isPlausibleCheckInForShift($employee, $a->date, $a->time_in);
+            }
+
+            // Pola baru: jam masuk dini hari (< batas jam checkout) dengan
+            // durasi lebih dari 8 jam sampai jam keluar di sore/malam hari —
+            // ciri khas tap pulang yang tertukar menjadi absen masuk.
+            return $this->isOvernightCheckoutShift($employee, $a->date)
+                && $a->time_in < sprintf('%02d:00:00', (int) config('attendance.overnight_latest_checkout_hour', 7))
+                && $this->sessionMinutes($a->time_in, $a->time_out) > 8 * 60;
+        });
     }
 
     private function applyToAttendance(Employee $employee, Carbon $punchAt, string $method): void
@@ -165,6 +179,52 @@ class AttendanceSyncService
             }
         }
 
+        // 2b. Punch dini hari (< batas jam checkout) dari karyawan shift yang
+        //     melewati tengah malam, ketika tidak ada sesi terbuka yang masih
+        //     relevan untuk ditutupnya (biasanya karena dia lupa tap masuk
+        //     malam sebelumnya), adalah absen PULANG dari sesi malam
+        //     sebelumnya. Rekap pada tanggal sebelumnya sebagai jam keluar —
+        //     bukan absen masuk baru pada tanggal kalender punch. Contoh:
+        //     host lupa tap masuk 18-08, tap pulang 00:58 19-08 menjadi jam
+        //     keluar rekap tanggal 18.
+        //
+        //     Sesi terbuka TUA (tanggal lebih lawas dari kemarin) diabaikan:
+        //     sesi seperti itu sudah tidak mungkin ditutup oleh punch ini
+        //     (jendela waktunya jauh terlewat) dan tidak boleh memblokir
+        //     atribusi checkout ke tanggal kemarin.
+        $yesterdayDate = $punchAt->copy()->subDay()->toDateString();
+        $hasRelevantOpen = $open !== null && $open->date->toDateString() >= $yesterdayDate;
+
+        if (! $isSubuhPunch
+            && ! $hasRelevantOpen
+            && (int) $punchAt->format('G') < (int) config('attendance.overnight_latest_checkout_hour', 7)
+            && $this->isOvernightCheckoutShift($employee, $punchAt)) {
+            $prev = Attendance::where('employee_id', $employee->id)
+                ->whereDate('date', $yesterdayDate)
+                ->first();
+
+            // Hari sebelumnya tercatat izin/sakit/alpha manual: pertahankan,
+            // lanjutkan dengan perilaku lama.
+            if (! $prev || $prev->status === 'hadir') {
+                if (! $prev) {
+                    $prev = new Attendance([
+                        'employee_id' => $employee->id,
+                        'date' => $yesterdayDate,
+                        'status' => 'hadir',
+                    ]);
+                }
+
+                if ($prev->time_out === null || $time > $prev->time_out) {
+                    $prev->time_out = $time;
+                    $prev->method = $method;
+                }
+
+                $prev->save();
+
+                return;
+            }
+        }
+
         // 3. Logic hari yang sama (perilaku lama dipertahankan).
         $attendance = Attendance::where('employee_id', $employee->id)
             ->whereDate('date', $punchDate)
@@ -210,6 +270,39 @@ class AttendanceSyncService
     }
 
     /**
+     * Apakah shift karyawan pada tanggal tertentu berprofil melewati (atau
+     * berakhir tepat di) tengah malam — mis. "Shift Malam (19.00-24.00)"
+     * maupun "Shift Admin Malam (19.00-06.00)" — sehingga punch dini hari
+     * mereka adalah absen pulang, bukan absen masuk.
+     *
+     * Shift Subuh tidak masuk di sini karena punch dini hari mereka adalah
+     * absen MASUK (ditangani atribusi tanggal kemarin oleh isSubuhPunch).
+     */
+    private function isOvernightCheckoutShift(Employee $employee, Carbon $date): bool
+    {
+        $shift = $employee->shiftOn($date->toDateString());
+        $startMinutes = Employee::shiftStartFrom(
+            $shift['jam_kerja'],
+            $shift['jam_masuk'],
+            str_contains((string) $employee->position, '(Malam)'),
+        );
+        $endMinutes = Employee::shiftEndFrom($shift['jam_kerja']);
+
+        if ($startMinutes === null || $endMinutes === null) {
+            return false;
+        }
+
+        return $endMinutes >= 24 * 60 || $endMinutes < $startMinutes;
+    }
+
+    private function sessionMinutes(string $timeIn, string $timeOut): int
+    {
+        $toMinutes = fn (string $t) => ((int) substr($t, 0, 2) * 60) + (int) substr($t, 3, 2);
+
+        return abs($toMinutes($timeOut) - $toMinutes($timeIn));
+    }
+
+    /**
      * Menentukan apakah scan baru masih wajar menjadi JAM KELUAR dari sesi
      * terbuka yang dimulai pada tanggal/ jam masuk sebelumnya.
      *
@@ -243,6 +336,22 @@ class AttendanceSyncService
             );
             if ($endMinutes < $startMinutes) {
                 $maxEnd->addDay();
+            }
+
+            // Shift sore/malam (mulai siang ke atas) maupun yang selesai
+            // tengah malam: checkout yang melebihi hari tetap menutup sesi
+            // pada tanggal masuk, selama scan-nya tidak melewati batas dini
+            // hari (overnight_latest_checkout_hour, default 07:00). Contoh:
+            // masuk 19.05 tanggal 21, pulang 03.00 tanggal 22 tetap direkap
+            // sebagai jam keluar presensi tanggal 21.
+            if ($startMinutes >= 12 * 60 || $endMinutes >= 24 * 60 || $endMinutes < $startMinutes) {
+                $latest = Carbon::parse($open->date->toDateString().' 00:00:00')
+                    ->addDay()
+                    ->setTime((int) config('attendance.overnight_latest_checkout_hour', 7), 0);
+
+                if ($latest->gt($maxEnd)) {
+                    $maxEnd = $latest;
+                }
             }
         } else {
             // Tanpa konfigurasi jam kerja, gunakan batas aman yang mudah
@@ -309,8 +418,21 @@ class AttendanceSyncService
             str_contains((string) $employee->position, '(Malam)'),
         );
 
-        if ($startMinutes < 7 * 60) {
+        // Mulai sebelum 05:00 = shift Subuh (mis. "Shift Subuh (01.00-06.00)").
+        // Shift Pagi yang mulai 06.00 TIDAK termasuk agar punch paginya tidak
+        // salah tercatat pada hari sebelumnya.
+        if ($startMinutes < 5 * 60) {
             return true;
+        }
+
+        // Karyawan dengan shift malam/lintas tengah malam yang jelas tidak
+        // boleh dianggap Subuh oleh fallback di bawah: punch dini hari mereka
+        // adalah absen PULANG, bukan absen masuk subuh. Tanpa ini, duplikasi
+        // punch dini hari membuat fraksi scan <07:00 melampaui ambang dan
+        // seluruh sesi malam mereka tertukar menjadi pasangan
+        // [pulang-dini-hari -> masuk-sore].
+        if ($this->isOvernightCheckoutShift($employee, $punchAt)) {
+            return false;
         }
 
         // Fallback pola punch: karyawan yang secara konsisten scan hanya pada

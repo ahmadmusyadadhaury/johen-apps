@@ -402,7 +402,11 @@
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att?->duration ?? '-' }}</td>
                                 <td class="table-cell">
                                     @php
-                                        $ds = $att?->display_status ?? 'tidak hadir';
+                                        // Tanpa record absensi: karyawan Office pada hari
+                                        // Minggu adalah libur mingguannya (jenis kerja sebagai
+                                        // acuan), bukan tidak hadir.
+                                        $ds = $att?->display_status
+                                            ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
                                     @endphp
                                     @if($ds === 'tepat waktu')
                                         <span class="badge-success">Tepat Waktu</span>
@@ -410,6 +414,8 @@
                                         <span class="badge-warning">Terlambat</span>
                                     @elseif($ds === 'tidak hadir')
                                         <span class="badge-danger">Tidak Hadir</span>
+                                    @elseif($ds === 'libur')
+                                        <span class="badge-secondary">Libur</span>
                                     @elseif($ds === 'izin')
                                         <span class="badge-info">Izin</span>
                                     @elseif($ds === 'sakit')
@@ -468,18 +474,16 @@
             <form wire:submit.prevent="saveJamKerja" class="space-y-4">
                 <div>
                     <x-input-label for="edit-jam_kerja" value="Jam Kerja" />
-                    <x-text-input id="edit-jam_kerja" wire:model="jam_kerja" type="text" placeholder="Contoh: Senin - Jumat 08.00-17.00, Sabtu 08.00-12.00" class="mt-1 block w-full" />
+                    <select id="edit-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                        <option value="">Pilih jam kerja</option>
+                        @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
+                            <option value="{{ $label }}">{{ $label }}</option>
+                        @endforeach
+                        @if($jam_kerja !== '' && ! array_key_exists($jam_kerja, \App\Models\Employee::SHIFT_OPTIONS))
+                            <option value="{{ $jam_kerja }}">{{ $jam_kerja }} (nilai lama)</option>
+                        @endif
+                    </select>
                     @error('jam_kerja') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <x-input-label for="edit-jam_masuk" value="Jam Masuk (acuan telat)" />
-                    <x-text-input id="edit-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
-                    @error('jam_masuk') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <x-input-label for="edit-effective_date" value="Berlaku Mulai" />
-                    <x-text-input id="edit-effective_date" wire:model="effective_date" type="date" class="mt-1 block w-full" />
-                    @error('effective_date') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center justify-end pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">

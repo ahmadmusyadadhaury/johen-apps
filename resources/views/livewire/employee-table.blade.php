@@ -371,17 +371,19 @@
                             <x-input-label for="create-jenis_kerja" value="Jenis Kerja" />
                             <select id="create-jenis_kerja" wire:model="jenis_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jenis kerja</option>
-                                <option value="Office">Office</option>
-                                <option value="Operasional">Operasional</option>
+                                @foreach(\App\Models\Employee::JENIS_KERJA_OPTIONS as $jenis => $ket)
+                                    <option value="{{ $jenis }}">{{ $jenis }} — {{ $ket }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div>
                             <x-input-label for="create-jam_kerja" value="Jam Kerja" />
-                            <x-text-input id="create-jam_kerja" wire:model="jam_kerja" type="text" class="mt-1 block w-full" placeholder="Contoh: 08:00 - 17:00" />
-                        </div>
-                        <div>
-                            <x-input-label for="create-jam_masuk" value="Jam Masuk (acuan telat)" />
-                            <x-text-input id="create-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
+                            <select id="create-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">Pilih jam kerja</option>
+                                @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
+                                    <option value="{{ $label }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="sm:col-span-2">
                             <x-input-label for="create-jobdesk" value="Jobdesk" />
@@ -707,22 +709,22 @@
                             <x-input-label for="edit-jenis_kerja" value="Jenis Kerja" />
                             <select id="edit-jenis_kerja" wire:model="jenis_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jenis kerja</option>
-                                <option value="Office">Office</option>
-                                <option value="Operasional">Operasional</option>
+                                @foreach(\App\Models\Employee::JENIS_KERJA_OPTIONS as $jenis => $ket)
+                                    <option value="{{ $jenis }}">{{ $jenis }} — {{ $ket }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div>
                             <x-input-label for="edit-jam_kerja" value="Jam Kerja" />
-                            <x-text-input id="edit-jam_kerja" wire:model="jam_kerja" type="text" class="mt-1 block w-full" />
-                        </div>
-                        <div>
-                            <x-input-label for="edit-jam_masuk" value="Jam Masuk (acuan telat)" />
-                            <x-text-input id="edit-jam_masuk" wire:model="jam_masuk" type="time" class="mt-1 block w-full" />
-                        </div>
-                        <div>
-                            <x-input-label for="edit-jam_kerja_effective" value="Berlaku Mulai" />
-                            <x-text-input id="edit-jam_kerja_effective" wire:model="jam_kerja_effective" type="date" class="mt-1 block w-full" />
-                            @error('jam_kerja_effective') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <select id="edit-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">Pilih jam kerja</option>
+                                @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
+                                    <option value="{{ $label }}">{{ $label }}</option>
+                                @endforeach
+                                @if($jam_kerja !== '' && ! array_key_exists($jam_kerja, \App\Models\Employee::SHIFT_OPTIONS))
+                                    <option value="{{ $jam_kerja }}">{{ $jam_kerja }} (nilai lama)</option>
+                                @endif
+                            </select>
                         </div>
                         <div class="sm:col-span-2">
                             <x-input-label for="edit-jobdesk" value="Jobdesk" />
@@ -909,7 +911,6 @@
                         <div class="preview-field"><span class="preview-label">Lokasi Kerja</span><span class="preview-value">{{ $lokasi_kerja ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kerja</span><span class="preview-value">{{ $jenis_kerja ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jam Kerja</span><span class="preview-value">{{ $jam_kerja ?: '-' }}</span></div>
-                        <div class="preview-field"><span class="preview-label">Jam Masuk</span><span class="preview-value">{{ $jam_masuk ?: '-' }}</span></div>
                         <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Jobdesk</span><span class="preview-value">{{ $jobdesk ?: '-' }}</span></div>
                     </div>
                 </div>

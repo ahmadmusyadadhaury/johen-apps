@@ -32,6 +32,8 @@ class StoreEmployeeRequest extends FormRequest
             'atasan' => 'nullable|string|max:255',
             'atasan2' => 'nullable|string|max:255',
             'status' => 'required|in:aktif,nonaktif,resign',
+            'jenis_kerja' => 'nullable|in:Operasional,Office',
+            'jam_kerja' => 'nullable|string|max:255',
             'tanggal_masuk' => 'nullable|date',
             'tanggal_resign' => 'nullable|date|after_or_equal:tanggal_masuk',
             'catatan' => 'nullable|string',

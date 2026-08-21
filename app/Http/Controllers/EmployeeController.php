@@ -121,7 +121,26 @@ class EmployeeController extends Controller
         if (auth()->user()->employee_id !== $employee->id) {
             Gate::authorize('update-data');
         }
-        $employee->update($request->validated());
+        $data = $request->validated();
+
+        // Jam kerja (shift) hanya boleh diubah oleh Super Admin/Staff HR;
+        // perubahan dicatat ke riwayat shift agar status presensi historis
+        // tetap memakai shift yang berlaku pada saat itu.
+        $newJamKerja = auth()->user()->isSuperAdminLike() ? ($data['jam_kerja'] ?? null) : null;
+        unset($data['jam_kerja']);
+
+        $oldJamKerja = $employee->jam_kerja;
+
+        $employee->update($data);
+
+        if ($newJamKerja !== null && $newJamKerja !== $oldJamKerja) {
+            $jamMasuk = Employee::SHIFT_OPTIONS[$newJamKerja] ?? null;
+            $employee->setJamKerja(
+                $newJamKerja ?: null,
+                $jamMasuk ? $jamMasuk.':00' : $employee->jam_masuk,
+                now()->toDateString()
+            );
+        }
 
         // Sync positions from pivot
         if ($request->has('position_ids')) {

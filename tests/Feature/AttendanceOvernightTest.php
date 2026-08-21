@@ -414,4 +414,142 @@ class AttendanceOvernightTest extends TestCase
         $this->assertSame('18:30:00', $att2->time_in);
         $this->assertSame('01:10:00', $att2->time_out);
     }
+
+    public function test_malam_label_checkout_past_midnight_stays_on_checkin_date(): void
+    {
+        $emp = $this->employee('001', '1', jamKerja: 'Shift Malam (19.00-24.00)');
+
+        $this->record('1', '2026-08-21 19:05:00');
+        $this->record('1', '2026-08-22 03:00:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-21');
+        $this->assertNotNull($att);
+        $this->assertSame('19:05:00', $att->time_in);
+        $this->assertSame('03:00:00', $att->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-22'));
+    }
+
+    public function test_subuh_label_attendance_belongs_to_previous_day(): void
+    {
+        $emp = $this->employee('001', '1', jamKerja: 'Shift Subuh (01.00-06.00)');
+
+        $this->record('1', '2026-08-22 01:10:00');
+        $this->record('1', '2026-08-22 05:50:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-21');
+        $this->assertNotNull($att);
+        $this->assertSame('01:10:00', $att->time_in);
+        $this->assertSame('05:50:00', $att->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-22'));
+    }
+
+    public function test_admin_malam_label_checkout_past_midnight_stays_on_checkin_date(): void
+    {
+        $emp = $this->employee('001', '1', jamKerja: 'Shift Admin Malam (19.00-06.00)');
+
+        $this->record('1', '2026-08-21 19:10:00');
+        $this->record('1', '2026-08-22 06:15:00');
+
+        $this->assertSame(1, Attendance::where('employee_id', $emp->id)->count());
+        $att = $this->attendance($emp->id, '2026-08-21');
+        $this->assertNotNull($att);
+        $this->assertSame('19:10:00', $att->time_in);
+        $this->assertSame('06:15:00', $att->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-22'));
+    }
+
+    public function test_pagi_label_early_punch_stays_on_same_day(): void
+    {
+        // Shift Pagi mulai 06.00 tidak boleh dianggap shift Subuh:
+        // punch sebelum jam 07.00 tetap tercatat di tanggal yang sama.
+        $emp = $this->employee('001', '1', jamKerja: 'Shift Pagi (07.00-12.00)');
+
+        $this->record('1', '2026-08-22 05:30:00');
+
+        $att = $this->attendance($emp->id, '2026-08-22');
+        $this->assertNotNull($att);
+        $this->assertSame('05:30:00', $att->time_in);
+        $this->assertNull($this->attendance($emp->id, '2026-08-21'));
+    }
+
+    public function test_missed_checkin_malam_checkout_punch_closes_previous_day(): void
+    {
+        // Host malam LUPA tap masuk 18-08. Tap pulang 00:58 19-08 harus
+        // menjadi jam keluar rekap tanggal 18, bukan absen masuk tanggal 19.
+        $emp = $this->employee('001', '1', Employee::SHIFT_MALAM, 'Host Free Fire (Malam)');
+
+        $this->record('1', '2026-08-19 00:58:34');
+
+        $att18 = $this->attendance($emp->id, '2026-08-18');
+        $this->assertNotNull($att18);
+        $this->assertNull($att18->time_in);
+        $this->assertSame('00:58:34', $att18->time_out);
+        $this->assertNull($this->attendance($emp->id, '2026-08-19'));
+    }
+
+    public function test_missed_checkin_cycle_records_night_session_on_checkin_date(): void
+    {
+        // Siklus penuh setelah lupa tap masuk: pulang 00:58 (rekap tgl-18),
+        // masuk 18:59 tgl-19, pulang 00:34 tgl-20 menutup sesi tgl-19.
+        $emp = $this->employee('001', '1', Employee::SHIFT_MALAM, 'Host Free Fire (Malam)');
+
+        $this->record('1', '2026-08-19 00:58:34');
+        $this->record('1', '2026-08-19 18:59:33');
+        $this->record('1', '2026-08-20 00:34:11');
+
+        $att18 = $this->attendance($emp->id, '2026-08-18');
+        $this->assertNotNull($att18);
+        $this->assertNull($att18->time_in);
+        $this->assertSame('00:58:34', $att18->time_out);
+
+        $att19 = $this->attendance($emp->id, '2026-08-19');
+        $this->assertNotNull($att19);
+        $this->assertSame('18:59:33', $att19->time_in);
+        $this->assertSame('00:34:11', $att19->time_out);
+
+        $this->assertNull($this->attendance($emp->id, '2026-08-20'));
+    }
+
+    public function test_missed_checkin_admin_malam_checkout_before_7am(): void
+    {
+        // Admin shift malam (19.00-06.00) lupa tap masuk; tap pulang 06:49
+        // pagi hari berikutnya tetap jam keluar rekap tanggal sebelumnya.
+        $emp = $this->employee('001', '1', Employee::SHIFT_ADMIN_MALAM, 'Admin Transaksi Johen Roblox');
+
+        $this->record('1', '2026-08-19 06:49:10');
+        $this->record('1', '2026-08-19 18:45:47');
+        $this->record('1', '2026-08-20 07:30:42');
+
+        $att18 = $this->attendance($emp->id, '2026-08-18');
+        $this->assertNotNull($att18);
+        $this->assertNull($att18->time_in);
+        $this->assertSame('06:49:10', $att18->time_out);
+
+        // Masuk 18:45 tgl-19 membuka sesi baru; punch 07:30 di luar jendela
+        // checkout dini hari menjadi absen masuk tgl-20.
+        $att19 = $this->attendance($emp->id, '2026-08-19');
+        $this->assertNotNull($att19);
+        $this->assertSame('18:45:47', $att19->time_in);
+        $this->assertNull($att19->time_out);
+
+        $att20 = $this->attendance($emp->id, '2026-08-20');
+        $this->assertNotNull($att20);
+        $this->assertSame('07:30:42', $att20->time_in);
+    }
+
+    public function test_day_shift_early_punch_is_not_redirected_as_checkout(): void
+    {
+        // Karyawan shift siang yang tap 06:30 tetap absen masuk hari itu,
+        // bukan jam keluar rekap kemarin.
+        $emp = $this->employee('001', '1', Employee::SHIFT_SIANG, 'Admin Transaksi Johen');
+
+        $this->record('1', '2026-08-19 06:30:00');
+
+        $this->assertNull($this->attendance($emp->id, '2026-08-18'));
+        $att19 = $this->attendance($emp->id, '2026-08-19');
+        $this->assertNotNull($att19);
+        $this->assertSame('06:30:00', $att19->time_in);
+    }
 }

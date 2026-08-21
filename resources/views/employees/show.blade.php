@@ -579,14 +579,13 @@ data-promotion-success="{{ session('promotion_success') }}"
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jenis Kerja</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jenis_kerja ?? '-' }}</span>
+                                @if(($employee->jenis_kerja ?? '') !== '')
+                                    <span class="block text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{{ \App\Models\Employee::JENIS_KERJA_OPTIONS[$employee->jenis_kerja] ?? '' }}</span>
+                                @endif
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jam Kerja</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jam_kerja ?? '-' }}</span>
-                            </div>
-                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jam Masuk (acuan telat)</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jam_masuk ? substr($employee->jam_masuk, 0, 5) : '09:00' }}</span>
                             </div>
                             <div class="px-5 py-3 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jobdesk</span>
@@ -653,7 +652,6 @@ data-promotion-success="{{ session('promotion_success') }}"
                     </div>
                 </div>
 
-                @livewire('shift-schedule-table', ['employee' => $employee])
             </div>
 
             {{-- Panel: Dokumen --}}
@@ -1377,6 +1375,37 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <option value="resign" {{ $employee->status == 'resign' ? 'selected' : '' }}>Resign</option>
                     </select>
                 </div>
+
+                @if($canManageEmployeeData)
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Jenis Kerja <span class="font-normal text-gray-400">(acuan hari libur mingguan)</span></label>
+                    <select name="jenis_kerja"
+                            class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                        <option value="">Pilih jenis kerja</option>
+                        @php $jenisKerjaTersimpan = old('jenis_kerja', $employee->jenis_kerja ?? ''); @endphp
+                        @foreach(\App\Models\Employee::JENIS_KERJA_OPTIONS as $jenis => $ket)
+                            <option value="{{ $jenis }}" {{ $jenisKerjaTersimpan === $jenis ? 'selected' : '' }}>{{ $jenis }} — {{ $ket }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Jam Kerja <span class="font-normal text-gray-400">(acuan status presensi, toleransi telat +5 menit)</span></label>
+                    @php
+                        $jamKerjaOptions = \App\Models\Employee::SHIFT_OPTIONS;
+                        $jamKerjaTersimpan = old('jam_kerja', $employee->jam_kerja ?? '');
+                    @endphp
+                    <select name="jam_kerja"
+                            class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                        <option value="">Pilih jam kerja</option>
+                        @foreach($jamKerjaOptions as $label => $mulai)
+                            <option value="{{ $label }}" {{ $jamKerjaTersimpan === $label ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                        @if($jamKerjaTersimpan !== '' && ! array_key_exists($jamKerjaTersimpan, $jamKerjaOptions))
+                            <option value="{{ $jamKerjaTersimpan }}" selected>{{ $jamKerjaTersimpan }} (nilai lama)</option>
+                        @endif
+                    </select>
+                </div>
+                @endif
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>

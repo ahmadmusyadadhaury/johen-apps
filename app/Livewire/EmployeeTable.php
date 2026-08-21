@@ -112,11 +112,12 @@ class EmployeeTable extends Component
 
     public string $catatan = '';
 
-    public function updatedJenisKerja($value): void
+    public function updatedJamKerja($value): void
     {
-        if ($value === 'Office') {
-            $this->jam_kerja = 'Senin - Jumat 08.00-17.00, Sabtu 08.00-12.00';
-            $this->jam_masuk = '08:00';
+        // Pilih shift otomatis mengisi jam masuk sebagai acuan telat
+        // (status terlambat/tepat waktu memakai shift + toleransi 5 menit).
+        if ($value && isset(Employee::SHIFT_OPTIONS[$value])) {
+            $this->jam_masuk = Employee::SHIFT_OPTIONS[$value];
         }
     }
 
@@ -389,7 +390,8 @@ class EmployeeTable extends Component
 
     public function render()
     {
-        $employees = Employee::with('divisions')
+        // listSelect: tanpa kolom foto (base64 besar) agar memori aman.
+        $employees = Employee::with('divisions')->listSelect()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nik', 'like', "%{$this->search}%")

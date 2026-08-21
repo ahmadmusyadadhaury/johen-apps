@@ -92,7 +92,11 @@ class AbsensiTable extends Component
             return;
         }
 
-        $cek = Attendance::where('employee_id', $employee->id)->where('date', today())->first();
+        // Shift Subuh yang absen dini hari (00:00-06:59) direkap pada
+        // tanggal hari sebelumnya (ikut malam sebelumnya).
+        $workDate = $employee->resolveWorkDate();
+
+        $cek = Attendance::where('employee_id', $employee->id)->where('date', $workDate)->first();
         if ($cek) {
             $this->dispatch('notify', type: 'error', message: 'Anda sudah melakukan absensi hari ini.');
             $this->closeAbsenModal();
@@ -102,13 +106,21 @@ class AbsensiTable extends Component
 
         Attendance::create([
             'employee_id' => $employee->id,
-            'date' => today(),
+            'date' => $workDate,
             'time_in' => now()->format('H:i:s'),
             'status' => $this->absenStatus === 'hadir' ? 'hadir' : $this->absenStatus,
         ]);
 
         $this->closeAbsenModal();
         $this->dispatch('notify', type: 'success', message: 'Absensi berhasil dicatat.');
+    }
+
+    public function updatedJamKerja($value): void
+    {
+        // Pilih shift otomatis mengisi jam masuk sebagai acuan telat.
+        if ($value && isset(Employee::SHIFT_OPTIONS[$value])) {
+            $this->jam_masuk = Employee::SHIFT_OPTIONS[$value];
+        }
     }
 
     public function openJamKerjaModal(int $employeeId): void
@@ -223,7 +235,7 @@ class AbsensiTable extends Component
                 ->orderBy('date', 'desc')
                 ->paginate(10);
 
-            $semuaAbsensi = Attendance::with('employee')->where('employee_id', $employee->id)->get();
+            $semuaAbsensi = Attendance::with(['employee' => fn ($q) => $q->listSelect()])->where('employee_id', $employee->id)->get();
             $totalAbsensi = $semuaAbsensi->count();
             $tepatWaktu = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && (! $a->time_in || $a->time_in <= ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
             )->count();
@@ -231,7 +243,7 @@ class AbsensiTable extends Component
             )->count();
             $totalHadir = $tepatWaktu + $terlambat;
             $attendanceHariIni = Attendance::where('employee_id', $employee->id)
-                ->whereDate('date', today())->first();
+                ->whereDate('date', $employee->resolveWorkDate())->first();
 
             return view('livewire.absensi-table', compact(
                 'employee', 'totalAbsensi', 'tepatWaktu', 'terlambat', 'totalHadir',
@@ -239,13 +251,15 @@ class AbsensiTable extends Component
             ))->with('karyawanView', true);
         }
 
-        $attendances = Attendance::with('employee.divisions')
+        // Kolom karyawan dibatasi (tanpa foto base64) agar memori aman saat
+        // daftar tim dimuat ulang setiap pagination.
+        $attendances = Attendance::with(['employee' => fn ($q) => $q->listSelect()])
             ->whereDate('date', $today)
             ->orderByRaw("CASE WHEN status = 'hadir' THEN 0 ELSE 1 END, id DESC")
             ->get()
             ->keyBy('employee_id');
 
-        $employeeQuery = Employee::with('divisions')->where('status', 'aktif');
+        $employeeQuery = Employee::query()->where('status', 'aktif')->listSelect();
 
         if ($user->isKoordinator() && $this->tab === 'tim') {
             $koordinatorEmployee = $user->employee;
