@@ -338,6 +338,7 @@ class MachineUserSyncTable extends Component
         $mapEmployees = collect();
         if ($this->showMapModal) {
             $mapEmployees = Employee::query()
+                ->select('id', 'nama', 'nik')
                 ->where(function ($q) {
                     $q->where(function ($q2) {
                         $q2->whereNull('device_user_id')
