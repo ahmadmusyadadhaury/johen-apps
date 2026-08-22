@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\BirthdayWish;
 use App\Models\Employee;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -32,6 +33,23 @@ class BirthdayWishTable extends Component
             ->orderByDesc('last_wish_at')
             ->paginate(12);
 
-        return view('livewire.birthday-wish-table', ['employees' => $employees]);
+        $now = now();
+
+        $stats = BirthdayWish::query()
+            ->selectRaw('COUNT(*) as total_ucapan')
+            ->selectRaw('COUNT(DISTINCT employee_id) as karyawan_diucapkan')
+            ->selectRaw("COALESCE(SUM(MONTH(created_at) = ? AND YEAR(created_at) = ?), 0) as ucapan_bulan_ini", [$now->month, $now->year])
+            ->first();
+
+        $ultahBulanIni = Employee::query()
+            ->where('status', 'aktif')
+            ->whereMonth('tanggal_lahir', $now->month)
+            ->count();
+
+        return view('livewire.birthday-wish-table', [
+            'employees' => $employees,
+            'stats' => $stats,
+            'ultahBulanIni' => $ultahBulanIni,
+        ]);
     }
 }

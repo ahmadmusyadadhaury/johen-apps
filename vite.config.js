@@ -4,15 +4,24 @@ import laravel from 'laravel-vite-plugin';
 
 function getLanIp() {
     const interfaces = os.networkInterfaces();
+    const candidates = [];
     for (const name of Object.keys(interfaces)) {
         const addrs = interfaces[name] ?? [];
         for (const iface of addrs) {
             if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
+                candidates.push({ name, address: iface.address });
             }
         }
     }
-    return 'localhost';
+    if (candidates.length === 0) {
+        return 'localhost';
+    }
+    // Prefer physical/private LAN ranges over virtual adapters (WSL/Hyper-V/VPN use 172.x)
+    return (
+        candidates.find((c) => /^192\.168\./.test(c.address) || /^10\./.test(c.address))
+        ?? candidates.find((c) => /^172\.(1[6-9]|2\d|3[01])\./.test(c.address))
+        ?? candidates[0]
+    ).address;
 }
 
 export default defineConfig(({ mode }) => {

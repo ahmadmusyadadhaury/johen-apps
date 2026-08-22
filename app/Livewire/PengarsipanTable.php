@@ -107,6 +107,17 @@ class PengarsipanTable extends Component
     public function render()
     {
         $arsips = Pengarsipan::latest()->paginate(10);
-        return view('livewire.pengarsipan-table', ['arsips' => $arsips]);
+
+        $stats = Pengarsipan::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("COALESCE(SUM(jenis = 'surat_edaran'), 0) as surat_edaran")
+            ->selectRaw("COALESCE(SUM(jenis = 'surat_keputusan'), 0) as surat_keputusan")
+            ->selectRaw("COALESCE(SUM(jenis = 'pemberitahuan'), 0) as pemberitahuan")
+            ->first();
+
+        return view('livewire.pengarsipan-table', [
+            'arsips' => $arsips,
+            'stats' => $stats,
+        ]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Position;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,7 +14,7 @@ class AbsensiTable extends Component
 {
     use WithPagination;
 
-    protected $queryString = ['date', 'search', 'tab'];
+    protected $queryString = ['date', 'search', 'tab', 'periode'];
 
     public string $date = '';
 
@@ -21,13 +22,12 @@ class AbsensiTable extends Component
 
     public string $tab = 'saya';
 
+    /** Bulan periode presensi (format Y-m). Periode = tgl 26 bulan lalu s.d. tgl 25 bulan terpilih. */
+    public string $periode = '';
+
     public array $statsMembers = ['tepat' => [], 'terlambat' => []];
 
     public string $statsDateLabel = '';
-
-    public bool $showAbsenModal = false;
-
-    public string $absenStatus = 'hadir';
 
     public bool $showJamKerjaModal = false;
 
@@ -45,12 +45,21 @@ class AbsensiTable extends Component
             $this->date = now()->format('Y-m-d');
         }
 
+        if ($this->periode === '') {
+            $this->periode = now()->format('Y-m');
+        }
+
         if ($this->tab === 'sinkron' && ! auth()->user()?->isSuperAdminLike()) {
             $this->tab = 'tim';
         }
     }
 
     public function updatedTab(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPeriode(): void
     {
         $this->resetPage();
     }
@@ -63,56 +72,6 @@ class AbsensiTable extends Component
     public function updatingDate(): void
     {
         $this->resetPage();
-    }
-
-    public function openAbsenModal(): void
-    {
-        $this->showAbsenModal = true;
-        $this->absenStatus = 'hadir';
-    }
-
-    public function closeAbsenModal(): void
-    {
-        $this->showAbsenModal = false;
-        $this->resetErrorBag();
-    }
-
-    public function submitAbsen(): void
-    {
-        $this->validate([
-            'absenStatus' => ['required', 'in:hadir,izin,sakit'],
-        ]);
-
-        $user = auth()->user();
-        $employee = $user->employee;
-
-        if (! $employee) {
-            $this->dispatch('notify', type: 'error', message: 'Akun Anda tidak terhubung ke data karyawan.');
-
-            return;
-        }
-
-        // Shift Subuh yang absen dini hari (00:00-06:59) direkap pada
-        // tanggal hari sebelumnya (ikut malam sebelumnya).
-        $workDate = $employee->resolveWorkDate();
-
-        $cek = Attendance::where('employee_id', $employee->id)->where('date', $workDate)->first();
-        if ($cek) {
-            $this->dispatch('notify', type: 'error', message: 'Anda sudah melakukan absensi hari ini.');
-            $this->closeAbsenModal();
-
-            return;
-        }
-
-        Attendance::create([
-            'employee_id' => $employee->id,
-            'date' => $workDate,
-            'time_in' => now()->format('H:i:s'),
-            'status' => $this->absenStatus === 'hadir' ? 'hadir' : $this->absenStatus,
-        ]);
-
-        $this->closeAbsenModal();
-        $this->dispatch('notify', type: 'success', message: 'Absensi berhasil dicatat.');
     }
 
     public function updatedJamKerja($value): void
@@ -228,14 +187,45 @@ class AbsensiTable extends Component
                     'riwayat' => $riwayat,
                     'attendanceHariIni' => null,
                     'today' => $today,
+                    'periodeLabel' => null,
+                    'periodeOptions' => collect(),
                 ]);
             }
 
+            // Periode presensi mengikuti siklus gaji: tanggal 26 bulan
+            // sebelumnya s.d. tanggal 25 bulan terpilih (mis. Januari = 26 Des
+            // s.d. 25 Jan). Riwayat dan statistik hanya menampilkan data dalam
+            // rentang tersebut.
+            try {
+                $periodeBulan = $this->periode !== ''
+                    ? Carbon::createFromFormat('Y-m', $this->periode)->startOfMonth()
+                    : now()->startOfMonth();
+            } catch (\Throwable) {
+                $periodeBulan = now()->startOfMonth();
+            }
+
+            $periodeMulai = $periodeBulan->copy()->subMonthNoOverflow()->day(26)->startOfDay();
+            $periodeSelesai = $periodeBulan->copy()->day(25)->endOfDay();
+            $periodeLabel = $periodeMulai->isoFormat('D MMM Y').' - '.$periodeSelesai->isoFormat('D MMM Y');
+
+            $periodeOptions = collect(range(0, 11))
+                ->map(fn ($i) => now()->subMonthsNoOverflow($i))
+                ->map(fn ($m) => [
+                    'value' => $m->format('Y-m'),
+                    'label' => $m->locale('id')->isoFormat('MMMM Y'),
+                ]);
+
             $riwayat = Attendance::where('employee_id', $employee->id)
+                ->where('date', '>=', $periodeMulai->toDateString())
+                ->where('date', '<', $periodeSelesai->copy()->addDay()->startOfDay()->toDateString())
                 ->orderBy('date', 'desc')
                 ->paginate(10);
 
-            $semuaAbsensi = Attendance::with(['employee' => fn ($q) => $q->listSelect()])->where('employee_id', $employee->id)->get();
+            $semuaAbsensi = Attendance::with(['employee' => fn ($q) => $q->listSelect()])
+                ->where('employee_id', $employee->id)
+                ->where('date', '>=', $periodeMulai->toDateString())
+                ->where('date', '<', $periodeSelesai->copy()->addDay()->startOfDay()->toDateString())
+                ->get();
             $totalAbsensi = $semuaAbsensi->count();
             $tepatWaktu = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && (! $a->time_in || $a->time_in <= ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
             )->count();
@@ -247,7 +237,7 @@ class AbsensiTable extends Component
 
             return view('livewire.absensi-table', compact(
                 'employee', 'totalAbsensi', 'tepatWaktu', 'terlambat', 'totalHadir',
-                'riwayat', 'attendanceHariIni', 'today'
+                'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'periodeOptions'
             ))->with('karyawanView', true);
         }
 

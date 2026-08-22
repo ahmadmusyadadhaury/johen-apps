@@ -13,37 +13,82 @@ class ExportController extends Controller
 {
     public function employees()
     {
-        $employees = Employee::with('divisions')->orderBy('nama')->get();
+        $columns = [
+            'nik', 'device_user_id', 'nama', 'email', 'no_hp',
+            'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'agama',
+            'pendidikan_terakhir', 'ukuran_baju', 'alamat',
+            'position', 'atasan', 'atasan2', 'jenis_karyawan', 'lokasi_kerja',
+            'jenis_kerja', 'jam_kerja', 'jam_masuk', 'jobdesk',
+            'no_kontak_darurat1', 'hubungan_darurat1',
+            'no_kontak_darurat2', 'hubungan_darurat2',
+            'no_bpjs', 'status_bpjs', 'status', 'tanggal_masuk', 'tanggal_resign',
+            'informasi_lowongan', 'catatan',
+        ];
+
+        $employees = Employee::query()
+            ->select(array_map(fn (string $col) => "employees.{$col}", $columns))
+            ->with(['divisions:id,nama'])
+            ->orderBy('nik')
+            ->get();
+
+        $fields = [
+            ['No', fn (Employee $e, int $i) => $i + 1],
+            ['NIK', fn (Employee $e) => $e->nik],
+            ['Nama', fn (Employee $e) => $e->nama],
+            ['Email', fn (Employee $e) => $e->email ?? '-'],
+            ['No HP', fn (Employee $e) => $e->no_hp ?? '-'],
+            ['Jenis Kelamin', fn (Employee $e) => $e->jenis_kelamin === 'L' ? 'Laki-laki' : ($e->jenis_kelamin === 'P' ? 'Perempuan' : '-')],
+            ['Tempat Lahir', fn (Employee $e) => $e->tempat_lahir ?? '-'],
+            ['Tanggal Lahir', fn (Employee $e) => $e->tanggal_lahir?->isoFormat('D MMM YYYY') ?? '-'],
+            ['Agama', fn (Employee $e) => $e->agama ?? '-'],
+            ['Pendidikan Terakhir', fn (Employee $e) => $e->pendidikan_terakhir ?? '-'],
+            ['Ukuran Baju', fn (Employee $e) => $e->ukuran_baju ?? '-'],
+            ['Alamat', fn (Employee $e) => $e->alamat ?? '-'],
+            ['Jabatan', fn (Employee $e) => $e->position ?? '-'],
+            ['Divisi', fn (Employee $e) => $e->divisionNames() ?: '-'],
+            ['Atasan', fn (Employee $e) => $e->atasan ?? '-'],
+            ['Atasan 2', fn (Employee $e) => $e->atasan2 ?? '-'],
+            ['Jenis Karyawan', fn (Employee $e) => $e->jenis_karyawan ?? '-'],
+            ['Lokasi Kerja', fn (Employee $e) => $e->lokasi_kerja ?? '-'],
+            ['Jenis Kerja', fn (Employee $e) => $e->jenis_kerja ?? '-'],
+            ['Jam Kerja', fn (Employee $e) => $e->jam_kerja ?? '-'],
+            ['Jam Masuk', fn (Employee $e) => $e->jam_masuk ?? '-'],
+            ['Jobdesk', fn (Employee $e) => $e->jobdesk ?? '-'],
+            ['No Kontak Darurat 1', fn (Employee $e) => $e->no_kontak_darurat1 ?? '-'],
+            ['Hubungan Darurat 1', fn (Employee $e) => $e->hubungan_darurat1 ?? '-'],
+            ['No Kontak Darurat 2', fn (Employee $e) => $e->no_kontak_darurat2 ?? '-'],
+            ['Hubungan Darurat 2', fn (Employee $e) => $e->hubungan_darurat2 ?? '-'],
+            ['No BPJS', fn (Employee $e) => $e->no_bpjs ?? '-'],
+            ['Status BPJS', fn (Employee $e) => $e->status_bpjs ?? '-'],
+            ['Status', fn (Employee $e) => ucfirst($e->status)],
+            ['Tanggal Masuk', fn (Employee $e) => $e->tanggal_masuk?->isoFormat('D MMM YYYY') ?? '-'],
+            ['Tanggal Resign', fn (Employee $e) => $e->tanggal_resign?->isoFormat('D MMM YYYY') ?? '-'],
+            ['Device User ID', fn (Employee $e) => $e->device_user_id ?? '-'],
+            ['Informasi Lowongan', fn (Employee $e) => $e->informasi_lowongan ?? '-'],
+            ['Catatan', fn (Employee $e) => $e->catatan ?? '-'],
+        ];
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Karyawan');
 
-        $headers = ['No', 'NIK', 'Nama', 'Email', 'No HP', 'Jenis Kelamin', 'Tempat Lahir', 'Tanggal Lahir', 'Jabatan', 'Divisi', 'Status', 'Tanggal Masuk'];
-        foreach ($headers as $i => $h) {
-            $sheet->setCellValue(chr(65 + $i) . '1', $h);
-            $sheet->getStyle(chr(65 + $i) . '1')->getFont()->setBold(true);
+        foreach ($fields as $i => [$header]) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->setCellValue($col . '1', $header);
+            $sheet->getStyle($col . '1')->getFont()->setBold(true);
         }
 
         $row = 2;
         foreach ($employees as $idx => $emp) {
-            $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $emp->nik);
-            $sheet->setCellValue('C' . $row, $emp->nama);
-            $sheet->setCellValue('D' . $row, $emp->email ?? '-');
-            $sheet->setCellValue('E' . $row, $emp->no_hp ?? '-');
-            $sheet->setCellValue('F' . $row, $emp->jenis_kelamin === 'L' ? 'Laki-laki' : ($emp->jenis_kelamin === 'P' ? 'Perempuan' : '-'));
-            $sheet->setCellValue('G' . $row, $emp->tempat_lahir ?? '-');
-            $sheet->setCellValue('H' . $row, $emp->tanggal_lahir?->isoFormat('D MMM YYYY') ?? '-');
-            $sheet->setCellValue('I' . $row, $emp->position ?? '-');
-            $sheet->setCellValue('J' . $row, $emp->divisionNames() ?: '-');
-            $sheet->setCellValue('K' . $row, ucfirst($emp->status));
-            $sheet->setCellValue('L' . $row, $emp->tanggal_masuk?->isoFormat('D MMM YYYY') ?? '-');
+            foreach ($fields as $i => [, $resolver]) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                $sheet->setCellValue($col . $row, $resolver($emp, $idx));
+            }
             $row++;
         }
 
-        foreach (range('A', 'L') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+        for ($i = 1; $i <= count($fields); $i++) {
+            $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
 
         $writer = new Xlsx($spreadsheet);
@@ -58,7 +103,7 @@ class ExportController extends Controller
 
     public function divisions()
     {
-        $divisions = Division::with('employees')->orderBy('nama')->get();
+        $divisions = Division::withCount('employees')->orderBy('nama')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -76,7 +121,7 @@ class ExportController extends Controller
             $sheet->setCellValue('B' . $row, $div->nama);
             $sheet->setCellValue('C' . $row, $div->koordinator ?? '-');
             $sheet->setCellValue('D' . $row, $div->deskripsi ?? '-');
-            $sheet->setCellValue('E' . $row, $div->employees->count());
+            $sheet->setCellValue('E' . $row, $div->employees_count);
             $sheet->setCellValue('F' . $row, $div->is_active ? 'Aktif' : 'Nonaktif');
             $row++;
         }
@@ -97,7 +142,8 @@ class ExportController extends Controller
 
     public function kontrakKerja()
     {
-        $contracts = EmployeeContract::with('employee.divisions')
+        $contracts = EmployeeContract::with(['employee' => fn ($q) => $q->listSelect()])
+            ->with('employee.divisions:id,nama')
             ->orderBy('tanggal_mulai', 'desc')
             ->get();
 

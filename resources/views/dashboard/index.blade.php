@@ -1176,6 +1176,289 @@
         @endunless
     </div>
 
+    {{-- Grafik Aktivitas & Aktivitas Terbaru --}}
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+        {{-- Grafik Aktivitas --}}
+        <div class="lg:col-span-3 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm" x-data="activityChart()">
+            <div class="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div class="min-w-0">
+                    <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Grafik Aktivitas</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="activeRange.subtitle"></p>
+                </div>
+                <div class="relative shrink-0" @click.outside="filterOpen = false">
+                    <button type="button" @click="filterOpen = !filterOpen"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:border-primary-200 dark:hover:border-primary-700 transition-colors">
+                        <span x-text="activeRange.label"></span>
+                        <svg class="w-3.5 h-3.5 text-gray-400 transition-transform" :class="filterOpen && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="filterOpen" x-cloak
+                         x-transition:enter="ease-out duration-150"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         class="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-100 dark:ring-gray-700 z-20 py-1">
+                        <template x-for="range in ranges" :key="range.days">
+                            <button type="button" @click="setDays(range.days)"
+                                    class="w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium text-left transition-colors"
+                                    :class="range.days === days ? 'text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-900/20' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+                                <span x-text="range.label"></span>
+                                <svg x-show="range.days === days" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="px-5 sm:px-6 py-5">
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3">
+                    <template x-for="s in series" :key="'legend-'+s.name">
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                            <span class="h-2 w-2 rounded-full" :style="`background:${s.color}`"></span>
+                            <span x-text="s.name"></span>
+                        </span>
+                    </template>
+                </div>
+                <div class="relative w-full transition-opacity duration-200" :class="loading && 'opacity-40 pointer-events-none'" style="aspect-ratio: 720 / 280;" @mouseleave="hover = null">
+                    <svg class="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet">
+                        <template x-for="(t, idx) in ticks" :key="'grid-'+idx">
+                            <line x1="38" :x2="706" :y1="t.y" :y2="t.y" class="stroke-gray-100 dark:stroke-gray-800" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+                        </template>
+                        <template x-for="(t, idx) in ticks" :key="'ylabel-'+idx">
+                            <text x="32" :y="t.y + 3.5" text-anchor="end" font-size="10" class="fill-gray-400 dark:fill-gray-500" x-text="t.label"></text>
+                        </template>
+                        <template x-for="(xl, idx) in xLabels" :key="'xlabel-'+idx">
+                            <text :x="xl.x" :y="272" text-anchor="middle" font-size="10" class="fill-gray-400 dark:fill-gray-500" x-show="xl.show" x-text="xl.label"></text>
+                        </template>
+                        <template x-for="s in series" :key="'area-'+s.name">
+                            <path :d="areaPath(s)" :fill="s.color" fill-opacity="0.07"></path>
+                        </template>
+                        <template x-for="s in series" :key="'line-'+s.name">
+                            <path :d="linePath(s)" fill="none" :stroke="s.color" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                        </template>
+                        <line x-show="hover !== null" :x1="hoverX" :x2="hoverX" :y1="14" :y2="252" class="stroke-gray-300 dark:stroke-gray-600" stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></line>
+                        <template x-for="s in series" :key="'dot-'+s.name">
+                            <g x-show="hover !== null && s.data[hover] !== undefined">
+                                <circle :cx="hoverX" :cy="yAt(s.data[hover] ?? 0)" r="4.5" class="fill-white dark:fill-gray-900" :stroke="s.color" stroke-width="2.5" vector-effect="non-scaling-stroke"></circle>
+                            </g>
+                        </template>
+                        <template x-for="slot in hoverSlots" :key="'slot-'+slot.i">
+                            <rect :x="slot.x" :y="14" :width="slot.w" :height="238" fill="transparent" @mouseenter="hover = slot.i"></rect>
+                        </template>
+                    </svg>
+                    <div x-show="hover !== null" x-cloak
+                         class="pointer-events-none absolute z-10 min-w-[150px] rounded-xl bg-gray-900/95 dark:bg-gray-800/95 px-3 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur"
+                         :style="`left: ${tooltipLeft()}%; top: 8px; transform: translate(-50%, 0);`">
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-white/50 mb-1" x-text="hover !== null ? labels[hover] : ''"></p>
+                        <template x-for="s in series" :key="'tooltip-'+s.name">
+                            <div class="flex items-center justify-between gap-4 py-0.5">
+                                <span class="flex items-center gap-1.5 text-[11px] text-white/80">
+                                    <span class="h-2 w-2 rounded-full shrink-0" :style="`background:${s.color}`"></span>
+                                    <span x-text="s.name"></span>
+                                </span>
+                                <span class="text-[11px] font-bold text-white tabular-nums" x-text="hover !== null ? (s.data[hover] ?? 0) : ''"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Aktivitas Terbaru --}}
+        <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                    <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">Aktivitas Terbaru</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Aktivitas terbaru yang terjadi di sistem</p>
+                </div>
+                <span class="text-xs font-semibold text-gray-400 cursor-default shrink-0">Lihat Selengkapnya &rarr;</span>
+            </div>
+            <div class="flex-1 divide-y divide-gray-50 dark:divide-gray-800">
+                @forelse($recentActivities as $activity)
+                <div class="flex items-start gap-3 px-5 sm:px-6 py-3.5">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-sm {{ [
+                        'meeting' => 'bg-gradient-to-br from-teal-500 to-cyan-500',
+                        'pengajuan' => 'bg-gradient-to-br from-violet-500 to-purple-500',
+                        'asset' => 'bg-gradient-to-br from-blue-500 to-indigo-500',
+                        'pembayaran' => 'bg-gradient-to-br from-emerald-500 to-green-500',
+                        'presensi' => 'bg-gradient-to-br from-amber-500 to-orange-500',
+                    ][$activity['type']] ?? 'bg-gradient-to-br from-gray-400 to-gray-500' }}">
+                        @switch($activity['type'])
+                            @case('meeting')
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            @break
+                            @case('pengajuan')
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"/></svg>
+                            @break
+                            @case('asset')
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                            @break
+                            @case('pembayaran')
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"/></svg>
+                            @break
+                            @case('presensi')
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            @break
+                            @default
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        @endswitch
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $activity['title'] }}</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{{ $activity['detail'] }}</p>
+                    </div>
+                    <span class="shrink-0 ml-2 text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap" title="{{ $activity['at_full'] }}">{{ $activity['time_ago'] }}</span>
+                </div>
+                @empty
+                <div class="flex items-center justify-center flex-1 py-10">
+                    <div class="text-center">
+                        <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-xl bg-gray-100 dark:bg-gray-800">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-sm text-gray-400 dark:text-gray-500">Belum ada aktivitas</p>
+                    </div>
+                </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
 @endif
+
+@push('scripts')
+<script>
+    function activityChart() {
+        return {
+            padL: 38,
+            padR: 14,
+            padT: 14,
+            padB: 28,
+            W: 720,
+            H: 280,
+            filterOpen: false,
+            loading: false,
+            days: 7,
+            hover: null,
+            labels: @json($activityChart['labels']),
+            series: @json($activityChart['series']),
+            apiUrl: @json(route('dashboard.activity-chart')),
+            ranges: [
+                { days: 1, label: 'Hari Ini', subtitle: 'Aktivitas sistem hari ini' },
+                { days: 7, label: '7 Hari Terakhir', subtitle: 'Aktivitas sistem dalam 7 hari terakhir' },
+                { days: 30, label: '30 Hari Terakhir', subtitle: 'Aktivitas sistem dalam 30 hari terakhir' },
+            ],
+            get activeRange() {
+                return this.ranges.find((r) => r.days === this.days) || this.ranges[1];
+            },
+            get plotW() {
+                return this.W - this.padL - this.padR;
+            },
+            get plotH() {
+                return this.H - this.padT - this.padB;
+            },
+            get maxValue() {
+                const raw = Math.max(1, ...this.series.flatMap((s) => s.data));
+                const step = Math.max(1, Math.ceil(raw / 4));
+                return step * 4;
+            },
+            get ticks() {
+                const lines = [];
+                for (let i = 0; i <= 4; i++) {
+                    lines.push({
+                        y: this.padT + this.plotH * (1 - i / 4),
+                        label: Math.round(this.maxValue * i / 4),
+                    });
+                }
+                return lines;
+            },
+            get xLabels() {
+                const n = this.labels.length;
+                const every = n <= 7 ? 1 : Math.ceil(n / 7);
+                return this.labels.map((label, i) => ({
+                    x: this.xAt(i),
+                    label,
+                    show: i % every === 0,
+                }));
+            },
+            get hoverSlots() {
+                const n = this.labels.length;
+                return this.labels.map((_, i) => {
+                    let start;
+                    let end;
+                    if (n === 1) {
+                        start = this.padL;
+                        end = this.padL + this.plotW;
+                    } else {
+                        start = i === 0 ? this.padL : (this.xAt(i - 1) + this.xAt(i)) / 2;
+                        end = i === n - 1 ? this.padL + this.plotW : (this.xAt(i) + this.xAt(i + 1)) / 2;
+                    }
+                    return { x: start, w: Math.max(1, end - start), i };
+                });
+            },
+            get hoverX() {
+                return this.hover === null ? 0 : this.xAt(this.hover);
+            },
+            xAt(i) {
+                const n = this.labels.length;
+                if (n <= 1) return this.padL + this.plotW / 2;
+                return this.padL + (i * this.plotW / (n - 1));
+            },
+            yAt(v) {
+                return this.padT + this.plotH * (1 - v / this.maxValue);
+            },
+            pointsFor(s) {
+                return s.data.map((v, i) => [this.xAt(i), this.yAt(v)]);
+            },
+            linePath(s) {
+                const pts = this.pointsFor(s);
+                if (!pts.length) return '';
+                if (pts.length === 1) return `M ${pts[0][0]},${pts[0][1]}`;
+                let d = `M ${pts[0][0]},${pts[0][1]}`;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[i - 1] || pts[i];
+                    const p1 = pts[i];
+                    const p2 = pts[i + 1];
+                    const p3 = pts[i + 2] || p2;
+                    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+                    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+                    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+                    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+                    d += ` C ${c1x.toFixed(2)},${c1y.toFixed(2)} ${c2x.toFixed(2)},${c2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+                }
+                return d;
+            },
+            areaPath(s) {
+                const pts = this.pointsFor(s);
+                if (pts.length < 2) return '';
+                const bottom = this.padT + this.plotH;
+                return `${this.linePath(s)} L ${pts[pts.length - 1][0].toFixed(2)},${bottom} L ${pts[0][0].toFixed(2)},${bottom} Z`;
+            },
+            tooltipLeft() {
+                if (this.hover === null) return 0;
+                return (this.xAt(this.hover) / this.W) * 100;
+            },
+            async setDays(days) {
+                this.filterOpen = false;
+                if (days === this.days) return;
+                this.loading = true;
+                this.days = days;
+                try {
+                    const res = await fetch(`${this.apiUrl}?days=${days}`, {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    });
+                    if (!res.ok) throw new Error('Gagal memuat grafik aktivitas');
+                    const json = await res.json();
+                    this.labels = json.labels;
+                    this.series = json.series;
+                    this.hover = null;
+                } catch (e) {
+                    if (window.Alpine && window.Alpine.store('toast')) {
+                        window.Alpine.store('toast').add('error', e.message || 'Gagal memuat grafik aktivitas.');
+                    }
+                } finally {
+                    this.loading = false;
+                }
+            },
+        };
+    }
+</script>
+@endpush
 
 </x-app-layout>

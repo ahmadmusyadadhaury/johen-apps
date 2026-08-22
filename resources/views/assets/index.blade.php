@@ -523,9 +523,12 @@
                             <td class="table-cell font-mono text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $v['nomor_mesin'] ?? '-' }}</td>
                             <td class="table-cell">
                                 @if(!empty($v['foto']))
-                                <a href="{{ $v['foto'] }}" target="_blank" class="inline-flex">
-                                    <img src="{{ $v['foto'] }}" alt="foto" class="h-11 w-14 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700">
-                                </a>
+                                <button type="button" @click="showPhoto(@js($v['foto']), @js($v['nama_kendaraan'] ?? $a->name))" class="group relative inline-flex overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300 hover:ring-blue-400 dark:hover:ring-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                                    <img src="{{ $v['foto'] }}" alt="foto {{ $v['nama_kendaraan'] ?? $a->name }}" class="h-11 w-14 rounded-lg object-cover transition-transform duration-300 group-hover:scale-110">
+                                    <span class="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition-all duration-300 group-hover:bg-slate-900/40 group-hover:opacity-100">
+                                        <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    </span>
+                                </button>
                                 @else
                                     <span class="text-gray-400 dark:text-gray-500">-</span>
                                 @endif
@@ -884,6 +887,57 @@
                 </div>
             </div>
         </div>
+
+        {{-- Photo Lightbox Modal --}}
+        <div x-show="photoOpen"
+             x-cloak
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8"
+             @keydown.escape.window="photoOpen = false">
+            <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-md dark:bg-slate-950/85" @click="photoOpen = false"></div>
+            <div x-show="photoOpen"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-[0.94]"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-[0.94]"
+                 @click.stop
+                 class="relative flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-[0_48px_120px_-32px_rgba(8,60,150,0.45)] ring-1 ring-gray-200/70 dark:bg-slate-900 dark:shadow-[0_48px_120px_-30px_rgba(2,8,23,0.8)] dark:ring-white/10">
+                <div class="flex items-center justify-between gap-4 px-6 py-4">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-violet-600 text-white shadow-lg shadow-primary-500/30">
+                            <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M18 6h.008v.008H18V6z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5A1.5 1.5 0 0021.75 19.5V4.5A1.5 1.5 0 0020.25 3H3.75A1.5 1.5 0 002.25 4.5v15A1.5 1.5 0 003.75 21z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-white/50">Foto Kendaraan</p>
+                            <h3 class="truncate font-display text-lg font-bold text-gray-900 dark:text-white" x-text="photoName"></h3>
+                        </div>
+                    </div>
+                    <button type="button" @click="photoOpen = false"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-all duration-300 hover:rotate-90 hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-white/10 dark:text-white/90 dark:hover:bg-white/20 dark:hover:text-white dark:focus-visible:ring-white/70">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="flex min-h-0 flex-1 items-center justify-center overflow-auto p-6 pt-0">
+                    <img :src="photoUrl" :alt="photoName"
+                         class="max-h-[72vh] max-w-full rounded-2xl object-contain shadow-xl ring-1 ring-gray-200 dark:shadow-2xl dark:ring-white/15">
+                </div>
+                <div class="flex items-center justify-end border-t border-gray-100 px-6 py-3 dark:border-white/10">
+                    <a :href="photoUrl" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3.5 py-1.5 text-xs font-semibold text-gray-600 ring-1 ring-gray-200 transition-colors hover:bg-gray-200 hover:text-gray-800 dark:bg-white/10 dark:text-white/80 dark:ring-white/15 dark:hover:bg-white/20 dark:hover:text-white">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                        Buka di tab baru
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -893,6 +947,9 @@
                 open: false,
                 loading: false,
                 d: {},
+                photoOpen: false,
+                photoUrl: '',
+                photoName: '',
                 urlTemplate: @json(route('assets.detail', ['asset' => '__ID__'])),
                 conditionLabels: { baik: 'Baik', rusak_ringan: 'Rusak Ringan', rusak_berat: 'Rusak Berat' },
                 statusLabels: { tersedia: 'Tersedia', dipinjam: 'Dipinjam', dalam_perbaikan: 'Perbaikan', dihapuskan: 'Dihapuskan' },
@@ -928,6 +985,11 @@
                     } finally {
                         this.loading = false;
                     }
+                },
+                showPhoto(url, name) {
+                    this.photoUrl = url;
+                    this.photoName = name || 'Foto Aset';
+                    this.photoOpen = true;
                 },
                 barcode() {
                     const d = this.d || {};
@@ -975,7 +1037,6 @@
                             label: f.label,
                             value: f.value,
                         })) : []),
-                        { label: 'Deskripsi', value: d.description, rich: true, full: true },
                     ].filter((r) => r.value !== null && r.value !== undefined && r.value !== '');
                 },
             };

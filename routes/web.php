@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/dashboard/ucapan-ultah', [DashboardController::class, 'storeBirthdayWish'])->name('dashboard.birthday-wish');
     Route::post('/dashboard/ucapan-ultah/sembunyikan', [DashboardController::class, 'hideBirthdayBanner'])->name('dashboard.birthday-banner.hide');
     Route::get('/dashboard/divisi/{division}', [DashboardController::class, 'division'])->name('dashboard.division');
+    Route::get('/dashboard/activity-chart', [DashboardController::class, 'activityChart'])->name('dashboard.activity-chart');
 
     Route::prefix('hris')->name('hris.')->group(function () {
         Route::resource('employees', EmployeeController::class);

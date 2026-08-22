@@ -239,7 +239,7 @@ public function detail(Asset $asset)
         } elseif ($asset->category?->name === 'Kendaraan') {
             $response['fields'] = $this->vehicleFields($asset->metadata);
             $response['photo'] = $asset->photo;
-            $response['description'] = $asset->description;
+            $response['description'] = null;
         } elseif ($asset->category?->name === 'Sosial Media') {
             $response['fields'] = $this->sosialMediaFields($asset->metadata);
             $response['condition'] = null;

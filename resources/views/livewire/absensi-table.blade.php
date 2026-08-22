@@ -44,7 +44,7 @@
                     <span class="badge-info">Total</span>
                 </div>
                 <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalAbsensi }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Absensi Saya</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Absensi Periode Ini</p>
             </div>
 
             <div class="stat-card group">
@@ -86,19 +86,26 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
                 <div>
                     <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Riwayat Absensi Saya</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $employee?->nama ?? '-' }}</p>
+                    @if($periodeLabel)
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Periode: {{ $periodeLabel }}
+                        </p>
+                    @endif
                 </div>
-                @if($attendanceHariIni)
-                    <span class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Sudah Absen Hari Ini
-                    </span>
-                @else
-                    <button wire:click="openAbsenModal" class="btn-primary text-xs py-2 shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                        Absen Hari Ini
-                    </button>
-                @endif
+                <div class="flex items-center gap-3 shrink-0">
+                    <select wire:model.live="periode" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        @foreach($periodeOptions as $opt)
+                            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
+                        @endforeach
+                    </select>
+                    @if($attendanceHariIni)
+                        <span class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Sudah Absen Hari Ini
+                        </span>
+                    @endif
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -166,60 +173,6 @@
             @endif
         </div>
 
-        <template x-teleport="body">
-        {{-- ABSEN MODAL --}}
-        <div x-data="{ open: $wire.entangle('showAbsenModal') }"
-             x-show="open" x-cloak
-             class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
-             @click="open = false">
-            <div @click.stop class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Absen Hari Ini</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ now()->format('d M Y') }}</p>
-                    </div>
-                    <button wire:click="closeAbsenModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-
-                <form wire:submit.prevent="submitAbsen" class="space-y-4">
-                    <div>
-                        <x-input-label value="Status Kehadiran *" />
-                        <div class="mt-2 grid grid-cols-3 gap-3">
-                            <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
-                                   :class="'hadir' === $wire.absenStatus ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
-                                <input type="radio" wire:model="absenStatus" value="hadir" class="sr-only">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span>Hadir</span>
-                            </label>
-                            <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
-                                   :class="'izin' === $wire.absenStatus ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
-                                <input type="radio" wire:model="absenStatus" value="izin" class="sr-only">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                                <span>Izin</span>
-                            </label>
-                            <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
-                                   :class="'sakit' === $wire.absenStatus ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
-                                <input type="radio" wire:model="absenStatus" value="sakit" class="sr-only">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <span>Sakit</span>
-                            </label>
-                        </div>
-                        @error('absenStatus') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <button type="button" wire:click="closeAbsenModal" class="btn-secondary text-xs">Batal</button>
-                        <button type="submit" class="btn-primary text-xs">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                            Kirim
-                        </button>
-                    </div>
-                </form>
-        </div>
-    </div>
-    </template>
     @else
         {{-- Admin/Direksi Stats --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6"

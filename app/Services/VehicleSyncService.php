@@ -144,7 +144,7 @@ class VehicleSyncService
     private function normalize(array $item): array
     {
         $condition = $this->mapCondition($item['kondisi'] ?? $item['condition'] ?? null);
-        $photo = $this->nullable($item['foto'] ?? $item['photo'] ?? null);
+        $photo = $this->resolvePhotoUrl($item['foto'] ?? $item['photo'] ?? null);
         $code = $this->nullable($item['plat_nomor'] ?? $item['code'] ?? $item['kode_aset'] ?? null);
         $id = $this->nullable($item['id'] ?? null);
 
@@ -164,7 +164,7 @@ class VehicleSyncService
             'location' => $this->nullable($item['lokasi_unit'] ?? $item['ruangan'] ?? $item['location'] ?? null),
             'condition' => $condition,
             'status' => strtolower($this->nullable($item['status_pajak'] ?? $item['status'] ?? '') ?? '') === 'mati' ? 'dihapuskan' : 'tersedia',
-            'description' => $this->buildDescription($item),
+            'description' => null,
             'photo' => $photo,
             'metadata' => [
                 'nama_kendaraan' => $this->nullable($item['nama_kendaraan'] ?? null),
@@ -188,53 +188,6 @@ class VehicleSyncService
         ];
     }
 
-    private function buildDescription(array $item): ?string
-    {
-        $parts = [];
-
-        if ($plat = $this->nullable($item['plat_nomor'] ?? null)) {
-            $parts[] = 'Nomor Polisi: '.$plat;
-        }
-        if ($jenis = $this->nullable($item['jenis_kendaraan'] ?? null)) {
-            $parts[] = 'Jenis: '.$jenis;
-        }
-        if ($merk = $this->nullable($item['merk_tipe'] ?? null)) {
-            $parts[] = 'Merk/Tipe: '.$merk;
-        }
-        if ($tahun = $this->nullable($item['tahun'] ?? null)) {
-            $parts[] = 'Tahun: '.$tahun;
-        }
-        if ($warna = $this->nullable($item['warna'] ?? null)) {
-            $parts[] = 'Warna: '.$warna;
-        }
-        if ($rangka = $this->nullable($item['nomor_rangka'] ?? null)) {
-            $parts[] = 'Nomor Rangka: '.$rangka;
-        }
-        if ($mesin = $this->nullable($item['nomor_mesin'] ?? null)) {
-            $parts[] = 'Nomor Mesin: '.$mesin;
-        }
-        if ($status = $this->nullable($item['status_pajak'] ?? null)) {
-            $parts[] = 'Status Pajak: '.$status;
-        }
-        if ($tahunan = $this->nullableDate($item['pajak_tahunan'] ?? null)) {
-            $parts[] = 'Pajak Tahunan: '.$tahunan;
-        }
-        if ($tahun5 = $this->nullableDate($item['pajak_5_tahun'] ?? null)) {
-            $parts[] = 'Pajak 5 Tahun: '.$tahun5;
-        }
-        if ($keperluan = $this->nullable($item['keperluan'] ?? null)) {
-            $parts[] = 'Keterangan: '.$keperluan;
-        }
-        if ($pic = $this->nullable($item['pic'] ?? null)) {
-            $parts[] = 'PIC: '.$pic;
-        }
-        if ($jabatan = $this->nullable($item['jabatan'] ?? null)) {
-            $parts[] = 'Jabatan: '.$jabatan;
-        }
-
-        return $parts ? implode(' | ', $parts) : null;
-    }
-
     private function mapCondition(mixed $value): string
     {
         $value = is_string($value) ? strtolower(trim($value)) : null;
@@ -253,6 +206,19 @@ class VehicleSyncService
         }
 
         return (string) $value;
+    }
+
+    private function resolvePhotoUrl(mixed $value): ?string
+    {
+        $photo = $this->nullable($value);
+
+        if (! $photo || preg_match('/^https?:\/\//i', $photo)) {
+            return $photo;
+        }
+
+        $base = rtrim((string) config('services.vehicle_api.url'), '/');
+
+        return $base !== '' ? $base.'/storage/'.ltrim($photo, '/') : $photo;
     }
 
     private function nullableDate(mixed $value): ?string

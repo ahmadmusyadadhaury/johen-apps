@@ -148,7 +148,9 @@ class SosialMediaSyncService
     {
         $id = $item['id'] ?? null;
         $username = $this->nullable($item['username'] ?? null);
-        $code = $username ?: ($id !== null ? 'SOSMED-'.$id : (string) ($item['code'] ?? ''));
+        // ID dipakai sebagai kunci utama agar unik walaupun ada username ganda
+        // di website utama (username saja bisa menimpa baris akun lain).
+        $code = $id !== null ? 'SOSMED-'.$id : ($username ?: (string) ($item['code'] ?? ''));
 
         return [
             'code' => (string) $code,

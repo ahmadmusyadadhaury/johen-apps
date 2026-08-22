@@ -84,6 +84,8 @@ class DashboardController extends Controller
         $expiringContracts = $this->dashboardService->getExpiringContracts();
         $expiringContractCount = count($expiringContracts);
         $meetingStats = $this->dashboardService->getMeetingStats();
+        $activityChart = $this->dashboardService->getActivityChartData(7);
+        $recentActivities = $this->dashboardService->getRecentActivities();
 
         $managerReviewStats = $user->isManager()
             ? $this->dashboardService->getManagerReviewStats($user)
@@ -104,7 +106,15 @@ class DashboardController extends Controller
             'latestPayroll', 'pendingLeaveRequests', 'pendingLeaveCount',
             'expiringContracts', 'expiringContractCount', 'meetingStats',
             'assetStats', 'koordinatorStats', 'managerReviewStats', 'employee',
+            'activityChart', 'recentActivities',
         ), $bannerData));
+    }
+
+    public function activityChart(Request $request): JsonResponse
+    {
+        return response()->json(
+            $this->dashboardService->getActivityChartData($request->integer('days', 7))
+        );
     }
 
     public function storeBirthdayWish(Request $request)

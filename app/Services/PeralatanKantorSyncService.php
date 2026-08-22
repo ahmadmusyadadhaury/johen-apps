@@ -142,20 +142,10 @@ class PeralatanKantorSyncService
             return collect();
         }
 
-        return collect($items)
-            ->filter(fn ($item) => $this->isPeralatanKantor((array) $item))
-            ->values();
-    }
-
-    private function isPeralatanKantor(array $item): bool
-    {
-        $subKategori = $item['sub_kategori'] ?? $item['kategori'] ?? null;
-
-        if (! is_string($subKategori)) {
-            return false;
-        }
-
-        return strtolower(trim($subKategori)) === 'peralatan kantor';
+        // Endpoint /api/peralatan-kantor sudah terbatas pada kategori peralatan
+        // kantor; sub-kategori (bagunan, elektronik, furniture, atk, dst.) tetap
+        // diikutkan agar jumlahnya sama dengan website utama.
+        return collect($items)->values();
     }
 
     private function normalize(array $item): array

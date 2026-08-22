@@ -144,4 +144,59 @@ class AbsensiDateFilterTest extends TestCase
         $component->assertSet('date', '2026-08-14');
         $component->assertSet('tab', 'tim');
     }
+
+    public function test_own_view_shows_only_current_payroll_period(): void
+    {
+        $user = $this->superAdmin();
+        $this->actingAs($user);
+
+        $emp = $this->employee('010');
+        $user->employee_id = $emp->id;
+        $user->save();
+
+        // Periode gaji berjalan: tanggal 26 bulan sebelumnya s.d. tanggal 25
+        // bulan ini. Dua record di dalam periode, dua di luar.
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->subMonthNoOverflow()->day(27)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->day(25)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->subMonthNoOverflow()->day(25)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->day(26)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+
+        $component = Livewire::test(AbsensiTable::class)
+            ->set('tab', 'saya');
+
+        $component->assertViewHas('riwayat', function ($riwayat) use ($emp) {
+            return $riwayat->getCollection()->every(fn ($a) => $a->employee_id === $emp->id)
+                && $riwayat->total() === 2
+                && $riwayat->contains(fn ($a) => $a->date->toDateString() === now()->subMonthNoOverflow()->day(27)->toDateString())
+                && $riwayat->contains(fn ($a) => $a->date->toDateString() === now()->day(25)->toDateString());
+        });
+
+        $component->assertViewHas('periodeLabel');
+    }
+
+    public function test_own_view_period_filter_selects_previous_month_cycle(): void
+    {
+        $user = $this->superAdmin();
+        $this->actingAs($user);
+
+        $emp = $this->employee('011');
+        $user->employee_id = $emp->id;
+        $user->save();
+
+        // Periode bulan lalu: tgl 26 dua bulan lalu s.d. tgl 25 bulan lalu.
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->subMonthsNoOverflow(2)->day(27)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->subMonthNoOverflow()->day(24)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+        // Di luar periode bulan lalu (masuk periode berjalan).
+        Attendance::create(['employee_id' => $emp->id, 'date' => now()->subMonthNoOverflow()->day(26)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
+
+        $component = Livewire::test(AbsensiTable::class)
+            ->set('tab', 'saya')
+            ->set('periode', now()->subMonthNoOverflow()->format('Y-m'));
+
+        $component->assertViewHas('riwayat', function ($riwayat) {
+            return $riwayat->total() === 2
+                && $riwayat->contains(fn ($a) => $a->date->toDateString() === now()->subMonthsNoOverflow(2)->day(27)->toDateString())
+                && $riwayat->contains(fn ($a) => $a->date->toDateString() === now()->subMonthNoOverflow()->day(24)->toDateString());
+        });
+    }
 }
