@@ -189,6 +189,7 @@ class AbsensiTable extends Component
                     'today' => $today,
                     'periodeLabel' => null,
                     'periodeOptions' => collect(),
+                    'mingguLiburHariIni' => false,
                 ]);
             }
 
@@ -215,29 +216,64 @@ class AbsensiTable extends Component
                     'label' => $m->locale('id')->isoFormat('MMMM Y'),
                 ]);
 
-            $riwayat = Attendance::where('employee_id', $employee->id)
-                ->where('date', '>=', $periodeMulai->toDateString())
-                ->where('date', '<', $periodeSelesai->copy()->addDay()->startOfDay()->toDateString())
-                ->orderBy('date', 'desc')
-                ->paginate(10);
-
             $semuaAbsensi = Attendance::with(['employee' => fn ($q) => $q->listSelect()])
                 ->where('employee_id', $employee->id)
                 ->where('date', '>=', $periodeMulai->toDateString())
                 ->where('date', '<', $periodeSelesai->copy()->addDay()->startOfDay()->toDateString())
                 ->get();
+
             $totalAbsensi = $semuaAbsensi->count();
+            $mingguLiburHariIni = $employee->isWeeklyDayOff();
             $tepatWaktu = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && (! $a->time_in || $a->time_in <= ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
             )->count();
             $terlambat = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && $a->time_in && $a->time_in > ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00')
             )->count();
             $totalHadir = $tepatWaktu + $terlambat;
+
+            // Riwayat memuat juga hari Minggu karyawan Office sebagai baris
+            // "libur" mingguan (tanpa record absensi), sehingga Minggu tetap
+            // tampil di daftar Senin-Sabtu.
+            $riwayatRows = $semuaAbsensi->values();
+
+            if (($employee->jenis_kerja ?? '') === Employee::JENIS_KERJA_OFFICE) {
+                $tanggalAda = $riwayatRows
+                    ->map(fn ($a) => $a->date?->toDateString())
+                    ->filter()
+                    ->all();
+
+                for ($d = $periodeMulai->copy(); $d->lte($periodeSelesai); $d->addDay()) {
+                    if ((int) $d->format('N') !== 7 || in_array($d->toDateString(), $tanggalAda, true)) {
+                        continue;
+                    }
+
+                    $riwayatRows->push(tap(new Attendance([
+                        'employee_id' => $employee->id,
+                        'date' => $d->toDateString(),
+                        'status' => 'libur',
+                    ]), fn ($row) => $row->setRelation('employee', $employee)));
+                }
+            }
+
+            $riwayatRows = $riwayatRows
+                ->sortByDesc(fn ($a) => $a->date?->toDateString() ?? '')
+                ->values();
+
+            $page = LengthAwarePaginator::resolveCurrentPage();
+            $riwayat = new LengthAwarePaginator(
+                $riwayatRows->slice(($page - 1) * 10, 10)->values(),
+                $riwayatRows->count(),
+                10,
+                $page,
+                ['path' => LengthAwarePaginator::resolveCurrentPath()]
+            );
+
             $attendanceHariIni = Attendance::where('employee_id', $employee->id)
                 ->whereDate('date', $employee->resolveWorkDate())->first();
 
             return view('livewire.absensi-table', compact(
                 'employee', 'totalAbsensi', 'tepatWaktu', 'terlambat', 'totalHadir',
-                'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'periodeOptions'
+                'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'periodeOptions',
+                'mingguLiburHariIni'
             ))->with('karyawanView', true);
         }
 

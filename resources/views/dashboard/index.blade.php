@@ -264,7 +264,7 @@
         </div>
 
         {{-- Announcements --}}
-        <div x-data="{ openAnnouncement: false, selectedAnn: null, announcements: {{ \Illuminate\Support\Js::from($karyawanData['announcements'] ?? []) }}, viewAnn(id) { this.selectedAnn = this.announcements.find(a => a.id === id); this.openAnnouncement = true; } }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 shadow-sm">
+        <div x-data="{ openAnnouncement: false, openAllAnn: false, selectedAnn: null, announcements: {{ \Illuminate\Support\Js::from($karyawanData['announcements'] ?? []) }}, viewAnn(id) { this.selectedAnn = this.announcements.find(a => a.id === id); this.openAnnouncement = true; } }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Pengumuman</h3>
@@ -275,14 +275,15 @@
                 </div>
             </div>
             @if(count($karyawanData['announcements'] ?? []) > 0)
-                @php $ann = $karyawanData['announcements'][0]; @endphp
+                @php
+                    $ann = $karyawanData['announcements'][0];
+                    // Path relatif agar fetch tetap benar walau diakses dari host/IP lain
+                    $markReadUrl = parse_url(route('hris.announcements.mark-read', $ann['id']), PHP_URL_PATH);
+                @endphp
                 <div x-show="announcements.length > 0" x-cloak
                      @click="viewAnn({{ $ann['id'] }})"
                      class="group relative overflow-hidden rounded-xl p-4 border transition-all cursor-pointer"
                      :class="announcements[0]?.is_read ? 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800' : 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-700'">
-                    <div class="absolute top-0 right-0 w-16 h-16 opacity-10">
-                        <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
-                    </div>
                     <div class="relative flex items-start justify-between gap-3">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
@@ -290,17 +291,23 @@
                                 <p class="text-xs font-semibold truncate" :class="announcements[0]?.is_read ? 'text-gray-900 dark:text-gray-100' : 'text-blue-900 dark:text-blue-100'">{{ $ann['title'] }}</p>
                             </div>
                             <p class="text-[11px] mt-0.5 line-clamp-2" :class="announcements[0]?.is_read ? 'text-gray-500 dark:text-gray-400' : 'text-blue-700/80 dark:text-blue-200/80'">{{ $ann['summary'] ?? '-' }}</p>
-                            <p class="text-[10px] font-medium mt-1.5" :class="announcements[0]?.is_read ? 'text-primary-600 dark:text-primary-400' : 'text-blue-600 dark:text-blue-300'">Lihat Selengkapnya</p>
                         </div>
                         <div class="flex flex-col items-end gap-2 shrink-0">
                             <span class="text-[10px] text-gray-400">{{ $ann['date'] }}</span>
                             <button x-show="!announcements[0]?.is_read" @click.stop="
-                                fetch('{{ route('hris.announcements.mark-read', $ann['id']) }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, credentials: 'same-origin' }).then(r => r.json()).then(() => {
-                                    const a = this.announcements.find(x => x.id === {{ $ann['id'] }});
-                                    if (a) a.is_read = true;
-                                    Alpine.store('toast').add('success', 'Pengumuman ditandai sebagai sudah dibaca.');
-                                });
-                            " class="rounded-lg bg-blue-600 text-white px-3 py-1.5 text-[10px] font-semibold hover:bg-blue-700 transition-colors">
+                                const btn = $el; btn.disabled = true;
+                                const target = announcements.find(x => x.id === {{ $ann['id'] }});
+                                if (!target || target.is_read) { btn.disabled = false; return; }
+                                target.is_read = true;
+                                Alpine.store('successModal').show('Pengumuman ditandai sebagai sudah dibaca.');
+                                fetch('{{ $markReadUrl }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                                    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                                    .catch((err) => {
+                                        target.is_read = false;
+                                        Alpine.store('toast').add('error', 'Gagal menandai pengumuman (' + (err && err.message ? err.message : 'jaringan') + ').');
+                                    })
+                                    .finally(() => { btn.disabled = false; });
+                            " class="rounded-lg bg-blue-600 text-white px-3 py-1.5 text-[10px] font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                                 Dibaca
                             </button>
                             <span x-show="announcements[0]?.is_read" class="rounded-lg bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 px-3 py-1.5 text-[10px] font-semibold inline-flex items-center gap-1">
@@ -310,6 +317,15 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Lihat Selengkapnya (di luar card) --}}
+                <button type="button" @click="openAllAnn = true"
+                        class="mt-3 w-full inline-flex items-center justify-center gap-1 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-2 text-[11px] font-semibold transition-colors"
+                        :class="announcements[0]?.is_read ? 'text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-700' : 'text-blue-600 dark:text-blue-300 hover:bg-blue-50/60 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700'">
+                    Lihat Selengkapnya
+                    <span x-show="announcements.length > 1" class="tabular-nums opacity-70">(<span x-text="announcements.length"></span>)</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                </button>
             @else
                 <div class="py-8 text-center">
                     <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-xl bg-gray-100 dark:bg-gray-800">
@@ -318,6 +334,62 @@
                     <p class="text-sm text-gray-400 dark:text-gray-500">Belum ada pengumuman</p>
                 </div>
             @endif
+
+            {{-- Semua Pengumuman Modal (Lihat Selengkapnya) --}}
+            <div x-show="openAllAnn" x-cloak
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm"
+                 @click="openAllAnn = false"
+                 @keydown.escape.window="openAllAnn = false">
+                <div @click.stop
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+                     class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 shadow-2xl overflow-hidden flex flex-col max-h-[75vh]">
+                    <div class="relative overflow-hidden bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 px-6 py-5 shrink-0">
+                        <div class="relative flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="text-lg font-display font-bold text-white">Semua Pengumuman</h3>
+                                <p class="text-xs text-white/70 mt-0.5"><span x-text="announcements.length"></span> pengumuman &middot; urut dari yang terbaru</p>
+                            </div>
+                            <button @click="openAllAnn = false" aria-label="Tutup" class="rounded-lg p-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700/60">
+                        <template x-for="a in announcements" :key="a.id">
+                            <button type="button" @click="viewAnn(a.id); openAllAnn = false"
+                                    class="w-full flex items-start gap-3 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg mt-0.5"
+                                      :class="a.is_read ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' : 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38a.467.467 0 01-.502-.011 5.095 5.095 0 01-1.357-3.637m3.394-5.026a9.44 9.44 0 000 4.52M3.554 9.48l-.397.73a.72.72 0 000 .59l.397.73m7.446-5.71v-.75c0-.663.284-1.275.73-1.74 0 0 1.813-1.87 3.042-2.27.291-.094.603.06.603.366v4.133m6.659 8.677l.397-.73a.72.72 0 000-.59l-.397-.73M18.304 8.88l1.26-1.08c.33-.283.363-.795.063-1.137m-8.865 3.827a6.03 6.06 0 00-.706.74m.706-.74c.62-.24 1.29-.37 1.99-.37h1.5a4.5 4.5 0 010 9h-.75c-.705 0-1.403.03-2.09.09"/></svg>
+                                </span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="flex items-center gap-1.5 min-w-0">
+                                        <span class="text-sm font-semibold truncate" :class="a.is_read ? 'text-gray-900 dark:text-gray-100' : 'text-blue-900 dark:text-blue-100'" x-text="a.title"></span>
+                                        <span x-show="!a.is_read" class="w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0" title="Belum dibaca"></span>
+                                    </span>
+                                    <span class="block text-[11px] text-gray-400 dark:text-gray-500 mt-0.5" x-text="a.date"></span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2" x-text="a.summary || '-'"></span>
+                                    <span class="block text-[10px] font-semibold mt-1.5 inline-flex items-center gap-1" :class="a.is_read ? 'text-gray-400 dark:text-gray-500' : 'text-blue-600 dark:text-blue-300'">
+                                        <span x-text="a.is_read ? 'Sudah Dibaca' : 'Baca Pengumuman'"></span>
+                                    </span>
+                                </span>
+                                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 mt-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
 
             {{-- Detail Modal --}}
             <div x-show="openAnnouncement" x-cloak

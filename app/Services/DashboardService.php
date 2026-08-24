@@ -475,21 +475,21 @@ class DashboardService
         $userId = $employee->user?->id;
 
         try {
-            $latestAnnouncement = Announcement::where('is_published', true)->latest()->first();
-            $announcements = collect();
-            if ($latestAnnouncement) {
-                $isRead = $userId && $latestAnnouncement->readByUsers()->where('users.id', $userId)->exists();
-                $announcements = collect([
-                    [
-                        'title' => $latestAnnouncement->title,
-                        'date' => $latestAnnouncement->created_at->isoFormat('D MMM YYYY'),
-                        'summary' => $latestAnnouncement->summary ?? $latestAnnouncement->content,
-                        'content' => $latestAnnouncement->content,
-                        'id' => $latestAnnouncement->id,
-                        'is_read' => (bool) $isRead,
-                    ],
-                ]);
-            }
+            // Semua pengumuman tayang, urut terbaru; dipakai kartu pengumuman
+            // terbaru di dashboard sekaligus popup "Lihat Selengkapnya".
+            $publishedAnnouncements = Announcement::where('is_published', true)->latest()->get();
+            $readIds = $userId
+                ? DB::table('announcement_user')->where('user_id', $userId)->pluck('announcement_id')->all()
+                : [];
+
+            $announcements = $publishedAnnouncements->map(fn (Announcement $a) => [
+                'title' => $a->title,
+                'date' => $a->created_at->isoFormat('D MMM YYYY'),
+                'summary' => $a->summary ?? $a->content,
+                'content' => $a->content,
+                'id' => $a->id,
+                'is_read' => (bool) in_array($a->id, $readIds),
+            ]);
         } catch (\Exception $e) {
             $announcements = collect();
         }

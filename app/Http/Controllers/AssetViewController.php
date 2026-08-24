@@ -46,12 +46,29 @@ class AssetViewController extends Controller
         $categories = AssetCategory::active()->get();
 
         $isMyAssets = $request->boolean('mine');
-        $userName = $isMyAssets ? auth()->user()->name : null;
+        // Nama pemilik aset dicocokkan dari PIC ke nama user maupun nama karyawan,
+        // karena sumber data aset (API eksternal) memakai nama karyawan di kolom PIC.
+        $myAssetNames = collect();
+        if ($isMyAssets) {
+            $user = auth()->user();
+            $myAssetNames = collect([$user->name, $user->employee?->nama])
+                ->filter()
+                ->map(fn ($n) => trim($n))
+                ->unique();
+        }
+
+        $applyMyAssetsFilter = function ($q) use ($myAssetNames) {
+            $q->where(function ($qq) use ($myAssetNames) {
+                foreach ($myAssetNames as $name) {
+                    $qq->orWhere('metadata->pic', 'like', '%'.$name.'%');
+                }
+            });
+        };
 
         $query = Asset::with(['category', 'creator']);
 
         if ($isMyAssets) {
-            $query->where('metadata->pic', 'like', '%'.$userName.'%');
+            $applyMyAssetsFilter($query);
         }
 
         if ($category) {
@@ -71,7 +88,7 @@ class AssetViewController extends Controller
         $statsQuery = Asset::query();
 
         if ($isMyAssets) {
-            $statsQuery->where('metadata->pic', 'like', '%'.$userName.'%');
+            $applyMyAssetsFilter($statsQuery);
         }
 
         if ($category) {
@@ -85,6 +102,7 @@ class AssetViewController extends Controller
         $isSosialMedia = $category && strtolower(str_replace('-', ' ', $category)) === 'sosial media';
         $isAssetMes = $category && in_array(strtolower(str_replace('-', ' ', $category)), ['asset mes', 'aset mes'], true);
         $isAsetTim = $category && strtolower(str_replace('-', ' ', $category)) === 'aset tim';
+        $isPeralatanKantor = $category && strtolower(str_replace('-', ' ', $category)) === 'peralatan kantor';
 
         $kendaraanRows = $isKendaraan ? (clone $statsQuery)->get() : collect();
         $sosialRows = $isSosialMedia ? (clone $statsQuery)->get() : collect();
@@ -176,6 +194,17 @@ class AssetViewController extends Controller
                 'perlu_diservis' => (clone $statsQuery)->where('condition', 'rusak_ringan')->count(),
                 'rusak' => (clone $statsQuery)->where('condition', 'rusak_berat')->count(),
             ];
+
+            if ($isPeralatanKantor) {
+                // Total nilai = jumlah seluruh harga aset pada submenu peralatan kantor.
+                $totalNilai = 0.0;
+                foreach ((clone $statsQuery)->get() as $row) {
+                    $meta = (array) ($row->metadata ?? []);
+                    $nilai = $meta['nilai'] ?? ($meta['harga'] ?? null);
+                    $totalNilai += (float) ($nilai !== null && $nilai !== '' ? $nilai : ($row->purchase_price ?? 0));
+                }
+                $stats['total_nilai'] = $totalNilai;
+            }
         }
 
         $assets = ($isAssetMes || $isAsetTim)
@@ -183,7 +212,7 @@ class AssetViewController extends Controller
             : $query->latest()->paginate(20)->withQueryString();
         $selectedCategory = $category;
 
-        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan', 'isSosialMedia', 'isAssetMes', 'isAsetTim', 'isMyAssets'));
+        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan', 'isSosialMedia', 'isAssetMes', 'isAsetTim', 'isPeralatanKantor', 'isMyAssets'));
     }
 
 public function detail(Asset $asset)

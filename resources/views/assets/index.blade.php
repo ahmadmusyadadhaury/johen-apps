@@ -292,14 +292,26 @@
 
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-300">
                 <div class="flex items-center justify-between mb-3">
+                    @if($isPeralatanKantor ?? false)
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/40 dark:shadow-violet-900/50 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 013 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>
+                    </div>
+                    <span class="badge-info text-[10px]">Nilai</span>
+                    @else
                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/40 dark:shadow-amber-900/50 group-hover:scale-110 transition-transform duration-300">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
                     </div>
                     <span class="badge-warning text-[10px]">Awas</span>
+                    @endif
                 </div>
+                @if($isPeralatanKantor ?? false)
+                <p class="text-xl font-bold font-display text-gray-900 dark:text-gray-100">Rp {{ number_format($stats['total_nilai'] ?? 0, 0, ',', '.') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Nilai</p>
+                @else
                 <p class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ number_format($stats['perlu_diservis']) }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Perlu Diservis</p>
-                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] text-amber-500 pointer-events-none">
+                @endif
+                <div class="absolute bottom-0 right-0 w-20 h-20 opacity-[0.04] dark:opacity-[0.06] {{ ($isPeralatanKantor ?? false) ? 'text-violet-500' : 'text-amber-500' }} pointer-events-none">
                     <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                 </div>
             </div>

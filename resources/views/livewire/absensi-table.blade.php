@@ -34,6 +34,17 @@
     @if($sinkronView ?? false)
         <livewire:machine-user-sync-table />
     @elseif($karyawanView || isset($koordinatorView))
+        {{-- Info libur mingguan (Office) --}}
+        @if(!empty($mingguLiburHariIni))
+            <div class="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-5 py-4">
+                <svg class="w-5 h-5 shrink-0 text-sky-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                <div>
+                    <p class="text-sm font-semibold text-sky-700 dark:text-sky-300">Hari ini hari Minggu &mdash; libur mingguan.</p>
+                    <p class="text-xs text-sky-600 dark:text-sky-400 mt-0.5">Karena jenis kerja kamu Office, tidak perlu melakukan absen pada hari Minggu.</p>
+                </div>
+            </div>
+        @endif
+
         {{-- Karyawan Stats --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
             <div class="stat-card group">
@@ -127,27 +138,36 @@
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $riwayat->firstItem() + $loop->index }}</td>
                                 <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ \Carbon\Carbon::parse($att->date)->locale('id')->isoFormat('dddd') }}</td>
-                                <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_in ? \Carbon\Carbon::parse($att->time_in)->format('H:i') : '-' }}</td>
-                                <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
-                                <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->duration ?? '-' }}</td>
-                                <td class="table-cell">
-                                    @php $ds = $att->display_status; @endphp
-                                    @if($ds === 'tepat waktu')
-                                        <span class="badge-success">Tepat Waktu</span>
-                                    @elseif($ds === 'terlambat')
-                                        <span class="badge-warning">Terlambat</span>
-                                    @elseif($ds === 'tidak hadir')
-                                        <span class="badge-danger">Tidak Hadir</span>
-                                    @elseif($ds === 'izin')
-                                        <span class="badge-info">Izin</span>
-                                    @elseif($ds === 'sakit')
-                                        <span class="badge-warning">Sakit</span>
-                                    @elseif($ds === 'cuti')
-                                        <span class="badge-info">Cuti</span>
-                                    @else
-                                        <span class="badge-secondary">{{ $ds }}</span>
-                                    @endif
-                                </td>
+                                @php $ds = $att->display_status; @endphp
+                                @if($ds === 'libur')
+                                    <td colspan="4" class="table-cell px-6 py-3">
+                                        <span class="badge-info w-full justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            Libur Mingguan
+                                        </span>
+                                    </td>
+                                @else
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_in ? \Carbon\Carbon::parse($att->time_in)->format('H:i') : '-' }}</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->duration ?? '-' }}</td>
+                                    <td class="table-cell">
+                                        @if($ds === 'tepat waktu')
+                                            <span class="badge-success">Tepat Waktu</span>
+                                        @elseif($ds === 'terlambat')
+                                            <span class="badge-warning">Terlambat</span>
+                                        @elseif($ds === 'tidak hadir')
+                                            <span class="badge-danger">Tidak Hadir</span>
+                                        @elseif($ds === 'izin')
+                                            <span class="badge-info">Izin</span>
+                                        @elseif($ds === 'sakit')
+                                            <span class="badge-warning">Sakit</span>
+                                        @elseif($ds === 'cuti')
+                                            <span class="badge-info">Cuti</span>
+                                        @else
+                                            <span class="badge-secondary">{{ $ds }}</span>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
@@ -350,35 +370,42 @@
                                     </div>
                                 </td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $emp->position ?? '-' }}</td>
-                                <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att?->time_in ? \Carbon\Carbon::parse($att->time_in)->format('H:i') : '-' }}</td>
-                                <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att?->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
-                                <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att?->duration ?? '-' }}</td>
-                                <td class="table-cell">
-                                    @php
-                                        // Tanpa record absensi: karyawan Office pada hari
-                                        // Minggu adalah libur mingguannya (jenis kerja sebagai
-                                        // acuan), bukan tidak hadir.
-                                        $ds = $att?->display_status
-                                            ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
-                                    @endphp
-                                    @if($ds === 'tepat waktu')
-                                        <span class="badge-success">Tepat Waktu</span>
-                                    @elseif($ds === 'terlambat')
-                                        <span class="badge-warning">Terlambat</span>
-                                    @elseif($ds === 'tidak hadir')
-                                        <span class="badge-danger">Tidak Hadir</span>
-                                    @elseif($ds === 'libur')
-                                        <span class="badge-secondary">Libur</span>
-                                    @elseif($ds === 'izin')
-                                        <span class="badge-info">Izin</span>
-                                    @elseif($ds === 'sakit')
-                                        <span class="badge-warning">Sakit</span>
-                                    @elseif($ds === 'cuti')
-                                        <span class="badge-info">Cuti</span>
-                                    @else
-                                        <span class="badge-secondary">{{ $ds }}</span>
-                                    @endif
-                                </td>
+                                @php
+                                    // Tanpa record absensi: karyawan Office pada hari
+                                    // Minggu adalah libur mingguannya (jenis kerja sebagai
+                                    // acuan), bukan tidak hadir.
+                                    $ds = $att?->display_status
+                                        ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
+                                @endphp
+                                @if($ds === 'libur')
+                                    <td colspan="4" class="table-cell px-6 py-3">
+                                        <span class="badge-info w-full justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            Libur Mingguan
+                                        </span>
+                                    </td>
+                                @else
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att?->time_in ? \Carbon\Carbon::parse($att->time_in)->format('H:i') : '-' }}</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att?->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att?->duration ?? '-' }}</td>
+                                    <td class="table-cell">
+                                        @if($ds === 'tepat waktu')
+                                            <span class="badge-success">Tepat Waktu</span>
+                                        @elseif($ds === 'terlambat')
+                                            <span class="badge-warning">Terlambat</span>
+                                        @elseif($ds === 'tidak hadir')
+                                            <span class="badge-danger">Tidak Hadir</span>
+                                        @elseif($ds === 'izin')
+                                            <span class="badge-info">Izin</span>
+                                        @elseif($ds === 'sakit')
+                                            <span class="badge-warning">Sakit</span>
+                                        @elseif($ds === 'cuti')
+                                            <span class="badge-info">Cuti</span>
+                                        @else
+                                            <span class="badge-secondary">{{ $ds }}</span>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
