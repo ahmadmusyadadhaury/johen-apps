@@ -128,23 +128,21 @@ class User extends Authenticatable
 
     public function canEvaluateContract(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_SUPER_ADMIN,
-            self::ROLE_GM_CEO,
-            self::ROLE_MANAGER,
-            self::ROLE_KOORDINATOR,
-            self::ROLE_KOORDINATOR_IT,
-            self::ROLE_KOORDINATOR_CREATIVE,
-            self::ROLE_KOORDINATOR_ADMIN,
-            self::ROLE_KOORDINATOR_PUBG,
-            self::ROLE_KOORDINATOR_FF,
-            self::ROLE_KOORDINATOR_MLBB,
-            self::ROLE_KOORDINATOR_EFOOTBALL,
-            self::ROLE_KOORDINATOR_VALORANT,
-            self::ROLE_KOORDINATOR_ROBLOX,
-            self::ROLE_KOORDINATOR_MONKEY_PUBG,
-            self::ROLE_KOORDINATOR_STOCK,
-        ]);
+        return $this->isSuperAdmin() || $this->isAnyKoordinator();
+    }
+
+    public function canApproveContract(): bool
+    {
+        return in_array($this->role, [self::ROLE_MANAGER, self::ROLE_GM_CEO]);
+    }
+
+    public function canApproveContractFor(EmployeeContract $contract): bool
+    {
+        if (!$this->canApproveContract()) {
+            return false;
+        }
+
+        return $this->roleLevel() > ($contract->employee?->evaluationLevel() ?? 1);
     }
 
     public function evaluationLevel(): int
@@ -163,11 +161,7 @@ class User extends Authenticatable
 
     public function canViewEvaluationDetail(): bool
     {
-        if ($this->isAnyKoordinator()) {
-            return false;
-        }
-
-        return $this->canEvaluateContract() || $this->isSuperAdminLike();
+        return $this->canEvaluateContract() || $this->isSuperAdminLike() || $this->canApproveContract();
     }
 
     public function isGmCeo(): bool
@@ -626,6 +620,43 @@ class User extends Authenticatable
     {
         return $this->isGmCeo() && session()->has('division_menu');
     }
+
+    public function canViewPengumuman(): bool
+    {
+        return in_array($this->role, self::PENGUMUMAN_VIEWER_ROLES);
+    }
+
+    public const PENGUMUMAN_ADMIN_ROLES = [
+        self::ROLE_SUPER_ADMIN,
+        self::ROLE_STAFF_HR,
+    ];
+
+    public const PENGUMUMAN_VIEWER_ROLES = [
+        self::ROLE_KOORDINATOR,
+        self::ROLE_KOORDINATOR_IT,
+        self::ROLE_KOORDINATOR_CREATIVE,
+        self::ROLE_KOORDINATOR_ADMIN,
+        self::ROLE_KOORDINATOR_PUBG,
+        self::ROLE_KOORDINATOR_FF,
+        self::ROLE_KOORDINATOR_MLBB,
+        self::ROLE_KOORDINATOR_EFOOTBALL,
+        self::ROLE_KOORDINATOR_VALORANT,
+        self::ROLE_KOORDINATOR_ROBLOX,
+        self::ROLE_KOORDINATOR_MONKEY_PUBG,
+        self::ROLE_KOORDINATOR_STOCK,
+        self::ROLE_STAFF,
+        self::ROLE_STAFF_IT,
+        self::ROLE_STAFF_CREATIVE,
+        self::ROLE_STAFF_ADMIN,
+        self::ROLE_STAFF_HOST_PUBG,
+        self::ROLE_STAFF_HOST_FF,
+        self::ROLE_STAFF_HOST_MLBB,
+        self::ROLE_STAFF_HOST_EFOOTBALL,
+        self::ROLE_STAFF_HOST_VALORANT,
+        self::ROLE_STAFF_HOST_ROBLOX,
+        self::ROLE_STAFF_HOST_MONKEY_PUBG,
+        self::ROLE_STAFF_STOCK,
+    ];
 
     public function canCreateData(): bool
     {

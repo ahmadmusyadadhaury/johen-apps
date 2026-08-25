@@ -45,4 +45,9 @@ class EmployeeContract extends Model
     {
         return $this->hasOne(ContractEvaluation::class, 'contract_id')->latestOfMany();
     }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(ContractApproval::class, 'contract_id');
+    }
 }

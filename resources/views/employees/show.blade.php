@@ -1792,7 +1792,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
                 <div>
                     <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Perbarui Kontrak</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kontrak lama akan ditandai selesai & kontrak baru dibuat</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perubahan disimpan pada kontrak yang sama</p>
                 </div>
                 <button @click="editKontrakModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
@@ -1860,7 +1860,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     </button>
                     <button type="submit"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
-                        Simpan & Buat Baru
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>

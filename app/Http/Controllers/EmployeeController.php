@@ -268,6 +268,10 @@ class EmployeeController extends Controller
             'file' => 'nullable|file|mimes:pdf',
         ]);
 
+        EmployeeContract::where('employee_id', $employee->id)
+            ->where('status', 'berlaku')
+            ->update(['status' => 'selesai']);
+
         EmployeeContract::create([
             'employee_id' => $employee->id,
             'jenis_kontrak' => 'Karyawan Kontrak',
@@ -281,7 +285,7 @@ class EmployeeController extends Controller
         ]);
 
         return redirect(route('hris.employees.show', $employee) . '#kontrak')
-            ->with('contract_success', 'Kontrak berhasil ditambahkan.');
+            ->with('contract_success', 'Kontrak berhasil ditambahkan. Kontrak sebelumnya otomatis ditandai selesai.');
     }
 
     public function getContract(Employee $employee, EmployeeContract $contract)
@@ -371,22 +375,26 @@ class EmployeeController extends Controller
             'file' => 'nullable|file|mimes:pdf',
         ]);
 
-        $contract->update(['status' => 'selesai']);
+        abort_unless($contract->employee_id === $employee->id, 404);
 
-        EmployeeContract::create([
-            'employee_id' => $employee->id,
-            'jenis_kontrak' => 'Karyawan Kontrak',
+        $data = [
             'posisi' => $request->posisi,
             'atasan' => $request->atasan,
             'tanggal_mulai' => $request->tanggal_mulai,
             'tanggal_berakhir' => $request->tanggal_berakhir,
-            'status' => 'berlaku',
             'keterangan' => $request->keterangan,
-            'file' => $this->storeContractFile($request, $employee->id),
-        ]);
+            'status' => \Carbon\Carbon::parse($request->tanggal_berakhir)->endOfDay()->isPast() ? 'selesai' : 'berlaku',
+        ];
+
+        if ($newFile = $this->storeContractFile($request, $employee->id)) {
+            $this->deleteContractFile($contract);
+            $data['file'] = $newFile;
+        }
+
+        $contract->update($data);
 
         return redirect(route('hris.employees.show', $employee) . '#kontrak')
-            ->with('contract_success', 'Kontrak berhasil diperbarui. Kontrak lama otomatis ditandai selesai.');
+            ->with('contract_success', 'Kontrak berhasil diperbarui.');
     }
 
     public function downloadContract(Employee $employee, EmployeeContract $contract)

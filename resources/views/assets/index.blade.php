@@ -349,7 +349,10 @@
                 </div>
                 @endif
                 <div class="flex items-center gap-2">
-                    <form method="GET" action="{{ route('assets.index') }}" class="relative">
+                    <form method="GET" action="{{ url()->current() }}" class="relative">
+                        @if($isMyAssets)
+                        <input type="hidden" name="mine" value="1">
+                        @endif
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari..."
                                class="input-field w-40 text-xs pl-8 py-2">
                         <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
