@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
+use App\Models\AttendancePunch;
 use App\Models\Employee;
 use App\Models\Position;
 use Carbon\Carbon;
@@ -30,6 +31,15 @@ class AbsensiTable extends Component
     public string $statsDateLabel = '';
 
     public bool $showJamKerjaModal = false;
+
+    public bool $showDetailModal = false;
+
+    /** Baris punch mentah (jam, tanggal, metode) untuk modal detail absen. */
+    public array $detailPunches = [];
+
+    public ?string $detailDate = null;
+
+    public string $detailNama = '';
 
     public ?int $jamKerjaEmployeeId = null;
 
@@ -113,6 +123,90 @@ class AbsensiTable extends Component
         $this->resetErrorBag();
     }
 
+    /**
+     * Modal detail absen: tampilkan SEMUA punch mentah karyawan pada hari
+     * kerja tersebut (jendela [tgl 00:00, tgl+1 07:00) mengikuti konvensi
+     * sesi lintas malam/subuh), sehingga tap berulang tidak saling menimpa —
+     * absen datang tetap terlihat walau tap pulang 2-3 kali.
+     */
+    public function openDetail(int $employeeId, string $date): void
+    {
+        $user = auth()->user();
+        $employee = Employee::find($employeeId);
+
+        if (! $employee || $employee->id !== $user->employee?->id) {
+            $allowed = ($user->isAnyKoordinator() || $user->isHeadOfStore())
+                && in_array($employeeId, $this->getSubordinateEmployeeIds());
+
+            if (! $allowed && ! $user->isSuperAdminLike()) {
+                abort(403);
+            }
+        }
+
+        try {
+            $day = Carbon::createFromFormat('Y-m-d', $date)->startOfDay();
+        } catch (\Throwable) {
+            return;
+        }
+
+        $start = $day->copy();
+        $end = $day->copy()->addDay()->setTime((int) config('attendance.overnight_latest_checkout_hour', 7), 0);
+
+        $punches = AttendancePunch::where('employee_id', $employee->id)
+            ->where('punch_at', '>=', $start->toDateTimeString())
+            ->where('punch_at', '<', $end->toDateTimeString())
+            ->orderBy('punch_at')
+            ->get()
+            ->values();
+
+        // Rangkaian tap ganda: punch berjarak < window dianggap satu rangkaian
+        // (mis. dobel tap datang 2 detik). Hanya pembuka rangkaian pertama
+        // berlabel Datang dan pembuka rangkaian terakhir berlabel Pulang
+        // (bila ada rangkaian berikutnya); sisanya cukup berlabel Tap.
+        $count = $punches->count();
+        $window = (int) config('attendance.tap_duplicate_window_seconds', 180);
+        $clusterStarts = [0];
+
+        for ($i = 1; $i < $count; $i++) {
+            if ($punches[$i]->punch_at->getTimestamp() - $punches[$i - 1]->punch_at->getTimestamp() >= $window) {
+                $clusterStarts[] = $i;
+            }
+        }
+
+        $this->detailPunches = $punches->map(function (AttendancePunch $p, int $i) use ($punches, $start, $clusterStarts) {
+            $at = $p->punch_at;
+
+            return [
+                'jam' => $at->format('H:i:s'),
+                'tanggal' => $at->locale('id')->isoFormat('D MMM'),
+                'dini_hari' => $at->toDateString() !== $start->toDateString(),
+                'metode' => match ($p->method) {
+                    'finger' => 'Fingerprint',
+                    'face' => 'Wajah',
+                    'card' => 'Kartu',
+                    default => ucfirst((string) $p->method),
+                },
+                'tipe' => match (true) {
+                    $i === 0 => 'Datang',
+                    $i === $punches->count() - 1 && in_array($i, $clusterStarts, true) => 'Pulang',
+                    default => 'Tap',
+                },
+            ];
+        })->all();
+
+        $this->detailNama = $employee->nama;
+        $this->detailDate = $day->isoFormat('dddd, D MMMM Y');
+        $this->showDetailModal = true;
+    }
+
+    public function closeDetail(): void
+    {
+        $this->showDetailModal = false;
+        $this->detailPunches = [];
+        $this->detailDate = null;
+        $this->detailNama = '';
+    }
+
     public function saveJamKerja(): void
     {
         $user = auth()->user();
@@ -183,6 +277,7 @@ class AbsensiTable extends Component
                     'tepatWaktu' => 0,
                     'terlambat' => 0,
                     'totalHadir' => 0,
+                    'jumlahHariKerja' => 0,
                     'attendances' => collect(),
                     'riwayat' => $riwayat,
                     'attendanceHariIni' => null,
@@ -230,6 +325,15 @@ class AbsensiTable extends Component
             )->count();
             $totalHadir = $tepatWaktu + $terlambat;
 
+            // Jumlah hari kerja = hari unik dengan record absensi (tanpa
+            // libur mingguan) dalam periode berjalan.
+            $jumlahHariKerja = $semuaAbsensi
+                ->filter(fn ($a) => ($a->status ?? '') !== 'libur')
+                ->map(fn ($a) => $a->date?->toDateString())
+                ->filter()
+                ->unique()
+                ->count();
+
             // Riwayat memuat juga hari Minggu karyawan Office sebagai baris
             // "libur" mingguan (tanpa record absensi), sehingga Minggu tetap
             // tampil di daftar Senin-Sabtu.
@@ -272,7 +376,7 @@ class AbsensiTable extends Component
 
             return view('livewire.absensi-table', compact(
                 'employee', 'totalAbsensi', 'tepatWaktu', 'terlambat', 'totalHadir',
-                'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'periodeOptions',
+                'jumlahHariKerja', 'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'periodeOptions',
                 'mingguLiburHariIni'
             ))->with('karyawanView', true);
         }

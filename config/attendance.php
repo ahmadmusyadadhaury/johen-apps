@@ -54,4 +54,16 @@ return [
 
     'checkin_late_tolerance_minutes' => (int) env('ATTENDANCE_CHECKIN_LATE_TOLERANCE_MINUTES', 240),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Ambang tap ganda pada modal Detail Absen
+    |--------------------------------------------------------------------------
+    | Punch berurutan dengan jeda lebih kecil dari nilai ini (detik) dianggap
+    | satu rangkaian tap yang sama (mis. dobel tap datang). Hanya punch pertama
+    | rangkaian berlabel "Datang" dan pembuka rangkaian terakhir berlabel
+    | "Pulang"; anggota rangkaian lain berlabel "Tap".
+    */
+
+    'tap_duplicate_window_seconds' => (int) env('ATTENDANCE_TAP_DUPLICATE_WINDOW_SECONDS', 180),
+
 ];
