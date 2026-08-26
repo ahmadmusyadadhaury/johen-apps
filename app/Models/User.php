@@ -142,7 +142,31 @@ class User extends Authenticatable
             return false;
         }
 
-        return $this->roleLevel() > ($contract->employee?->evaluationLevel() ?? 1);
+        // GM/CEO dapat approve semua kontrak
+        if ($this->role === self::ROLE_GM_CEO) {
+            return true;
+        }
+
+        // Manager: approve berdasarkan struktur organisasi (posisi hierarchy)
+        if ($this->role === self::ROLE_MANAGER) {
+            $employee = $contract->employee;
+            if (!$employee) return false;
+
+            $managerEmployee = $this->employee;
+            if (!$managerEmployee) return false;
+
+            $managerPosition = $managerEmployee->mainPosition();
+            if (!$managerPosition) return false;
+
+            // Ambil semua descendant position ID (termasuk posisi manager sendiri)
+            $descendantIds = $this->getAllDescendantIdsForPosition($managerPosition);
+            $descendantIds[] = $managerPosition->id;
+
+            // Cek apakah karyawan kontrak memegang salah satu posisi di hierarchy
+            return $employee->positions()->whereIn('position_id', $descendantIds)->exists();
+        }
+
+        return false;
     }
 
     public function evaluationLevel(): int

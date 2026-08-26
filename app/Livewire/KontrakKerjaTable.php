@@ -30,6 +30,8 @@ class KontrakKerjaTable extends Component
 
     public bool $hasSubmittedEval = false;
 
+    public bool $hasAnyEvaluation = false;
+
     public string $approveDecision = ContractApproval::DECISION_SETUJU;
 
     public string $approveCatatan = '';
@@ -62,18 +64,14 @@ class KontrakKerjaTable extends Component
 
         if (auth()->user()?->canApproveContractFor($contract)) {
             $this->hasSubmittedEval = $contract->evaluations()->whereNotNull('submitted_at')->exists();
-            if ($this->hasSubmittedEval) {
-                $myApproval = $contract->approvals->firstWhere('approver_id', auth()->id());
-                $this->approveContractId = $contract->id;
-                $this->approveDecision = $myApproval?->decision ?? ContractApproval::DECISION_SETUJU;
-                $this->approveCatatan = $myApproval?->catatan ?? '';
-            } else {
-                $this->approveContractId = null;
-                $this->approveDecision = ContractApproval::DECISION_SETUJU;
-                $this->approveCatatan = '';
-            }
+            $this->hasAnyEvaluation = $contract->evaluations()->exists();
+            $myApproval = $contract->approvals->firstWhere('approver_id', auth()->id());
+            $this->approveContractId = $contract->id;
+            $this->approveDecision = $myApproval?->decision ?? ContractApproval::DECISION_SETUJU;
+            $this->approveCatatan = $myApproval?->catatan ?? '';
         } else {
             $this->hasSubmittedEval = false;
+            $this->hasAnyEvaluation = false;
             $this->reset('approveContractId', 'approveDecision', 'approveCatatan');
         }
 
@@ -87,7 +85,7 @@ class KontrakKerjaTable extends Component
     {
         $indicators = ContractEvaluationConfig::indicators();
 
-        $evaluations = $contract->evaluations->map(function ($e) use ($indicators) {
+        $evaluations = $contract->evaluations->map(function ($e) use ($indicators, $contract) {
             $isNew = $e->isNewFormat();
 
             $catScores = [];
@@ -197,6 +195,7 @@ class KontrakKerjaTable extends Component
 
         if ($contract = EmployeeContract::with(['employee', 'evaluations.evaluator', 'approvals.approver'])->find($this->approveContractId)) {
             $this->hasSubmittedEval = $contract->evaluations()->whereNotNull('submitted_at')->exists();
+            $this->hasAnyEvaluation = $contract->evaluations()->exists();
             $this->loadPenilaianEntries($contract);
         }
     }
@@ -287,6 +286,8 @@ class KontrakKerjaTable extends Component
         }
 
         $descendantIds = $this->getAllDescendantIds($position);
+        $descendantIds[] = $position->id;
+
         if (empty($descendantIds)) {
             return [];
         }

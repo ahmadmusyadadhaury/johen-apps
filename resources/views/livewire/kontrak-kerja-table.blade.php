@@ -297,7 +297,7 @@
                     </div>
 
                     {{-- Form approval terpadu --}}
-                    @if($approveContractId && $hasSubmittedEval)
+                    @if($approveContractId && $hasAnyEvaluation)
                     <div class="mt-6 rounded-2xl border border-violet-200 dark:border-violet-800 overflow-hidden">
                         <div class="flex items-center gap-3 px-5 py-4 bg-violet-50 dark:bg-violet-950/60 border-b border-violet-100 dark:border-violet-800">
                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900 text-violet-600 dark:text-violet-300">
@@ -355,7 +355,7 @@
                             </div>
                         </div>
                     </div>
-                    @elseif($approveContractId && !$hasSubmittedEval)
+                    @elseif($approveContractId && !$hasAnyEvaluation)
                     <div class="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-5 flex items-center gap-3">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>

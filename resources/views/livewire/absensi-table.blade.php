@@ -93,7 +93,7 @@
 
         </div>
 
-        <div class="card">
+        <div class="card" wire:poll.60s="refreshPeriod">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
                 <div>
                     <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -111,11 +111,22 @@
                     @endif
                 </div>
                 <div class="flex items-center gap-3 shrink-0">
-                    <select wire:model.live="periode" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        @foreach($periodeOptions as $opt)
-                            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <select x-on:change="$wire.setBulan($event.target.value)" class="appearance-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            @foreach($monthOptions as $opt)
+                                <option value="{{ $opt['value'] }}" {{ (string) $opt['value'] === (string) $bulan ? 'selected' : '' }}>{{ $opt['label'] }}</option>
+                            @endforeach
+                        </select>
+                        <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                    </div>
+                    <div class="relative">
+                        <select x-on:change="$wire.setTahun($event.target.value)" class="appearance-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[5rem]">
+                            @foreach($yearOptions as $opt)
+                                <option value="{{ $opt['value'] }}" {{ (string) $opt['value'] === (string) $tahun ? 'selected' : '' }}>{{ $opt['label'] }}</option>
+                            @endforeach
+                        </select>
+                        <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                    </div>
                     @if($attendanceHariIni)
                         <span class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -147,10 +158,12 @@
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ \Carbon\Carbon::parse($att->date)->locale('id')->isoFormat('dddd') }}</td>
                                 @php $ds = $att->display_status; @endphp
                                 @if($ds === 'libur')
-                                    <td colspan="4" class="table-cell px-6 py-3">
-                                        <span class="badge-info w-full justify-center">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            Libur Mingguan
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400">-</td>
+                                    <td class="table-cell">
+                                        <span class="badge-info">
+                                            Libur
                                         </span>
                                     </td>
                                     <td class="table-cell text-center text-gray-300 dark:text-gray-600">-</td>
@@ -395,10 +408,12 @@
                                         ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
                                 @endphp
                                 @if($ds === 'libur')
-                                    <td colspan="4" class="table-cell px-6 py-3">
-                                        <span class="badge-info w-full justify-center">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            Libur Mingguan
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
+                                    <td class="table-cell text-gray-600 dark:text-gray-400">-</td>
+                                    <td class="table-cell">
+                                        <span class="badge-info">
+                                            Libur
                                         </span>
                                     </td>
                                     <td class="table-cell text-center text-gray-300 dark:text-gray-600">-</td>

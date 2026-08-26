@@ -15,7 +15,7 @@ class AbsensiTable extends Component
 {
     use WithPagination;
 
-    protected $queryString = ['date', 'search', 'tab', 'periode'];
+    protected $queryString = ['date', 'search', 'tab', 'bulan', 'tahun'];
 
     public string $date = '';
 
@@ -23,8 +23,11 @@ class AbsensiTable extends Component
 
     public string $tab = 'saya';
 
-    /** Bulan periode presensi (format Y-m). Periode = tgl 26 bulan lalu s.d. tgl 25 bulan terpilih. */
-    public string $periode = '';
+    public string $bulan = '';
+
+    public string $tahun = '';
+
+    public bool $periodManual = false;
 
     public array $statsMembers = ['tepat' => [], 'terlambat' => []];
 
@@ -55,9 +58,7 @@ class AbsensiTable extends Component
             $this->date = now()->format('Y-m-d');
         }
 
-        if ($this->periode === '') {
-            $this->periode = now()->format('Y-m');
-        }
+        $this->refreshPeriod();
 
         if ($this->tab === 'sinkron' && ! auth()->user()?->isSuperAdminLike()) {
             $this->tab = 'tim';
@@ -69,9 +70,45 @@ class AbsensiTable extends Component
         $this->resetPage();
     }
 
-    public function updatedPeriode(): void
+    public function updatedBulan(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedTahun(): void
+    {
+        $this->resetPage();
+    }
+
+    public function setBulan(string $value): void
+    {
+        $this->periodManual = true;
+        $this->bulan = $value;
+        $this->resetPage();
+    }
+
+    public function setTahun(string $value): void
+    {
+        $this->periodManual = true;
+        $this->tahun = $value;
+        $this->resetPage();
+    }
+
+    public function refreshPeriod(): void
+    {
+        if ($this->periodManual) {
+            return;
+        }
+
+        $now = now();
+        $default = $now->day >= 26 ? $now->copy()->addMonthNoOverflow() : $now;
+        $newBulan = $default->format('m');
+        $newTahun = (string) $default->year;
+
+        if ($this->bulan !== $newBulan || $this->tahun !== $newTahun) {
+            $this->bulan = $newBulan;
+            $this->tahun = $newTahun;
+        }
     }
 
     public function updatingSearch(): void
@@ -283,18 +320,19 @@ class AbsensiTable extends Component
                     'attendanceHariIni' => null,
                     'today' => $today,
                     'periodeLabel' => null,
-                    'periodeOptions' => collect(),
+                    'monthOptions' => collect(),
+                    'yearOptions' => collect(),
                     'mingguLiburHariIni' => false,
                 ]);
             }
 
             // Periode presensi mengikuti siklus gaji: tanggal 26 bulan
-            // sebelumnya s.d. tanggal 25 bulan terpilih (mis. Januari = 26 Des
-            // s.d. 25 Jan). Riwayat dan statistik hanya menampilkan data dalam
+            // sebelumnya s.d. tanggal 25 bulan terpilih (mis. September = 26 Ags
+            // s.d. 25 Sep). Riwayat dan statistik hanya menampilkan data dalam
             // rentang tersebut.
             try {
-                $periodeBulan = $this->periode !== ''
-                    ? Carbon::createFromFormat('Y-m', $this->periode)->startOfMonth()
+                $periodeBulan = ($this->bulan !== '' && $this->tahun !== '')
+                    ? Carbon::createFromDate((int) $this->tahun, (int) $this->bulan, 1)->startOfMonth()
                     : now()->startOfMonth();
             } catch (\Throwable) {
                 $periodeBulan = now()->startOfMonth();
@@ -304,12 +342,16 @@ class AbsensiTable extends Component
             $periodeSelesai = $periodeBulan->copy()->day(25)->endOfDay();
             $periodeLabel = $periodeMulai->isoFormat('D MMM Y').' - '.$periodeSelesai->isoFormat('D MMM Y');
 
-            $periodeOptions = collect(range(0, 11))
-                ->map(fn ($i) => now()->subMonthsNoOverflow($i))
-                ->map(fn ($m) => [
-                    'value' => $m->format('Y-m'),
-                    'label' => $m->locale('id')->isoFormat('MMMM Y'),
-                ]);
+            $monthOptions = collect(range(1, 12))->map(fn ($m) => [
+                'value' => str_pad((string) $m, 2, '0', STR_PAD_LEFT),
+                'label' => Carbon::createFromDate((int) $this->tahun ?: now()->year, $m, 1)->locale('id')->isoFormat('MMMM'),
+            ]);
+
+            $currentYear = (int) ($this->tahun ?: now()->year);
+            $yearOptions = collect(range($currentYear - 2, $currentYear + 2))->map(fn ($y) => [
+                'value' => (string) $y,
+                'label' => (string) $y,
+            ]);
 
             $semuaAbsensi = Attendance::with(['employee' => fn ($q) => $q->listSelect()])
                 ->where('employee_id', $employee->id)
@@ -346,7 +388,7 @@ class AbsensiTable extends Component
                     ->all();
 
                 for ($d = $periodeMulai->copy(); $d->lte($periodeSelesai); $d->addDay()) {
-                    if ((int) $d->format('N') !== 7 || in_array($d->toDateString(), $tanggalAda, true)) {
+                    if ((int) $d->format('N') !== 7 || in_array($d->toDateString(), $tanggalAda, true) || $d->gt($today)) {
                         continue;
                     }
 
@@ -376,7 +418,7 @@ class AbsensiTable extends Component
 
             return view('livewire.absensi-table', compact(
                 'employee', 'totalAbsensi', 'tepatWaktu', 'terlambat', 'totalHadir',
-                'jumlahHariKerja', 'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'periodeOptions',
+                'jumlahHariKerja', 'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'monthOptions', 'yearOptions',
                 'mingguLiburHariIni'
             ))->with('karyawanView', true);
         }

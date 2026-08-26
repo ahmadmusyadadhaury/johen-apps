@@ -162,7 +162,9 @@ class AbsensiDateFilterTest extends TestCase
         Attendance::create(['employee_id' => $emp->id, 'date' => now()->day(26)->toDateString(), 'time_in' => '19:00:00', 'time_out' => '23:00:00', 'status' => 'hadir']);
 
         $component = Livewire::test(AbsensiTable::class)
-            ->set('tab', 'saya');
+            ->set('tab', 'saya')
+            ->set('bulan', now()->format('m'))
+            ->set('tahun', (string) now()->year);
 
         $component->assertViewHas('riwayat', function ($riwayat) use ($emp) {
             return $riwayat->getCollection()->every(fn ($a) => $a->employee_id === $emp->id)
@@ -191,7 +193,8 @@ class AbsensiDateFilterTest extends TestCase
 
         $component = Livewire::test(AbsensiTable::class)
             ->set('tab', 'saya')
-            ->set('periode', now()->subMonthNoOverflow()->format('Y-m'));
+            ->set('bulan', now()->subMonthNoOverflow()->format('m'))
+            ->set('tahun', (string) now()->subMonthNoOverflow()->year);
 
         $component->assertViewHas('riwayat', function ($riwayat) {
             return $riwayat->total() === 2
