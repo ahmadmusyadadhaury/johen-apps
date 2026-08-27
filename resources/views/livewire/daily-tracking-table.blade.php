@@ -53,25 +53,38 @@
             </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
-            <div class="relative flex-1 min-w-[200px] max-w-xs">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari NIK atau Nama..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+        <div class="flex flex-col gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="relative flex-1 min-w-[200px] max-w-xs">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari NIK atau Nama..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                </div>
+                <input type="date" wire:model.live="tanggal" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                <select wire:model.live="nama" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-8 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <option value="">Semua Nama</option>
+                    @foreach($namaOptions as $n)
+                        <option value="{{ $n }}">{{ $n }}</option>
+                    @endforeach
+                </select>
             </div>
-            <input type="date" wire:model.live="tanggal" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-            <select wire:model.live="nama" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-8 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                <option value="">Semua Nama</option>
-                @foreach($namaOptions as $n)
-                    <option value="{{ $n }}">{{ $n }}</option>
+            @if(!empty($divisiOptions))
+            <div class="flex flex-wrap gap-2">
+                <button wire:click="$set('divisi', '')" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{ $divisi === '' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' }}">
+                    Semua Divisi
+                </button>
+                @foreach($divisiOptions as $opt)
+                    <button wire:click="$set('divisi', '{{ $opt }}')" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{ $divisi === $opt ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' }}">
+                        {{ $opt }}
+                    </button>
                 @endforeach
-            </select>
+            </div>
+            @endif
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="table-header">
-                        <th class="px-6 py-3 text-center border-r border-gray-200 dark:border-gray-600">Tanggal</th>
                         <th class="px-6 py-3">Divisi</th>
                         <th class="px-6 py-3">NIK</th>
                         <th class="px-6 py-3">Nama</th>
@@ -90,9 +103,6 @@
                     @forelse($groupedItems as $date => $dateItems)
                         @foreach($dateItems as $item)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            @if($loop->first)
-                            <td class="table-cell text-gray-700 dark:text-gray-300 font-medium text-center border-r border-gray-200 dark:border-gray-600" rowspan="{{ $dateItems->count() }}">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}</td>
-                            @endif
                             <td class="table-cell">
                                 <span class="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold
                                     {{ match($item->divisi) {
@@ -145,7 +155,7 @@
                         @endforeach
                     @empty
                         <tr>
-                            <td colspan="13" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="12" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     <p class="font-medium">Belum ada data</p>
@@ -158,7 +168,7 @@
             </table>
         </div>
 
-        @if($items->hasPages())
+        @if($items instanceof \Illuminate\Pagination\LengthAwarePaginator && $items->hasPages())
             <div class="px-6 py-4 border-t border-gray-50 dark:border-gray-800">
                 {{ $items->links() }}
             </div>

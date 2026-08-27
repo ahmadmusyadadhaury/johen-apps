@@ -60,6 +60,9 @@ class PubgDailyTrackingTable extends Component
 
     protected function rules(): array
     {
+        $buktiStats = $this->showEditModal && $this->fotoBuktiStatsPath ? 'nullable' : 'required';
+        $buktiLive = $this->showEditModal && $this->fotoBuktiLivePath ? 'nullable' : 'required';
+
         return [
             'tanggal' => 'required|date',
             'nik' => 'required|string|max:255',
@@ -70,8 +73,8 @@ class PubgDailyTrackingTable extends Component
             'peak_view' => 'required|numeric|min:0',
             'durasi' => 'required|numeric|min:0',
             'catatan' => 'nullable|string',
-            'foto_bukti_stats' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
-            'foto_bukti_live' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            'foto_bukti_stats' => "$buktiStats|image|mimes:jpg,jpeg,png|max:10240",
+            'foto_bukti_live' => "$buktiLive|image|mimes:jpg,jpeg,png|max:10240",
         ];
     }
 
@@ -91,9 +94,11 @@ class PubgDailyTrackingTable extends Component
             'foto_bukti_stats.image' => 'Bukti Stats harus berupa gambar.',
             'foto_bukti_stats.mimes' => 'Bukti Stats harus format JPG/PNG.',
             'foto_bukti_stats.max' => 'Ukuran Bukti Stats maksimal 10MB.',
+            'foto_bukti_stats.required' => 'Bukti Stats wajib diisi.',
             'foto_bukti_live.image' => 'Bukti Live harus berupa gambar.',
             'foto_bukti_live.mimes' => 'Bukti Live harus format JPG/PNG.',
             'foto_bukti_live.max' => 'Ukuran Bukti Live maksimal 10MB.',
+            'foto_bukti_live.required' => 'Bukti Live wajib diisi.',
         ];
     }
 
@@ -176,9 +181,9 @@ class PubgDailyTrackingTable extends Component
         $sold = str_replace(',', '.', $this->ach_sold);
 
         $user = auth()->user();
-        if ($this->isDivisiKoordinator() && !$user->isKoordinatorGame()) return;
+        if ($this->isDivisiKoordinator()) return;
 
-        $status = $user->isKoordinatorGame() ? 'disetujui' : 'pending';
+        $status = 'pending';
 
         $data = [
             'employee_id' => $employee->id,
@@ -388,9 +393,41 @@ class PubgDailyTrackingTable extends Component
         return $employee->positions()->where('position_id', $root->id)->exists();
     }
 
+    public function isDivisiStaffHost(): bool
+    {
+        $divisi = $this->getDivisiName();
+        $employee = auth()->user()->employee;
+        if (!$employee) return false;
+
+        $hostPositionNames = match ($divisi) {
+            'MLBB' => ['Host MLBB'],
+            'Valorant' => ['Host Valorant'],
+            'PUBG' => ['Host Johen PUBG'],
+            'Free Fire' => ['Host Free Fire'],
+            'E-football' => ['Host E-football'],
+            'Roblox' => ['Host Roblox'],
+            'Monkey PUBG' => ['Host Monkey PUBG'],
+            'FC Mobile' => ['Host FC Mobile'],
+            default => [],
+        };
+
+        if (empty($hostPositionNames)) return false;
+
+        return $employee->positions()->where(function ($q) use ($hostPositionNames) {
+            foreach ($hostPositionNames as $name) {
+                $q->orWhere('nama', 'like', $name . '%');
+            }
+        })->exists();
+    }
+
+    public function canFillData(): bool
+    {
+        return $this->isDivisiStaffHost();
+    }
+
     private function isKoordinatorView(): bool
     {
-        return auth()->user()->isKoordinatorGame() || $this->isDivisiKoordinator();
+        return $this->isDivisiKoordinator();
     }
 
     private function getViewEmployeeIds(): array
@@ -400,13 +437,6 @@ class PubgDailyTrackingTable extends Component
 
         if ($this->isDivisiKoordinator()) {
             return $this->getDivisionEmployeeIds($this->getDivisionRootPosition());
-        }
-
-        $user = auth()->user();
-        if ($user->isKoordinatorGame()) {
-            $ids = [$employee->id];
-            $subordinateIds = $this->getSubordinateEmployeeIds();
-            return array_values(array_unique(array_merge($ids, $subordinateIds)));
         }
 
         return [$employee->id];
@@ -447,29 +477,8 @@ class PubgDailyTrackingTable extends Component
 
         $employees = Employee::when($divisionRoot, function ($q) use ($divisionRoot) {
             $q->whereIn('id', $this->getDivisionEmployeeIds($divisionRoot));
-        })->when(!$divisionRoot && $user->isKoordinatorGame(), function ($q) use ($userEmployee) {
-            $subordinateIds = $this->getSubordinateEmployeeIds();
-            $ids = $userEmployee ? [$userEmployee->id] : [];
-            if (!empty($subordinateIds)) {
-                $ids = array_merge($ids, $subordinateIds);
-            }
-            $q->whereIn('id', $ids);
-        })->when(!$divisionRoot && !$user->isKoordinatorGame() && !$user->isManager() && $userEmployee, function ($q) use ($user) {
-            $roleMap = [
-                'isStaffHostPubg' => User::ROLE_STAFF_HOST_PUBG,
-                'isStaffHostFf' => User::ROLE_STAFF_HOST_FF,
-                'isStaffHostMlbb' => User::ROLE_STAFF_HOST_MLBB,
-                'isStaffHostEfootball' => User::ROLE_STAFF_HOST_EFOOTBALL,
-                'isStaffHostValorant' => User::ROLE_STAFF_HOST_VALORANT,
-                'isStaffHostRoblox' => User::ROLE_STAFF_HOST_ROBLOX,
-                'isStaffHostMonkeyPubg' => User::ROLE_STAFF_HOST_MONKEY_PUBG,
-            ];
-            foreach ($roleMap as $method => $role) {
-                if ($user->$method()) {
-                    $q->whereHas('users', fn ($uq) => $uq->where('role', $role));
-                    break;
-                }
-            }
+        })->when(!$divisionRoot && $userEmployee, function ($q) use ($userEmployee) {
+            $q->where('id', $userEmployee->id);
         })->orderBy('nama')->get();
 
         $totalSold = 0;
@@ -480,7 +489,7 @@ class PubgDailyTrackingTable extends Component
         $viewBreakdown = collect();
         $peakBreakdown = collect();
         $durasiBreakdown = collect();
-        if (($user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isKoordinatorGame()) && $userEmployee) {
+        if (($this->isDivisiStaffHost() || $this->isDivisiKoordinator()) && $userEmployee) {
             $statsQuery = BonusPubg::query();
             $statsQuery->whereIn('employee_id', $this->getViewEmployeeIds());
             $statsQuery->where('divisi', $divisi);

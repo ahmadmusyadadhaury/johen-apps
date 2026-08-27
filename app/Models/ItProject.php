@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ItProject extends Model
 {
+    const STATUS_MENUNGGU = 'menunggu';
+    const STATUS_PROSES = 'proses';
+    const STATUS_SELESAI = 'selesai';
+
+    const STATUSES = [
+        self::STATUS_MENUNGGU => 'Menunggu',
+        self::STATUS_PROSES => 'Proses',
+        self::STATUS_SELESAI => 'Selesai',
+    ];
+
     protected $fillable = ['nama', 'deadline', 'status', 'created_by', 'feedback_atasan'];
 
     protected function casts(): array

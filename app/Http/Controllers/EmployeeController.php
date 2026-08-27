@@ -108,7 +108,9 @@ class EmployeeController extends Controller
         $jenisDokumenList = ['KTP', 'KK', 'NPWP', 'Ijazah', 'Sertifikat', 'Kontrak', 'SK', 'Lainnya'];
         $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
 
-        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions');
+        $canSeePayroll = auth()->user()->isGmCeo();
+
+        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'canSeePayroll');
     }
 
     public function edit(Employee $employee)

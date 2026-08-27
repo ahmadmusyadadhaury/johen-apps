@@ -21,12 +21,12 @@ class DailyTrackingTable extends Component
         'Roblox' => 'koordinator roblox',
         'Monkey PUBG' => 'koordinator monkey pubg',
         'FC Mobile' => 'koordinator fc mobile',
-        'Admin' => 'koordinator admin',
     ];
 
     public string $search = '';
     public string $tanggal = '';
     public string $nama = '';
+    public string $divisi = '';
     public bool $showSuccess = false;
 
     public function mount(): void
@@ -52,6 +52,11 @@ class DailyTrackingTable extends Component
     }
 
     public function updatingNama(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDivisi(): void
     {
         $this->resetPage();
     }
@@ -221,6 +226,9 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             ->when($this->nama, function ($q) {
                 $q->where('bonus_pubgs.nama', $this->nama);
             })
+            ->when($this->divisi, function ($q) {
+                $q->where('bonus_pubgs.divisi', $this->divisi);
+            })
             ->with('employee.divisions', 'employee.users');
 
         $orderRaw = "CASE
@@ -281,6 +289,7 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             'totalDurasi' => $totalDurasi,
             'tanggal' => $this->tanggal,
             'namaOptions' => $namaOptions,
+            'divisiOptions' => $managerDivisionNames,
         ]);
     }
 }

@@ -45,26 +45,26 @@
                             <div :class="childCards.length > 4 ? 'w-48 p-3.5' : 'w-64 p-4'"
                                  class="relative cursor-pointer rounded-xl bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-sm text-center hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-md transition-all"
                                  @click="focusedId = parent.id">
-                                <div class="flex items-center justify-center mb-1">
-                                    <template x-if="card.emp && card.emp.foto_url">
-                                        <img :src="card.emp.foto_url" :alt="card.emp.nama"
-                                             :class="childCards.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
-                                             class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
-                                    </template>
-                                    <template x-if="card.emp && !card.emp.foto_url">
-                                        <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
-                                             class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-amber-500">
-                                            <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
-                                        </div>
-                                    </template>
-                                    <template x-if="!card.emp">
-                                        <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
-                                             class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-amber-500">
-                                            <span x-text="parent.nama.charAt(0).toUpperCase()"></span>
-                                        </div>
-                                    </template>
-                                    <span class="text-[9px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Atasan</span>
-                                </div>
+                                 <span class="text-[9px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Atasan</span>
+                                 <div class="flex items-center justify-center mb-1">
+                                     <template x-if="card.emp && card.emp.foto_url">
+                                         <img :src="card.emp.foto_url" :alt="card.emp.nama"
+                                              :class="childCards.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
+                                              class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
+                                     </template>
+                                     <template x-if="card.emp && !card.emp.foto_url">
+                                         <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
+                                              class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-amber-500">
+                                             <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
+                                         </div>
+                                     </template>
+                                     <template x-if="!card.emp">
+                                         <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
+                                              class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-amber-500">
+                                             <span x-text="parent.nama.charAt(0).toUpperCase()"></span>
+                                         </div>
+                                     </template>
+                                 </div>
                                 <p :class="childCards.length > 4 ? 'text-xs' : 'text-sm'" class="font-semibold text-gray-900 dark:text-gray-100 leading-tight" x-text="parent.nama"></p>
                                 <template x-if="card.emp">
                                     <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="card.emp.nama"></p>
@@ -84,6 +84,7 @@
                  <template x-for="card in positionCards(focused)" :key="card.cardKey">
                      <div :class="childCards.length > 4 ? 'w-48 p-3.5' : 'w-64 p-4'"
                           class="relative rounded-xl bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-950 dark:to-blue-950 border-2 border-primary-500 shadow-lg shadow-primary-100 dark:shadow-primary-900/30 text-center ring-2 ring-primary-200 dark:ring-primary-800">
+                         <span class="text-[9px] font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">Terfokus</span>
                          <div class="flex items-center justify-center mb-1">
                              <template x-if="card.emp && card.emp.foto_url">
                                  <img :src="card.emp.foto_url" :alt="card.emp.nama"
@@ -93,16 +94,15 @@
                              <template x-if="card.emp && !card.emp.foto_url">
                                  <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
                                       class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-primary-600">
-                                     <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
+                                      <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
                                  </div>
                              </template>
                              <template x-if="!card.emp">
                                  <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
                                       class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-primary-600">
-                                     <span x-text="focused.nama.charAt(0).toUpperCase()"></span>
+                                      <span x-text="focused.nama.charAt(0).toUpperCase()"></span>
                                  </div>
                              </template>
-                             <span class="text-[9px] font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">Terfokus</span>
                          </div>
                          <p :class="childCards.length > 4 ? 'text-xs' : 'text-sm'" class="font-bold text-primary-800 dark:text-primary-200 leading-tight" x-text="focused.nama"></p>
                          <template x-if="card.emp">
@@ -154,26 +154,26 @@
                                  <div @click="focusedId = card.id"
                                       :class="childCards.length > 4 ? 'w-48 p-3.5' : 'w-64 p-4'"
                                       class="relative cursor-pointer rounded-xl bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-sm text-center hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-md transition-all">
-                                     <div class="flex items-center justify-center mb-1">
-                                         <template x-if="card.emp && card.emp.foto_url">
-                                             <img :src="card.emp.foto_url" :alt="card.emp.nama"
-                                                  :class="childCards.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
-                                                  class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
-                                         </template>
-                                         <template x-if="card.emp && !card.emp.foto_url">
-                                             <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
-                                                  class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-purple-500">
-                                                 <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
-                                             </div>
-                                         </template>
-                                         <template x-if="!card.emp">
-                                             <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
-                                                  class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-purple-500">
-                                                 <span x-text="card.nama.charAt(0).toUpperCase()"></span>
-                                             </div>
-                                         </template>
-                                         <span class="text-[9px] font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">Bawahan</span>
-                                     </div>
+                                      <span class="text-[9px] font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">Bawahan</span>
+                                      <div class="flex items-center justify-center mb-1">
+                                          <template x-if="card.emp && card.emp.foto_url">
+                                              <img :src="card.emp.foto_url" :alt="card.emp.nama"
+                                                   :class="childCards.length > 4 ? 'w-6 h-6' : 'w-8 h-8'"
+                                                   class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
+                                          </template>
+                                          <template x-if="card.emp && !card.emp.foto_url">
+                                              <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
+                                                   class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-purple-500">
+                                                  <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
+                                              </div>
+                                          </template>
+                                          <template x-if="!card.emp">
+                                              <div :class="childCards.length > 4 ? 'w-6 h-6 text-[11px]' : 'w-8 h-8 text-[13px]'"
+                                                   class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-purple-500">
+                                                  <span x-text="card.nama.charAt(0).toUpperCase()"></span>
+                                              </div>
+                                          </template>
+                                      </div>
                                      <p :class="childCards.length > 4 ? 'text-xs' : 'text-sm'" class="font-semibold text-gray-900 dark:text-gray-100 leading-tight" x-text="card.nama"></p>
                                      <template x-if="card.emp">
                                          <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="card.emp.nama"></p>

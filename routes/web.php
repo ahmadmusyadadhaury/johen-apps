@@ -250,6 +250,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
         Route::delete('/maintenance/pc/{pc}', [JadwalMaintenanceController::class, 'destroyPc'])->name('maintenance.pc.destroy');
         Route::post('/maintenance/{schedule}/feedback', [JadwalMaintenanceController::class, 'feedback'])->name('maintenance.feedback');
+        Route::post('/maintenance/{schedule}/feedback-koordinator', [JadwalMaintenanceController::class, 'feedbackKoordinator'])->name('maintenance.feedback-koordinator');
     });
 
     Route::prefix('pubg')->name('pubg.')->group(function () {

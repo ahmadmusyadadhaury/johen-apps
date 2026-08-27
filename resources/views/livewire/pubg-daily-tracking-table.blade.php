@@ -6,7 +6,7 @@
 @endpush
 
 <div x-data="{ showFotoModal: false, fotoModalUrl: '', fotoModalLabel: '' }">
-    @if(auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostMlbb() || auth()->user()->isStaffHostEfootball() || auth()->user()->isStaffHostValorant() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isKoordinatorGame())
+    @if($this->isDivisiStaffHost() || $this->isDivisiKoordinator())
     <div x-data="{ modal: null }" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div @click="modal = 'sold'" class="stat-card group cursor-pointer">
             <div class="flex items-center justify-between mb-3">
@@ -158,7 +158,7 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data daily tracking divisi {{ $divisi }}</p>
             </div>
             @php $isDivisiKoord = $this->isDivisiKoordinator(); @endphp
-            @if(!$isDivisiKoord || auth()->user()->isKoordinatorGame())
+            @if($this->canFillData())
             <button wire:click="openCreateModal" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Data
@@ -265,8 +265,8 @@
                             </td>
                             <td class="table-cell text-center">
                                 @php
-                                    $isKoord = auth()->user()->isKoordinatorGame() || $isDivisiKoord;
-                                    $isStaff = auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostMlbb() || auth()->user()->isStaffHostEfootball() || auth()->user()->isStaffHostValorant() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg();
+                                    $isKoord = $isDivisiKoord;
+                                    $isStaff = $this->canFillData();
                                     $canEdit = $isKoord || ($isStaff && $item->status === 'pending');
                                 @endphp
                                 @if($isKoord && $item->status === 'pending')
@@ -303,7 +303,7 @@
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     <p class="font-medium">Belum ada data</p>
-                                    <p class="text-xs mt-1">{{ (!$isDivisiKoord || auth()->user()->isKoordinatorGame()) ? 'Klik "Tambah Data" untuk menambahkan' : 'Menunggu data dari host divisi' }}</p>
+                                    <p class="text-xs mt-1">{{ $this->canFillData() ? 'Klik "Tambah Data" untuk menambahkan' : 'Menunggu data dari host divisi' }}</p>
                                 </div>
                             </td>
                         </tr>
@@ -396,14 +396,14 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div wire:key="create-foto-bukti-stats">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bukti Stats</label>
-                        <input wire:model="foto_bukti_stats" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bukti Stats <span class="text-red-500">*</span></label>
+                        <input wire:model="foto_bukti_stats" type="file" accept="image/jpeg,image/png" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
                         <div wire:loading wire:target="foto_bukti_stats" class="text-xs text-primary-600 mt-1">Mengupload...</div>
                         @error('foto_bukti_stats') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div wire:key="create-foto-bukti-live">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bukti Live</label>
-                        <input wire:model="foto_bukti_live" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bukti Live <span class="text-red-500">*</span></label>
+                        <input wire:model="foto_bukti_live" type="file" accept="image/jpeg,image/png" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
                         <div wire:loading wire:target="foto_bukti_live" class="text-xs text-primary-600 mt-1">Mengupload...</div>
                         @error('foto_bukti_live') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -509,14 +509,20 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div wire:key="edit-foto-bukti-stats">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ganti Bukti Stats</label>
-                        <input wire:model="foto_bukti_stats" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ganti Bukti Stats {{ $fotoBuktiStatsPath ? '' : '<span class="text-red-500">*</span>' }}</label>
+                        @if($fotoBuktiStatsPath)
+                            <p class="text-[11px] text-gray-400 mb-1">Foto saat ini sudah ada, kosongkan jika tidak ingin mengganti.</p>
+                        @endif
+                        <input wire:model="foto_bukti_stats" type="file" accept="image/jpeg,image/png" {{ $fotoBuktiStatsPath ? '' : 'required' }} class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
                         <div wire:loading wire:target="foto_bukti_stats" class="text-xs text-primary-600 mt-1">Mengupload...</div>
                         @error('foto_bukti_stats') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div wire:key="edit-foto-bukti-live">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ganti Bukti Live</label>
-                        <input wire:model="foto_bukti_live" type="file" accept="image/jpeg,image/png" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ganti Bukti Live {{ $fotoBuktiLivePath ? '' : '<span class="text-red-500">*</span>' }}</label>
+                        @if($fotoBuktiLivePath)
+                            <p class="text-[11px] text-gray-400 mb-1">Foto saat ini sudah ada, kosongkan jika tidak ingin mengganti.</p>
+                        @endif
+                        <input wire:model="foto_bukti_live" type="file" accept="image/jpeg,image/png" {{ $fotoBuktiLivePath ? '' : 'required' }} class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 transition-all duration-200" />
                         <div wire:loading wire:target="foto_bukti_live" class="text-xs text-primary-600 mt-1">Mengupload...</div>
                         @error('foto_bukti_live') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>

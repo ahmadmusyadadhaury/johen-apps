@@ -18,17 +18,18 @@ class ProjectItController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless(auth()->user()->isKoordinatorIt(), 403);
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
 
         $request->validate([
             'nama' => 'required|string|max:255',
             'deadline' => 'required|date',
+            'status' => 'required|in:menunggu,proses,selesai',
         ]);
 
         ItProject::create([
             'nama' => $request->nama,
             'deadline' => $request->deadline,
-            'status' => 'aktif',
+            'status' => $request->status,
             'created_by' => auth()->id(),
         ]);
 
@@ -37,12 +38,12 @@ class ProjectItController extends Controller
 
     public function update(Request $request, ItProject $project)
     {
-        abort_unless(auth()->user()->isKoordinatorIt(), 403);
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
 
         $request->validate([
             'nama' => 'required|string|max:255',
             'deadline' => 'required|date',
-            'status' => 'required|in:aktif,selesai',
+            'status' => 'required|in:menunggu,proses,selesai',
         ]);
 
         $project->update($request->only(['nama', 'deadline', 'status']));
@@ -52,7 +53,7 @@ class ProjectItController extends Controller
 
     public function destroy(ItProject $project)
     {
-        abort_unless(auth()->user()->isKoordinatorIt(), 403);
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
 
         $project->delete();
         return back()->with('success', 'Project berhasil dihapus.');

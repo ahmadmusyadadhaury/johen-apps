@@ -6,10 +6,10 @@
 @endpush
 
 <x-app-layout title="Project IT">
-    <div x-data="{ showModal: false, editMode: false, deleteMode: false, selected: null, formNama: '', formDeadline: '', formStatus: 'aktif', feedbackTarget: null, feedbackText: '' }" class="space-y-6">
+    <div x-data="{ showModal: false, editMode: false, deleteMode: false, selected: null, formNama: '', formDeadline: '', formStatus: 'menunggu', feedbackTarget: null, feedbackText: '' }" class="space-y-6">
 
         {{-- Stats --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-5">
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/30 group-hover:scale-110 transition-transform duration-300">
@@ -23,12 +23,23 @@
 
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-gray-400 to-slate-500 text-white shadow-lg shadow-gray-200 dark:shadow-gray-900/30 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">Menunggu</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $projects->where('status', 'menunggu')->count() }} <span class="text-sm font-medium text-gray-400">project</span></p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Menunggu Diproses</p>
+            </div>
+
+            <div class="stat-card group">
+                <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-200 dark:shadow-amber-900/30 group-hover:scale-110 transition-transform duration-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
                     </div>
-                    <span class="badge-warning">Aktif</span>
+                    <span class="badge-warning">Proses</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $projects->where('status', 'aktif')->count() }} <span class="text-sm font-medium text-gray-400">project</span></p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $projects->where('status', 'proses')->count() }} <span class="text-sm font-medium text-gray-400">project</span></p>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Sedang Berjalan</p>
             </div>
 
@@ -52,7 +63,7 @@
                     <p class="mt-0.5 text-xs text-gray-400">Semua project IT yang sedang berjalan</p>
                 </div>
                 @if($canManage)
-                <button @click="showModal = true; editMode = false; formNama = ''; formDeadline = ''; formStatus = 'aktif'" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition">
+                <button @click="showModal = true; editMode = false; formNama = ''; formDeadline = ''; formStatus = 'menunggu'" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     Tambah Project
                 </button>
@@ -79,7 +90,7 @@
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800/60">
                         @forelse($projects as $index => $project)
                             @php
-                                $isOverdue = $project->status === 'aktif' && $project->deadline->isPast();
+                                $isOverdue = $project->status !== 'selesai' && $project->deadline->isPast();
                             @endphp
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                                 <td class="px-5 py-3.5 text-gray-400">{{ $index + 1 }}</td>
@@ -91,8 +102,10 @@
                                     @endif
                                 </td>
                                 <td class="px-5 py-3.5">
-                                    @if($project->status === 'aktif')
-                                        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Aktif</span>
+                                    @if($project->status === 'menunggu')
+                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">Menunggu</span>
+                                    @elseif($project->status === 'proses')
+                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Proses</span>
                                     @else
                                         <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Selesai</span>
                                     @endif
@@ -162,15 +175,14 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deadline</label>
                             <input type="date" name="deadline" x-model="formDeadline" required class="mt-1 block w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                         </div>
-                        <template x-if="editMode">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                                <select name="status" x-model="formStatus" class="mt-1 block w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                                    <option value="aktif">Aktif</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-                            </div>
-                        </template>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                            <select name="status" x-model="formStatus" required class="mt-1 block w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                <option value="menunggu">Menunggu</option>
+                                <option value="proses">Proses</option>
+                                <option value="selesai">Selesai</option>
+                            </select>
+                        </div>
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" @click="showModal = false" class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Batal</button>
                             <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition" x-text="editMode ? 'Simpan' : 'Tambah'"></button>

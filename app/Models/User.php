@@ -307,7 +307,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!in_array($this->role, [self::ROLE_KOORDINATOR, self::ROLE_KOORDINATOR_PUBG])) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 
@@ -329,7 +329,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!in_array($this->role, [self::ROLE_KOORDINATOR, self::ROLE_KOORDINATOR_FF])) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 
@@ -351,7 +351,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role !== self::ROLE_KOORDINATOR) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 
@@ -373,7 +373,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role !== self::ROLE_KOORDINATOR) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 
@@ -395,7 +395,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role !== self::ROLE_KOORDINATOR) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 
@@ -417,7 +417,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role !== self::ROLE_KOORDINATOR) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 
@@ -439,7 +439,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role !== self::ROLE_KOORDINATOR) {
+        if (!$this->isAnyKoordinator()) {
             return false;
         }
 

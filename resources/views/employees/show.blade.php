@@ -2,6 +2,7 @@
     $isOwnView = $isOwnView ?? false;
     $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
     $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
+    $canSeePayroll = ($canSeePayroll ?? false) || $isOwnView;
 
     $firstContractStart = $employee->firstContractStart();
     $masaKerjaText = null;
@@ -83,6 +84,8 @@ data-promotion-success="{{ session('promotion_success') }}"
           data-payroll-stats="{{ json_encode($stats) }}"
           class="hidden"></div>
 
+    @php $tabsJson = json_encode(array_filter(['dasar', 'dokumen', 'kontrak', 'jabatan', $canSeePayroll ? 'payroll' : null])); @endphp
+
     <div x-data="{
         activeTab: 'dasar',
         aksiOpen: false,
@@ -136,7 +139,7 @@ data-promotion-success="{{ session('promotion_success') }}"
         viewSuratPromosi: null,
         payrollList: [],
         payrollStats: { gaji_pokok: 0, total_tunjangan: 0, total_potongan: 0, gaji_bersih: 0 },
-        tabs: ['dasar', 'dokumen', 'kontrak', 'jabatan', 'payroll'],
+        tabs: {{ $tabsJson }},
         init() {
             const data = document.getElementById('page-data');
             if (data) {
@@ -441,7 +444,9 @@ data-promotion-success="{{ session('promotion_success') }}"
                     { key: 'dokumen', label: 'Dokumen' },
                     { key: 'kontrak', label: 'Riwayat Kontrak' },
                     { key: 'jabatan', label: 'Riwayat Jabatan' },
+                    @if($canSeePayroll)
                     { key: 'payroll', label: 'Riwayat Payroll' },
+                    @endif
                 ]" :key="tab.key">
                     <button type="button"
                         @click="setTab(tab.key)"
@@ -1201,6 +1206,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             </div>
 
             {{-- Panel: Riwayat Payroll --}}
+            @if($canSeePayroll)
             <div x-show="activeTab === 'payroll'" x-cloak class="p-7">
                 {{-- Table --}}
                 <div x-show="payrollList.length > 0">
@@ -1257,6 +1263,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     <p class="text-xs">Riwayat payroll akan tersedia setelah fitur aktif.</p>
                 </div>
             </div>
+            @endif
 
 
         </div>

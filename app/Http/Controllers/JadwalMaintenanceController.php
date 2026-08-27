@@ -9,16 +9,20 @@ use Illuminate\Support\Facades\Storage;
 
 class JadwalMaintenanceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pcs = ItMaintenancePc::with(['schedules' => function ($q) {
-            $q->orderByDesc('urutan')->limit(1);
+        $periode = $request->input('periode', 1);
+        $periodeList = ItMaintenanceSchedule::distinct()->pluck('periode')->sort()->values();
+
+        $pcs = ItMaintenancePc::with(['schedules' => function ($q) use ($periode) {
+            $q->where('periode', $periode)->orderByDesc('tanggal_mulai')->limit(1);
         }])->where('aktif', true)->get();
 
         $canManage = auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt();
         $canGiveFeedback = auth()->user()->isHeadOfStore2();
+        $canGiveFeedbackKoordinator = auth()->user()->isKoordinatorIt();
 
-        return view('it.maintenance', compact('pcs', 'canManage', 'canGiveFeedback'));
+        return view('it.maintenance', compact('pcs', 'canManage', 'canGiveFeedback', 'canGiveFeedbackKoordinator', 'periodeList', 'periode'));
     }
 
     public function storeMaintenance(Request $request)
@@ -27,7 +31,7 @@ class JadwalMaintenanceController extends Controller
 
         $request->validate([
             'nama' => 'required|string|max:255',
-            'urutan' => 'required|integer|min:1',
+            'periode' => 'required|integer|min:1',
             'catatan' => 'nullable|string|max:500',
         ]);
 
@@ -35,7 +39,7 @@ class JadwalMaintenanceController extends Controller
 
         ItMaintenanceSchedule::create([
             'pc_id' => $pc->id,
-            'urutan' => $request->urutan,
+            'periode' => $request->periode,
             'catatan' => $request->catatan,
             'created_by' => auth()->id(),
         ]);
@@ -76,10 +80,10 @@ class JadwalMaintenanceController extends Controller
         abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
 
         $data = $request->validate([
-            'urutan' => ['required', 'integer', 'min:1'],
-            'tanggal' => ['nullable', 'date'],
+            'tanggal_mulai' => ['nullable', 'date'],
+            'tanggal_selesai' => ['nullable', 'date'],
             'catatan' => ['nullable', 'string', 'max:500'],
-            'status' => ['required', 'in:antrean,diproses,selesai'],
+            'status' => ['required', 'in:antrean,diproses,dijeda,selesai'],
             'foto_sebelum' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'foto_sesudah' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
@@ -143,5 +147,18 @@ class JadwalMaintenanceController extends Controller
         $schedule->update(['feedback_atasan' => $request->input('feedback_atasan')]);
 
         return back()->with('success', 'Feedback untuk jadwal maintenance berhasil disimpan.');
+    }
+
+    public function feedbackKoordinator(Request $request, ItMaintenanceSchedule $schedule)
+    {
+        abort_unless($request->user()->isKoordinatorIt(), 403);
+
+        $request->validate([
+            'feedback_koordinator' => 'required|string|max:3000',
+        ]);
+
+        $schedule->update(['feedback_koordinator' => $request->input('feedback_koordinator')]);
+
+        return back()->with('success', 'Feedback koordinator untuk jadwal maintenance berhasil disimpan.');
     }
 }
