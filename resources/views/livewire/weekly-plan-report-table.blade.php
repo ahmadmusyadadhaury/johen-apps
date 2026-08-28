@@ -5,16 +5,40 @@
         </div>
     @endif
 
+    @if($employeeId)
+    <div class="mb-4">
+        <a href="{{ route('hris.weekly-report') }}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Kembali ke Daftar Koordinator
+        </a>
+    </div>
+    @endif
+
     <div class="flex items-center justify-between mb-6">
         <div>
             <p class="text-sm text-gray-500 dark:text-gray-400">Kelola rencana kerja mingguan</p>
         </div>
-        @unless($hideCreateButton || auth()->user()->isReadOnlyWorkspace())
-        <button wire:click="openNew" class="btn-primary text-xs py-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            Tambah WPR
-        </button>
-        @endunless
+        <div class="flex items-center gap-3">
+            @if($availableWeeks->isNotEmpty())
+            <div class="relative">
+                <select wire:model.live="filterWeek" class="appearance-none rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 pr-8 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <option value="">Semua Week</option>
+                    @foreach($availableWeeks as $w)
+                        <option value="{{ $w->week }}">Week {{ $w->week }} ({{ \Carbon\Carbon::parse($w->start_date)->format('d M') }} - {{ \Carbon\Carbon::parse($w->end_date)->format('d M Y') }})</option>
+                    @endforeach
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </div>
+            @endif
+            @unless($hideCreateButton || auth()->user()->isReadOnlyWorkspace())
+            <button wire:click="openNew" class="btn-primary text-xs py-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Tambah WPR
+            </button>
+            @endunless
+        </div>
     </div>
 
     <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">

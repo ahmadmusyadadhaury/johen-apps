@@ -121,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
         })->name('laporan-penjualan');
         Route::get('/jobdesk', [JobdeskController::class, 'index'])->name('jobdesk');
         Route::get('/weekly-report', [WeeklyReportController::class, 'index'])->name('weekly-report');
+        Route::get('/weekly-report/{employee}', [WeeklyReportController::class, 'show'])->name('weekly-report.show');
         Route::get('/daily-tracking', [DailyTrackingController::class, 'index'])->name('daily-tracking');
         Route::get('/daily-tracking-admin', AdminDailyTrackingTable::class)->name('daily-tracking-admin');
         Route::get('/daily-tracking-stock', StockDailyTrackingTable::class)->name('daily-tracking-stock');

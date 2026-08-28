@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\WeeklyPlanReport;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,6 +20,8 @@ class WeeklyPlanReportTable extends Component
     public ?int $editId = null;
     public ?int $w1Id = null;
     public ?int $feedbackId = null;
+    public ?int $employeeId = null;
+    public string $filterWeek = '';
 
     public string $tanggal = '';
     public string $kategori = '';
@@ -27,6 +30,11 @@ class WeeklyPlanReportTable extends Component
     public string $keterangan = '';
     public string $action_plan = '';
     public string $feedback_atasan = '';
+
+    public function mount(?int $employeeId = null): void
+    {
+        $this->employeeId = $employeeId;
+    }
 
     public function openNew(): void
     {
@@ -215,7 +223,10 @@ class WeeklyPlanReportTable extends Component
             $currentEmployeeId = $employee->id;
             $visibleIds = [$currentEmployeeId];
 
-            if ($user->isKoordinator()) {
+            if ($this->employeeId) {
+                $visibleIds = [$this->employeeId];
+                $hideCreateButton = true;
+            } elseif ($user->isKoordinator()) {
                 $divisionIds = $employee->divisions()->pluck('divisions.id')->toArray();
                 $teamIds = Employee::whereHas('divisions', fn($q) => $q->whereIn('divisions.id', $divisionIds))
                     ->where('id', '!=', $employee->id)
@@ -232,7 +243,22 @@ class WeeklyPlanReportTable extends Component
             }
 
             $query->whereIn('employee_id', $visibleIds);
+
+            if ($this->filterWeek !== '') {
+                $week = (int) $this->filterWeek;
+                $year = (int) Carbon::now()->year;
+                $query->whereRaw("EXTRACT(YEAR FROM tanggal) = ?", [$year])
+                      ->whereRaw("EXTRACT(WEEK FROM tanggal) = ?", [$week]);
+            }
+
             $reports = $query->latest('tanggal')->paginate(10);
+
+            $availableWeeks = WeeklyPlanReport::whereIn('employee_id', $visibleIds)
+                ->selectRaw('YEAR(tanggal) as year, WEEK(tanggal) as week, MIN(tanggal) as start_date, MAX(tanggal) as end_date')
+                ->groupByRaw('YEAR(tanggal), WEEK(tanggal)')
+                ->orderByDesc('year')
+                ->orderByDesc('week')
+                ->get();
 
             foreach ($reports as $r) {
                 $re = $r->employee;
@@ -250,6 +276,7 @@ class WeeklyPlanReportTable extends Component
             'canGiveFeedbackMap' => $canGiveFeedbackMap,
             'userEmployee' => $userEmployee,
             'hideCreateButton' => $hideCreateButton,
+            'availableWeeks' => $availableWeeks ?? collect(),
         ]);
     }
 }

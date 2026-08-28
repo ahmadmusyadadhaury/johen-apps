@@ -283,6 +283,11 @@ class User extends Authenticatable
         ]);
     }
 
+    public function isKoordinatorGameRole(): bool
+    {
+        return $this->isKoordinatorGame();
+    }
+
     public function isAnyKoordinator(): bool
     {
         return in_array($this->role, [
@@ -520,6 +525,11 @@ class User extends Authenticatable
         $position = $employee->mainPosition();
         if (!$position) return false;
         return strtolower($position->nama) === 'head of store 2';
+    }
+
+    public function isHeadOfStore1(): bool
+    {
+        return $this->isHeadOfStore() && !$this->isHeadOfStore2();
     }
 
     public function isKoordinatorItOrAbove(): bool
