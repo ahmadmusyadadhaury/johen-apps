@@ -2,10 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Models\Employee;
 use App\Models\Freelance;
 use App\Models\LeaveRequest;
-use App\Models\Employee;
 use App\Models\Position;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,31 +15,51 @@ class CutiIzinTable extends Component
     use WithPagination;
 
     public string $tab = 'saya';
+
     public string $search = '';
+
     public string $filterJenis = '';
+
     public string $filterStatus = '';
 
     public bool $showPengajuanModal = false;
+
     public ?int $selectedPositionId = null;
+
     public string $pengajuanJenis = 'cuti_tahunan';
+
     public string $pengajuanTanggalMulai = '';
+
     public string $pengajuanTanggalSelesai = '';
+
     public string $pengajuanKeterangan = '';
 
     public bool $showPinModal = false;
+
     public bool $showNoPinModal = false;
+
     public bool $showAtasan2ErrorModal = false;
+
     public string $atasan2ErrorMessage = '';
+
     public bool $showDeleteConfirmModal = false;
+
     public ?int $deleteId = null;
 
     public bool $showRekomendasiFreelanceModal = false;
+
     public string $rekomendasiPositionName = '';
+
     public $rekomendasiFreelancers = [];
+
     public string $pin = '';
+
     public string $catatan = '';
+
     public ?int $pendingId = null;
+
     public string $pendingLevel = '';
+
     public string $pendingAction = '';
 
     public function updatingSearch(): void
@@ -67,7 +88,7 @@ class CutiIzinTable extends Component
     public function submitPengajuan(): void
     {
         $rules = [
-            'pengajuanJenis' => ['required', 'in:cuti_tahunan,izin'],
+            'pengajuanJenis' => ['required', 'in:cuti_tahunan,izin,jatah'],
             'pengajuanTanggalMulai' => ['required', 'date'],
             'pengajuanTanggalSelesai' => ['required', 'date', 'after_or_equal:pengajuanTanggalMulai'],
             'pengajuanKeterangan' => ['required', 'string', 'max:1000'],
@@ -83,17 +104,19 @@ class CutiIzinTable extends Component
 
         $user = auth()->user();
 
-        if (!$employee) {
+        if (! $employee) {
             $this->dispatch('notify', type: 'error', message: 'Akun Anda tidak terhubung ke data karyawan.');
+
             return;
         }
 
-        $mulai = \Carbon\Carbon::parse($this->pengajuanTanggalMulai);
-        $selesai = \Carbon\Carbon::parse($this->pengajuanTanggalSelesai);
+        $mulai = Carbon::parse($this->pengajuanTanggalMulai);
+        $selesai = Carbon::parse($this->pengajuanTanggalSelesai);
         $durasi = $mulai->diffInDays($selesai) + 1;
 
-        if ($this->pengajuanJenis === 'cuti_tahunan' && !$employee->isCutiEligible()) {
+        if ($this->pengajuanJenis === 'cuti_tahunan' && ! $employee->isCutiEligible()) {
             $this->dispatch('notify', type: 'error', message: 'Cuti belum aktif. Cuti dapat digunakan setelah karyawan bekerja minimal 1 tahun sejak kontrak pertama.');
+
             return;
         }
 
@@ -103,18 +126,73 @@ class CutiIzinTable extends Component
                 ->where('jenis', 'cuti_tahunan')
                 ->where('tanggal_mulai', '>=', $accrual['cycle_start'])
                 ->where('persetujuan_koor', 'disetujui');
-            if (!$user->isAnyKoordinator()) {
+            if (! $user->isAnyKoordinator()) {
                 $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
             }
-            if (!$user->isAnyKoordinator() && !$user->isStaffAdmin() && !$user->isStaffHostPubg() && !$user->isStaffHostFf() && !$user->isStaffIt() && !$user->isStaffHostMlbb() && !$user->isStaffHostEfootball() && !$user->isStaffHostValorant() && !$user->isStaffHostRoblox() && !$user->isStaffHostMonkeyPubg() && !$user->isStaffStock()) {
+            if (! $user->isAnyKoordinator() && ! $user->isStaffAdmin() && ! $user->isStaffHostPubg() && ! $user->isStaffHostFf() && ! $user->isStaffIt() && ! $user->isStaffHostMlbb() && ! $user->isStaffHostEfootball() && ! $user->isStaffHostValorant() && ! $user->isStaffHostRoblox() && ! $user->isStaffHostMonkeyPubg() && ! $user->isStaffStock()) {
                 $usedCutiQuery->where('persetujuan_hr', 'disetujui');
             }
             $usedCuti = $usedCutiQuery->get()
-                ->sum(fn($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+                ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
             $sisa = max(0, $accrual['earned'] - $usedCuti);
             if ($durasi > $sisa) {
                 $this->dispatch('notify', type: 'error', message: "Saldo cuti tidak mencukupi. Sisa saldo Anda {$sisa} hari.");
+
                 return;
+            }
+        }
+
+        if ($this->pengajuanJenis === 'jatah') {
+            $user = auth()->user();
+            if ($user->isStaffIt() || $user->isKoordinatorIt()) {
+                $this->dispatch('notify', type: 'error', message: 'Jatah libur tidak tersedia untuk role Anda.');
+
+                return;
+            }
+
+            $usedJatah = LeaveRequest::where('employee_id', $employee->id)
+                ->where('jenis', 'jatah')
+                ->where('tanggal_mulai', '>=', now()->startOfMonth()->toDateString())
+                ->where('persetujuan_koor', 'disetujui')
+                ->get()
+                ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+            $sisaJatah = max(0, 4 - $usedJatah);
+            if ($durasi > $sisaJatah) {
+                $this->dispatch('notify', type: 'error', message: "Jatah libur tidak mencukupi. Sisa jatah libur Anda {$sisaJatah} dari 4 hari bulan ini.");
+
+                return;
+            }
+
+            // Aturan 1 minggu maksimal dipakai 1 hari jatah libur.
+            $existingJatah = LeaveRequest::where('employee_id', $employee->id)
+                ->where('jenis', 'jatah')
+                ->where('persetujuan_koor', 'disetujui')
+                ->get()
+                ->flatMap(fn ($lr) => $lr->dateRange())
+                ->map(fn ($date) => \Illuminate\Support\Carbon::parse($date))
+                ->all();
+
+            $requestWeeks = [];
+            for ($d = $mulai->copy(); $d->lte($selesai); $d->addDay()) {
+                $key = $d->isoWeekYear().'-W'.str_pad((string) $d->isoWeek(), 2, '0', STR_PAD_LEFT);
+                $requestWeeks[$key] = ($requestWeeks[$key] ?? 0) + 1;
+            }
+
+            foreach ($requestWeeks as $weekKey => $countInWeek) {
+                if ($countInWeek > 1) {
+                    $this->dispatch('notify', type: 'error', message: 'Jatah libur hanya dapat dipakai 1 hari dalam 1 minggu.');
+
+                    return;
+                }
+            }
+
+            foreach ($existingJatah as $existingDate) {
+                $key = $existingDate->isoWeekYear().'-W'.str_pad((string) $existingDate->isoWeek(), 2, '0', STR_PAD_LEFT);
+                if (isset($requestWeeks[$key])) {
+                    $this->dispatch('notify', type: 'error', message: 'Jatah libur hanya dapat dipakai 1 hari dalam 1 minggu. Minggu tersebut sudah terpakai.');
+
+                    return;
+                }
             }
         }
 
@@ -135,7 +213,7 @@ class CutiIzinTable extends Component
             'jenis' => $this->pengajuanJenis,
             'tanggal_mulai' => $this->pengajuanTanggalMulai,
             'tanggal_selesai' => $this->pengajuanTanggalSelesai,
-            'durasi' => $durasi . ' hari',
+            'durasi' => $durasi.' hari',
             'keterangan' => $this->pengajuanKeterangan,
             'persetujuan_koor' => $atasan ? 'menunggu' : 'disetujui',
             'persetujuan_atasan2' => $hasAtasan2 ? 'menunggu' : 'disetujui',
@@ -154,24 +232,28 @@ class CutiIzinTable extends Component
         if ($level === 'persetujuan_atasan2' && $lr->persetujuan_koor !== 'disetujui') {
             $this->atasan2ErrorMessage = 'Atasan 1 belum menyetujui pengajuan ini. Atasan 2 hanya dapat menyetujui setelah Atasan 1 menyetujui.';
             $this->showAtasan2ErrorModal = true;
+
             return;
         }
 
         if ($level === 'persetujuan_hr') {
             if ($lr->persetujuan_atasan2 !== 'disetujui') {
                 $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah Atasan 2 menyetujui.');
+
                 return;
             }
-            if (!$lr->tanggal_selesai->isPast() && !auth()->user()->isSuperAdmin()) {
+            if (! $lr->tanggal_selesai->isPast() && ! auth()->user()->isSuperAdmin()) {
                 $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
+
                 return;
             }
         }
 
         $user = auth()->user();
         if ($user->requiresPinApproval()) {
-            if (!$user->hasPin()) {
+            if (! $user->hasPin()) {
                 $this->showNoPinModal = true;
+
                 return;
             }
             $this->pendingId = $id;
@@ -180,6 +262,7 @@ class CutiIzinTable extends Component
             $this->pin = '';
             $this->catatan = '';
             $this->showPinModal = true;
+
             return;
         }
 
@@ -199,8 +282,9 @@ class CutiIzinTable extends Component
 
         $user = auth()->user();
         if ($user->requiresPinApproval()) {
-            if (!$user->hasPin()) {
+            if (! $user->hasPin()) {
                 $this->showNoPinModal = true;
+
                 return;
             }
             $this->pendingId = $id;
@@ -209,6 +293,7 @@ class CutiIzinTable extends Component
             $this->pin = '';
             $this->catatan = '';
             $this->showPinModal = true;
+
             return;
         }
 
@@ -230,8 +315,9 @@ class CutiIzinTable extends Component
         ]);
 
         $user = auth()->user();
-        if (!$user->verifyPin($this->pin)) {
+        if (! $user->verifyPin($this->pin)) {
             $this->addError('pin', 'PIN Persetujuan yang Anda masukkan tidak sesuai.');
+
             return;
         }
 
@@ -243,6 +329,7 @@ class CutiIzinTable extends Component
             $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
             $this->atasan2ErrorMessage = 'Atasan 1 belum menyetujui pengajuan ini. Atasan 2 hanya dapat menyetujui setelah Atasan 1 menyetujui.';
             $this->showAtasan2ErrorModal = true;
+
             return;
         }
 
@@ -251,12 +338,14 @@ class CutiIzinTable extends Component
                 $this->showPinModal = false;
                 $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
                 $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah Atasan 2 menyetujui.');
+
                 return;
             }
-            if (!$lr->tanggal_selesai->isPast() && !auth()->user()->isSuperAdmin()) {
+            if (! $lr->tanggal_selesai->isPast() && ! auth()->user()->isSuperAdmin()) {
                 $this->showPinModal = false;
                 $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
                 $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
+
                 return;
             }
         }
@@ -279,7 +368,7 @@ class CutiIzinTable extends Component
 
         $this->dispatch('leave-request-updated');
 
-        $message = 'Pengajuan ' . ($this->pendingAction === 'setujui' ? 'disetujui' : 'ditolak') . '.';
+        $message = 'Pengajuan '.($this->pendingAction === 'setujui' ? 'disetujui' : 'ditolak').'.';
 
         $this->showPinModal = false;
         $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
@@ -293,16 +382,16 @@ class CutiIzinTable extends Component
 
         if ($level === 'persetujuan_koor') {
             $userEmployee = $user->employee;
-            if (!$userEmployee || $userEmployee->id !== $lr->atasan_id) {
+            if (! $userEmployee || $userEmployee->id !== $lr->atasan_id) {
                 abort(403, 'Hanya atasan 1 yang dapat menyetujui pengajuan ini.');
             }
         } elseif ($level === 'persetujuan_atasan2') {
             $userEmployee = $user->employee;
-            if (!$userEmployee || $userEmployee->id !== $lr->atasan2_id) {
+            if (! $userEmployee || $userEmployee->id !== $lr->atasan2_id) {
                 abort(403, 'Hanya atasan 2 yang dapat menyetujui pengajuan ini.');
             }
         } elseif ($level === 'persetujuan_hr') {
-            if ($user->isStaffHr() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || (!$user->isSuperAdmin() && !$user->isGmCeo() && $user->id !== 4 && !$this->isHr($user))) {
+            if ($user->isStaffHr() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || (! $user->isSuperAdmin() && ! $user->isGmCeo() && $user->id !== 4 && ! $this->isHr($user))) {
                 abort(403, 'Hanya HR yang dapat menyetujui persetujuan HR.');
             }
         } else {
@@ -312,7 +401,7 @@ class CutiIzinTable extends Component
 
     public function confirmDelete(int $id): void
     {
-        if (!auth()->user()->isSuperAdmin()) {
+        if (! auth()->user()->isSuperAdmin()) {
             abort(403);
         }
 
@@ -322,9 +411,11 @@ class CutiIzinTable extends Component
 
     public function executeDelete(): void
     {
-        if (!$this->deleteId) return;
+        if (! $this->deleteId) {
+            return;
+        }
 
-        if (!auth()->user()->isSuperAdmin()) {
+        if (! auth()->user()->isSuperAdmin()) {
             abort(403);
         }
 
@@ -353,16 +444,22 @@ class CutiIzinTable extends Component
 
     private function showRekomendasiIfHost(LeaveRequest $lr, string $level): void
     {
-        if ($level === 'persetujuan_hr') return;
+        if ($level === 'persetujuan_hr') {
+            return;
+        }
 
         $position = $lr->selectedPosition;
-        if (!$position || !str_starts_with($position->nama, 'Host')) return;
+        if (! $position || ! str_starts_with($position->nama, 'Host')) {
+            return;
+        }
 
         $gameName = preg_replace('/^Host\s+/', '', $position->nama);
         $gameName = preg_replace('/\s*\((Subuh|Pagi|Siang|Malam)\)$/i', '', $gameName);
 
-        $freelancers = Freelance::where('host_position', 'like', '%' . $gameName . '%')->get();
-        if ($freelancers->isEmpty()) return;
+        $freelancers = Freelance::where('host_position', 'like', '%'.$gameName.'%')->get();
+        if ($freelancers->isEmpty()) {
+            return;
+        }
 
         $this->rekomendasiPositionName = $position->nama;
         $this->rekomendasiFreelancers = $freelancers;
@@ -371,20 +468,30 @@ class CutiIzinTable extends Component
 
     public function getSelectedPositionAtasan(): ?string
     {
-        if (!$this->selectedPositionId) return null;
+        if (! $this->selectedPositionId) {
+            return null;
+        }
         $position = Position::find($this->selectedPositionId);
-        if (!$position) return null;
+        if (! $position) {
+            return null;
+        }
         $atasan = $this->getAtasan(auth()->user()->employee, $position);
+
         return $atasan?->nama;
     }
 
     public function getSelectedPositionAtasan2(): ?string
     {
-        if (!$this->selectedPositionId) return null;
+        if (! $this->selectedPositionId) {
+            return null;
+        }
         $position = Position::find($this->selectedPositionId);
-        if (!$position) return null;
+        if (! $position) {
+            return null;
+        }
         $atasan1 = $this->getAtasan(auth()->user()->employee, $position);
         $atasan2 = $this->getAtasan2(auth()->user()->employee, $atasan1, $position);
+
         return $atasan2?->nama;
     }
 
@@ -397,7 +504,9 @@ class CutiIzinTable extends Component
         }
 
         $userEmployee = $user->employee;
-        if (!$userEmployee) return 0;
+        if (! $userEmployee) {
+            return 0;
+        }
 
         $query = LeaveRequest::query();
 
@@ -409,7 +518,7 @@ class CutiIzinTable extends Component
                 $position = Position::where('nama', $positionName)->first();
                 if ($position) {
                     $descendantIds = $this->getAllDescendantIds($position);
-                    if (!empty($descendantIds)) {
+                    if (! empty($descendantIds)) {
                         $query->whereIn('selected_position_id', $descendantIds);
                     }
                 }
@@ -419,7 +528,7 @@ class CutiIzinTable extends Component
         } elseif ($user->isHeadOfStore()) {
             $query->where(function ($q) use ($userEmployee) {
                 $q->where('atasan_id', $userEmployee->id)
-                  ->orWhere('atasan2_id', $userEmployee->id);
+                    ->orWhere('atasan2_id', $userEmployee->id);
             });
 
             if ($user->isAnyKoordinator()) {
@@ -431,7 +540,7 @@ class CutiIzinTable extends Component
             } else {
                 $query->where(function ($q) {
                     $q->where('persetujuan_koor', 'menunggu')
-                      ->orWhere('persetujuan_atasan2', 'menunggu');
+                        ->orWhere('persetujuan_atasan2', 'menunggu');
                 });
             }
         } else {
@@ -447,9 +556,9 @@ class CutiIzinTable extends Component
         $userEmployee = $user->employee;
 
         $isHr = $userEmployee && $userEmployee->positions()->whereIn('nama', [
-            'Human Resource Generalist', 'Admin HR', 'Admin GA', 'Office Boy'
+            'Human Resource Generalist', 'Admin HR', 'Admin GA', 'Office Boy',
         ])->exists();
-        $lihatSemua = !$user->isStaffHr() && ($user->isSuperAdmin() || $user->isGmCeo() || $user->id === 4 || $isHr);
+        $lihatSemua = ! $user->isStaffHr() && ($user->isSuperAdmin() || $user->isGmCeo() || $user->id === 4 || $isHr);
 
         $baseQuery = LeaveRequest::query();
 
@@ -471,7 +580,7 @@ class CutiIzinTable extends Component
                         $position = Position::where('nama', $positionName)->first();
                         if ($position) {
                             $descendantIds = $this->getAllDescendantIds($position);
-                            if (!empty($descendantIds)) {
+                            if (! empty($descendantIds)) {
                                 $baseQuery->whereIn('selected_position_id', $descendantIds);
                             }
                         }
@@ -487,29 +596,30 @@ class CutiIzinTable extends Component
                 } else {
                     $baseQuery->where(function ($q) use ($userEmployee) {
                         $q->where('atasan_id', $userEmployee->id)
-                          ->orWhere('atasan2_id', $userEmployee->id);
+                            ->orWhere('atasan2_id', $userEmployee->id);
                     });
                 }
             } else {
                 $baseQuery->whereRaw('1 = 0');
             }
-        } elseif ($userEmployee && !$lihatSemua) {
+        } elseif ($userEmployee && ! $lihatSemua) {
             $baseQuery->where(function ($q) use ($userEmployee) {
                 $q->where('atasan_id', $userEmployee->id)
-                  ->orWhere('atasan2_id', $userEmployee->id)
-                  ->orWhere('employee_id', $userEmployee->id);
+                    ->orWhere('atasan2_id', $userEmployee->id)
+                    ->orWhere('employee_id', $userEmployee->id);
             });
-        } elseif (!$lihatSemua) {
+        } elseif (! $lihatSemua) {
             $baseQuery->whereRaw('1 = 0');
         }
 
         $totalPengajuan = (clone $baseQuery)->count();
         $totalCuti = (clone $baseQuery)->where('jenis', 'cuti_tahunan')->count();
         $totalIzin = (clone $baseQuery)->where('jenis', 'izin')->count();
+        $totalJatah = (clone $baseQuery)->where('jenis', 'jatah')->count();
         $menunggu = (clone $baseQuery)->where(function ($q) {
             $q->where('persetujuan_koor', 'menunggu')
-              ->orWhere('persetujuan_atasan2', 'menunggu')
-              ->orWhere('persetujuan_hr', 'menunggu');
+                ->orWhere('persetujuan_atasan2', 'menunggu')
+                ->orWhere('persetujuan_hr', 'menunggu');
         })->count();
 
         $leaveRequests = (clone $baseQuery)
@@ -517,7 +627,7 @@ class CutiIzinTable extends Component
             ->when($this->search, function ($query) {
                 $query->whereHas('employee', function ($q) {
                     $q->where('nama', 'like', "%{$this->search}%")
-                      ->orWhere('nik', 'like', "%{$this->search}%");
+                        ->orWhere('nik', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->filterJenis, function ($query) {
@@ -526,8 +636,8 @@ class CutiIzinTable extends Component
             ->when($this->filterStatus, function ($query) {
                 $query->where(function ($q) {
                     $q->where('persetujuan_koor', $this->filterStatus)
-                      ->orWhere('persetujuan_atasan2', $this->filterStatus)
-                      ->orWhere('persetujuan_hr', $this->filterStatus);
+                        ->orWhere('persetujuan_atasan2', $this->filterStatus)
+                        ->orWhere('persetujuan_hr', $this->filterStatus);
                 });
             })
             ->latest()
@@ -543,18 +653,32 @@ class CutiIzinTable extends Component
                 ->where('tanggal_mulai', '>=', $accrual['cycle_start'])
                 ->where('persetujuan_koor', 'disetujui');
 
-            if (!$user->isAnyKoordinator()) {
+            if (! $user->isAnyKoordinator()) {
                 $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
             }
 
-            if (!$user->isAnyKoordinator() && !$user->isStaffAdmin() && !$user->isStaffHostPubg() && !$user->isStaffHostFf() && !$user->isStaffIt() && !$user->isStaffHostMlbb() && !$user->isStaffHostEfootball() && !$user->isStaffHostValorant() && !$user->isStaffHostRoblox() && !$user->isStaffHostMonkeyPubg() && !$user->isStaffStock()) {
+            if (! $user->isAnyKoordinator() && ! $user->isStaffAdmin() && ! $user->isStaffHostPubg() && ! $user->isStaffHostFf() && ! $user->isStaffIt() && ! $user->isStaffHostMlbb() && ! $user->isStaffHostEfootball() && ! $user->isStaffHostValorant() && ! $user->isStaffHostRoblox() && ! $user->isStaffHostMonkeyPubg() && ! $user->isStaffStock()) {
                 $usedCutiQuery->where('persetujuan_hr', 'disetujui');
             }
 
             $usedCuti = $usedCutiQuery->get()
-                ->sum(fn($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+                ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
         $sisaCuti = max(0, $terakumulasiCuti - $usedCuti);
+
+        $jatahBulanIni = 4;
+        $usedJatah = 0;
+        if ($userEmployee) {
+            $usedJatah = LeaveRequest::where('employee_id', $userEmployee->id)
+                ->where('jenis', 'jatah')
+                ->where('tanggal_mulai', '>=', now()->startOfMonth()->toDateString())
+                ->where('persetujuan_koor', 'disetujui')
+                ->get()
+                ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+        }
+        $sisaJatah = max(0, $jatahBulanIni - $usedJatah);
+
+        $jatahAvailable = ! $user->isStaffIt() && ! $user->isKoordinatorIt();
 
         $cutiEligible = $accrual['eligible'] ?? false;
         $cutiEligibleDate = $userEmployee?->cutiEligibleDate();
@@ -585,14 +709,16 @@ class CutiIzinTable extends Component
             || $user->isStaffHostMonkeyPubg();
 
         return view('livewire.cuti-izin-table', compact(
-            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'terakumulasiCuti', 'usedCuti', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
+            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'totalJatah', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'terakumulasiCuti', 'usedCuti', 'jatahBulanIni', 'usedJatah', 'sisaJatah', 'jatahAvailable', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
         ))->with('karyawanView', false);
     }
 
     private function getAtasan(Employee $employee, ?Position $position = null): ?Employee
     {
         $pos = $position ?? $employee->mainPosition();
-        if (!$pos || !$pos->parent_id) return null;
+        if (! $pos || ! $pos->parent_id) {
+            return null;
+        }
 
         if (str_starts_with($pos->nama, 'Koordinator')) {
             return null;
@@ -601,7 +727,9 @@ class CutiIzinTable extends Component
         $current = $pos->parent;
         while ($current) {
             $atasan = $current->employees()->first();
-            if ($atasan) return $atasan;
+            if ($atasan) {
+                return $atasan;
+            }
             $current = $current->parent;
         }
 
@@ -611,20 +739,27 @@ class CutiIzinTable extends Component
     private function getAtasan2(Employee $employee, ?Employee $atasan1 = null, ?Position $position = null): ?Employee
     {
         $pos = $position ?? $employee->mainPosition();
-        if (!$pos) return null;
+        if (! $pos) {
+            return null;
+        }
 
         if (str_starts_with($pos->nama, 'Koordinator')) {
             $current = $pos->parent;
             while ($current) {
                 $atasan = $current->employees()->first();
-                if ($atasan) return $atasan;
+                if ($atasan) {
+                    return $atasan;
+                }
                 $current = $current->parent;
             }
+
             return null;
         }
 
         $atasan1 = $atasan1 ?? $this->getAtasan($employee, $position);
-        if (!$atasan1) return null;
+        if (! $atasan1) {
+            return null;
+        }
 
         $current = $pos->parent;
         while ($current) {
@@ -633,7 +768,9 @@ class CutiIzinTable extends Component
                 $current = $current->parent;
                 while ($current) {
                     $atasan2 = $current->employees()->first();
-                    if ($atasan2) return $atasan2;
+                    if ($atasan2) {
+                        return $atasan2;
+                    }
                     $current = $current->parent;
                 }
                 break;
@@ -644,7 +781,9 @@ class CutiIzinTable extends Component
         $atasan2Field = trim($employee->atasan2 ?? '');
         if ($atasan2Field !== '' && $atasan2Field !== '-') {
             $atasan2 = Employee::where('nama', $atasan2Field)->first();
-            if ($atasan2) return $atasan2;
+            if ($atasan2) {
+                return $atasan2;
+            }
         }
 
         return null;
@@ -653,6 +792,7 @@ class CutiIzinTable extends Component
     private function getRolePositionName(): ?string
     {
         $user = auth()->user();
+
         return match (true) {
             $user->isKoordinatorPubg() => 'Koordinator Johen PUBG',
             $user->isKoordinatorFf() => 'Koordinator Free Fire',
@@ -678,15 +818,19 @@ class CutiIzinTable extends Component
             $ids[] = $child->id;
             $ids = array_merge($ids, $this->getAllDescendantIds($child));
         }
+
         return $ids;
     }
 
     private function isHr($user): bool
     {
         $emp = $user->employee;
-        if (!$emp) return false;
+        if (! $emp) {
+            return false;
+        }
+
         return $emp->positions()->whereIn('nama', [
-            'Human Resource Generalist', 'Admin HR', 'Admin GA', 'Office Boy'
+            'Human Resource Generalist', 'Admin HR', 'Admin GA', 'Office Boy',
         ])->exists();
     }
 }

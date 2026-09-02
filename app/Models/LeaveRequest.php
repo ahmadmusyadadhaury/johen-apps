@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\AttendanceSyncService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -62,11 +64,13 @@ class LeaveRequest extends Model
         $existingDates = Attendance::where('employee_id', $this->employee_id)
             ->whereIn('date', $this->dateRange())
             ->pluck('date')
-            ->map(fn($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : $d)
+            ->map(fn ($d) => $d instanceof Carbon ? $d->toDateString() : $d)
             ->all();
 
         foreach ($this->dateRange() as $date) {
-            if (in_array($date, $existingDates)) continue;
+            if (in_array($date, $existingDates)) {
+                continue;
+            }
 
             Attendance::create([
                 'employee_id' => $this->employee_id,
@@ -82,8 +86,8 @@ class LeaveRequest extends Model
      */
     public function dateRange(): array
     {
-        $start = \Carbon\Carbon::parse($this->tanggal_mulai);
-        $end = \Carbon\Carbon::parse($this->tanggal_selesai);
+        $start = Carbon::parse($this->tanggal_mulai);
+        $end = Carbon::parse($this->tanggal_selesai);
 
         $dates = [];
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
@@ -134,7 +138,7 @@ class LeaveRequest extends Model
         }
 
         if ($deletedAny) {
-            app(\App\Services\AttendanceSyncService::class)
+            app(AttendanceSyncService::class)
                 ->rebuildEmployeeAttendance($this->employee, preserveManual: true);
         }
     }

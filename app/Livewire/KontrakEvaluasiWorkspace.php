@@ -177,7 +177,7 @@ class KontrakEvaluasiWorkspace extends Component
             $this->persistDraft();
             $this->saveState = 'saved';
             $this->savedAt = now()->format('H:i');
-            $this->dispatch('draft-saved');
+            $this->dispatch('notify', type: 'success', message: 'Draft evaluasi berhasil disimpan.');
         } catch (\Throwable) {
             $this->saveState = 'error';
         }

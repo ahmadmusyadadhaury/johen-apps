@@ -29,7 +29,7 @@
     @endif
 
         {{-- Stats --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 {{ $jatahAvailable ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-5 mb-6">
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
@@ -83,6 +83,31 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Izin</p>
             </div>
 
+            @if($jatahAvailable)
+            <div class="stat-card group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                    </div>
+                    <span class="badge-info text-[10px]">Bulanan</span>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $sisaJatah }}</span>
+                    <span class="text-sm font-medium text-gray-400">/ {{ $jatahBulanIni }} hari</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Jatah Libur</p>
+                <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1">
+                    Terpakai {{ $usedJatah }} hari
+                </p>
+                <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 transition-all duration-500" style="width: {{ $jatahBulanIni > 0 ? ($sisaJatah / $jatahBulanIni) * 100 : 0 }}%"></div>
+                </div>
+                <p class="mt-2 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                    1 minggu hanya 1x pake &bull; reset otomatis tiap bulan
+                </p>
+            </div>
+            @endif
+
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
@@ -106,7 +131,7 @@
                 @if($myEmployee && !auth()->user()->isGmCeo())
                 <button wire:click="openPengajuanModal" class="btn-primary text-xs py-2 shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    Ajukan Cuti / Izin
+                    Ajukan Cuti / Izin / Jatah
                 </button>
                 @endif
             </div>
@@ -127,6 +152,7 @@
                             <option value="">Semua Jenis</option>
                             <option value="cuti_tahunan">Cuti Tahunan</option>
                             <option value="izin">Izin</option>
+                            <option value="jatah">Jatah Libur</option>
                         </select>
 
                     <select wire:model.live="filterStatus" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 pr-8 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -185,10 +211,16 @@
                                 </td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $lr->selectedPosition?->nama ?? $lr->employee?->position ?? '-' }}</td>
                                 <td class="table-cell">
-                                    <span class="font-medium text-gray-900 dark:text-gray-100">{{ $lr->jenis === 'cuti_tahunan' ? 'Cuti Tahunan' : 'Izin' }}</span>
+                                    @if($lr->jenis === 'cuti_tahunan')
+                                        <span class="badge badge-success">Cuti Tahunan</span>
+                                    @elseif($lr->jenis === 'jatah')
+                                        <span class="badge badge-warning">Jatah Libur</span>
+                                    @else
+                                        <span class="badge badge-info">Izin</span>
+                                    @endif
                                 </td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                    {{ \Carbon\Carbon::parse($lr->tanggal_mulai)->format('d/m') }} - {{ \Carbon\Carbon::parse($lr->tanggal_selesai)->format('d/m/Y') }}
+                                    {{ \Carbon\Carbon::parse($lr->tanggal_mulai)->format('d/m') }} - {{ \Carbon\Carbon::parse($lr->tanggal_selesai)->format('d/m') }}
                                 </td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $lr->durasi }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $lr->atasan?->nama ?? '-' }}</td>
@@ -330,7 +362,7 @@
         <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Ajukan Cuti / Izin</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Ajukan Cuti / Izin / Jatah</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Isi form pengajuan di bawah ini</p>
                 </div>
                 <button wire:click="closePengajuanModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -360,7 +392,7 @@
                 @endif
                 <div>
                     <x-input-label value="Jenis *" />
-                    <div class="mt-2 grid grid-cols-2 gap-3">
+                    <div class="mt-2 grid {{ $jatahAvailable ? 'grid-cols-3' : 'grid-cols-2' }} gap-2">
                         @if($cutiEligible && $sisaCuti > 0)
                         <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
                                :class="'cuti_tahunan' === $wire.pengajuanJenis ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
@@ -391,6 +423,23 @@
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <span>Izin</span>
                         </label>
+                        @if($jatahAvailable)
+                        @if($sisaJatah > 0)
+                        <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
+                               :class="'jatah' === $wire.pengajuanJenis ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
+                            <input type="radio" wire:model="pengajuanJenis" value="jatah" class="sr-only">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                            <span>Jatah Libur</span>
+                            <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">1 bulan 4x &bull; sisa {{ $sisaJatah }}</span>
+                        </label>
+                        @else
+                        <div class="relative flex flex-col items-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-4 text-center text-sm font-medium text-gray-400 dark:text-gray-500 opacity-60 cursor-not-allowed">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                            <span>Jatah Libur</span>
+                            <span class="text-[10px] font-semibold text-gray-400 dark:text-gray-500">1 bulan 4x &bull; sisa 0</span>
+                        </div>
+                        @endif
+                        @endif
                     </div>
                     @error('pengajuanJenis') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>

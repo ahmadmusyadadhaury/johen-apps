@@ -19,30 +19,26 @@
      x-init="onScroll(); window.addEventListener('scroll', onScroll, { passive: true })"
      class="pb-24 lg:pb-10">
 
-    {{-- Breadcrumb --}}
-    <nav class="mb-4 flex items-center gap-2 text-xs text-gray-400">
-        <a href="{{ route('hris.kontrak-kerja') }}" class="hover:text-emerald-600 transition-colors">Kontrak Kerja</a>
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>
-        <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $contract->employee->nama }}</span>
-    </nav>
+    {{-- Page header --}}
+    <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div class="px-4 lg:px-8">
 
-    {{-- Fixed header --}}
-    <div class="fixed inset-x-0 top-16 z-40 border-b border-gray-100/80 dark:border-gray-800/80 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl">
-        <div class="px-4 lg:px-8 pt-4">
-            <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                <div class="min-w-0">
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <h1 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">Evaluasi Masa Kontrak</h1>
-                        @if($isSubmitted)
-                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">Final</span>
-                        @else
-                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300">Draft</span>
-                        @endif
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{{ $contract->employee->nama }} · {{ $contract->posisi ?: '-' }} · {{ $contract->employee->divisionNames() ?: '-' }}</p>
-                </div>
+            {{-- Breadcrumb + actions --}}
+            <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-4">
+                <nav class="flex items-center gap-1.5 min-w-0" aria-label="Breadcrumb">
+                    <span class="shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500">Evaluasi Kontrak</span>
+                    <svg class="w-3 h-3 shrink-0 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                    <span class="shrink-0 text-xs font-semibold text-gray-600 dark:text-gray-400 truncate max-w-[38vw] sm:max-w-[240px]">{{ $contract->employee->nama }}</span>
+                    <svg class="w-3 h-3 shrink-0 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                    <span class="shrink-0 text-xs font-bold text-gray-900 dark:text-gray-100">Kontrak #{{ str_pad($contract->id, 4, '0', STR_PAD_LEFT) }}</span>
+                    @if($isSubmitted)
+                        <span class="shrink-0 inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">Final</span>
+                    @else
+                        <span class="shrink-0 inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">Draft</span>
+                    @endif
+                </nav>
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                     <span class="hidden sm:inline-flex items-center gap-1.5 text-xs" :class="$wire.saveState === 'error' ? 'text-red-500' : 'text-gray-400'">
                         <template x-if="$wire.saveState === 'saving'">
                             <span class="inline-flex items-center gap-1.5">
@@ -63,50 +59,58 @@
 
                     <button type="button" wire:click="saveDraft"
                             wire:loading.attr="disabled" wire:target="saveDraft"
-                            class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 transition-all">
+                            class="inline-flex h-9 items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-60 transition-all">
                         Simpan Draft
                     </button>
 
                     <button type="button" wire:click="openSubmitDialog"
-                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm shadow-emerald-600/30 transition-all">
+                            class="inline-flex h-9 items-center rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 text-sm font-semibold text-white shadow-sm shadow-emerald-600/25 transition-all">
                         {{ $isSubmitted ? 'Perbarui Evaluasi' : 'Submit Evaluasi' }}
                     </button>
                 </div>
             </div>
 
-            <div class="mt-3 flex items-center gap-3">
-                <div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            {{-- Progress evaluasi --}}
+            <div class="pb-4">
+                <div class="flex items-center justify-between gap-4">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Progress Evaluasi</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">{{ $filledCount }}/{{ $config::indicatorCount() }} indikator selesai · {{ $progressPercent }}%</p>
+                </div>
+                <div class="mt-2 h-1 w-full rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                     <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" style="width: {{ $progressPercent }}%"></div>
                 </div>
-                <span class="text-[11px] font-bold text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">{{ $progressPercent }}% · {{ $filledCount }}/{{ $config::indicatorCount() }}</span>
             </div>
         </div>
 
-        {{-- Section navigation (horizontal pills) --}}
-        <div class="overflow-x-auto scrollbar-none border-t border-gray-100/50 dark:border-gray-800/50">
-            <div class="flex gap-1.5 px-4 lg:px-8 py-2 min-w-max">
-                @foreach($config::sections() as $section)
-                    <button type="button"
-                            @click="activeSection = '{{ $section['id'] }}'; document.getElementById('section-{{ $section['id'] }}')?.scrollIntoView({behavior:'smooth', block:'start'})"
-                            class="relative shrink-0 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all duration-150"
-                            :class="activeSection === '{{ $section['id'] }}' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'">
-                        @if(in_array($section['id'], ['disiplin','kinerja','sikap','hasil']))
-                            @php
-                                $cs = $this->categoryScores()[$section['id']] ?? null;
-                            @endphp
-                            @if($cs)
-                                <span class="tabular-nums text-[11px] {{ $cs['filled'] === $cs['total'] ? '' : 'opacity-60' }}">{{ $cs['filled'] }}/{{ $cs['total'] }}</span>
+        {{-- Sticky tab navigation --}}
+        <div class="sticky top-0 z-20 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div class="overflow-x-auto scrollbar-none">
+                <div class="flex gap-1 px-4 lg:px-8 min-w-max">
+                    @foreach($config::sections() as $section)
+                        <button type="button"
+                                @click="activeSection = '{{ $section['id'] }}'; document.getElementById('section-{{ $section['id'] }}')?.scrollIntoView({behavior:'smooth', block:'start'})"
+                                class="relative -mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3.5 py-3 text-[13px] transition-colors duration-150"
+                                :class="activeSection === '{{ $section['id'] }}' ? 'border-emerald-600 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200'">
+                            <span :class="activeSection === '{{ $section['id'] }}' ? 'font-semibold' : 'font-medium'">{{ $section['label'] }}</span>
+                            @if(in_array($section['id'], ['disiplin','kinerja','sikap','hasil']))
+                                @php
+                                    $cs = $this->categoryScores()[$section['id']] ?? null;
+                                @endphp
+                                @if($cs)
+                                    <span class="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums {{ $cs['filled'] === $cs['total'] ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }}">
+                                        @if($cs['filled'] === $cs['total'])
+                                            <svg class="w-2 h-2" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                        @endif
+                                        {{ $cs['filled'] }}/{{ $cs['total'] }}
+                                    </span>
+                                @endif
                             @endif
-                        @endif
-                        {{ $section['label'] }}
-                    </button>
-                @endforeach
+                        </button>
+                    @endforeach
+                </div>
             </div>
         </div>
-    </div>
-
-    {{-- Spacer for fixed header --}}
-    <div class="h-[190px]"></div>
+    </header>
 
     {{-- Error summary --}}
     @if($errors->any())
@@ -125,28 +129,6 @@
         @error('perpanjangan')<p class="text-xs text-red-600 mt-2">{{ $message }}</p>@enderror
     </div>
     @endif
-
-    {{-- Section navigation (horizontal pills) --}}
-    <div class="mt-6 overflow-x-auto -mx-4 lg:-mx-8 px-4 lg:px-8 scrollbar-none">
-        <div class="flex gap-1.5 pb-1 min-w-max">
-            @foreach($config::sections() as $section)
-                <button type="button"
-                        @click="activeSection = '{{ $section['id'] }}'; document.getElementById('section-{{ $section['id'] }}')?.scrollIntoView({behavior:'smooth', block:'start'})"
-                        class="relative shrink-0 inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-semibold transition-all duration-150"
-                        :class="activeSection === '{{ $section['id'] }}' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'">
-                    @if(in_array($section['id'], ['disiplin','kinerja','sikap','hasil']))
-                        @php
-                            $cs = $this->categoryScores()[$section['id']] ?? null;
-                        @endphp
-                        @if($cs)
-                            <span class="tabular-nums text-[11px] {{ $cs['filled'] === $cs['total'] ? '' : 'opacity-60' }}">{{ $cs['filled'] }}/{{ $cs['total'] }}</span>
-                        @endif
-                    @endif
-                    {{ $section['label'] }}
-                </button>
-            @endforeach
-        </div>
-    </div>
 
     {{-- 2-column layout: content + summary --}}
     <div class="mt-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 items-start">
@@ -186,15 +168,34 @@
             {{-- Sections kategori skor --}}
             @foreach($config::categories() as $category)
             <section id="section-{{ $category['section'] }}" class="scroll-mt-[200px]">
-                <div class="flex items-end justify-between gap-4 mb-4">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Kategori {{ $category['code'] }}</p>
-                        <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-50 mt-0.5">{{ $category['label'] }}</h2>
+                @php
+                    $cs = $this->categoryScores()[$category['key']] ?? null;
+                    $catFilled = $cs ? $cs['filled'] : 0;
+                    $catTotal = count($category['indicators']);
+                    $catComplete = $catFilled === $catTotal;
+                @endphp
+                <div class="mb-4 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950 text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{{ $category['code'] }}</span>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Bobot {{ $category['weight'] }}%</p>
+                            <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-50 leading-tight">{{ $category['label'] }}</h2>
+                        </div>
                     </div>
-                    <span class="shrink-0 inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-bold text-gray-600 dark:text-gray-300">Bobot {{ $category['weight'] }}%</span>
+                    <div class="shrink-0 text-right">
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold {{ $catComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500' }}">
+                            <span class="tabular-nums">{{ $catFilled }}/{{ $catTotal }}</span> indikator
+                            @if($catComplete)
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4.5 12.75l6 6 9-13.5"/></svg>
+                            @endif
+                        </span>
+                        <div class="mt-1.5 ml-auto h-1 w-24 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" style="width: {{ $catTotal > 0 ? $catFilled / $catTotal * 100 : 0 }}%"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     @foreach($category['indicators'] as $indicator)
                         @include('livewire.partials.eval-card', ['indicator' => $indicator])
                     @endforeach
