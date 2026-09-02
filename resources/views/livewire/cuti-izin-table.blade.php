@@ -96,9 +96,6 @@
                     <span class="text-sm font-medium text-gray-400">/ {{ $jatahBulanIni }} hari</span>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Jatah Libur</p>
-                <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1">
-                    Terpakai {{ $usedJatah }} hari
-                </p>
                 <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                     <div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 transition-all duration-500" style="width: {{ $jatahBulanIni > 0 ? ($sisaJatah / $jatahBulanIni) * 100 : 0 }}%"></div>
                 </div>
