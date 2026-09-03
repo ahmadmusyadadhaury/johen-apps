@@ -80,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/employees/{employee}/photo', [EmployeeController::class, 'uploadPhoto'])->name('employees.upload-photo');
         Route::post('/employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.store-document');
         Route::put('/employees/{employee}/documents/{document}', [EmployeeController::class, 'updateDocument'])->name('employees.update-document');
+        Route::get('/employees/{employee}/documents/{document}/view', [EmployeeController::class, 'viewDocument'])->name('employees.view-document');
         Route::get('/employees/{employee}/documents/{document}/download', [EmployeeController::class, 'downloadDocument'])->name('employees.download-document');
         Route::delete('/employees/{employee}/documents/{document}', [EmployeeController::class, 'destroyDocument'])->name('employees.destroy-document');
 

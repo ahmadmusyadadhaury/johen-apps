@@ -205,7 +205,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             return icons[this.viewDokumen?.jenis_dokumen] || 'file';
         },
         get docUrl() {
-            return this.viewDokumen?.file ? '/storage/documents/' + this.viewDokumen.file : null;
+            return this.viewDokumen?.id ? '{{ route('hris.employees.view-document', [$employee, '__DOCID__']) }}'.replace('__DOCID__', this.viewDokumen.id) : null;
         },
         get docExt() {
             if (!this.viewDokumen?.file) return '';

@@ -280,6 +280,24 @@ class EmployeeController extends Controller
         return Storage::disk('public')->download($filePath, $document->nama_dokumen . '.' . pathinfo($document->file, PATHINFO_EXTENSION));
     }
 
+    public function viewDocument(Employee $employee, EmployeeDocument $document)
+    {
+        $filePath = 'documents/' . $document->file;
+
+        if (!Storage::disk('public')->exists($filePath)) {
+            abort(404);
+        }
+
+        $fullPath = Storage::disk('public')->path($filePath);
+        $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+
+        return response()->file($fullPath, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline',
+            'Cache-Control' => 'public, max-age=31536000',
+        ]);
+    }
+
     public function destroyDocument(Employee $employee, EmployeeDocument $document)
     {
         $this->authorizeManageEmployeeData();
