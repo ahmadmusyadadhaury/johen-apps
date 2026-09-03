@@ -216,12 +216,14 @@ class EmployeeController extends Controller
 
         $file = $request->file('file');
         $filename = $employee->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
         $file->storeAs('documents', $filename, 'public');
 
         EmployeeDocument::create([
             'employee_id' => $employee->id,
             'nama_dokumen' => $request->nama_dokumen,
             'file' => $filename,
+            'file_content' => base64_encode($file->get()),
             'keterangan' => $request->keterangan,
         ]);
 
@@ -260,6 +262,7 @@ class EmployeeController extends Controller
             $file->storeAs('documents', $filename, 'public');
 
             $data['file'] = $filename;
+            $data['file_content'] = base64_encode($file->get());
         }
 
         $document->update($data);
@@ -270,32 +273,50 @@ class EmployeeController extends Controller
 
     public function downloadDocument(Employee $employee, EmployeeDocument $document)
     {
-        $filePath = 'documents/' . $document->file;
+        $content = $this->documentContents($document);
+        $extension = pathinfo($document->file, PATHINFO_EXTENSION);
 
-        if (!Storage::disk('public')->exists($filePath)) {
+        if ($content === null) {
             return redirect()->route('hris.employees.show', $employee)
                 ->with('error', 'File dokumen tidak ditemukan.');
         }
 
-        return Storage::disk('public')->download($filePath, $document->nama_dokumen . '.' . pathinfo($document->file, PATHINFO_EXTENSION));
+        return response($content, 200, [
+            'Content-Type' => mime_content_type('data://text/plain;base64,' . base64_encode($content)) ?: 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $document->nama_dokumen . '.' . $extension . '"',
+        ]);
     }
 
     public function viewDocument(Employee $employee, EmployeeDocument $document)
     {
-        $filePath = 'documents/' . $document->file;
+        $content = $this->documentContents($document);
 
-        if (!Storage::disk('public')->exists($filePath)) {
+        if ($content === null) {
             abort(404);
         }
 
-        $fullPath = Storage::disk('public')->path($filePath);
-        $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->buffer($content) ?: 'application/octet-stream';
 
-        return response()->file($fullPath, [
+        return response($content, 200, [
             'Content-Type' => $mime,
             'Content-Disposition' => 'inline',
             'Cache-Control' => 'public, max-age=31536000',
         ]);
+    }
+
+    protected function documentContents(EmployeeDocument $document): ?string
+    {
+        if ($document->file_content) {
+            return base64_decode($document->file_content);
+        }
+
+        $filePath = 'documents/' . $document->file;
+        if (Storage::disk('public')->exists($filePath)) {
+            return Storage::disk('public')->get($filePath);
+        }
+
+        return null;
     }
 
     public function destroyDocument(Employee $employee, EmployeeDocument $document)

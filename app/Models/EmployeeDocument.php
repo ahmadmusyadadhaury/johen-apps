@@ -12,6 +12,7 @@ class EmployeeDocument extends Model
         'nama_dokumen',
         'jenis_dokumen',
         'file',
+        'file_content',
         'keterangan',
     ];
 
