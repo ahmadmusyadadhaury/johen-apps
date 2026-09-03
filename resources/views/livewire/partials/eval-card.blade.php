@@ -1,5 +1,6 @@
 @php
-    $value = ${$indicator['field']};
+    $value = $value ?? ${$indicator['field']};
+    $editable = $editable ?? true;
     $sel = [
         0 => 'border-red-500 bg-red-500 text-white shadow-md shadow-red-500/25 scale-[1.05]',
         1 => 'border-orange-500 bg-orange-500 text-white shadow-md shadow-orange-500/25 scale-[1.05]',
@@ -34,12 +35,18 @@
         <div class="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between">
             <div class="flex items-center gap-1.5" wire:loading.class="opacity-60">
                 @for($s = 0; $s <= 4; $s++)
-                    <button type="button"
-                            wire:click="$set('{{ $indicator['field'] }}', {{ $s }})"
-                            aria-label="Skor {{ $s }}"
-                            class="relative flex h-10 w-10 items-center justify-center rounded-xl border-2 text-sm font-extrabold transition-all duration-150 {{ $value === $s ? $sel[$s] : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-500 hover:text-gray-600 dark:hover:text-gray-300' }}">
-                        {{ $s }}
-                    </button>
+                    @if($editable)
+                        <button type="button"
+                                wire:click="$set('{{ $indicator['field'] }}', {{ $s }})"
+                                aria-label="Skor {{ $s }}"
+                                class="relative flex h-10 w-10 items-center justify-center rounded-xl border-2 text-sm font-extrabold transition-all duration-150 {{ $value === $s ? $sel[$s] : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-500 hover:text-gray-600 dark:hover:text-gray-300' }}">
+                            {{ $s }}
+                        </button>
+                    @else
+                        <span class="relative flex h-10 w-10 items-center justify-center rounded-xl border-2 text-sm font-extrabold transition-all duration-150 {{ $value === $s ? $sel[$s] : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500' }}">
+                            {{ $s }}
+                        </span>
+                    @endif
                 @endfor
             </div>
             <div class="shrink-0 sm:text-right">

@@ -79,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/employees/{employee}/photo', [EmployeeController::class, 'showPhoto'])->name('employees.photo');
         Route::post('/employees/{employee}/photo', [EmployeeController::class, 'uploadPhoto'])->name('employees.upload-photo');
         Route::post('/employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.store-document');
+        Route::put('/employees/{employee}/documents/{document}', [EmployeeController::class, 'updateDocument'])->name('employees.update-document');
         Route::get('/employees/{employee}/documents/{document}/download', [EmployeeController::class, 'downloadDocument'])->name('employees.download-document');
         Route::delete('/employees/{employee}/documents/{document}', [EmployeeController::class, 'destroyDocument'])->name('employees.destroy-document');
 
@@ -123,6 +124,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/weekly-report', [WeeklyReportController::class, 'index'])->name('weekly-report');
         Route::get('/weekly-report/{employee}', [WeeklyReportController::class, 'show'])->name('weekly-report.show');
         Route::get('/daily-tracking', [DailyTrackingController::class, 'index'])->name('daily-tracking');
+        Route::get('/daily-tracking/{divisi}', [DailyTrackingController::class, 'show'])->name('daily-tracking.game');
         Route::get('/daily-tracking-admin', AdminDailyTrackingTable::class)->name('daily-tracking-admin');
         Route::get('/daily-tracking-stock', StockDailyTrackingTable::class)->name('daily-tracking-stock');
         Route::get('/rekap-stok', RekapStokTable::class)->name('rekap-stok')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock,staff_hr');

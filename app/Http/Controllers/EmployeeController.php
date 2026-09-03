@@ -210,7 +210,6 @@ class EmployeeController extends Controller
         $this->authorizeManageEmployeeData();
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
-            'jenis_dokumen' => 'required|string|max:100',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'keterangan' => 'nullable|string|max:500',
         ]);
@@ -222,13 +221,51 @@ class EmployeeController extends Controller
         EmployeeDocument::create([
             'employee_id' => $employee->id,
             'nama_dokumen' => $request->nama_dokumen,
-            'jenis_dokumen' => $request->jenis_dokumen,
             'file' => $filename,
             'keterangan' => $request->keterangan,
         ]);
 
         return redirect(route('hris.employees.show', $employee) . '#dokumen')
             ->with('doc_success', 'Dokumen berhasil ditambahkan.');
+    }
+
+    public function updateDocument(Request $request, Employee $employee, EmployeeDocument $document)
+    {
+        $this->authorizeManageEmployeeData();
+
+        if ($document->employee_id !== $employee->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'nama_dokumen' => 'required|string|max:255',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        $data = [
+            'nama_dokumen' => $request->nama_dokumen,
+            'keterangan' => $request->keterangan,
+        ];
+
+        if ($request->hasFile('file')) {
+            $oldPath = 'documents/' . $document->file;
+
+            if (Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $file = $request->file('file');
+            $filename = $employee->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('documents', $filename, 'public');
+
+            $data['file'] = $filename;
+        }
+
+        $document->update($data);
+
+        return redirect(route('hris.employees.show', $employee) . '#dokumen')
+            ->with('doc_success', 'Dokumen berhasil diperbarui.');
     }
 
     public function downloadDocument(Employee $employee, EmployeeDocument $document)

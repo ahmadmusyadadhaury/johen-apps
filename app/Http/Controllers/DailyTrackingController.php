@@ -10,4 +10,9 @@ class DailyTrackingController extends Controller
     {
         return view('operasional.daily-tracking');
     }
+
+    public function show(string $divisi)
+    {
+        return view('operasional.daily-tracking-game', ['divisi' => $divisi]);
+    }
 }

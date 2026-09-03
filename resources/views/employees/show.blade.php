@@ -93,8 +93,12 @@ data-promotion-success="{{ session('promotion_success') }}"
         dokumenModal: false,
         viewDokumen: null,
         deleteDokumenId: null,
+        editDokumenModal: false,
+        editDokumenId: null,
+        editDokumenNama: '',
         cariDokumen: '',
         selectedFile: null,
+        selectedFileNama: '',
         showSuccess: false,
         successMessage: '',
         documents: [],
@@ -182,7 +186,7 @@ data-promotion-success="{{ session('promotion_success') }}"
         get dokumenFiltered() {
             if (!this.cariDokumen) return this.documents;
             const q = this.cariDokumen.toLowerCase();
-            return this.documents.filter(d => d.nama_dokumen.toLowerCase().includes(q) || d.jenis_dokumen.toLowerCase().includes(q));
+            return this.documents.filter(d => d.nama_dokumen.toLowerCase().includes(q) || (d.jenis_dokumen && d.jenis_dokumen.toLowerCase().includes(q)));
         },
         get dokumenYangDihapus() {
             const doc = this.documents.find(d => d.id === this.deleteDokumenId);
@@ -212,6 +216,21 @@ data-promotion-success="{{ session('promotion_success') }}"
         },
         get docIsPdf() {
             return this.docExt === 'pdf';
+        },
+        openEditDokumen(doc) {
+            if (!doc) return;
+            this.editDokumenId = doc.id;
+            this.editDokumenNama = doc.nama_dokumen || '';
+            this.selectedFileNama = doc.file || '';
+            this.selectedFile = null;
+            this.editDokumenModal = true;
+        },
+        closeEditDokumen() {
+            this.editDokumenModal = false;
+            this.editDokumenId = null;
+            this.editDokumenNama = '';
+            this.selectedFileNama = '';
+            this.selectedFile = null;
         },
         get kontrakDurasi() {
             if (!this.viewKontrak?.tanggal_mulai || !this.viewKontrak?.tanggal_berakhir) return '';
@@ -757,16 +776,6 @@ data-promotion-success="{{ session('promotion_success') }}"
                                        class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
                             </div>
                             <div class="space-y-1">
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Kategori <span class="text-red-500">*</span></label>
-                                <select name="jenis_dokumen" required
-                                        class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236b7280%27 stroke-width=%272%27%3E%3Cpath d=%27M5 7l5 5 5-5%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_12px_center] pr-9">
-                                    <option value="">Pilih kategori dokumen</option>
-                                    @foreach($jenisDokumenList as $jenis)
-                                        <option value="{{ $jenis }}">{{ $jenis }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="space-y-1">
                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">File Dokumen <span class="text-red-500">*</span></label>
                                 <div class="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl py-6 px-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all"
                                      @click="$event.target.closest('div').querySelector('input[type=file]').click()"
@@ -843,17 +852,93 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 </div>
                             </template>
                         </div>
-                        <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                            <button @click="viewDokumen = null"
-                                    class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                                Tutup
+                        <div class="flex items-center justify-between gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                            @if($canManageEmployeeData)
+                            <button @click="openEditDokumen(viewDokumen)"
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                Edit
                             </button>
-                            <a :href="viewDokumen?.id ? '{{ route('hris.employees.download-document', [$employee, '__DOCID__']) }}'.replace('__DOCID__', viewDokumen.id) : '#'"
-                               class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
-                                Unduh
-                            </a>
+                            @endif
+                            <div class="flex items-center gap-2.5">
+                                <button @click="viewDokumen = null"
+                                        class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                                    Tutup
+                                </button>
+                                <a :href="viewDokumen?.id ? '{{ route('hris.employees.download-document', [$employee, '__DOCID__']) }}'.replace('__DOCID__', viewDokumen.id) : '#'"
+                                   class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+                                    Unduh
+                                </a>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                {{-- Modal Edit Dokumen --}}
+                <div x-show="editDokumenModal" x-cloak
+                     x-transition:enter="transition-opacity ease-linear duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition-opacity ease-linear duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-[210] flex items-center justify-center p-5 bg-gray-900/50 backdrop-blur-sm"
+                     @click="editDokumenModal = false">
+                    <div x-show="editDokumenModal" x-cloak
+                         x-transition:enter="transition-all ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition-all ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         @click.stop
+                          class="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
+                        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+                            <div>
+                                <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Edit Dokumen</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perbarui dokumen untuk karyawan ini</p>
+                            </div>
+                            <button @click="editDokumenModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <form :action="editDokumenId ? '{{ route('hris.employees.update-document', [$employee, '__DOCID__']) }}'.replace('__DOCID__', editDokumenId) : '#'" method="POST" enctype="multipart/form-data" class="overflow-y-auto p-6 space-y-4">
+                            @csrf
+                            @method('PUT')
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Nama Dokumen <span class="text-red-500">*</span></label>
+                                <input type="text" name="nama_dokumen" required x-model="editDokumenNama" placeholder="Contoh: KTP (Kartu Tanda Penduduk)"
+                                       class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">File Dokumen <span class="text-xs font-normal text-gray-400">(opsional, kosongkan jika tidak diganti)</span></label>
+                                <div class="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl py-6 px-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all"
+                                     @click="$event.target.closest('div').querySelector('input[type=file]').click()"
+                                     :class="selectedFile ? 'border-solid border-blue-300 bg-blue-50 dark:bg-blue-950' : ''">
+                                    <svg class="w-[26px] h-[26px] mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+                                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Klik atau seret file ke sini</div>
+                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG — maks 5MB</div>
+                                    <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden"
+                                           @change="selectedFile = $event.target.files[0]?.name || null">
+                                </div>
+                                <div x-show="selectedFile || selectedFileNama" class="flex items-center gap-2.5 bg-white dark:bg-gray-900 border border-blue-100 dark:border-blue-900 rounded-xl px-3 py-2 mt-2 text-xs text-gray-700 dark:text-gray-300">
+                                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                                    <span class="flex-1 truncate" x-text="selectedFile || selectedFileNama"></span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">Format: PDF, JPG, PNG. Maks: 5MB.</p>
+                            </div>
+                            <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <button type="button" @click="editDokumenModal = false"
+                                        class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                                    Batal
+                                </button>
+                                <button type="submit"
+                                        class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
+                                    Simpan
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 

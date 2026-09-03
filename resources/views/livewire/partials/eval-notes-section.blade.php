@@ -5,6 +5,14 @@
         <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-50 mt-0.5">Catatan Evaluasi</h2>
     </div>
 
+    @php
+        $notesEditable = $editable ?? true;
+        $showKelebihan = $notesEditable ? $this->catatanKelebihan : ($this->peerEval?->catatan_kelebihan ?? '');
+        $showKekurangan = $notesEditable ? $this->catatanKekurangan : ($this->peerEval?->catatan_kekurangan ?? '');
+        $showTambahan = $notesEditable ? $this->catatanTambahan : ($this->peerEval?->catatan ?? '');
+    @endphp
+
+    @if($notesEditable)
     <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 space-y-5">
         <div>
             <div class="flex items-center justify-between">
@@ -39,4 +47,24 @@
             @error('catatanTambahan')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
+    @else
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-6 space-y-5">
+        <p class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            Read Only — bagian ini diisi oleh Koordinator
+        </p>
+        <div>
+            <label class="text-sm font-bold text-gray-800 dark:text-gray-200">Kelebihan Karyawan</label>
+            <p class="mt-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $showKelebihan ?: '—' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-bold text-gray-800 dark:text-gray-200">Hal yang Perlu Ditingkatkan</label>
+            <p class="mt-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $showKekurangan ?: '—' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Catatan Tambahan</label>
+            <p class="mt-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $showTambahan ?: '—' }}</p>
+        </div>
+    </div>
+    @endif
 </section>

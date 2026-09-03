@@ -26,6 +26,10 @@
             {{-- Breadcrumb + actions --}}
             <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-4">
                 <nav class="flex items-center gap-1.5 min-w-0" aria-label="Breadcrumb">
+                    <a href="{{ route('hris.kontrak-kerja') }}" class="shrink-0 inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                        Kembali
+                    </a>
                     <span class="shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500">Evaluasi Kontrak</span>
                     <svg class="w-3 h-3 shrink-0 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
                     <span class="shrink-0 text-xs font-semibold text-gray-600 dark:text-gray-400 truncate max-w-[38vw] sm:max-w-[240px]">{{ $contract->employee->nama }}</span>
@@ -173,6 +177,7 @@
                     $catFilled = $cs ? $cs['filled'] : 0;
                     $catTotal = count($category['indicators']);
                     $catComplete = $catFilled === $catTotal;
+                    $catEditable = $this->canEditCategory($category['key']);
                 @endphp
                 <div class="mb-4 flex items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
@@ -180,6 +185,12 @@
                         <div class="min-w-0">
                             <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Bobot {{ $category['weight'] }}%</p>
                             <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-50 leading-tight">{{ $category['label'] }}</h2>
+                            @if(!$catEditable)
+                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                                    Read Only
+                                </span>
+                            @endif
                         </div>
                     </div>
                     <div class="shrink-0 text-right">
@@ -197,7 +208,7 @@
 
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     @foreach($category['indicators'] as $indicator)
-                        @include('livewire.partials.eval-card', ['indicator' => $indicator])
+                        @include('livewire.partials.eval-card', ['indicator' => $indicator, 'value' => $this->indicatorValues[$indicator['field']] ?? null, 'editable' => $catEditable])
                     @endforeach
                 </div>
 
@@ -222,8 +233,11 @@
             </section>
             @endforeach
 
-            @include('livewire.partials.eval-notes-section')
-            @include('livewire.partials.eval-recommendation-section')
+            @php
+                $qualEditable = $this->canEditQualitative();
+            @endphp
+            @include('livewire.partials.eval-notes-section', ['editable' => $qualEditable])
+            @include('livewire.partials.eval-recommendation-section', ['editable' => $qualEditable])
             @include('livewire.partials.eval-review-section')
 
         </main>

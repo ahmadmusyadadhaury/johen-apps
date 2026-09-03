@@ -6,11 +6,24 @@ use App\Models\BonusPubg;
 use App\Models\Employee;
 use App\Models\Position;
 use Livewire\Component;
-use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 
 class DailyTrackingTable extends Component
 {
-    use WithPagination;
+    use WithFileUploads;
+
+    private const GAME_KEYS = [
+        'PUBG' => 'pubg',
+        'Free Fire' => 'free-fire',
+        'MLBB' => 'mlbb',
+        'E-football' => 'e-football',
+        'Valorant' => 'valorant',
+        'Roblox' => 'roblox',
+        'Monkey PUBG' => 'monkey-pubg',
+        'FC Mobile' => 'fc-mobile',
+    ];
+
+    private const GAME_PHOTO_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'avif', 'gif'];
 
     private const DIVISION_POSITION_MAP = [
         'PUBG' => 'koordinator johen pubg',
@@ -23,42 +36,73 @@ class DailyTrackingTable extends Component
         'FC Mobile' => 'koordinator fc mobile',
     ];
 
-    public string $search = '';
-    public string $tanggal = '';
-    public string $nama = '';
-    public string $divisi = '';
-    public bool $showSuccess = false;
+    public bool $showUploadModal = false;
+    public string $uploadDivisi = '';
+    public $uploadPhoto;
 
-    public function mount(): void
+    private function gameKey(string $divisi): string
     {
-        $this->tanggal = now()->toDateString();
+        return self::GAME_KEYS[$divisi] ?? 'game-' . str($divisi)->slug();
     }
 
-    public function updatingSearch(): void
+    private function resolveGamePhoto(string $divisi): ?string
     {
-        $this->resetPage();
-    }
-
-    public function updatingTanggal(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedTanggal(): void
-    {
-        if ($this->tanggal === '') {
-            $this->tanggal = now()->toDateString();
+        $key = $this->gameKey($divisi);
+        foreach (self::GAME_PHOTO_EXTS as $ext) {
+            if (is_file(public_path("games/{$key}.{$ext}"))) {
+                return asset("games/{$key}.{$ext}");
+            }
         }
+        return null;
     }
 
-    public function updatingNama(): void
+    public function openUploadModal(string $divisi): void
     {
-        $this->resetPage();
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->uploadDivisi = $divisi;
+        $this->uploadPhoto = null;
+        $this->showUploadModal = true;
+        $this->resetErrorBag();
     }
 
-    public function updatingDivisi(): void
+    public function closeUploadModal(): void
     {
-        $this->resetPage();
+        $this->showUploadModal = false;
+        $this->uploadDivisi = '';
+        $this->uploadPhoto = null;
+        $this->resetErrorBag();
+    }
+
+    public function saveUploadPhoto(): void
+    {
+        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->validate([
+            'uploadPhoto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'uploadPhoto.required' => 'Pilih gambar game terlebih dahulu.',
+            'uploadPhoto.image' => 'File harus berupa gambar.',
+            'uploadPhoto.mimes' => 'Format harus JPG/PNG/WEBP.',
+            'uploadPhoto.max' => 'Ukuran gambar maksimal 5MB.',
+        ]);
+
+        $key = $this->gameKey($this->uploadDivisi);
+
+        $dir = public_path('games');
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $ext = strtolower($this->uploadPhoto->getClientOriginalExtension());
+        foreach (self::GAME_PHOTO_EXTS as $oldExt) {
+            if ($oldExt !== $ext) {
+                @unlink(public_path("games/{$key}.{$oldExt}"));
+            }
+        }
+
+        $this->uploadPhoto->move($dir, "{$key}.{$ext}");
+
+        $this->closeUploadModal();
+        $this->dispatch('notify', type: 'success', message: "Foto game {$this->uploadDivisi} berhasil diperbarui.");
     }
 
     private function getSubordinateIds(Employee $employee): array
@@ -86,24 +130,6 @@ class DailyTrackingTable extends Component
             $ids = array_merge($ids, $this->getDescendantIds($childId));
         }
         return $ids;
-    }
-
-    private function getDivisi(Employee $employee): string
-    {
-        $user = $employee->user;
-        if (!$user) return $employee->divisionNames() ?: '-';
-
-        return match (true) {
-            $user->isKoordinatorPubg(), $user->isStaffHostPubg() => 'PUBG',
-            $user->isKoordinatorFf(), $user->isStaffHostFf() => 'Free Fire',
-            $user->isKoordinatorMlbb(), $user->isStaffHostMlbb() => 'MLBB',
-            $user->isKoordinatorEfootball(), $user->isStaffHostEfootball() => 'E-football',
-            $user->isKoordinatorValorant(), $user->isStaffHostValorant() => 'Valorant',
-$user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
-             $user->isKoordinatorMonkeyPubg(), $user->isStaffHostMonkeyPubg() => 'Monkey PUBG',
-             $user->isKoordinatorAdmin(), $user->isStaffAdmin() => 'Admin',
-            default => $employee->divisionNames() ?: '-',
-        };
     }
 
     private function getManagerDivisionNames(Employee $employee): array
@@ -148,46 +174,26 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
         return str_contains(strtolower($position->nama), 'head of store 2');
     }
 
-    public function saveFeedback($id, $feedback): void
-    {
-        $user = auth()->user();
-        if (!$user || !$user->isManager()) return;
-
-        BonusPubg::where('id', $id)->update(['feedback_atasan' => $feedback]);
-        $this->dispatch('daily-tracking-updated');
-        $this->showSuccess = true;
-    }
-
     public function render()
     {
         $user = auth()->user();
         $employee = $user->employee;
 
+        $empty = [
+            'games' => collect(),
+            'totalSold' => 0,
+            'totalView' => 0,
+            'totalPeak' => 0,
+            'totalDurasi' => 0,
+        ];
+
         if (!$employee || !$user->isManager()) {
-            return view('livewire.daily-tracking-table', [
-                'items' => collect(),
-                'groupedItems' => collect(),
-                'totalSold' => 0,
-                'totalView' => 0,
-                'totalPeak' => 0,
-                'totalDurasi' => 0,
-                'tanggal' => $this->tanggal,
-                'namaOptions' => collect(),
-            ]);
+            return view('livewire.daily-tracking-table', $empty);
         }
 
         $subordinateIds = $this->getSubordinateIds($employee);
         if (empty($subordinateIds)) {
-            return view('livewire.daily-tracking-table', [
-                'items' => collect(),
-                'groupedItems' => collect(),
-                'totalSold' => 0,
-                'totalView' => 0,
-                'totalPeak' => 0,
-                'totalDurasi' => 0,
-                'tanggal' => $this->tanggal,
-                'namaOptions' => collect(),
-            ]);
+            return view('livewire.daily-tracking-table', $empty);
         }
 
         if ($this->isHeadOfStore2($employee)) {
@@ -195,101 +201,45 @@ $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
             if (!empty($efootballIds)) {
                 $subordinateIds = array_diff($subordinateIds, $efootballIds);
                 if (empty($subordinateIds)) {
-                    return view('livewire.daily-tracking-table', [
-                        'items' => collect(),
-                        'groupedItems' => collect(),
-                        'totalSold' => 0,
-                        'totalView' => 0,
-                        'totalPeak' => 0,
-                        'totalDurasi' => 0,
-                        'tanggal' => $this->tanggal,
-                        'namaOptions' => collect(),
-                    ]);
+                    return view('livewire.daily-tracking-table', $empty);
                 }
             }
         }
 
         $managerDivisionNames = $this->getManagerDivisionNames($employee);
 
-        $query = BonusPubg::whereIn('bonus_pubgs.employee_id', $subordinateIds)
+        $baseQuery = BonusPubg::whereIn('bonus_pubgs.employee_id', $subordinateIds)
             ->where('bonus_pubgs.status', 'disetujui')
-            ->whereIn('bonus_pubgs.divisi', $managerDivisionNames)
-            ->when($this->search, function ($q) {
-                $q->where(function ($q) {
-                    $q->where('bonus_pubgs.nama', 'like', "%{$this->search}%")
-                      ->orWhere('bonus_pubgs.nik', 'like', "%{$this->search}%");
-                });
-            })
-            ->when($this->tanggal, function ($q) {
-                $q->whereDate('bonus_pubgs.tanggal', $this->tanggal);
-            })
-            ->when($this->nama, function ($q) {
-                $q->where('bonus_pubgs.nama', $this->nama);
-            })
-            ->when($this->divisi, function ($q) {
-                $q->where('bonus_pubgs.divisi', $this->divisi);
-            })
-            ->with('employee.divisions', 'employee.users');
+            ->whereIn('bonus_pubgs.divisi', $managerDivisionNames);
 
-        $orderRaw = "CASE
-            WHEN users.role IN ('staff_host_pubg', 'koordinator_pubg') THEN 1
-            WHEN users.role IN ('staff_host_ff', 'koordinator_ff') THEN 2
-            WHEN users.role IN ('staff_host_mlbb', 'koordinator_mlbb') THEN 3
-            WHEN users.role IN ('staff_host_efootball', 'koordinator_efootball') THEN 4
-            WHEN users.role IN ('staff_host_valorant', 'koordinator_valorant') THEN 5
-            WHEN users.role IN ('staff_host_roblox', 'koordinator_roblox') THEN 6
-            WHEN users.role IN ('staff_host_monkey_pubg', 'koordinator_monkey_pubg') THEN 7
-            WHEN users.role IN ('staff_admin', 'koordinator_admin') THEN 8
-            ELSE 8
-        END";
+        $games = collect($managerDivisionNames)->map(function ($divisi) use ($baseQuery) {
+            $stats = (clone $baseQuery)
+                ->where('bonus_pubgs.divisi', $divisi)
+                ->selectRaw('COALESCE(SUM(ach_sold), 0) as sold, COALESCE(SUM(ach_view), 0) as view, COALESCE(SUM(peak_view), 0) as peak, COALESCE(SUM(durasi), 0) as durasi, COUNT(*) as total')
+                ->first();
 
-        $items = (clone $query)
-            ->join('employees', 'bonus_pubgs.employee_id', '=', 'employees.id')
-            ->join('users', 'employees.id', '=', 'users.employee_id')
-            ->select('bonus_pubgs.*')
-            ->orderByRaw($orderRaw)
-            ->latest('bonus_pubgs.tanggal')
-            ->paginate(20);
-
-        $groupedItems = $items->getCollection()->groupBy(function ($item) {
-            return $item->tanggal->format('Y-m-d');
+            return [
+                'divisi' => $divisi,
+                'photo' => $this->resolveGamePhoto($divisi),
+                'totalSold' => $stats->sold ?? 0,
+                'totalView' => $stats->view ?? 0,
+                'totalPeak' => $stats->peak ?? 0,
+                'totalDurasi' => $stats->durasi ?? 0,
+                'total' => $stats->total ?? 0,
+            ];
         });
 
-        $groupedItems->transform(function ($dateItems) {
-            return $dateItems->map(function ($item) {
-                $emp = $item->employee;
-                $item->divisi = $item->divisi ?: ($emp ? $this->getDivisi($emp) : '-');
-                return $item;
-            });
-        });
-
-        $namaOptions = BonusPubg::whereIn('bonus_pubgs.employee_id', $subordinateIds)
-            ->where('bonus_pubgs.status', 'disetujui')
-            ->whereIn('bonus_pubgs.divisi', $managerDivisionNames)
-            ->when($this->tanggal, function ($q) {
-                $q->whereDate('bonus_pubgs.tanggal', $this->tanggal);
-            })
-            ->distinct()
-            ->pluck('bonus_pubgs.nama')
-            ->sort()
-            ->values();
-
-        $allItems = (clone $query)->get();
-        $totalSold = $allItems->sum('ach_sold');
-        $totalView = $allItems->sum('ach_view');
-        $totalPeak = $allItems->sum('peak_view');
-        $totalDurasi = $allItems->sum('durasi');
+        $totalSold = $games->sum('totalSold');
+        $totalView = $games->sum('totalView');
+        $totalPeak = $games->sum('totalPeak');
+        $totalDurasi = $games->sum('totalDurasi');
 
         return view('livewire.daily-tracking-table', [
-            'items' => $items,
-            'groupedItems' => $groupedItems,
+            'games' => $games,
             'totalSold' => $totalSold,
             'totalView' => $totalView,
             'totalPeak' => $totalPeak,
             'totalDurasi' => $totalDurasi,
-            'tanggal' => $this->tanggal,
-            'namaOptions' => $namaOptions,
-            'divisiOptions' => $managerDivisionNames,
         ]);
     }
 }

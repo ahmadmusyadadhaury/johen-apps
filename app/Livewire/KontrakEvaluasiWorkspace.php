@@ -67,6 +67,29 @@ class KontrakEvaluasiWorkspace extends Component
 
     public ?string $perpanjanganBerakhir = null;
 
+    // Evaluasi rekan (evaluator lain) untuk tampilan read-only + nilai gabungan
+    public ?ContractEvaluation $peerEval = null;
+
+    #[Computed]
+    public function editableSections(): array
+    {
+        if (auth()->user()?->isSuperAdmin()) {
+            return ['disiplin'];
+        }
+
+        return ['kinerja', 'sikap', 'hasil'];
+    }
+
+    public function canEditCategory(string $categoryKey): bool
+    {
+        return in_array($categoryKey, $this->editableSections);
+    }
+
+    public function canEditQualitative(): bool
+    {
+        return !auth()->user()?->isSuperAdmin();
+    }
+
     public function mount(EmployeeContract $contract): void
     {
         if (!auth()->user()?->canEvaluateContractFor($contract)) {
@@ -83,6 +106,11 @@ class KontrakEvaluasiWorkspace extends Component
         }
 
         $this->contract = $contract->load(['employee.divisions', 'evaluations.evaluator', 'approvals.approver']);
+
+        $this->peerEval = $contract->evaluations
+            ->load('evaluator')
+            ->where('evaluator_id', '!=', auth()->id())
+            ->first();
 
         if ($myEval) {
             $this->isEdit = true;
@@ -216,6 +244,10 @@ class KontrakEvaluasiWorkspace extends Component
         $missing = [];
 
         foreach (ContractEvaluationConfig::indicators() as $indicator) {
+            if (!$this->canEditCategory($indicator['category_key'])) {
+                continue;
+            }
+
             if ($this->{$indicator['field']} === null) {
                 $missing[] = $indicator;
             }
@@ -259,6 +291,10 @@ class KontrakEvaluasiWorkspace extends Component
 
         $rules = [];
         foreach (array_keys(ContractEvaluationConfig::indicators()) as $field) {
+            if (!$this->canEditCategory(ContractEvaluationConfig::indicators()[$field]['category_key'])) {
+                continue;
+            }
+
             $rules[$field] = ['required', 'integer', 'between:0,4'];
         }
         $rules += [
@@ -276,7 +312,9 @@ class KontrakEvaluasiWorkspace extends Component
 
         $lulus = $this->finalScore >= ContractEvaluationConfig::PASSING_THRESHOLD;
 
-        if ($lulus && ($this->perpanjanganBulan === null || !$this->perpanjanganMulai || !$this->perpanjanganBerakhir)) {
+        $isSuperAdmin = auth()->user()?->isSuperAdmin() ?? false;
+
+        if (!$isSuperAdmin && $lulus && ($this->perpanjanganBulan === null || !$this->perpanjanganMulai || !$this->perpanjanganBerakhir)) {
             $this->addError('perpanjangan', 'Durasi & tanggal perpanjangan wajib diisi untuk rekomendasi perpanjang.');
             $this->showSubmitDialog = false;
 
@@ -284,7 +322,9 @@ class KontrakEvaluasiWorkspace extends Component
         }
 
         $attrs = $this->evaluationAttributes();
-        $attrs['rekomendasi'] = $lulus ? 'perpanjang' : 'tidak_perpanjang';
+        if (!$isSuperAdmin) {
+            $attrs['rekomendasi'] = $lulus ? 'perpanjang' : 'tidak_perpanjang';
+        }
         $attrs['submitted_at'] = now();
 
         DB::transaction(function () use ($attrs) {
@@ -304,10 +344,33 @@ class KontrakEvaluasiWorkspace extends Component
     {
         $values = [];
         foreach (array_keys(ContractEvaluationConfig::indicators()) as $field) {
-            $values[$field] = $this->{$field};
+            $values[$field] = $this->effectiveValue($field);
         }
 
         return $values;
+    }
+
+    public function effectiveValue(string $field): ?int
+    {
+        $indicator = ContractEvaluationConfig::indicators()[$field] ?? null;
+
+        if (!$indicator) {
+            return null;
+        }
+
+        $mine = $this->{$field};
+
+        // Jika field termasuk scope yang boleh diedit user saat ini, pakai nilai user.
+        if ($this->canEditCategory($indicator['category_key'])) {
+            return $mine;
+        }
+
+        // Field di luar scope: tampilkan nilai rekan (read-only) bila ada.
+        if ($this->peerEval && $this->peerEval->{$field} !== null) {
+            return $this->peerEval->{$field};
+        }
+
+        return $mine;
     }
 
     #[Computed]
@@ -334,7 +397,7 @@ class KontrakEvaluasiWorkspace extends Component
             $sumWeight = 0;
 
             foreach ($category['indicators'] as $indicator) {
-                $value = $this->{$indicator['field']};
+                $value = $this->effectiveValue($indicator['field']);
 
                 if ($value !== null) {
                     $sumWeighted += $value * $indicator['weight'];
@@ -346,7 +409,7 @@ class KontrakEvaluasiWorkspace extends Component
                 'label' => $category['label'],
                 'weight' => $category['weight'],
                 'score' => $sumWeight > 0 ? round($sumWeighted / $sumWeight, 2) : null,
-                'filled' => collect($category['indicators'])->filter(fn ($i) => $this->{$i['field']} !== null)->count(),
+                'filled' => collect($category['indicators'])->filter(fn ($i) => $this->effectiveValue($i['field']) !== null)->count(),
                 'total' => count($category['indicators']),
             ];
         }
@@ -362,7 +425,7 @@ class KontrakEvaluasiWorkspace extends Component
 
         foreach (ContractEvaluationConfig::categories() as $category) {
             foreach ($category['indicators'] as $indicator) {
-                $value = $this->{$indicator['field']};
+                $value = $this->effectiveValue($indicator['field']);
 
                 if ($value !== null) {
                     $sumWeighted += $value * $indicator['weight'];

@@ -5,7 +5,13 @@
         <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-50 mt-0.5">Rekomendasi Pengembangan dari Atasan</h2>
     </div>
 
+    @php
+        $recEditable = $editable ?? true;
+        $peerTags = $this->peerEval?->rekomendasi_pengembangan ?? [];
+    @endphp
+
     <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 space-y-6">
+        @if($recEditable)
         <div>
             <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Fokus pengembangan</p>
             <p class="text-xs text-gray-400 mt-0.5">Pilih salah satu atau beberapa rekomendasi.</p>
@@ -28,6 +34,23 @@
                        class="mt-3 w-full rounded-xl border-gray-200 dark:border-gray-700 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
             @endif
         </div>
+        @else
+        <div>
+            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Fokus pengembangan</p>
+            <p class="text-xs text-gray-400 mt-0.5">Pilih salah satu atau beberapa rekomendasi.</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+                @forelse($peerTags as $t)
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500 bg-emerald-500 text-white px-3.5 py-1.5 text-xs font-semibold">{{ $t }}</span>
+                @empty
+                    <span class="text-xs text-gray-400">Belum ada rekomendasi yang diisi.</span>
+                @endforelse
+            </div>
+            <p class="mt-3 inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                Read Only — bagian ini diisi oleh Koordinator
+            </p>
+        </div>
+        @endif
 
         {{-- Recommendation Card --}}
         @php($lulus = ($finalScore !== null && $filledCount === $config::indicatorCount()) && $finalScore >= $config::PASSING_THRESHOLD)
@@ -49,6 +72,7 @@
                         <p class="text-base font-extrabold text-gray-900 dark:text-gray-50 mt-0.5">Rekomendasi: Perpanjang Masa Kontrak</p>
                     </div>
                 </div>
+                @if($recEditable)
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Durasi (bulan)</label>
@@ -66,6 +90,7 @@
                                class="mt-1.5 w-full rounded-xl border-gray-200 dark:border-gray-700 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
                     </div>
                 </div>
+                @endif
             @else
                 <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900 text-red-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
