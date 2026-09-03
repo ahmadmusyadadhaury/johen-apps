@@ -21,38 +21,6 @@ $badgeColors = [
     'lime' => 'bg-lime-50 text-lime-700 ring-lime-700/10',
     'emerald' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10',
 ];
-
-$fillTabColors = [
-    'primary' => 'bg-primary-600 text-white shadow-md',
-    'purple' => 'bg-purple-600 text-white shadow-md',
-    'blue' => 'bg-blue-600 text-white shadow-md',
-    'green' => 'bg-green-600 text-white shadow-md',
-    'orange' => 'bg-orange-600 text-white shadow-md',
-    'pink' => 'bg-pink-600 text-white shadow-md',
-    'indigo' => 'bg-indigo-600 text-white shadow-md',
-    'teal' => 'bg-teal-600 text-white shadow-md',
-    'cyan' => 'bg-cyan-600 text-white shadow-md',
-    'rose' => 'bg-rose-600 text-white shadow-md',
-    'amber' => 'bg-amber-600 text-white shadow-md',
-    'lime' => 'bg-lime-600 text-white shadow-md',
-    'emerald' => 'bg-emerald-600 text-white shadow-md',
-];
-
-$fillHoverTabColors = [
-    'primary' => 'hover:border-primary-300 dark:hover:border-primary-700',
-    'purple' => 'hover:border-purple-300 dark:hover:border-purple-700',
-    'blue' => 'hover:border-blue-300 dark:hover:border-blue-700',
-    'green' => 'hover:border-green-300 dark:hover:border-green-700',
-    'orange' => 'hover:border-orange-300 dark:hover:border-orange-700',
-    'pink' => 'hover:border-pink-300 dark:hover:border-pink-700',
-    'indigo' => 'hover:border-indigo-300 dark:hover:border-indigo-700',
-    'teal' => 'hover:border-teal-300 dark:hover:border-teal-700',
-    'cyan' => 'hover:border-cyan-300 dark:hover:border-cyan-700',
-    'rose' => 'hover:border-rose-300 dark:hover:border-rose-700',
-    'amber' => 'hover:border-amber-300 dark:hover:border-amber-700',
-    'lime' => 'hover:border-lime-300 dark:hover:border-lime-700',
-    'emerald' => 'hover:border-emerald-300 dark:hover:border-emerald-700',
-];
 @endphp
 
 <div>
@@ -82,18 +50,16 @@ $fillHoverTabColors = [
 
     <div class="border-b border-gray-200 dark:border-gray-700">
         <div class="flex flex-wrap items-center gap-2 px-6 py-4">
-            <button wire:click="selectDivision(null)"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ is_null($selectedDivision) ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
-                Semua Divisi
-            </button>
-            @foreach($divisions as $div)
-                @php $fc = $fillTabColors[$div->color] ?? 'bg-primary-600 text-white shadow-md'; $fh = $fillHoverTabColors[$div->color] ?? 'hover:border-primary-300 dark:hover:border-primary-700'; @endphp
-                <button wire:click="selectDivision({{ $div->id }})"
-                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $selectedDivision === $div->id ? $fc : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 $fh" }}">
-                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                    {{ $div->nama }}
-                </button>
-            @endforeach
+            <div class="relative">
+                <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                <select wire:model.live="selectedDivision"
+                    class="appearance-none rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-4 pr-9 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 cursor-pointer">
+                    <option value="">Semua Divisi</option>
+                    @foreach($divisions as $div)
+                        <option value="{{ $div->id }}">{{ $div->nama }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </div>
 

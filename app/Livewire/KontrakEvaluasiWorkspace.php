@@ -23,6 +23,7 @@ class KontrakEvaluasiWorkspace extends Component
 
     public bool $showSubmitDialog = false;
 
+
     // Indikator (skala 0-4)
     public ?int $i_kehadiran = null;
 
@@ -238,6 +239,7 @@ class KontrakEvaluasiWorkspace extends Component
         }
     }
 
+
     #[Computed]
     public function missingIndicators(): array
     {
@@ -334,8 +336,10 @@ class KontrakEvaluasiWorkspace extends Component
             );
         });
 
-        session()->flash('eval_success', 'Evaluasi kontrak berhasil dikirim & masuk tahap approval.');
+        $this->isSubmitted = true;
+        $this->showSubmitDialog = false;
 
+        session()->flash('eval_success', 'Evaluasi kontrak berhasil dikirim & masuk tahap approval.');
         $this->redirectRoute('hris.kontrak-kerja', absolute: false);
     }
 
