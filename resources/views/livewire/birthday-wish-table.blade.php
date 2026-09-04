@@ -71,6 +71,7 @@
         </div>
 
         <div class="p-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             @forelse($upcomingBirthdays as $emp)
             <div class="flex items-center gap-4 rounded-xl border border-amber-100 dark:border-amber-800/40 bg-white/70 dark:bg-gray-900/70 p-4 transition-colors hover:bg-white dark:hover:bg-gray-900">
                 <div class="shrink-0">
@@ -111,6 +112,7 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tidak ada karyawan yang berulang tahun dalam 7 hari ke depan</p>
             </div>
             @endforelse
+            </div>
         </div>
     </section>
 

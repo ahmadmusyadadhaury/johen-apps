@@ -39,7 +39,7 @@ class AdminUserSeeder extends Seeder
                 'nik' => 'ADM001',
                 'nama' => $admin->name,
                 'email' => $admin->email,
-                'status' => 'aktif',
+                'tipe' => 'karyawan_aktif',
             ]);
             $admin->employee_id = $emp->id;
             $admin->save();
@@ -50,7 +50,7 @@ class AdminUserSeeder extends Seeder
                 'nik' => 'GM001',
                 'nama' => $gm->name,
                 'email' => $gm->email,
-                'status' => 'aktif',
+                'tipe' => 'karyawan_aktif',
             ]);
             $gm->employee_id = $emp->id;
             $gm->save();

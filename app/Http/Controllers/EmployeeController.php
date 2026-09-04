@@ -19,7 +19,7 @@ class EmployeeController extends Controller
     {
         $stats = [
             'total' => Employee::count(),
-            'aktif' => Employee::where('status', 'aktif')->count(),
+            'aktif' => Employee::where('tipe', 'karyawan_aktif')->count(),
             'divisi' => Division::count(),
         ];
 
@@ -99,9 +99,9 @@ class EmployeeController extends Controller
         ];
 
         $statusClasses = [
-            'aktif' => 'bg-emerald-50 text-emerald-700',
-            'nonaktif' => 'bg-amber-50 text-amber-700',
-            'resign' => 'bg-red-50 text-red-700',
+            'karyawan_aktif' => 'bg-emerald-50 text-emerald-700',
+            'calon_karyawan' => 'bg-blue-50 text-blue-700',
+            'mantan_karyawan' => 'bg-gray-100 text-gray-600',
         ];
 
         $divisions = Division::orderBy('nama')->get();

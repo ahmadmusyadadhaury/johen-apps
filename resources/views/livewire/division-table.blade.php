@@ -27,24 +27,6 @@
         </div>
     </div>
 
-    {{-- Filter Status (Tag Card) --}}
-    <div class="flex flex-wrap items-center gap-2 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
-        <button wire:click="$set('filterStatus', '')"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterStatus === '' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
-            Semua
-        </button>
-        <button wire:click="$set('filterStatus', 'aktif')"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'aktif' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-emerald-300 dark:hover:border-emerald-700' }}">
-            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Aktif
-        </button>
-        <button wire:click="$set('filterStatus', 'nonaktif')"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'nonaktif' ? 'bg-red-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-red-300 dark:hover:border-red-700' }}">
-            <span class="inline-block w-1.5 h-1.5 rounded-full bg-red-500"></span>
-            Nonaktif
-        </button>
-    </div>
-
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>

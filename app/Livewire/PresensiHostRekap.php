@@ -119,7 +119,7 @@ class PresensiHostRekap extends Component
 
         $employees = Employee::with('divisions')
             ->where('position', 'like', 'Host%')
-            ->where('status', 'aktif')
+            ->where('tipe', 'karyawan_aktif')
             ->orderBy('nama')
             ->get();
 

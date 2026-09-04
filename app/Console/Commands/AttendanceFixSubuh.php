@@ -16,7 +16,7 @@ class AttendanceFixSubuh extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
         $employees = Employee::where('position', 'like', '%(Subuh)%')
-            ->where('status', 'aktif')
+            ->where('tipe', 'karyawan_aktif')
             ->orderBy('nik')
             ->get();
 

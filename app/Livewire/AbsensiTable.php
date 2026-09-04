@@ -431,7 +431,7 @@ class AbsensiTable extends Component
             ->get()
             ->keyBy('employee_id');
 
-        $employeeQuery = Employee::query()->where('status', 'aktif')->listSelect();
+        $employeeQuery = Employee::query()->where('tipe', 'karyawan_aktif')->listSelect();
 
         if ($user->isKoordinator() && $this->tab === 'tim') {
             $koordinatorEmployee = $user->employee;

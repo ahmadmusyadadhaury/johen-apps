@@ -1,4 +1,42 @@
 <div>
+    <div class="flex items-center justify-between px-6 py-3 bg-gray-900 dark:bg-gray-800 rounded-xl">
+        @php
+            $tipeCounts = [
+                'karyawan_aktif' => \App\Models\Employee::where('tipe', 'karyawan_aktif')->count(),
+                'calon_karyawan' => \App\Models\Employee::where('tipe', 'calon_karyawan')->count(),
+                'mantan_karyawan' => \App\Models\Employee::where('tipe', 'mantan_karyawan')->count(),
+            ];
+        @endphp
+        <button wire:click="$set('filterStatus', 'karyawan_aktif')"
+            class="flex-1 justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'karyawan_aktif' ? 'bg-emerald-500 text-white shadow-sm' : 'text-white hover:text-emerald-300' }}">
+            <span class="inline-flex items-center gap-1">
+                @if($filterStatus === 'karyawan_aktif')
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                @endif
+                Karyawan Aktif
+                <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] {{ $filterStatus === 'karyawan_aktif' ? 'bg-emerald-600 text-emerald-100' : 'bg-white/20 text-white' }}">{{ $tipeCounts['karyawan_aktif'] }}</span>
+            </span>
+        </button>
+        <button wire:click="$set('filterStatus', 'calon_karyawan')"
+            class="flex-1 justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'calon_karyawan' ? 'bg-blue-500 text-white shadow-sm' : 'text-white hover:text-blue-300' }}">
+            <span class="inline-flex items-center gap-1">
+                @if($filterStatus === 'calon_karyawan')
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
+                @endif
+                Calon Karyawan
+                <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] {{ $filterStatus === 'calon_karyawan' ? 'bg-blue-600 text-blue-100' : 'bg-white/20 text-white' }}">{{ $tipeCounts['calon_karyawan'] }}</span>
+            </span>
+        </button>
+        <button wire:click="$set('filterStatus', 'mantan_karyawan')"
+            class="flex-1 justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'mantan_karyawan' ? 'bg-red-500 text-white shadow-sm' : 'text-white hover:text-red-300' }}">
+            <span class="inline-flex items-center gap-1">
+                Mantan Karyawan
+                <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] {{ $filterStatus === 'mantan_karyawan' ? 'bg-red-600 text-red-100' : 'bg-white/20 text-white' }}">{{ $tipeCounts['mantan_karyawan'] }}</span>
+            </span>
+        </button>
+    </div>
+
+    <div class="card overflow-hidden mt-5">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
         <div class="flex items-center gap-3 flex-1">
             <div class="relative flex-1 max-w-xs">
@@ -16,13 +54,6 @@
                 @foreach($divisions as $div)
                     <option value="{{ $div->id }}">{{ $div->nama }}</option>
                 @endforeach
-            </select>
-
-            <select wire:model.live="filterStatus" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                <option value="">Semua Status</option>
-                <option value="aktif">Aktif</option>
-                <option value="nonaktif">Nonaktif</option>
-                <option value="resign">Resign</option>
             </select>
         </div>
 
@@ -90,12 +121,12 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $emp->divisionNames() ?: '-' }}</td>
                         <td class="table-cell text-gray-500 dark:text-gray-400">{{ $emp->tanggal_masuk?->format('d M Y') ?? '-' }}</td>
                         <td class="table-cell">
-                            @if($emp->status == 'aktif')
-                                <span class="badge-success">Aktif</span>
-                            @elseif($emp->status == 'nonaktif')
-                                <span class="badge-warning">Nonaktif</span>
+                            @if($emp->tipe == 'karyawan_aktif')
+                                <span class="badge-success">Karyawan Aktif</span>
+                            @elseif($emp->tipe == 'calon_karyawan')
+                                <span class="badge-info">Calon Karyawan</span>
                             @else
-                                <span class="badge-danger">Resign</span>
+                                <span class="badge-danger">Mantan Karyawan</span>
                             @endif
                         </td>
                         <td class="table-cell text-center whitespace-nowrap">
@@ -162,6 +193,7 @@
             {{ $employees->links() }}
         </div>
     @endif
+    </div>
 
     {{-- ============ CREATE MODAL ============ --}}
     <template x-teleport="body">
@@ -250,13 +282,13 @@
                             <x-input-error :messages="$errors->get('jenis_kelamin')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="create-status" value="Status *" />
-                            <select id="create-status" wire:model="status" class="mt-1 block w-full rounded-xl border @error('status') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                                <option value="aktif">Aktif</option>
-                                <option value="nonaktif">Nonaktif</option>
-                                <option value="resign">Resign</option>
+                            <x-input-label for="create-tipe" value="Tipe Karyawan *" />
+                            <select id="create-tipe" wire:model="tipe" class="mt-1 block w-full rounded-xl border @error('tipe') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="karyawan_aktif">Karyawan Aktif</option>
+                                <option value="calon_karyawan">Calon Karyawan</option>
+                                <option value="mantan_karyawan">Mantan Karyawan</option>
                             </select>
-                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('tipe')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-ukuran_baju" value="Ukuran Baju" />
@@ -345,6 +377,20 @@
                             <x-input-error :messages="$errors->get('kelurahan')" class="mt-2" />
                         </div>
                         <div>
+                            <x-input-label for="create-rt_rw" value="RT/RW" />
+                            <div class="mt-1 flex items-center gap-0">
+                                <input id="create-rt" type="text" maxlength="3" inputmode="numeric" placeholder="001"
+                                    class="rt-rw-input input-field !w-20 !rounded-r-none !text-center !px-2 {{ $errors->has('rt_rw') ? '!border-red-400 !focus:border-red-400 !focus:ring-red-100' : '' }}"
+                                    data-target="create-rw" data-group="create" />
+                                <span class="input-field !w-auto !rounded-none !px-3 !border-l-0 !border-r-0 cursor-default select-none">/</span>
+                                <input id="create-rw" type="text" maxlength="3" inputmode="numeric" placeholder="002"
+                                    class="rt-rw-input input-field !w-20 !rounded-l-none !text-center !px-2 {{ $errors->has('rt_rw') ? '!border-red-400 !focus:border-red-400 !focus:ring-red-100' : '' }}"
+                                    data-group="create" />
+                            </div>
+                            <input type="hidden" wire:model="rt_rw" id="create-rt_rw" />
+                            <x-input-error :messages="$errors->get('rt_rw')" class="mt-2" />
+                        </div>
+                        <div>
                             <x-input-label for="create-kode_pos" value="Kode Pos" />
                             <x-text-input id="create-kode_pos" wire:model="kode_pos" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('kode_pos') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="40134" />
                             <x-input-error :messages="$errors->get('kode_pos')" class="mt-2" />
@@ -417,6 +463,7 @@
                                 @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
+                                <option value="Other">Other</option>
                             </select>
                             <x-input-error :messages="$errors->get('atasan')" class="mt-2" />
                         </div>
@@ -427,6 +474,7 @@
                                 @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
+                                <option value="Other">Other</option>
                             </select>
                             <x-input-error :messages="$errors->get('atasan2')" class="mt-2" />
                         </div>
@@ -561,6 +609,7 @@
                                 <option value="">-- Pilih --</option>
                                 <option value="aktif">Aktif</option>
                                 <option value="tidak aktif">Tidak Aktif</option>
+                                <option value="Other">Other</option>
                             </select>
                             <x-input-error :messages="$errors->get('status_bpjs')" class="mt-2" />
                         </div>
@@ -685,13 +734,13 @@
                             <x-input-error :messages="$errors->get('jenis_kelamin')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="edit-status" value="Status *" />
-                            <select id="edit-status" wire:model="status" class="mt-1 block w-full rounded-xl border @error('status') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                                <option value="aktif">Aktif</option>
-                                <option value="nonaktif">Nonaktif</option>
-                                <option value="resign">Resign</option>
+                            <x-input-label for="edit-tipe" value="Tipe Karyawan *" />
+                            <select id="edit-tipe" wire:model="tipe" class="mt-1 block w-full rounded-xl border @error('tipe') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="karyawan_aktif">Karyawan Aktif</option>
+                                <option value="calon_karyawan">Calon Karyawan</option>
+                                <option value="mantan_karyawan">Mantan Karyawan</option>
                             </select>
-                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('tipe')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-ukuran_baju" value="Ukuran Baju" />
@@ -780,6 +829,20 @@
                             <x-input-error :messages="$errors->get('kelurahan')" class="mt-2" />
                         </div>
                         <div>
+                            <x-input-label for="edit-rt_rw" value="RT/RW" />
+                            <div class="mt-1 flex items-center gap-0">
+                                <input id="edit-rt" type="text" maxlength="3" inputmode="numeric" placeholder="001"
+                                    class="rt-rw-input input-field !w-20 !rounded-r-none !text-center !px-2 {{ $errors->has('rt_rw') ? '!border-red-400 !focus:border-red-400 !focus:ring-red-100' : '' }}"
+                                    data-target="edit-rw" data-group="edit" />
+                                <span class="input-field !w-auto !rounded-none !px-3 !border-l-0 !border-r-0 cursor-default select-none">/</span>
+                                <input id="edit-rw" type="text" maxlength="3" inputmode="numeric" placeholder="002"
+                                    class="rt-rw-input input-field !w-20 !rounded-l-none !text-center !px-2 {{ $errors->has('rt_rw') ? '!border-red-400 !focus:border-red-400 !focus:ring-red-100' : '' }}"
+                                    data-group="edit" />
+                            </div>
+                            <input type="hidden" wire:model="rt_rw" id="edit-rt_rw" />
+                            <x-input-error :messages="$errors->get('rt_rw')" class="mt-2" />
+                        </div>
+                        <div>
                             <x-input-label for="edit-kode_pos" value="Kode Pos" />
                             <x-text-input id="edit-kode_pos" wire:model="kode_pos" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('kode_pos') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="40134" />
                             <x-input-error :messages="$errors->get('kode_pos')" class="mt-2" />
@@ -852,6 +915,7 @@
                                 @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
+                                <option value="Other">Other</option>
                             </select>
                             <x-input-error :messages="$errors->get('atasan')" class="mt-2" />
                         </div>
@@ -862,6 +926,7 @@
                                 @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
+                                <option value="Other">Other</option>
                             </select>
                             <x-input-error :messages="$errors->get('atasan2')" class="mt-2" />
                         </div>
@@ -999,6 +1064,7 @@
                                 <option value="">-- Pilih --</option>
                                 <option value="aktif">Aktif</option>
                                 <option value="tidak aktif">Tidak Aktif</option>
+                                <option value="Other">Other</option>
                             </select>
                             <x-input-error :messages="$errors->get('status_bpjs')" class="mt-2" />
                         </div>
@@ -1070,7 +1136,7 @@
                         <div class="preview-field"><span class="preview-label">Tempat Lahir</span><span class="preview-value">{{ $tempat_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Tanggal Lahir</span><span class="preview-value">{{ $tanggal_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kelamin</span><span class="preview-value">{{ $jenis_kelamin == 'L' ? 'Laki-laki' : ($jenis_kelamin == 'P' ? 'Perempuan' : '-') }}</span></div>
-                        <div class="preview-field"><span class="preview-label">Status</span><span class="preview-value">{{ ucfirst($status) }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Tipe Karyawan</span><span class="preview-value">{{ \App\Models\Employee::TIPE_OPTIONS[$tipe] ?? ucfirst($tipe) }}</span></div>
                         <div class="preview-field"><span class="preview-label">Status Pernikahan</span><span class="preview-value">{{ $status_pernikahan ? ucfirst($status_pernikahan) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Ukuran Baju</span><span class="preview-value">{{ $ukuran_baju ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Agama</span><span class="preview-value">{{ $agama ? ucfirst($agama) : '-' }}</span></div>
@@ -1079,6 +1145,7 @@
                         <div class="preview-field"><span class="preview-label">Kota/Kabupaten</span><span class="preview-value">{{ $kota ? ucwords(strtolower($cityList[$kota] ?? '')) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kecamatan</span><span class="preview-value">{{ $kecamatan ? ucwords(strtolower($districtList[$kecamatan] ?? '')) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kelurahan/Desa</span><span class="preview-value">{{ $kelurahan ? ucwords(strtolower($villageList[$kelurahan] ?? '')) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">RT/RW</span><span class="preview-value">{{ $rt_rw ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kode Pos</span><span class="preview-value">{{ $kode_pos ?: '-' }}</span></div>
                         <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Alamat Lengkap</span><span class="preview-value">{{ $alamat ?: '-' }}</span></div>
                     </div>
@@ -1131,6 +1198,8 @@
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700">Aktif</span>
                             @elseif($status_bpjs === 'tidak aktif')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700">Tidak Aktif</span>
+                            @elseif($status_bpjs === 'Other')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">Other</span>
                             @else
                                 -
                             @endif
@@ -1177,4 +1246,131 @@
     </template>
 
     <x:confirm-delete-modal title="Hapus Karyawan" message="Apakah Anda yakin ingin menghapus data karyawan ini? Semua data terkait juga akan dihapus." />
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            const syncRtRw = (group) => {
+                const rt = document.getElementById(`${group}-rt`);
+                const rw = document.getElementById(`${group}-rw`);
+                const hidden = document.getElementById(`${group}-rt_rw`);
+                if (rt && rw && hidden) {
+                    const rtVal = rt.value === '-' ? '-' : rt.value.replace(/\D/g, '');
+                    const rwVal = rw.value === '-' ? '-' : rw.value.replace(/\D/g, '');
+                    hidden.value = (rtVal || rwVal) ? `${rtVal}/${rwVal}` : '';
+                    hidden.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+
+            const splitRtRw = (group, value) => {
+                const rt = document.getElementById(`${group}-rt`);
+                const rw = document.getElementById(`${group}-rw`);
+                if (rt && rw && value) {
+                    const parts = value.split('/');
+                    rt.value = parts[0] || '';
+                    rw.value = parts[1] || '';
+                }
+            };
+
+            const initRtRwInputs = () => {
+                document.querySelectorAll('.rt-rw-input').forEach(input => {
+                    if (input.dataset.rtrwInit) return;
+                    input.dataset.rtrwInit = 'true';
+
+                    input.addEventListener('input', function() {
+                        const isDash = this.value === '-';
+                        if (isDash) {
+                            this.value = '-';
+                        } else {
+                            this.value = this.value.replace(/[^0-9-]/g, '').replace(/-/g, '').substring(0, 3);
+                        }
+                        const group = this.dataset.group;
+                        if ((this.value.length === 3 || this.value === '-') && this.dataset.target) {
+                            const target = document.getElementById(this.dataset.target);
+                            if (target) target.focus();
+                        }
+                        syncRtRw(group);
+                    });
+
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Backspace' && this.value === '' && this.id.endsWith('-rw')) {
+                            const group = this.dataset.group;
+                            const rt = document.getElementById(`${group}-rt`);
+                            if (rt) {
+                                rt.focus();
+                                rt.value = rt.value.substring(0, rt.value.length - 1);
+                                syncRtRw(group);
+                            }
+                        }
+                        if (e.key === '/' || e.key === 'ArrowRight') {
+                            e.preventDefault();
+                            const group = this.dataset.group;
+                            const rw = document.getElementById(`${group}-rw`);
+                            if (rw && this.id.endsWith('-rt')) rw.focus();
+                        }
+                        if (e.key === 'ArrowLeft' && this.id.endsWith('-rw')) {
+                            const group = this.dataset.group;
+                            const rt = document.getElementById(`${group}-rt`);
+                            if (rt && this.value === '') rt.focus();
+                        }
+                    });
+
+                    input.addEventListener('focus', function() {
+                        this.select();
+                    });
+                });
+            };
+
+            const watchEditModal = () => {
+                const editModal = document.querySelector('[x-data*="showEditModal"]');
+                if (editModal && !editModal.dataset.rtrwWatch) {
+                    editModal.dataset.rtrwWatch = 'true';
+                    const observer = new MutationObserver(() => {
+                        setTimeout(() => {
+                            const hidden = document.getElementById('edit-rt_rw');
+                            const rt = document.getElementById('edit-rt');
+                            const rw = document.getElementById('edit-rw');
+                            if (hidden && rt && rw) {
+                                const val = hidden.value || '';
+                                if (val && val.includes('/')) {
+                                    const parts = val.split('/');
+                                    rt.value = parts[0] || '';
+                                    rw.value = parts[1] || '';
+                                } else {
+                                    rt.value = '';
+                                    rw.value = '';
+                                }
+                            }
+                            initRtRwInputs();
+                        }, 100);
+                    });
+                    observer.observe(editModal, { attributes: true, subtree: true, childList: true });
+                }
+            };
+
+            Livewire.on('showEditModal', () => {
+                setTimeout(() => {
+                    const hidden = document.getElementById('edit-rt_rw');
+                    const rt = document.getElementById('edit-rt');
+                    const rw = document.getElementById('edit-rw');
+                    if (hidden && rt && rw) {
+                        const val = hidden.value || '';
+                        if (val && val.includes('/')) {
+                            const parts = val.split('/');
+                            rt.value = parts[0] || '';
+                            rw.value = parts[1] || '';
+                        }
+                    }
+                }, 150);
+            });
+
+            initRtRwInputs();
+            watchEditModal();
+
+            const checkForModals = setInterval(() => {
+                initRtRwInputs();
+                watchEditModal();
+            }, 500);
+            setTimeout(() => clearInterval(checkForModals), 10000);
+        });
+    </script>
 </div>

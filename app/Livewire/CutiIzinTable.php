@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Employee;
-use App\Models\Freelance;
 use App\Models\LeaveRequest;
 use App\Models\Position;
 use Carbon\Carbon;
@@ -45,12 +44,6 @@ class CutiIzinTable extends Component
     public bool $showDeleteConfirmModal = false;
 
     public ?int $deleteId = null;
-
-    public bool $showRekomendasiFreelanceModal = false;
-
-    public string $rekomendasiPositionName = '';
-
-    public $rekomendasiFreelancers = [];
 
     public string $pin = '';
 
@@ -270,7 +263,6 @@ class CutiIzinTable extends Component
         if ($level === 'persetujuan_atasan2') {
             $lr->syncAttendance();
         }
-        $this->showRekomendasiIfHost($lr, $level);
         $this->dispatch('leave-request-updated');
         $this->dispatch('notify', type: 'success', message: 'Pengajuan disetujui.');
     }
@@ -363,7 +355,6 @@ class CutiIzinTable extends Component
             if ($this->pendingLevel === 'persetujuan_atasan2') {
                 $lr->syncAttendance();
             }
-            $this->showRekomendasiIfHost($lr, $this->pendingLevel);
         }
 
         $this->dispatch('leave-request-updated');
@@ -433,37 +424,6 @@ class CutiIzinTable extends Component
     {
         $this->showDeleteConfirmModal = false;
         $this->deleteId = null;
-    }
-
-    public function closeRekomendasiFreelanceModal(): void
-    {
-        $this->showRekomendasiFreelanceModal = false;
-        $this->rekomendasiPositionName = '';
-        $this->rekomendasiFreelancers = [];
-    }
-
-    private function showRekomendasiIfHost(LeaveRequest $lr, string $level): void
-    {
-        if ($level === 'persetujuan_hr') {
-            return;
-        }
-
-        $position = $lr->selectedPosition;
-        if (! $position || ! str_starts_with($position->nama, 'Host')) {
-            return;
-        }
-
-        $gameName = preg_replace('/^Host\s+/', '', $position->nama);
-        $gameName = preg_replace('/\s*\((Subuh|Pagi|Siang|Malam)\)$/i', '', $gameName);
-
-        $freelancers = Freelance::where('host_position', 'like', '%'.$gameName.'%')->get();
-        if ($freelancers->isEmpty()) {
-            return;
-        }
-
-        $this->rekomendasiPositionName = $position->nama;
-        $this->rekomendasiFreelancers = $freelancers;
-        $this->showRekomendasiFreelanceModal = true;
     }
 
     public function getSelectedPositionAtasan(): ?string

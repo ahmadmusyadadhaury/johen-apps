@@ -43,8 +43,6 @@
         </div>
     </div>
 
-    <div class="card overflow-hidden">
-        @livewire('employee-table')
-    </div>
+    @livewire('employee-table')
 
 </x-app-layout>

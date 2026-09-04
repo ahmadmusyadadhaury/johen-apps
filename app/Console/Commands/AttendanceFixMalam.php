@@ -16,7 +16,7 @@ class AttendanceFixMalam extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
 
-        $employees = Employee::where('status', 'aktif')
+        $employees = Employee::where('tipe', 'karyawan_aktif')
             ->where('position', 'like', '%(Malam)%')
             ->orderBy('nik')
             ->get();

@@ -156,8 +156,8 @@ class DashboardService
 
     public function getEmployeeStatusBreakdown(): array
     {
-        $active = Employee::where('status', 'aktif')->count();
-        $nonActive = Employee::where('status', '!=', 'aktif')->count();
+        $active = Employee::where('tipe', 'karyawan_aktif')->count();
+        $nonActive = Employee::where('tipe', '!=', 'karyawan_aktif')->count();
         $kontrak = EmployeeContract::whereBetween('tanggal_berakhir', [now(), now()->addDays(14)])
             ->where('status', 'berlaku')
             ->count();

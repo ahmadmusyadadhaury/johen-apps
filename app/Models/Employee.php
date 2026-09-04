@@ -28,6 +28,18 @@ class Employee extends Model
 
     public const JENIS_KERJA_OFFICE = 'Office';
 
+    public const TIPE_KARYAWAN_AKTIF = 'karyawan_aktif';
+
+    public const TIPE_CALON_KARYAWAN = 'calon_karyawan';
+
+    public const TIPE_MANTAN_KARYAWAN = 'mantan_karyawan';
+
+    public const TIPE_OPTIONS = [
+        self::TIPE_KARYAWAN_AKTIF => 'Karyawan Aktif',
+        self::TIPE_CALON_KARYAWAN => 'Calon Karyawan',
+        self::TIPE_MANTAN_KARYAWAN => 'Mantan Karyawan',
+    ];
+
     public const STATUS_MENIKAH = 'sudah menikah';
 
     public const STATUS_BELUM_MENIKAH = 'belum menikah';
@@ -114,7 +126,7 @@ class Employee extends Model
         'jam_kerja',
         'jam_masuk',
         'jobdesk',
-        'status',
+        'tipe',
         'status_bpjs',
         'tanggal_masuk',
         'tanggal_resign',
@@ -140,6 +152,7 @@ class Employee extends Model
         'kota',
         'kecamatan',
         'kelurahan',
+        'rt_rw',
         'kode_pos',
         'tempat_lahir',
         'tanggal_lahir',
@@ -163,7 +176,7 @@ class Employee extends Model
         'hubungan_darurat2',
         'no_bpjs',
         'status_bpjs',
-        'status',
+        'tipe',
         'status_pernikahan',
         'tanggal_masuk',
         'tanggal_resign',
@@ -224,7 +237,7 @@ class Employee extends Model
     public function getFotoUrlAttribute(): ?string
     {
         if (! array_key_exists('foto', $this->attributes) && array_key_exists('foto_is_base64', $this->attributes)) {
-            return $this->foto_is_base64 ? route('hris.employees.photo', $this).'?'.$this->updated_at->timestamp : null;
+            return $this->foto_is_base64 ? route('hris.employees.photo', $this).'?'.($this->updated_at?->timestamp ?? '') : null;
         }
 
         if (! $this->foto) {
@@ -232,7 +245,7 @@ class Employee extends Model
         }
 
         if (str_starts_with($this->foto, 'base64:')) {
-            return route('hris.employees.photo', $this).'?'.$this->updated_at->timestamp;
+            return route('hris.employees.photo', $this).'?'.($this->updated_at?->timestamp ?? '');
         }
 
         return asset('storage/employees/'.$this->foto);

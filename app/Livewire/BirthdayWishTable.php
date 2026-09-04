@@ -31,7 +31,7 @@ class BirthdayWishTable extends Component
         $until = $now->copy()->addDays($days)->endOfDay();
 
         return Employee::query()
-            ->where('status', 'aktif')
+            ->where('tipe', 'karyawan_aktif')
             ->whereNotNull('tanggal_lahir')
             ->get(['id', 'nama', 'position', 'tanggal_lahir', 'foto'])
             ->map(function (Employee $emp) use ($from) {
@@ -76,7 +76,7 @@ class BirthdayWishTable extends Component
             ->first();
 
         $ultahBulanIni = Employee::query()
-            ->where('status', 'aktif')
+            ->where('tipe', 'karyawan_aktif')
             ->whereMonth('tanggal_lahir', $now->month)
             ->count();
 

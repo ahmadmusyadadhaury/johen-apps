@@ -22,7 +22,7 @@ class StrukturOrganisasiSeeder extends Seeder
                 'nik' => 'CEO001',
                 'nama' => 'Josia Hendrico Simanungkalit',
                 'email' => 'ceo@johen.com',
-                'status' => 'aktif',
+                'tipe' => 'karyawan_aktif',
             ]
         );
 

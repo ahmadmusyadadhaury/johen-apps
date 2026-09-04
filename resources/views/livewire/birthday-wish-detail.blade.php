@@ -42,6 +42,20 @@
     </section>
 
     <section class="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex flex-col gap-3 border-b border-gray-100 p-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Riwayat Ucapan</h3>
+            @if(count($availableYears) > 0)
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-gray-500 dark:text-gray-400">Tahun:</label>
+                <select wire:model.live="selectedYear" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <option value="">Semua Tahun</option>
+                    @foreach($availableYears as $year)
+                        <option value="{{ $year }}">{{ $year }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
+        </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
                 <thead class="bg-gray-50 dark:bg-gray-800/50">

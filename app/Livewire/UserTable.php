@@ -199,7 +199,7 @@ class UserTable extends Component
                 WHEN 'koordinator_monkey_pubg' THEN 4
                 ELSE 5
             END, name")->paginate(20);
-        $allEmployees = Employee::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'nik']);
+        $allEmployees = Employee::where('tipe', 'karyawan_aktif')->orderBy('nama')->get(['id', 'nama', 'nik']);
         return view('livewire.user-table', compact('users', 'allEmployees'));
     }
 

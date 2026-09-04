@@ -34,13 +34,13 @@ class BirthdayUpcomingTest extends TestCase
         Employee::where('nik', 'like', 'TST-%')->delete();
     }
 
-    private function makeEmployee(string $nama, ?Carbon $tanggalLahir, string $status = 'aktif'): Employee
+    private function makeEmployee(string $nama, ?Carbon $tanggalLahir, string $tipe = 'karyawan_aktif'): Employee
     {
         return Employee::create([
             'nik' => 'TST-'.strtoupper(substr(md5($nama.microtime()), 0, 8)),
             'nama' => $nama,
             'tanggal_lahir' => $tanggalLahir,
-            'status' => $status,
+            'tipe' => $tipe,
         ]);
     }
 
@@ -53,7 +53,7 @@ class BirthdayUpcomingTest extends TestCase
         $h3 = $this->makeEmployee('Ultah H-3', $today->copy()->addDays(3));
         $h7 = $this->makeEmployee('Ultah H-7', $today->copy()->addDays(7));
         $h8 = $this->makeEmployee('Ultah H-8', $today->copy()->addDays(8));
-        $nonaktif = $this->makeEmployee('Ultah Nonaktif', $today->copy()->addDays(2), 'resign');
+        $nonaktif = $this->makeEmployee('Ultah Nonaktif', $today->copy()->addDays(2), 'mantan_karyawan');
 
         $component = Livewire::test(BirthdayWishTable::class);
         $upcoming = $component->viewData('upcomingBirthdays');

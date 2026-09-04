@@ -24,7 +24,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         $birthdayEmployees = Employee::whereNotNull('tanggal_lahir')
-            ->where('status', 'aktif')
+            ->where('tipe', 'karyawan_aktif')
             ->whereMonth('tanggal_lahir', now()->month)
             ->whereDay('tanggal_lahir', now()->day)
             ->orderBy('nama')

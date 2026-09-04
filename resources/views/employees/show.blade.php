@@ -421,14 +421,19 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <h2 class="text-xl font-extrabold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</h2>
                         @php
                             $statusLabel = [
-                                'aktif' => 'Aktif',
-                                'nonaktif' => 'Nonaktif',
-                                'resign' => 'Resign',
+                                'karyawan_aktif' => 'Karyawan Aktif',
+                                'calon_karyawan' => 'Calon Karyawan',
+                                'mantan_karyawan' => 'Mantan Karyawan',
+                            ];
+                            $statusClasses = [
+                                'karyawan_aktif' => 'bg-emerald-50 text-emerald-700',
+                                'calon_karyawan' => 'bg-blue-50 text-blue-700',
+                                'mantan_karyawan' => 'bg-gray-100 text-gray-600',
                             ];
                         @endphp
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full {{ $statusClasses[$employee->status] ?? 'bg-gray-50 text-gray-700' }}">
-                            <span class="w-1.5 h-1.5 rounded-full {{ $employee->status === 'aktif' ? 'bg-emerald-600' : ($employee->status === 'nonaktif' ? 'bg-amber-600' : 'bg-red-600') }}"></span>
-                            {{ $statusLabel[$employee->status] ?? ucfirst($employee->status) }}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full {{ $statusClasses[$employee->tipe] ?? 'bg-gray-50 text-gray-700' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $employee->tipe === 'karyawan_aktif' ? 'bg-emerald-600' : ($employee->tipe === 'calon_karyawan' ? 'bg-blue-600' : 'bg-gray-400') }}"></span>
+                            {{ $statusLabel[$employee->tipe] ?? ucfirst($employee->tipe) }}
                         </span>
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
@@ -498,8 +503,8 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->nik }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Status</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $statusLabel[$employee->status] ?? ucfirst($employee->status) }}</span>
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Tipe Karyawan</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $statusLabel[$employee->tipe] ?? ucfirst($employee->tipe) }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Status Pernikahan</span>
@@ -536,27 +541,9 @@ data-promotion-success="{{ session('promotion_success') }}"
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Alamat Lengkap</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 leading-relaxed">{{ $employee->alamat ?? '-' }}</span>
-                            </div>
-                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Provinsi</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->provinsi) ? ucwords(strtolower($employee->provinsi)) : '-' }}</span>
-                            </div>
-                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kota/Kabupaten</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kota) ? ucwords(strtolower($employee->kota)) : '-' }}</span>
-                            </div>
-                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kecamatan</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kecamatan) ? ucwords(strtolower($employee->kecamatan)) : '-' }}</span>
-                            </div>
-                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kelurahan/Desa</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kelurahan) ? ucwords(strtolower($employee->kelurahan)) : '-' }}</span>
-                            </div>
-                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kode Pos</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kode_pos) ? $employee->kode_pos : '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 leading-relaxed">
+                                    {{ $employee->alamat ?? '-' }}@if(!empty($employee->kelurahan)){{ ', ' . ucwords(strtolower($employee->kelurahan)) }}@endif@if(!empty($employee->kecamatan)){{ ', ' . ucwords(strtolower($employee->kecamatan)) }}@endif@if(!empty($employee->rt_rw)){{ ', RT/RW ' . $employee->rt_rw }}@endif@if(!empty($employee->kota)){{ ', ' . ucwords(strtolower($employee->kota)) }}@endif@if(!empty($employee->provinsi)){{ ', ' . ucwords(strtolower($employee->provinsi)) }}@endif@if(!empty($employee->kode_pos)){{ ', ' . $employee->kode_pos }}@endif
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -600,11 +587,11 @@ data-promotion-success="{{ session('promotion_success') }}"
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Atasan 1</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->atasan ?? '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->atasan && $employee->atasan !== 'Other' ? $employee->atasan : '-' }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Atasan 2</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->atasan2 ?? '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->atasan2 && $employee->atasan2 !== 'Other' ? $employee->atasan2 : '-' }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Tanggal Bergabung</span>
@@ -681,14 +668,19 @@ data-promotion-success="{{ session('promotion_success') }}"
                                     @endif
                                 </span>
                             </div>
-                            <div class="px-5 py-3 last:border-b-0">
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">BPJS Kesehatan</span>
-                                <span class="flex items-center gap-2 mt-0.5">
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->no_bpjs ?? '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->no_bpjs ?? '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Status BPJS</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">
                                     @if($employee->status_bpjs === 'aktif')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400">Aktif</span>
+                                        Aktif
                                     @elseif($employee->status_bpjs === 'tidak aktif')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400">Tidak Aktif</span>
+                                        Tidak Aktif
+                                    @else
+                                        -
                                     @endif
                                 </span>
                             </div>
@@ -1483,12 +1475,12 @@ data-promotion-success="{{ session('promotion_success') }}"
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Status</label>
-                    <select name="status" required
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Tipe Karyawan</label>
+                    <select name="tipe" required
                             class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                        <option value="aktif" {{ $employee->status == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                        <option value="nonaktif" {{ $employee->status == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
-                        <option value="resign" {{ $employee->status == 'resign' ? 'selected' : '' }}>Resign</option>
+                        <option value="karyawan_aktif" {{ $employee->tipe == 'karyawan_aktif' ? 'selected' : '' }}>Karyawan Aktif</option>
+                        <option value="calon_karyawan" {{ $employee->tipe == 'calon_karyawan' ? 'selected' : '' }}>Calon Karyawan</option>
+                        <option value="mantan_karyawan" {{ $employee->tipe == 'mantan_karyawan' ? 'selected' : '' }}>Mantan Karyawan</option>
                     </select>
                 </div>
 

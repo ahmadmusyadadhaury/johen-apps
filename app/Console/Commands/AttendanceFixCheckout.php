@@ -19,7 +19,7 @@ class AttendanceFixCheckout extends Command
         $dryRun = (bool) $this->option('dry-run');
         $employeeFilter = $this->option('employee');
 
-        $query = Employee::query()->where('status', 'aktif')->orderBy('nik')->listSelect();
+        $query = Employee::query()->where('tipe', 'karyawan_aktif')->orderBy('nik')->listSelect();
         if ($employeeFilter) {
             $query->where('nik', $employeeFilter);
         }

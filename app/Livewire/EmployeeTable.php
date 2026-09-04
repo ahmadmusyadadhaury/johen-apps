@@ -23,7 +23,7 @@ class EmployeeTable extends Component
 
     public string $filterDivision = '';
 
-    public string $filterStatus = '';
+    public string $filterStatus = 'karyawan_aktif';
 
     public function mount(): void
     {
@@ -71,6 +71,8 @@ class EmployeeTable extends Component
 
     public string $kelurahan = '';
 
+    public string $rt_rw = '';
+
     public string $kode_pos = '';
 
     public array $provinceList = [];
@@ -81,7 +83,7 @@ class EmployeeTable extends Component
 
     public array $villageList = [];
 
-    public string $status = 'aktif';
+    public string $tipe = 'karyawan_aktif';
 
     public string $status_pernikahan = '';
 
@@ -262,8 +264,9 @@ class EmployeeTable extends Component
             'kota' => 'required|string|max:150',
             'kecamatan' => 'required|string|max:150',
             'kelurahan' => 'required|string|max:150',
+            'rt_rw' => 'nullable|string|max:20',
             'kode_pos' => 'required|string|max:10',
-            'status' => 'required|in:aktif,nonaktif,resign',
+            'tipe' => 'required|in:karyawan_aktif,calon_karyawan,mantan_karyawan',
             'status_pernikahan' => 'required|in:sudah menikah,belum menikah',
             'position' => 'nullable|string|max:255',
             'position_ids' => 'required|array|min:1',
@@ -271,8 +274,8 @@ class EmployeeTable extends Component
             'main_position_id' => 'required|string',
             'division_ids' => 'required|array|min:1',
             'division_ids.*' => 'exists:divisions,id',
-            'atasan' => ['required', 'string', Rule::in(Employee::ATASAN_OPTIONS)],
-            'atasan2' => ['nullable', 'string', Rule::in(Employee::ATASAN_OPTIONS)],
+            'atasan' => ['required', 'string', Rule::in(array_merge(Employee::ATASAN_OPTIONS, ['Other']))],
+            'atasan2' => ['nullable', 'string', Rule::in(array_merge(Employee::ATASAN_OPTIONS, ['Other']))],
             'tanggal_masuk' => 'required|date',
             'jenis_karyawan' => 'required|string|max:30',
             'lokasi_kerja' => 'required|in:Summarecon,Baleendah',
@@ -288,7 +291,7 @@ class EmployeeTable extends Component
             'no_kontak_darurat2' => 'required|string|max:30',
             'hubungan_darurat2' => 'required|string|max:50',
             'no_bpjs' => 'required|string|max:30',
-            'status_bpjs' => 'required|in:aktif,tidak aktif',
+            'status_bpjs' => ['required', 'in:aktif,tidak aktif,Other'],
             'tanggal_resign' => 'nullable|date',
             'catatan' => 'nullable|string',
         ];
@@ -299,7 +302,7 @@ class EmployeeTable extends Component
         $all = $this->rules();
 
         $fields = match ($step) {
-            1 => ['nik_ktp', 'nama', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'status', 'status_pernikahan', 'ukuran_baju', 'agama', 'pendidikan_terakhir', 'provinsi', 'kota', 'kecamatan', 'kelurahan', 'kode_pos', 'alamat'],
+            1 => ['nik_ktp', 'nama', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'tipe', 'status_pernikahan', 'ukuran_baju', 'agama', 'pendidikan_terakhir', 'provinsi', 'kota', 'kecamatan', 'kelurahan', 'rt_rw', 'kode_pos', 'alamat'],
             2 => ['nik', 'position_ids', 'main_position_id', 'division_ids', 'atasan', 'atasan2', 'tanggal_masuk', 'jenis_karyawan', 'lokasi_kerja', 'jenis_kerja', 'jam_kerja', 'jobdesk'],
             3 => ['no_hp', 'email', 'informasi_lowongan', 'no_kontak_darurat1', 'hubungan_darurat1', 'no_kontak_darurat2', 'hubungan_darurat2', 'no_bpjs', 'status_bpjs'],
             default => array_keys($all),
@@ -331,7 +334,7 @@ class EmployeeTable extends Component
             'kecamatan.required' => 'Kecamatan wajib dipilih.',
             'kelurahan.required' => 'Kelurahan/Desa wajib dipilih.',
             'kode_pos.required' => 'Kode pos wajib diisi.',
-            'status.required' => 'Status wajib dipilih.',
+            'tipe.required' => 'Tipe karyawan wajib dipilih.',
             'status_pernikahan.required' => 'Status pernikahan wajib dipilih.',
             'status_pernikahan.in' => 'Status pernikahan tidak valid.',
             'position_ids.required' => 'Minimal satu jabatan wajib dipilih.',
@@ -372,7 +375,12 @@ class EmployeeTable extends Component
         }
     }
 
-    public function updatingSearch(): void
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
     {
         $this->resetPage();
     }
@@ -406,9 +414,10 @@ class EmployeeTable extends Component
         $this->kota = $this->regionIdForParentId($this->provinsi, Region::TYPE_KABUPATEN, $emp->kota ?? '');
         $this->kecamatan = $this->regionIdForParentId($this->kota, Region::TYPE_KECAMATAN, $emp->kecamatan ?? '');
         $this->kelurahan = $this->regionIdForParentId($this->kecamatan, Region::TYPE_KELURAHAN, $emp->kelurahan ?? '');
+        $this->rt_rw = $emp->rt_rw ?? '';
         $this->kode_pos = $emp->kode_pos ?? '';
         $this->loadRegionLists();
-        $this->status = $emp->status;
+        $this->tipe = $emp->tipe;
         $this->status_pernikahan = $emp->status_pernikahan ?? '';
         $this->position = $emp->position ?? '';
         $this->position_ids = $emp->positions->pluck('id')->toArray();
@@ -602,7 +611,7 @@ class EmployeeTable extends Component
                 $query->whereHas('divisions', fn ($q) => $q->where('divisions.id', $this->filterDivision));
             })
             ->when($this->filterStatus, function ($query) {
-                $query->where('status', $this->filterStatus);
+                $query->where('tipe', $this->filterStatus);
             })
             ->when($this->sortField === 'nik', function ($query) {
                 $query->orderByRaw('CAST(nik AS UNSIGNED) '.($this->sortDirection === 'asc' ? 'asc' : 'desc'));
@@ -640,6 +649,7 @@ class EmployeeTable extends Component
             'kota' => $this->kota ? ($this->cityList[$this->kota] ?? null) : null,
             'kecamatan' => $this->kecamatan ? ($this->districtList[$this->kecamatan] ?? null) : null,
             'kelurahan' => $this->kelurahan ? ($this->villageList[$this->kelurahan] ?? null) : null,
+            'rt_rw' => $this->rt_rw ?: null,
             'kode_pos' => $this->kode_pos ?: null,
             'tempat_lahir' => $this->tempat_lahir ?: null,
             'tanggal_lahir' => $this->tanggal_lahir ?: null,
@@ -663,7 +673,7 @@ class EmployeeTable extends Component
             'hubungan_darurat2' => $this->hubungan_darurat2 ?: null,
             'no_bpjs' => $this->no_bpjs ?: null,
             'status_bpjs' => $this->status_bpjs ?: null,
-            'status' => $this->status,
+            'tipe' => $this->tipe,
             'status_pernikahan' => $this->status_pernikahan ?: null,
             'tanggal_masuk' => $this->tanggal_masuk ?: null,
             'tanggal_resign' => $this->tanggal_resign ?: null,
@@ -689,11 +699,12 @@ class EmployeeTable extends Component
         $this->kota = '';
         $this->kecamatan = '';
         $this->kelurahan = '';
+        $this->rt_rw = '';
         $this->kode_pos = '';
         $this->cityList = [];
         $this->districtList = [];
         $this->villageList = [];
-        $this->status = 'aktif';
+        $this->tipe = 'karyawan_aktif';
         $this->status_pernikahan = '';
         $this->position = '';
         $this->position_ids = [];

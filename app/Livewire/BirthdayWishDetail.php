@@ -10,9 +10,12 @@ class BirthdayWishDetail extends Component
 {
     public Employee $employee;
 
+    public ?string $selectedYear = null;
+
     public function mount(Employee $employee): void
     {
         $this->employee = $employee->loadCount('birthdayWishes');
+        $this->selectedYear = (string) now()->year;
     }
 
     public function delete(int $id): void
@@ -29,11 +32,24 @@ class BirthdayWishDetail extends Component
 
     public function render()
     {
-        $wishes = $this->employee->birthdayWishes()
-            ->with(['user.employee'])
-            ->latest()
-            ->get();
+        $query = $this->employee->birthdayWishes()
+            ->with(['user.employee']);
 
-        return view('livewire.birthday-wish-detail', ['wishes' => $wishes]);
+        if ($this->selectedYear) {
+            $query->whereYear('created_at', $this->selectedYear);
+        }
+
+        $wishes = $query->latest()->get();
+
+        $availableYears = $this->employee->birthdayWishes()
+            ->selectRaw('DISTINCT YEAR(created_at) as year')
+            ->orderByRaw('YEAR(created_at) DESC')
+            ->pluck('year')
+            ->toArray();
+
+        return view('livewire.birthday-wish-detail', [
+            'wishes' => $wishes,
+            'availableYears' => $availableYears,
+        ]);
     }
 }
