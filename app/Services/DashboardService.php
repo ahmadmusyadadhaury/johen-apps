@@ -356,6 +356,37 @@ class DashboardService
         return array_values(array_unique($divisions));
     }
 
+    /**
+     * Pengumuman yang berstatus tayang (is_published = true) dan belum
+     * dibaca/aktif, dibentuk untuk kartu Pengumuman di dashboard sekaligus
+     * untuk popup Pengumuman. Hanya is_published = true yang bersifat aktif
+     * (draft tidak tampil). Tidak ada filter tanggal karena kolom event_date
+     * bersifat informasional saja pada sistem existing.
+     */
+    public function getAnnouncements(?int $userId = null, ?int $limit = null): array
+    {
+        $query = Announcement::where('is_published', true)->latest();
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        $publishedAnnouncements = $query->get();
+
+        $readIds = $userId
+            ? DB::table('announcement_user')->where('user_id', $userId)->pluck('announcement_id')->all()
+            : [];
+
+        return $publishedAnnouncements->map(fn (Announcement $a) => [
+            'title' => $a->title,
+            'date' => $a->created_at->isoFormat('D MMM YYYY'),
+            'summary' => $a->summary ?? $a->content,
+            'content' => $a->content,
+            'id' => $a->id,
+            'is_read' => (bool) in_array($a->id, $readIds),
+        ])->all();
+    }
+
     public function getKaryawanDashboard(int $employeeId): array
     {
         $now = now();
@@ -477,19 +508,7 @@ class DashboardService
         try {
             // Semua pengumuman tayang, urut terbaru; dipakai kartu pengumuman
             // terbaru di dashboard sekaligus popup "Lihat Selengkapnya".
-            $publishedAnnouncements = Announcement::where('is_published', true)->latest()->get();
-            $readIds = $userId
-                ? DB::table('announcement_user')->where('user_id', $userId)->pluck('announcement_id')->all()
-                : [];
-
-            $announcements = $publishedAnnouncements->map(fn (Announcement $a) => [
-                'title' => $a->title,
-                'date' => $a->created_at->isoFormat('D MMM YYYY'),
-                'summary' => $a->summary ?? $a->content,
-                'content' => $a->content,
-                'id' => $a->id,
-                'is_read' => (bool) in_array($a->id, $readIds),
-            ]);
+            $announcements = $this->getAnnouncements($userId);
         } catch (\Exception $e) {
             $announcements = collect();
         }

@@ -5,7 +5,9 @@ namespace App\Livewire;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
+use App\Models\Region;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -26,6 +28,7 @@ class EmployeeTable extends Component
     public function mount(): void
     {
         $this->filterDivision = request('division', '');
+        $this->provinceList = Region::provinces()->pluck('name', 'id')->toArray();
     }
 
     public bool $showCreateModal = false;
@@ -39,6 +42,8 @@ class EmployeeTable extends Component
     public int $step = 1;
 
     public string $nik = '';
+
+    public string $nik_ktp = '';
 
     public string $nama = '';
 
@@ -58,7 +63,27 @@ class EmployeeTable extends Component
 
     public string $alamat = '';
 
+    public string $provinsi = '';
+
+    public string $kota = '';
+
+    public string $kecamatan = '';
+
+    public string $kelurahan = '';
+
+    public string $kode_pos = '';
+
+    public array $provinceList = [];
+
+    public array $cityList = [];
+
+    public array $districtList = [];
+
+    public array $villageList = [];
+
     public string $status = 'aktif';
+
+    public string $status_pernikahan = '';
 
     public string $position = '';
 
@@ -121,60 +146,219 @@ class EmployeeTable extends Component
         }
     }
 
+    public function updatedPositionIds($value): void
+    {
+        $this->syncJobdeskFromPositions();
+    }
+
+    public function updatedMainPositionId($value): void
+    {
+        $this->syncJobdeskFromPositions();
+    }
+
+    private function syncJobdeskFromPositions(): void
+    {
+        if (empty($this->position_ids)) {
+            $this->jobdesk = '';
+
+            return;
+        }
+
+        $positions = Position::whereIn('id', $this->position_ids)->get()
+            ->sortBy('nama')
+            ->sortBy(fn ($pos) => $pos->id == (int) $this->main_position_id ? 0 : 1);
+
+        $blocks = $positions->map(function ($pos) {
+            $judul = strtoupper($pos->nama);
+            $deskripsi = trim(strip_tags($pos->deskripsi ?: ''));
+
+            return $judul.PHP_EOL.($deskripsi === '' ? '-' : $deskripsi);
+        });
+
+        $this->jobdesk = $blocks->implode(PHP_EOL.PHP_EOL);
+    }
+
+    public function updatedProvinsi($value): void
+    {
+        $this->kota = '';
+        $this->kecamatan = '';
+        $this->kelurahan = '';
+        $this->cityList = $value
+            ? Region::where('type', Region::TYPE_KABUPATEN)->where('parent_id', $value)->orderBy('name')->pluck('name', 'id')->toArray()
+            : [];
+        $this->districtList = [];
+        $this->villageList = [];
+    }
+
+    public function updatedKota($value): void
+    {
+        $this->kecamatan = '';
+        $this->kelurahan = '';
+        $this->districtList = $value
+            ? Region::where('type', Region::TYPE_KECAMATAN)->where('parent_id', $value)->orderBy('name')->pluck('name', 'id')->toArray()
+            : [];
+        $this->villageList = [];
+    }
+
+    public function updatedKecamatan($value): void
+    {
+        $this->kelurahan = '';
+        $this->villageList = $value
+            ? Region::where('type', Region::TYPE_KELURAHAN)->where('parent_id', $value)->orderBy('name')->pluck('name', 'id')->toArray()
+            : [];
+    }
+
+    private function loadRegionLists(): void
+    {
+        $this->provinceList = Region::provinces()->pluck('name', 'id')->toArray();
+        $this->cityList = $this->provinsi
+            ? Region::where('type', Region::TYPE_KABUPATEN)->where('parent_id', $this->provinsi)->orderBy('name')->pluck('name', 'id')->toArray()
+            : [];
+        $this->districtList = $this->kota
+            ? Region::where('type', Region::TYPE_KECAMATAN)->where('parent_id', $this->kota)->orderBy('name')->pluck('name', 'id')->toArray()
+            : [];
+        $this->villageList = $this->kecamatan
+            ? Region::where('type', Region::TYPE_KELURAHAN)->where('parent_id', $this->kecamatan)->orderBy('name')->pluck('name', 'id')->toArray()
+            : [];
+    }
+
+    private function provinceIdForName(?string $name): string
+    {
+        if (! $name) {
+            return '';
+        }
+        $row = Region::where('type', Region::TYPE_PROVINSI)->where('name', $name)->first();
+
+        return (string) ($row->id ?? '');
+    }
+
+    private function regionIdForParentId(string $parentId, string $type, ?string $name): string
+    {
+        if (! $parentId || ! $name) {
+            return '';
+        }
+        $row = Region::where('type', $type)->where('parent_id', $parentId)->where('name', $name)->first();
+
+        return (string) ($row->id ?? '');
+    }
+
     protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {
         return [
             'nik' => ['required', 'string', 'max:30'],
+            'nik_ktp' => ['required', 'string', 'max:50', 'regex:/^[0-9]+$/'],
             'nama' => 'required|string|max:255',
-            'tempat_lahir' => 'nullable|string|max:100',
-            'tanggal_lahir' => 'nullable|date',
-            'jenis_kelamin' => 'nullable|in:L,P',
-            'ukuran_baju' => 'nullable|in:S,M,L,XL,XXL',
-            'agama' => 'nullable|string|max:50',
-            'pendidikan_terakhir' => 'nullable|string|max:100',
-            'informasi_lowongan' => 'nullable|string|max:100',
-            'alamat' => 'nullable|string',
+            'tempat_lahir' => 'required|string|max:100',
+            'tanggal_lahir' => 'required|date',
+            'jenis_kelamin' => 'required|in:L,P',
+            'ukuran_baju' => 'required|in:S,M,L,XL,XXL',
+            'agama' => 'required|string|max:50',
+            'pendidikan_terakhir' => 'required|string|max:100',
+            'informasi_lowongan' => 'required|string|max:100',
+            'alamat' => 'required|string',
+            'provinsi' => 'required|string|max:150',
+            'kota' => 'required|string|max:150',
+            'kecamatan' => 'required|string|max:150',
+            'kelurahan' => 'required|string|max:150',
+            'kode_pos' => 'required|string|max:10',
             'status' => 'required|in:aktif,nonaktif,resign',
+            'status_pernikahan' => 'required|in:sudah menikah,belum menikah',
             'position' => 'nullable|string|max:255',
-            'position_ids' => 'nullable|array',
+            'position_ids' => 'required|array|min:1',
             'position_ids.*' => 'exists:positions,id',
-            'main_position_id' => 'nullable|string',
-            'division_ids' => 'nullable|array',
+            'main_position_id' => 'required|string',
+            'division_ids' => 'required|array|min:1',
             'division_ids.*' => 'exists:divisions,id',
-            'atasan' => 'nullable|string|max:255',
-            'atasan2' => 'nullable|string|max:255',
-            'tanggal_masuk' => 'nullable|date',
-            'jenis_karyawan' => 'nullable|string|max:30',
-            'lokasi_kerja' => 'nullable|in:Summarecon,Baleendah',
-            'jenis_kerja' => 'nullable|in:Office,Operasional',
-            'jam_kerja' => 'nullable|string|max:255',
+            'atasan' => ['required', 'string', Rule::in(Employee::ATASAN_OPTIONS)],
+            'atasan2' => ['nullable', 'string', Rule::in(Employee::ATASAN_OPTIONS)],
+            'tanggal_masuk' => 'required|date',
+            'jenis_karyawan' => 'required|string|max:30',
+            'lokasi_kerja' => 'required|in:Summarecon,Baleendah',
+            'jenis_kerja' => 'required|in:Office,Operasional',
+            'jam_kerja' => 'required|string|max:255',
             'jam_masuk' => 'nullable|date_format:H:i',
             'jam_kerja_effective' => 'nullable|date|after_or_equal:2000-01-01',
-            'jobdesk' => 'nullable|string',
-            'no_hp' => 'nullable|string|max:30',
-            'email' => 'nullable|email|max:255',
-            'no_kontak_darurat1' => 'nullable|string|max:30',
-            'hubungan_darurat1' => 'nullable|string|max:50',
-            'no_kontak_darurat2' => 'nullable|string|max:30',
-            'hubungan_darurat2' => 'nullable|string|max:50',
-            'no_bpjs' => 'nullable|string|max:30',
-            'status_bpjs' => 'nullable|in:aktif,tidak aktif',
+            'jobdesk' => 'required|string',
+            'no_hp' => 'required|string|max:30',
+            'email' => 'required|email|max:255',
+            'no_kontak_darurat1' => 'required|string|max:30',
+            'hubungan_darurat1' => 'required|string|max:50',
+            'no_kontak_darurat2' => 'required|string|max:30',
+            'hubungan_darurat2' => 'required|string|max:50',
+            'no_bpjs' => 'required|string|max:30',
+            'status_bpjs' => 'required|in:aktif,tidak aktif',
             'tanggal_resign' => 'nullable|date',
             'catatan' => 'nullable|string',
         ];
     }
 
+    protected function stepRules(int $step): array
+    {
+        $all = $this->rules();
+
+        $fields = match ($step) {
+            1 => ['nik_ktp', 'nama', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'status', 'status_pernikahan', 'ukuran_baju', 'agama', 'pendidikan_terakhir', 'provinsi', 'kota', 'kecamatan', 'kelurahan', 'kode_pos', 'alamat'],
+            2 => ['nik', 'position_ids', 'main_position_id', 'division_ids', 'atasan', 'atasan2', 'tanggal_masuk', 'jenis_karyawan', 'lokasi_kerja', 'jenis_kerja', 'jam_kerja', 'jobdesk'],
+            3 => ['no_hp', 'email', 'informasi_lowongan', 'no_kontak_darurat1', 'hubungan_darurat1', 'no_kontak_darurat2', 'hubungan_darurat2', 'no_bpjs', 'status_bpjs'],
+            default => array_keys($all),
+        };
+
+        return array_intersect_key($all, array_flip($fields));
+    }
+
     protected function messages(): array
     {
         return [
-            'nik.required' => 'NIK wajib diisi.',
-            'nik.unique' => 'NIK sudah terdaftar.',
+            'nik.required' => 'NIP wajib diisi.',
+            'nik.unique' => 'NIP sudah terdaftar.',
+            'nik_ktp.required' => 'NIK KTP wajib diisi.',
+            'nik_ktp.regex' => 'NIK KTP hanya boleh berisi angka.',
             'nama.required' => 'Nama wajib diisi.',
+            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+            'tanggal_lahir.date' => 'Tanggal lahir tidak valid.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid.',
+            'ukuran_baju.required' => 'Ukuran baju wajib dipilih.',
+            'agama.required' => 'Agama wajib dipilih.',
+            'pendidikan_terakhir.required' => 'Pendidikan terakhir wajib dipilih.',
+            'informasi_lowongan.required' => 'Informasi lowongan wajib dipilih.',
+            'alamat.required' => 'Alamat lengkap wajib diisi.',
+            'provinsi.required' => 'Provinsi wajib dipilih.',
+            'kota.required' => 'Kota/Kabupaten wajib dipilih.',
+            'kecamatan.required' => 'Kecamatan wajib dipilih.',
+            'kelurahan.required' => 'Kelurahan/Desa wajib dipilih.',
+            'kode_pos.required' => 'Kode pos wajib diisi.',
             'status.required' => 'Status wajib dipilih.',
+            'status_pernikahan.required' => 'Status pernikahan wajib dipilih.',
+            'status_pernikahan.in' => 'Status pernikahan tidak valid.',
+            'position_ids.required' => 'Minimal satu jabatan wajib dipilih.',
+            'position_ids.min' => 'Minimal satu jabatan wajib dipilih.',
+            'main_position_id.required' => 'Jabatan utama wajib ditentukan.',
+            'division_ids.required' => 'Minimal satu divisi wajib dipilih.',
+            'division_ids.min' => 'Minimal satu divisi wajib dipilih.',
             'division_ids.*.exists' => 'Divisi tidak ditemukan.',
+            'atasan.required' => 'Atasan 1 wajib diisi.',
+            'atasan.in' => 'Atasan 1 tidak valid.',
+            'atasan2.in' => 'Atasan 2 tidak valid.',
+            'tanggal_masuk.required' => 'Tanggal bergabung wajib diisi.',
+            'tanggal_masuk.date' => 'Tanggal bergabung tidak valid.',
+            'jenis_karyawan.required' => 'Jenis karyawan wajib dipilih.',
+            'lokasi_kerja.required' => 'Lokasi kerja wajib dipilih.',
+            'jenis_kerja.required' => 'Jenis kerja wajib dipilih.',
+            'jam_kerja.required' => 'Jam kerja wajib dipilih.',
+            'jobdesk.required' => 'Jobdesk wajib diisi.',
+            'no_hp.required' => 'No. telepon wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'no_kontak_darurat1.required' => 'No. kontak darurat 1 wajib diisi.',
+            'hubungan_darurat1.required' => 'Hubungan kontak darurat 1 wajib dipilih.',
+            'no_kontak_darurat2.required' => 'No. kontak darurat 2 wajib diisi.',
+            'hubungan_darurat2.required' => 'Hubungan kontak darurat 2 wajib dipilih.',
+            'no_bpjs.required' => 'No. BPJS wajib diisi.',
+            'status_bpjs.required' => 'Status BPJS wajib dipilih.',
         ];
     }
 
@@ -197,6 +381,7 @@ class EmployeeTable extends Component
     {
         $this->authorizeWrite('create-data');
         $this->resetForm();
+        $this->resetValidation();
         $this->step = 1;
         $this->showCreateModal = true;
     }
@@ -207,6 +392,7 @@ class EmployeeTable extends Component
         $emp = Employee::with('positions', 'divisions')->findOrFail($id);
         $this->editId = $emp->id;
         $this->nik = $emp->nik;
+        $this->nik_ktp = $emp->nik_ktp ?? '';
         $this->nama = $emp->nama;
         $this->tempat_lahir = $emp->tempat_lahir ?? '';
         $this->tanggal_lahir = $emp->tanggal_lahir?->format('Y-m-d') ?? '';
@@ -216,7 +402,14 @@ class EmployeeTable extends Component
         $this->pendidikan_terakhir = $emp->pendidikan_terakhir ?? '';
         $this->informasi_lowongan = $emp->informasi_lowongan ?? '';
         $this->alamat = $emp->alamat ?? '';
+        $this->provinsi = $this->provinceIdForName($emp->provinsi ?? '');
+        $this->kota = $this->regionIdForParentId($this->provinsi, Region::TYPE_KABUPATEN, $emp->kota ?? '');
+        $this->kecamatan = $this->regionIdForParentId($this->kota, Region::TYPE_KECAMATAN, $emp->kecamatan ?? '');
+        $this->kelurahan = $this->regionIdForParentId($this->kecamatan, Region::TYPE_KELURAHAN, $emp->kelurahan ?? '');
+        $this->kode_pos = $emp->kode_pos ?? '';
+        $this->loadRegionLists();
         $this->status = $emp->status;
+        $this->status_pernikahan = $emp->status_pernikahan ?? '';
         $this->position = $emp->position ?? '';
         $this->position_ids = $emp->positions->pluck('id')->toArray();
         $mainPos = $emp->mainPosition();
@@ -232,6 +425,9 @@ class EmployeeTable extends Component
         $this->jam_masuk = $emp->jam_masuk ? substr($emp->jam_masuk, 0, 5) : '';
         $this->jam_kerja_effective = now()->toDateString();
         $this->jobdesk = $emp->jobdesk ?? '';
+        if (! empty($this->position_ids)) {
+            $this->syncJobdeskFromPositions();
+        }
         $this->no_hp = $emp->no_hp ?? '';
         $this->email = $emp->email ?? '';
         $this->no_kontak_darurat1 = $emp->no_kontak_darurat1 ?? '';
@@ -243,6 +439,7 @@ class EmployeeTable extends Component
         $this->tanggal_resign = $emp->tanggal_resign?->format('Y-m-d') ?? '';
         $this->catatan = $emp->catatan ?? '';
         $this->step = 1;
+        $this->resetValidation();
         $this->showEditModal = true;
     }
 
@@ -253,11 +450,12 @@ class EmployeeTable extends Component
         $this->showPreview = false;
         $this->editId = null;
         $this->step = 1;
-        $this->resetErrorBag();
+        $this->resetValidation();
     }
 
     public function nextStep(): void
     {
+        $this->validate($this->stepRules($this->step));
         $this->step++;
     }
 
@@ -433,10 +631,16 @@ class EmployeeTable extends Component
 
         return [
             'nik' => $this->nik,
+            'nik_ktp' => $this->nik_ktp ?: null,
             'nama' => $this->nama,
             'email' => $this->email ?: null,
             'no_hp' => $this->no_hp ?: null,
             'alamat' => $this->alamat ?: null,
+            'provinsi' => $this->provinsi ? ($this->provinceList[$this->provinsi] ?? null) : null,
+            'kota' => $this->kota ? ($this->cityList[$this->kota] ?? null) : null,
+            'kecamatan' => $this->kecamatan ? ($this->districtList[$this->kecamatan] ?? null) : null,
+            'kelurahan' => $this->kelurahan ? ($this->villageList[$this->kelurahan] ?? null) : null,
+            'kode_pos' => $this->kode_pos ?: null,
             'tempat_lahir' => $this->tempat_lahir ?: null,
             'tanggal_lahir' => $this->tanggal_lahir ?: null,
             'jenis_kelamin' => $this->jenis_kelamin ?: null,
@@ -460,6 +664,7 @@ class EmployeeTable extends Component
             'no_bpjs' => $this->no_bpjs ?: null,
             'status_bpjs' => $this->status_bpjs ?: null,
             'status' => $this->status,
+            'status_pernikahan' => $this->status_pernikahan ?: null,
             'tanggal_masuk' => $this->tanggal_masuk ?: null,
             'tanggal_resign' => $this->tanggal_resign ?: null,
             'catatan' => $this->catatan ?: null,
@@ -470,6 +675,7 @@ class EmployeeTable extends Component
     {
         $this->editId = null;
         $this->nik = '';
+        $this->nik_ktp = '';
         $this->nama = '';
         $this->tempat_lahir = '';
         $this->tanggal_lahir = '';
@@ -479,7 +685,16 @@ class EmployeeTable extends Component
         $this->pendidikan_terakhir = '';
         $this->informasi_lowongan = '';
         $this->alamat = '';
+        $this->provinsi = '';
+        $this->kota = '';
+        $this->kecamatan = '';
+        $this->kelurahan = '';
+        $this->kode_pos = '';
+        $this->cityList = [];
+        $this->districtList = [];
+        $this->villageList = [];
         $this->status = 'aktif';
+        $this->status_pernikahan = '';
         $this->position = '';
         $this->position_ids = [];
         $this->main_position_id = '';

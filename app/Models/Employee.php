@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 class Employee extends Model
 {
@@ -27,6 +27,43 @@ class Employee extends Model
     public const JENIS_KERJA_OPERASIONAL = 'Operasional';
 
     public const JENIS_KERJA_OFFICE = 'Office';
+
+    public const STATUS_MENIKAH = 'sudah menikah';
+
+    public const STATUS_BELUM_MENIKAH = 'belum menikah';
+
+    /**
+     * Opsi status pernikahan (dropdown tab Informasi Pribadi).
+     */
+    public const STATUS_PERKAWINAN_OPTIONS = [
+        self::STATUS_MENIKAH => 'Sudah Menikah',
+        self::STATUS_BELUM_MENIKAH => 'Belum Menikah',
+    ];
+
+    /**
+     * Daftar nama atasan yang bisa dipilih (dropdown Atasan 1 & Atasan 2).
+     */
+    public const ATASAN_OPTIONS = [
+        'Gonzaga Gogo Silalahi',
+        'Pamungkas Chris Hermanto',
+        'Rinaldo Pardomuan Sinaga',
+        'Novena Novri',
+        'Yuliana Sventy Yasmine',
+        'Ahmad Musyadad Haury',
+        'Zulfa Rahmani',
+        'Rizky Fahmi Hidayat',
+        'Tasya Lutfiah Nur Azizah',
+        'Kornelius Adrian',
+        'Fiki Sugiana',
+        'Fathan Muhamad Fauzan',
+        'Mohamad Rafli Bahtiar',
+        'Mochamad Rizal Hanapi',
+        'Albert Christian Simanungkalit',
+        'Ridwan Hasan Maulana',
+        'Muhamad Rafly Firdaus',
+        'Yogi Ginanjar',
+        'Dhika Andara',
+    ];
 
     /**
      * Opsi jenis kerja: label => keterangan pola hari kerja mingguan.
@@ -93,11 +130,17 @@ class Employee extends Model
 
     protected $fillable = [
         'nik',
+        'nik_ktp',
         'device_user_id',
         'nama',
         'email',
         'no_hp',
         'alamat',
+        'provinsi',
+        'kota',
+        'kecamatan',
+        'kelurahan',
+        'kode_pos',
         'tempat_lahir',
         'tanggal_lahir',
         'jenis_kelamin',
@@ -121,6 +164,7 @@ class Employee extends Model
         'no_bpjs',
         'status_bpjs',
         'status',
+        'status_pernikahan',
         'tanggal_masuk',
         'tanggal_resign',
         'foto',
@@ -530,10 +574,18 @@ class Employee extends Model
         $positionName = $this->mainPosition()?->nama ?: $this->position;
         $name = strtolower((string) $positionName);
 
-        if ($name === 'ceo') return 5;
-        if (str_contains($name, 'general manager')) return 4;
-        if (str_starts_with($name, 'head of store')) return 3;
-        if (str_starts_with($name, 'koordinator')) return 2;
+        if ($name === 'ceo') {
+            return 5;
+        }
+        if (str_contains($name, 'general manager')) {
+            return 4;
+        }
+        if (str_starts_with($name, 'head of store')) {
+            return 3;
+        }
+        if (str_starts_with($name, 'koordinator')) {
+            return 2;
+        }
 
         return 1;
     }

@@ -168,12 +168,12 @@
     <div x-data="{ open: $wire.entangle('showCreateModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-3xl rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop class="relative w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl my-8">
 
             {{-- HEADER --}}
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tambah Karyawan</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Lengkapi data karyawan baru</p>
@@ -184,7 +184,7 @@
             </div>
 
             {{-- STEP INDICATOR --}}
-            <div class="mb-8">
+            <div class="mb-5">
                 <div class="flex items-center justify-center gap-0">
                     @foreach ([1 => 'Informasi Pribadi', 2 => 'Data Pekerjaan', 3 => 'Kontak & Darurat'] as $num => $label)
                         <div class="flex items-center">
@@ -218,46 +218,49 @@
 
                 {{-- STEP 1: Informasi Pribadi --}}
                 @if($step == 1)
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <x-input-label for="create-nik" value="NIK *" />
-                            <x-text-input id="create-nik" wire:model="nik" type="text" class="mt-1 block w-full" placeholder="1234567890" />
-                            @error('nik') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-input-label for="create-nik_ktp" value="NIK KTP *" />
+                            <x-text-input id="create-nik_ktp" wire:model="nik_ktp" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('nik_ktp') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="Masukan NIK KTP" />
+                            <x-input-error :messages="$errors->get('nik_ktp')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-nama" value="Nama Lengkap *" />
-                            <x-text-input id="create-nama" wire:model="nama" type="text" class="mt-1 block w-full" placeholder="John Doe" />
-                            @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-text-input id="create-nama" wire:model="nama" type="text" class="mt-1 block w-full {{ $errors->has('nama') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="Masukan nama karyawan" />
+                            <x-input-error :messages="$errors->get('nama')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-tempat_lahir" value="Tempat Lahir" />
-                            <x-text-input id="create-tempat_lahir" wire:model="tempat_lahir" type="text" class="mt-1 block w-full" placeholder="Jakarta" />
+                            <x-text-input id="create-tempat_lahir" wire:model="tempat_lahir" type="text" class="mt-1 block w-full {{ $errors->has('tempat_lahir') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="Bandung" />
+                            <x-input-error :messages="$errors->get('tempat_lahir')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-tanggal_lahir" value="Tanggal Lahir" />
-                            <x-text-input id="create-tanggal_lahir" wire:model="tanggal_lahir" type="date" class="mt-1 block w-full" />
+                            <x-text-input id="create-tanggal_lahir" wire:model="tanggal_lahir" type="date" class="mt-1 block w-full {{ $errors->has('tanggal_lahir') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('tanggal_lahir')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-jenis_kelamin" value="Jenis Kelamin" />
-                            <select id="create-jenis_kelamin" wire:model="jenis_kelamin" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-jenis_kelamin" wire:model="jenis_kelamin" class="mt-1 block w-full rounded-xl border @error('jenis_kelamin') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
+                            <x-input-error :messages="$errors->get('jenis_kelamin')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-status" value="Status *" />
-                            <select id="create-status" wire:model="status" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-status" wire:model="status" class="mt-1 block w-full rounded-xl border @error('status') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="aktif">Aktif</option>
                                 <option value="nonaktif">Nonaktif</option>
                                 <option value="resign">Resign</option>
                             </select>
-                            @error('status') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-ukuran_baju" value="Ukuran Baju" />
-                            <select id="create-ukuran_baju" wire:model="ukuran_baju" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-ukuran_baju" wire:model="ukuran_baju" class="mt-1 block w-full rounded-xl border @error('ukuran_baju') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="S">S</option>
                                 <option value="M">M</option>
@@ -265,43 +268,109 @@
                                 <option value="XL">XL</option>
                                 <option value="XXL">XXL</option>
                             </select>
+                            <x-input-error :messages="$errors->get('ukuran_baju')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-agama" value="Agama" />
-                            <select id="create-agama" wire:model="agama" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-agama" wire:model="agama" class="mt-1 block w-full rounded-xl border @error('agama') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="islam">Islam</option>
-                                <option value="kristen">Kristen</option>
+                                <option value="katolik">Katolik</option>
                                 <option value="protestan">Protestan</option>
                                 <option value="hindu">Hindu</option>
                                 <option value="budha">Budha</option>
                             </select>
+                            <x-input-error :messages="$errors->get('agama')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="create-status_pernikahan" value="Status Pernikahan" />
+                            <select id="create-status_pernikahan" wire:model="status_pernikahan" class="mt-1 block w-full rounded-xl border @error('status_pernikahan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                @foreach(\App\Models\Employee::STATUS_PERKAWINAN_OPTIONS as $nilai => $label)
+                                    <option value="{{ $nilai }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('status_pernikahan')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-pendidikan_terakhir" value="Pendidikan Terakhir" />
-                            <select id="create-pendidikan_terakhir" wire:model="pendidikan_terakhir" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-pendidikan_terakhir" wire:model="pendidikan_terakhir" class="mt-1 block w-full rounded-xl border @error('pendidikan_terakhir') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
-                                <option value="sekolah menengah atas (SMA)">Sekolah Menengah Atas (SMA)</option>
-                                <option value="sekolah menengah kejuruan (SMK)">Sekolah Menengah Kejuruan (SMK)</option>
-                                <option value="Sarjana">Sarjana</option>
+                                <option value="sekolah dasar (SD)">Sekolah Dasar (SD)</option>
+                                <option value="sekolah menengah pertama (SMP)">Sekolah Menengah Pertama (SMP)</option>
+                                <option value="sekolah menengah atas (SMA)">Sekolah Menengah Atas (SMA) Sederajat</option>
+                                <option value="S1">S1</option>
+                                <option value="S2">S2</option>
                             </select>
+                            <x-input-error :messages="$errors->get('pendidikan_terakhir')" class="mt-2" />
                         </div>
-                    </div>
-                    <div>
-                        <x-input-label for="create-alamat" value="Alamat Lengkap" />
-                        <textarea id="create-alamat" wire:model="alamat" rows="2" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Jl. Contoh No. 123"></textarea>
+                        <div>
+                            <x-input-label for="create-provinsi" value="Provinsi" />
+                            <select id="create-provinsi" wire:model.live="provinsi" class="mt-1 block w-full rounded-xl border @error('provinsi') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Provinsi --</option>
+                                @foreach($provinceList as $pid => $pname)
+                                    <option value="{{ $pid }}">{{ ucwords(strtolower($pname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('provinsi')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="create-kota" value="Kota/Kabupaten" />
+                            <select id="create-kota" wire:model.live="kota" class="mt-1 block w-full rounded-xl border @error('kota') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Kota/Kabupaten --</option>
+                                @foreach($cityList as $cid => $cname)
+                                    <option value="{{ $cid }}">{{ ucwords(strtolower($cname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kota')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="create-kecamatan" value="Kecamatan" />
+                            <select id="create-kecamatan" wire:model.live="kecamatan" class="mt-1 block w-full rounded-xl border @error('kecamatan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Kecamatan --</option>
+                                @foreach($districtList as $did => $dname)
+                                    <option value="{{ $did }}">{{ ucwords(strtolower($dname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kecamatan')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="create-kelurahan" value="Kelurahan/Desa" />
+                            <select id="create-kelurahan" wire:model.live="kelurahan" class="mt-1 block w-full rounded-xl border @error('kelurahan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Kelurahan/Desa --</option>
+                                @foreach($villageList as $vid => $vname)
+                                    <option value="{{ $vid }}">{{ ucwords(strtolower($vname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kelurahan')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="create-kode_pos" value="Kode Pos" />
+                            <x-text-input id="create-kode_pos" wire:model="kode_pos" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('kode_pos') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="40134" />
+                            <x-input-error :messages="$errors->get('kode_pos')" class="mt-2" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-input-label for="create-alamat" value="Alamat Lengkap" />
+                            <textarea id="create-alamat" wire:model="alamat" rows="2" class="mt-1 block w-full rounded-xl border @error('alamat') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Jl. Contoh No. 123"></textarea>
+                            <x-input-error :messages="$errors->get('alamat')" class="mt-2" />
+                        </div>
                     </div>
                 </div>
                 @endif
 
                 {{-- STEP 2: Data Pekerjaan --}}
                 @if($step == 2)
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <x-input-label for="create-nik" value="NIP (Nomor Induk Pegawai) *" />
+                            <x-text-input id="create-nik" wire:model="nik" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('nik') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="Masukan NIP" />
+                            <x-input-error :messages="$errors->get('nik')" class="mt-2" />
+                        </div>
                         <div x-data="{ open: false }" class="relative">
                             <x-input-label value="Divisi" />
                             <button type="button" @click="open = !open"
-                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
                                 <span>{{ count($division_ids) > 0 ? count($division_ids) . ' divisi dipilih' : 'Pilih divisi' }}</span>
                                 <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </button>
@@ -315,12 +384,13 @@
                                     </label>
                                 @endforeach
                             </div>
+                        @error('division_ids') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div x-data="{ open: false }" class="relative">
                             <x-input-label value="Jabatan" />
                             <input type="hidden" wire:model="position">
                             <button type="button" @click="open = !open"
-                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
                                 <span>{{ count($position_ids) > 0 ? count($position_ids) . ' jabatan dipilih' : 'Pilih jabatan' }}</span>
                                 <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </button>
@@ -328,66 +398,86 @@
                                  class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
                                 @foreach($allPositions as $pos)
                                     <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($pos->id, $position_ids) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
-                                        <input type="checkbox" value="{{ $pos->id }}" wire:model="position_ids"
+                                        <input type="checkbox" value="{{ $pos->id }}" wire:model.live="position_ids"
                                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
                                         <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $pos->nama }}</span>
-                                        <input type="radio" value="{{ $pos->id }}" wire:model="main_position_id"
+                                        <input type="radio" value="{{ $pos->id }}" wire:model.live="main_position_id"
                                                class="text-primary-600 focus:ring-primary-500">
                                         <span class="text-[10px] text-gray-400 dark:text-gray-500">Utama</span>
                                     </label>
                                 @endforeach
                             </div>
+                        @error('position_ids') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('main_position_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <x-input-label for="create-atasan" value="Atasan 1" />
-                            <x-text-input id="create-atasan" wire:model="atasan" type="text" class="mt-1 block w-full" placeholder="Nama atasan langsung" />
+                            <select id="create-atasan" wire:model="atasan" class="mt-1 block w-full rounded-xl border @error('atasan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih atasan --</option>
+                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                    <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('atasan')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-atasan2" value="Atasan 2" />
-                            <x-text-input id="create-atasan2" wire:model="atasan2" type="text" class="mt-1 block w-full" placeholder="Nama atasan kedua" />
+                            <select id="create-atasan2" wire:model="atasan2" class="mt-1 block w-full rounded-xl border @error('atasan2') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih atasan 2 --</option>
+                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                    <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('atasan2')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-tanggal_masuk" value="Tanggal Bergabung" />
-                            <x-text-input id="create-tanggal_masuk" wire:model="tanggal_masuk" type="date" class="mt-1 block w-full" />
+                            <x-text-input id="create-tanggal_masuk" wire:model="tanggal_masuk" type="date" class="mt-1 block w-full {{ $errors->has('tanggal_masuk') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('tanggal_masuk')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-jenis_karyawan" value="Jenis Karyawan" />
-                            <select id="create-jenis_karyawan" wire:model="jenis_karyawan" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-jenis_karyawan" wire:model="jenis_karyawan" class="mt-1 block w-full rounded-xl border @error('jenis_karyawan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="tetap">Tetap</option>
                                 <option value="kontrak">Kontrak</option>
                                 <option value="magang">Magang</option>
                             </select>
+                            <x-input-error :messages="$errors->get('jenis_karyawan')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-lokasi_kerja" value="Lokasi Kerja" />
-                            <select id="create-lokasi_kerja" wire:model="lokasi_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-lokasi_kerja" wire:model="lokasi_kerja" class="mt-1 block w-full rounded-xl border @error('lokasi_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih lokasi kerja</option>
                                 <option value="Summarecon">Summarecon</option>
                                 <option value="Baleendah">Baleendah</option>
                             </select>
+                            <x-input-error :messages="$errors->get('lokasi_kerja')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-jenis_kerja" value="Jenis Kerja" />
-                            <select id="create-jenis_kerja" wire:model="jenis_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-jenis_kerja" wire:model="jenis_kerja" class="mt-1 block w-full rounded-xl border @error('jenis_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jenis kerja</option>
                                 @foreach(\App\Models\Employee::JENIS_KERJA_OPTIONS as $jenis => $ket)
                                     <option value="{{ $jenis }}">{{ $jenis }} — {{ $ket }}</option>
                                 @endforeach
                             </select>
+                            <x-input-error :messages="$errors->get('jenis_kerja')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-jam_kerja" value="Jam Kerja" />
-                            <select id="create-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border @error('jam_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jam kerja</option>
                                 @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
                                     <option value="{{ $label }}">{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <x-input-error :messages="$errors->get('jam_kerja')" class="mt-2" />
                         </div>
                         <div class="sm:col-span-2">
                             <x-input-label for="create-jobdesk" value="Jobdesk" />
-                            <textarea id="create-jobdesk" wire:model="jobdesk" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Deskripsi jobdesk..."></textarea>
+                            <textarea id="create-jobdesk" wire:model="jobdesk" rows="3" class="mt-1 block w-full rounded-xl border @error('jobdesk') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Deskripsi jobdesk..."></textarea>
+                            <x-input-error :messages="$errors->get('jobdesk')" class="mt-2" />
                         </div>
                     </div>
                 </div>
@@ -395,39 +485,41 @@
 
                 {{-- STEP 3: Kontak & Darurat --}}
                 @if($step == 3)
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <x-input-label for="create-no_hp" value="No. Telepon" />
-                            <x-text-input id="create-no_hp" wire:model="no_hp" type="text" class="mt-1 block w-full" placeholder="08123456789" />
+<x-input-label for="create-no_hp" value="No. Telepon" />
+                           <x-text-input id="create-no_hp" wire:model="no_hp" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_hp') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="08123456789" />
+                            <x-input-error :messages="$errors->get('no_hp')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-email" value="Email" />
-                            <x-text-input id="create-email" wire:model="email" type="email" class="mt-1 block w-full" placeholder="john@company.com" />
-                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-text-input id="create-email" wire:model="email" type="email" class="mt-1 block w-full {{ $errors->has('email') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="john@company.com" />
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-informasi_lowongan" value="Informasi Lowongan" />
-                            <select id="create-informasi_lowongan" wire:model="informasi_lowongan" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-informasi_lowongan" wire:model="informasi_lowongan" class="mt-1 block w-full rounded-xl border @error('informasi_lowongan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
-                                <option value="kitalulus">Kitalulus</option>
+                                <option value="kita lulus">Kita Lulus</option>
                                 <option value="loker bandung">Loker Bandung</option>
-                                <option value="jobstreet">Jobstreet</option>
-                                <option value="glints">Glints</option>
+                                <option value="linkedin">LinkedIn</option>
                                 <option value="kerabat">Kerabat</option>
                             </select>
+                            <x-input-error :messages="$errors->get('informasi_lowongan')" class="mt-2" />
                         </div>
                     </div>
                     <hr class="border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Kontak Darurat</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
-                            <x-input-label for="create-no_kontak_darurat1" value="No. Kontak Darurat 1" />
-                            <x-text-input id="create-no_kontak_darurat1" wire:model="no_kontak_darurat1" type="text" class="mt-1 block w-full" placeholder="08xxxxxxxxxx" />
+<x-input-label for="create-no_kontak_darurat1" value="No. Kontak Darurat 1" />
+                           <x-text-input id="create-no_kontak_darurat1" wire:model="no_kontak_darurat1" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_kontak_darurat1') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="08xxxxxxxxxx" />
+                            <x-input-error :messages="$errors->get('no_kontak_darurat1')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-hubungan_darurat1" value="Hubungan" />
-                            <select id="create-hubungan_darurat1" wire:model="hubungan_darurat1" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-hubungan_darurat1" wire:model="hubungan_darurat1" class="mt-1 block w-full rounded-xl border @error('hubungan_darurat1') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="suami">Suami</option>
                                 <option value="istri">Istri</option>
@@ -437,14 +529,16 @@
                                 <option value="teman">Teman</option>
                                 <option value="lainnya">Lainnya</option>
                             </select>
+                            <x-input-error :messages="$errors->get('hubungan_darurat1')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="create-no_kontak_darurat2" value="No. Kontak Darurat 2" />
-                            <x-text-input id="create-no_kontak_darurat2" wire:model="no_kontak_darurat2" type="text" class="mt-1 block w-full" placeholder="08xxxxxxxxxx" />
+<x-input-label for="create-no_kontak_darurat2" value="No. Kontak Darurat 2" />
+                           <x-text-input id="create-no_kontak_darurat2" wire:model="no_kontak_darurat2" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_kontak_darurat2') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="08xxxxxxxxxx" />
+                            <x-input-error :messages="$errors->get('no_kontak_darurat2')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-hubungan_darurat2" value="Hubungan" />
-                            <select id="create-hubungan_darurat2" wire:model="hubungan_darurat2" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-hubungan_darurat2" wire:model="hubungan_darurat2" class="mt-1 block w-full rounded-xl border @error('hubungan_darurat2') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="suami">Suami</option>
                                 <option value="istri">Istri</option>
@@ -454,25 +548,28 @@
                                 <option value="teman">Teman</option>
                                 <option value="lainnya">Lainnya</option>
                             </select>
+                            <x-input-error :messages="$errors->get('hubungan_darurat2')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="create-no_bpjs" value="No. BPJS" />
-                            <x-text-input id="create-no_bpjs" wire:model="no_bpjs" type="text" class="mt-1 block w-full" placeholder="0001234567890" />
+<x-input-label for="create-no_bpjs" value="No. BPJS" />
+                           <x-text-input id="create-no_bpjs" wire:model="no_bpjs" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_bpjs') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="0001234567890" />
+                            <x-input-error :messages="$errors->get('no_bpjs')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="create-status_bpjs" value="Status BPJS" />
-                            <select id="create-status_bpjs" wire:model="status_bpjs" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="create-status_bpjs" wire:model="status_bpjs" class="mt-1 block w-full rounded-xl border @error('status_bpjs') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="aktif">Aktif</option>
                                 <option value="tidak aktif">Tidak Aktif</option>
                             </select>
+                            <x-input-error :messages="$errors->get('status_bpjs')" class="mt-2" />
                         </div>
                     </div>
                 </div>
                 @endif
 
                 {{-- FOOTER NAVIGATION --}}
-                <div class="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
                     <div>
                         @if($step > 1)
                             <button type="button" wire:click="prevStep" class="btn-secondary text-xs">
@@ -508,11 +605,11 @@
     <div x-data="{ open: $wire.entangle('showEditModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-3xl rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop class="relative w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl my-8">
 
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Karyawan</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Perbarui data karyawan</p>
@@ -523,7 +620,7 @@
             </div>
 
             {{-- STEP INDICATOR --}}
-            <div class="mb-8">
+            <div class="mb-5">
                 <div class="flex items-center justify-center gap-0">
                     @foreach ([1 => 'Informasi Pribadi', 2 => 'Data Pekerjaan', 3 => 'Kontak & Darurat'] as $num => $label)
                         <div class="flex items-center">
@@ -556,46 +653,49 @@
 
                 {{-- STEP 1: Informasi Pribadi --}}
                 @if($step == 1)
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <x-input-label for="edit-nik" value="NIK *" />
-                            <x-text-input id="edit-nik" wire:model="nik" type="text" class="mt-1 block w-full" />
-                            @error('nik') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-input-label for="edit-nik_ktp" value="NIK KTP *" />
+                            <x-text-input id="edit-nik_ktp" wire:model="nik_ktp" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('nik_ktp') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('nik_ktp')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-nama" value="Nama Lengkap *" />
-                            <x-text-input id="edit-nama" wire:model="nama" type="text" class="mt-1 block w-full" />
-                            @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-text-input id="edit-nama" wire:model="nama" type="text" class="mt-1 block w-full {{ $errors->has('nama') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('nama')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-tempat_lahir" value="Tempat Lahir" />
-                            <x-text-input id="edit-tempat_lahir" wire:model="tempat_lahir" type="text" class="mt-1 block w-full" />
+                            <x-text-input id="edit-tempat_lahir" wire:model="tempat_lahir" type="text" class="mt-1 block w-full {{ $errors->has('tempat_lahir') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('tempat_lahir')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-tanggal_lahir" value="Tanggal Lahir" />
-                            <x-text-input id="edit-tanggal_lahir" wire:model="tanggal_lahir" type="date" class="mt-1 block w-full" />
+                            <x-text-input id="edit-tanggal_lahir" wire:model="tanggal_lahir" type="date" class="mt-1 block w-full {{ $errors->has('tanggal_lahir') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('tanggal_lahir')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-jenis_kelamin" value="Jenis Kelamin" />
-                            <select id="edit-jenis_kelamin" wire:model="jenis_kelamin" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-jenis_kelamin" wire:model="jenis_kelamin" class="mt-1 block w-full rounded-xl border @error('jenis_kelamin') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
+                            <x-input-error :messages="$errors->get('jenis_kelamin')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-status" value="Status *" />
-                            <select id="edit-status" wire:model="status" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-status" wire:model="status" class="mt-1 block w-full rounded-xl border @error('status') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="aktif">Aktif</option>
                                 <option value="nonaktif">Nonaktif</option>
                                 <option value="resign">Resign</option>
                             </select>
-                            @error('status') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-ukuran_baju" value="Ukuran Baju" />
-                            <select id="edit-ukuran_baju" wire:model="ukuran_baju" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-ukuran_baju" wire:model="ukuran_baju" class="mt-1 block w-full rounded-xl border @error('ukuran_baju') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="S">S</option>
                                 <option value="M">M</option>
@@ -603,43 +703,109 @@
                                 <option value="XL">XL</option>
                                 <option value="XXL">XXL</option>
                             </select>
+                            <x-input-error :messages="$errors->get('ukuran_baju')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-agama" value="Agama" />
-                            <select id="edit-agama" wire:model="agama" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-agama" wire:model="agama" class="mt-1 block w-full rounded-xl border @error('agama') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="islam">Islam</option>
-                                <option value="kristen">Kristen</option>
+                                <option value="katolik">Katolik</option>
                                 <option value="protestan">Protestan</option>
                                 <option value="hindu">Hindu</option>
                                 <option value="budha">Budha</option>
                             </select>
+                            <x-input-error :messages="$errors->get('agama')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="edit-status_pernikahan" value="Status Pernikahan" />
+                            <select id="edit-status_pernikahan" wire:model="status_pernikahan" class="mt-1 block w-full rounded-xl border @error('status_pernikahan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih --</option>
+                                @foreach(\App\Models\Employee::STATUS_PERKAWINAN_OPTIONS as $nilai => $label)
+                                    <option value="{{ $nilai }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('status_pernikahan')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-pendidikan_terakhir" value="Pendidikan Terakhir" />
-                            <select id="edit-pendidikan_terakhir" wire:model="pendidikan_terakhir" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-pendidikan_terakhir" wire:model="pendidikan_terakhir" class="mt-1 block w-full rounded-xl border @error('pendidikan_terakhir') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
-                                <option value="sekolah menengah atas (SMA)">Sekolah Menengah Atas (SMA)</option>
-                                <option value="sekolah menengah kejuruan (SMK)">Sekolah Menengah Kejuruan (SMK)</option>
-                                <option value="Sarjana">Sarjana</option>
+                                <option value="sekolah dasar (SD)">Sekolah Dasar (SD)</option>
+                                <option value="sekolah menengah pertama (SMP)">Sekolah Menengah Pertama (SMP)</option>
+                                <option value="sekolah menengah atas (SMA)">Sekolah Menengah Atas (SMA) Sederajat</option>
+                                <option value="S1">S1</option>
+                                <option value="S2">S2</option>
                             </select>
+                            <x-input-error :messages="$errors->get('pendidikan_terakhir')" class="mt-2" />
                         </div>
-                    </div>
-                    <div>
-                        <x-input-label for="edit-alamat" value="Alamat Lengkap" />
-                        <textarea id="edit-alamat" wire:model="alamat" rows="2" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"></textarea>
+                        <div>
+                            <x-input-label for="edit-provinsi" value="Provinsi" />
+                            <select id="edit-provinsi" wire:model.live="provinsi" class="mt-1 block w-full rounded-xl border @error('provinsi') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Provinsi --</option>
+                                @foreach($provinceList as $pid => $pname)
+                                    <option value="{{ $pid }}">{{ ucwords(strtolower($pname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('provinsi')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="edit-kota" value="Kota/Kabupaten" />
+                            <select id="edit-kota" wire:model.live="kota" class="mt-1 block w-full rounded-xl border @error('kota') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Kota/Kabupaten --</option>
+                                @foreach($cityList as $cid => $cname)
+                                    <option value="{{ $cid }}">{{ ucwords(strtolower($cname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kota')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="edit-kecamatan" value="Kecamatan" />
+                            <select id="edit-kecamatan" wire:model.live="kecamatan" class="mt-1 block w-full rounded-xl border @error('kecamatan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Kecamatan --</option>
+                                @foreach($districtList as $did => $dname)
+                                    <option value="{{ $did }}">{{ ucwords(strtolower($dname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kecamatan')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="edit-kelurahan" value="Kelurahan/Desa" />
+                            <select id="edit-kelurahan" wire:model.live="kelurahan" class="mt-1 block w-full rounded-xl border @error('kelurahan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih Kelurahan/Desa --</option>
+                                @foreach($villageList as $vid => $vname)
+                                    <option value="{{ $vid }}">{{ ucwords(strtolower($vname)) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('kelurahan')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="edit-kode_pos" value="Kode Pos" />
+                            <x-text-input id="edit-kode_pos" wire:model="kode_pos" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('kode_pos') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="40134" />
+                            <x-input-error :messages="$errors->get('kode_pos')" class="mt-2" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-input-label for="edit-alamat" value="Alamat Lengkap" />
+                            <textarea id="edit-alamat" wire:model="alamat" rows="2" class="mt-1 block w-full rounded-xl border @error('alamat') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"></textarea>
+                            <x-input-error :messages="$errors->get('alamat')" class="mt-2" />
+                        </div>
                     </div>
                 </div>
                 @endif
 
                 {{-- STEP 2: Data Pekerjaan --}}
                 @if($step == 2)
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <x-input-label for="edit-nik" value="NIP (Nomor Induk Pegawai) *" />
+                            <x-text-input id="edit-nik" wire:model="nik" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('nik') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('nik')" class="mt-2" />
+                        </div>
                         <div x-data="{ open: false }" class="relative">
                             <x-input-label value="Divisi" />
                             <button type="button" @click="open = !open"
-                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
                                 <span>{{ count($division_ids) > 0 ? count($division_ids) . ' divisi dipilih' : 'Pilih divisi' }}</span>
                                 <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </button>
@@ -653,12 +819,13 @@
                                     </label>
                                 @endforeach
                             </div>
+                        @error('division_ids') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div x-data="{ open: false }" class="relative">
                             <x-input-label value="Jabatan" />
                             <input type="hidden" wire:model="position">
                             <button type="button" @click="open = !open"
-                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
+                                    class="flex items-center justify-between w-full mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
                                 <span>{{ count($position_ids) > 0 ? count($position_ids) . ' jabatan dipilih' : 'Pilih jabatan' }}</span>
                                 <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </button>
@@ -666,57 +833,75 @@
                                  class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
                                 @foreach($allPositions as $pos)
                                     <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($pos->id, $position_ids) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
-                                        <input type="checkbox" value="{{ $pos->id }}" wire:model="position_ids"
+                                        <input type="checkbox" value="{{ $pos->id }}" wire:model.live="position_ids"
                                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
                                         <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $pos->nama }}</span>
-                                        <input type="radio" value="{{ $pos->id }}" wire:model="main_position_id"
+                                        <input type="radio" value="{{ $pos->id }}" wire:model.live="main_position_id"
                                                class="text-primary-600 focus:ring-primary-500">
                                         <span class="text-[10px] text-gray-400 dark:text-gray-500">Utama</span>
                                     </label>
                                 @endforeach
                             </div>
+                        @error('position_ids') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('main_position_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <x-input-label for="edit-atasan" value="Atasan 1" />
-                            <x-text-input id="edit-atasan" wire:model="atasan" type="text" class="mt-1 block w-full" />
+                            <select id="edit-atasan" wire:model="atasan" class="mt-1 block w-full rounded-xl border @error('atasan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih atasan --</option>
+                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                    <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('atasan')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-atasan2" value="Atasan 2" />
-                            <x-text-input id="edit-atasan2" wire:model="atasan2" type="text" class="mt-1 block w-full" />
+                            <select id="edit-atasan2" wire:model="atasan2" class="mt-1 block w-full rounded-xl border @error('atasan2') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                                <option value="">-- Pilih atasan 2 --</option>
+                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                    <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('atasan2')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-tanggal_masuk" value="Tanggal Bergabung" />
-                            <x-text-input id="edit-tanggal_masuk" wire:model="tanggal_masuk" type="date" class="mt-1 block w-full" />
+                            <x-text-input id="edit-tanggal_masuk" wire:model="tanggal_masuk" type="date" class="mt-1 block w-full {{ $errors->has('tanggal_masuk') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('tanggal_masuk')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-jenis_karyawan" value="Jenis Karyawan" />
-                            <select id="edit-jenis_karyawan" wire:model="jenis_karyawan" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-jenis_karyawan" wire:model="jenis_karyawan" class="mt-1 block w-full rounded-xl border @error('jenis_karyawan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="tetap">Tetap</option>
                                 <option value="kontrak">Kontrak</option>
                                 <option value="magang">Magang</option>
                             </select>
+                            <x-input-error :messages="$errors->get('jenis_karyawan')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-lokasi_kerja" value="Lokasi Kerja" />
-                            <select id="edit-lokasi_kerja" wire:model="lokasi_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-lokasi_kerja" wire:model="lokasi_kerja" class="mt-1 block w-full rounded-xl border @error('lokasi_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih lokasi kerja</option>
                                 <option value="Summarecon">Summarecon</option>
                                 <option value="Baleendah">Baleendah</option>
                             </select>
+                            <x-input-error :messages="$errors->get('lokasi_kerja')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-jenis_kerja" value="Jenis Kerja" />
-                            <select id="edit-jenis_kerja" wire:model="jenis_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-jenis_kerja" wire:model="jenis_kerja" class="mt-1 block w-full rounded-xl border @error('jenis_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jenis kerja</option>
                                 @foreach(\App\Models\Employee::JENIS_KERJA_OPTIONS as $jenis => $ket)
                                     <option value="{{ $jenis }}">{{ $jenis }} — {{ $ket }}</option>
                                 @endforeach
                             </select>
+                            <x-input-error :messages="$errors->get('jenis_kerja')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-jam_kerja" value="Jam Kerja" />
-                            <select id="edit-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border @error('jam_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jam kerja</option>
                                 @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
                                     <option value="{{ $label }}">{{ $label }}</option>
@@ -725,10 +910,12 @@
                                     <option value="{{ $jam_kerja }}">{{ $jam_kerja }} (nilai lama)</option>
                                 @endif
                             </select>
+                            <x-input-error :messages="$errors->get('jam_kerja')" class="mt-2" />
                         </div>
                         <div class="sm:col-span-2">
                             <x-input-label for="edit-jobdesk" value="Jobdesk" />
-                            <textarea id="edit-jobdesk" wire:model="jobdesk" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"></textarea>
+                            <textarea id="edit-jobdesk" wire:model="jobdesk" rows="3" class="mt-1 block w-full rounded-xl border @error('jobdesk') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"></textarea>
+                            <x-input-error :messages="$errors->get('jobdesk')" class="mt-2" />
                         </div>
                     </div>
                 </div>
@@ -736,39 +923,41 @@
 
                 {{-- STEP 3: Kontak & Darurat --}}
                 @if($step == 3)
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <x-input-label for="edit-no_hp" value="No. Telepon" />
-                            <x-text-input id="edit-no_hp" wire:model="no_hp" type="text" class="mt-1 block w-full" />
+<x-input-label for="edit-no_hp" value="No. Telepon" />
+                           <x-text-input id="edit-no_hp" wire:model="no_hp" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_hp') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('no_hp')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-email" value="Email" />
-                            <x-text-input id="edit-email" wire:model="email" type="email" class="mt-1 block w-full" />
-                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <x-text-input id="edit-email" wire:model="email" type="email" class="mt-1 block w-full {{ $errors->has('email') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-informasi_lowongan" value="Informasi Lowongan" />
-                            <select id="edit-informasi_lowongan" wire:model="informasi_lowongan" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-informasi_lowongan" wire:model="informasi_lowongan" class="mt-1 block w-full rounded-xl border @error('informasi_lowongan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
-                                <option value="kitalulus">Kitalulus</option>
+                                <option value="kita lulus">Kita Lulus</option>
                                 <option value="loker bandung">Loker Bandung</option>
-                                <option value="jobstreet">Jobstreet</option>
-                                <option value="glints">Glints</option>
+                                <option value="linkedin">LinkedIn</option>
                                 <option value="kerabat">Kerabat</option>
                             </select>
+                            <x-input-error :messages="$errors->get('informasi_lowongan')" class="mt-2" />
                         </div>
                     </div>
                     <hr class="border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Kontak Darurat</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
-                            <x-input-label for="edit-no_kontak_darurat1" value="No. Kontak Darurat 1" />
-                            <x-text-input id="edit-no_kontak_darurat1" wire:model="no_kontak_darurat1" type="text" class="mt-1 block w-full" />
+<x-input-label for="edit-no_kontak_darurat1" value="No. Kontak Darurat 1" />
+                           <x-text-input id="edit-no_kontak_darurat1" wire:model="no_kontak_darurat1" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_kontak_darurat1') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('no_kontak_darurat1')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-hubungan_darurat1" value="Hubungan" />
-                            <select id="edit-hubungan_darurat1" wire:model="hubungan_darurat1" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-hubungan_darurat1" wire:model="hubungan_darurat1" class="mt-1 block w-full rounded-xl border @error('hubungan_darurat1') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="suami">Suami</option>
                                 <option value="istri">Istri</option>
@@ -778,14 +967,16 @@
                                 <option value="teman">Teman</option>
                                 <option value="lainnya">Lainnya</option>
                             </select>
+                            <x-input-error :messages="$errors->get('hubungan_darurat1')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="edit-no_kontak_darurat2" value="No. Kontak Darurat 2" />
-                            <x-text-input id="edit-no_kontak_darurat2" wire:model="no_kontak_darurat2" type="text" class="mt-1 block w-full" />
+<x-input-label for="edit-no_kontak_darurat2" value="No. Kontak Darurat 2" />
+                           <x-text-input id="edit-no_kontak_darurat2" wire:model="no_kontak_darurat2" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_kontak_darurat2') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('no_kontak_darurat2')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-hubungan_darurat2" value="Hubungan" />
-                            <select id="edit-hubungan_darurat2" wire:model="hubungan_darurat2" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-hubungan_darurat2" wire:model="hubungan_darurat2" class="mt-1 block w-full rounded-xl border @error('hubungan_darurat2') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="suami">Suami</option>
                                 <option value="istri">Istri</option>
@@ -795,25 +986,28 @@
                                 <option value="teman">Teman</option>
                                 <option value="lainnya">Lainnya</option>
                             </select>
+                            <x-input-error :messages="$errors->get('hubungan_darurat2')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="edit-no_bpjs" value="No. BPJS" />
-                            <x-text-input id="edit-no_bpjs" wire:model="no_bpjs" type="text" class="mt-1 block w-full" />
+<x-input-label for="edit-no_bpjs" value="No. BPJS" />
+                           <x-text-input id="edit-no_bpjs" wire:model="no_bpjs" type="number" inputmode="numeric" pattern="[0-9]*" class="mt-1 block w-full {{ $errors->has('no_bpjs') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" />
+                            <x-input-error :messages="$errors->get('no_bpjs')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="edit-status_bpjs" value="Status BPJS" />
-                            <select id="edit-status_bpjs" wire:model="status_bpjs" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                            <select id="edit-status_bpjs" wire:model="status_bpjs" class="mt-1 block w-full rounded-xl border @error('status_bpjs') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="aktif">Aktif</option>
                                 <option value="tidak aktif">Tidak Aktif</option>
                             </select>
+                            <x-input-error :messages="$errors->get('status_bpjs')" class="mt-2" />
                         </div>
                     </div>
                 </div>
                 @endif
 
                 {{-- FOOTER NAVIGATION --}}
-                <div class="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
                     <div>
                         @if($step > 1)
                             <button type="button" wire:click="prevStep" class="btn-secondary text-xs">
@@ -849,11 +1043,11 @@
     <div x-data="{ open: $wire.entangle('showPreview') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-3xl rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop class="relative flex flex-col w-full max-w-5xl max-h-[90vh] rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl overflow-hidden">
 
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center justify-between mb-4 shrink-0">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pratinjau Data Karyawan</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Periksa kembali data sebelum menyimpan</p>
@@ -863,7 +1057,7 @@
                 </button>
             </div>
 
-            <div class="space-y-6">
+            <div class="space-y-6 overflow-y-auto flex-1 min-h-0 pr-1">
                 {{-- Informasi Pribadi --}}
                 <div>
                     <h4 class="text-sm font-semibold text-primary-600 dark:text-primary-400 mb-3 flex items-center gap-2">
@@ -871,16 +1065,22 @@
                         Informasi Pribadi
                     </h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div class="preview-field"><span class="preview-label">NIK</span><span class="preview-value">{{ $nik ?: '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">NIK KTP</span><span class="preview-value">{{ $nik_ktp ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Nama Lengkap</span><span class="preview-value">{{ $nama ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Tempat Lahir</span><span class="preview-value">{{ $tempat_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Tanggal Lahir</span><span class="preview-value">{{ $tanggal_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kelamin</span><span class="preview-value">{{ $jenis_kelamin == 'L' ? 'Laki-laki' : ($jenis_kelamin == 'P' ? 'Perempuan' : '-') }}</span></div>
                         <div class="preview-field"><span class="preview-label">Status</span><span class="preview-value">{{ ucfirst($status) }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Status Pernikahan</span><span class="preview-value">{{ $status_pernikahan ? ucfirst($status_pernikahan) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Ukuran Baju</span><span class="preview-value">{{ $ukuran_baju ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Agama</span><span class="preview-value">{{ $agama ? ucfirst($agama) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Pendidikan Terakhir</span><span class="preview-value">{{ $pendidikan_terakhir ? ucfirst($pendidikan_terakhir) : '-' }}</span></div>
-                        <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Alamat</span><span class="preview-value">{{ $alamat ?: '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Provinsi</span><span class="preview-value">{{ $provinsi ? ucwords(strtolower($provinceList[$provinsi] ?? '')) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Kota/Kabupaten</span><span class="preview-value">{{ $kota ? ucwords(strtolower($cityList[$kota] ?? '')) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Kecamatan</span><span class="preview-value">{{ $kecamatan ? ucwords(strtolower($districtList[$kecamatan] ?? '')) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Kelurahan/Desa</span><span class="preview-value">{{ $kelurahan ? ucwords(strtolower($villageList[$kelurahan] ?? '')) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">Kode Pos</span><span class="preview-value">{{ $kode_pos ?: '-' }}</span></div>
+                        <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Alamat Lengkap</span><span class="preview-value">{{ $alamat ?: '-' }}</span></div>
                     </div>
                 </div>
 
@@ -891,6 +1091,7 @@
                         Data Pekerjaan
                     </h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div class="preview-field"><span class="preview-label">NIP</span><span class="preview-value">{{ $nik ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Divisi</span><span class="preview-value">{{ $divisions->whereIn('id', $division_ids)->pluck('nama')->implode(' & ') ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jabatan</span><span class="preview-value">
                             @php
@@ -954,7 +1155,7 @@
                 </div>
             @endif
 
-            <div class="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mt-4 shrink-0">
                 <button type="button" @click="$wire.backToForm()" class="btn-secondary text-xs">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
                     Kembali Edit

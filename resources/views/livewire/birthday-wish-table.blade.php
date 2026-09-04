@@ -52,6 +52,68 @@
         </div>
     </div>
 
+    {{-- Ulang Tahun 7 Hari Ke Depan --}}
+    <section class="mb-6 overflow-hidden rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:border-amber-800/40 dark:from-amber-950/20 dark:to-orange-950/10 shadow-sm">
+        <div class="flex flex-col gap-3 border-b border-amber-100 p-5 dark:border-amber-800/40 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-base font-display font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                    Ulang Tahun 7 Hari Ke Depan
+                </h2>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Karyawan yang berulang tahun mulai hari ini hingga H-7</p>
+            </div>
+            @if($upcomingBirthdays->count() > 0)
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                H-7: {{ $upcomingBirthdays->count() }} karyawan
+            </span>
+            @endif
+        </div>
+
+        <div class="p-5">
+            @forelse($upcomingBirthdays as $emp)
+            <div class="flex items-center gap-4 rounded-xl border border-amber-100 dark:border-amber-800/40 bg-white/70 dark:bg-gray-900/70 p-4 transition-colors hover:bg-white dark:hover:bg-gray-900">
+                <div class="shrink-0">
+                    @if($emp->foto_url)
+                        <img src="{{ $emp->foto_url }}" alt="{{ $emp->nama }}" class="w-12 h-12 rounded-xl object-contain bg-gray-50 dark:bg-gray-800">
+                    @else
+                        <div class="flex w-12 h-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400 font-display text-lg font-bold">
+                            {{ strtoupper(substr($emp->nama, 0, 1)) }}
+                        </div>
+                    @endif
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $emp->nama }}</p>
+                    <p class="mt-0.5 truncate text-xs text-gray-400">{{ $emp->position ?: '-' }}</p>
+                </div>
+                <div class="shrink-0 text-right">
+                    @php
+                        $daysUntil = $emp->next_birthday->copy()->startOfDay()->diffInDays(\Carbon\Carbon::now()->startOfDay());
+                    @endphp
+                    <p class="text-xs font-bold {{ $daysUntil === 0 ? 'text-amber-600' : 'text-gray-700 dark:text-gray-200' }}">
+                        {{ $emp->next_birthday->isoFormat('D MMM') }}
+                        @if($daysUntil === 0)
+                            <span class="inline-flex items-center gap-1 ml-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                                Hari Ini!
+                            </span>
+                        @else
+                            <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">(H-{{ $daysUntil }})</span>
+                        @endif
+                    </p>
+                </div>
+            </div>
+            @empty
+            <div class="py-10 text-center">
+                <div class="flex items-center justify-center w-14 h-14 mx-auto mb-3 rounded-xl bg-amber-100 dark:bg-amber-900/30">
+                    <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Tidak Ada Ulang Tahun Terdekat</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tidak ada karyawan yang berulang tahun dalam 7 hari ke depan</p>
+            </div>
+            @endforelse
+        </div>
+    </section>
+
     <section class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div class="flex flex-col gap-3 border-b border-gray-100 p-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
             <div>

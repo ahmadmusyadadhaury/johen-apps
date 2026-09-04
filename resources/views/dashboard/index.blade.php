@@ -743,15 +743,20 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <a href="{{ route('hris.employees.index') }}"
-                   class="flex items-center justify-between p-4 rounded-xl border-2 border-primary-100 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 transition-all group">
+            <a href="{{ route('hris.employees.index') }}"
+                   class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-primary-100 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 transition-all group">
                     <div>
                         <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Semua Karyawan</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Seluruh divisi</p>
                     </div>
                     <span class="text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
                 </a>
+                <div class="my-1 flex items-center gap-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+                    <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+                    <span>Pilih Divisi</span>
+                    <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 @foreach($divisionStats as $ds)
                 <a href="{{ (auth()->user()->isManager() || auth()->user()->isSuperAdmin()) ? route('hris.employees.index', ['division' => $ds['id']]) : route('dashboard.division', $ds['id']) }}"
                    class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
@@ -1249,5 +1254,125 @@
     </div>
 
 @endif
+
+{{-- Popup Pengumuman ------------------------------------------------------ --}}
+{{-- Diambil dari data pengumuman tayang (is_published = true) di menu
+     Pengumuman. "Aktif" = is_published = true (draft tidak tampil).
+     Dismiss per-pengumuman via sessionStorage: announcement_popup_dismissed_{id}.
+     Dipasang via x-teleport ke <body> agar lepas dari parent bertipe
+     overflow/transform/stacking-context sehingga backdrop fixed inset-0
+     menutupi seluruh viewport termasuk header/navbar/sidebar. --}}
+<template x-teleport="body">
+<div
+    x-data="announcementPopup({{ \Illuminate\Support\Js::from($announcements ?? []) }})"
+    x-init="init()"
+    x-show="open"
+    x-cloak
+    x-transition:enter="ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm"
+    @keydown.escape.window="close()">
+    <div @click.stop
+         x-show="open"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+         class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
+        <div class="relative overflow-hidden bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 px-6 py-5">
+            <div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+                <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
+            </div>
+            <div class="relative flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38a.467.467 0 01-.502-.011 5.095 5.095 0 01-1.357-3.637m3.394-5.026a9.44 9.44 0 000 4.52M3.554 9.48l-.397.73a.72.72 0 000 .59l.397.73m7.446-5.71v-.75c0-.663.284-1.275.73-1.74 0 0 1.813-1.87 3.042-2.27.291-.094.603.06.603.366v4.133m6.659 8.677l.397-.73a.72.72 0 000-.59l-.397-.73M18.304 8.88l1.26-1.08c.33-.283.363-.795.063-1.137m-8.865 3.827a6.03 6.03 0 00-.706.74m.706-.74c.62-.24 1.29-.37 1.99-.37h1.5a4.5 4.5 0 010 9h-.75c-.705 0-1.403.03-2.09.09"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-lg font-display font-bold text-white">Pengumuman</h3>
+                        <p class="text-xs text-white/70 mt-0.5">Informasi terbaru untuk Anda</p>
+                    </div>
+                </div>
+                <button type="button" @click="close()" aria-label="Tutup" class="rounded-lg p-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="px-6 py-5">
+            <template x-if="selected">
+                <div>
+                    <p class="text-sm font-display font-bold text-gray-900 dark:text-gray-100" x-text="selected.title"></p>
+                    <p class="text-xs mt-3 leading-relaxed text-gray-600 dark:text-gray-300 whitespace-pre-line line-clamp-6" x-text="selected.summary || selected.content || '-'"></p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-4 inline-flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                        <span x-text="selected.date"></span>
+                    </p>
+                </div>
+            </template>
+            <template x-if="!selected">
+                <p class="text-sm text-center text-gray-400 py-6">Tidak ada pengumuman aktif untuk ditampilkan.</p>
+            </template>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+            <label class="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer select-none">
+                <input type="checkbox" x-model="checked" class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
+                Jangan tampilkan lagi
+            </label>
+            <button type="button" @click="close()" class="rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 px-4 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+</template>
+
+<script>
+    function announcementPopup(announcements) {
+        return {
+            announcements: Array.isArray(announcements) ? announcements : [],
+            selected: null,
+            checked: false,
+            open: false,
+            storageKey(id) {
+                return 'announcement_popup_dismissed_' + id;
+            },
+            init() {
+                let candidate = null;
+                for (const a of this.announcements) {
+                    // Lewati pengumuman yang sudah di-"jangan tampilkan lagi" selama session ini.
+                    if (sessionStorage.getItem(this.storageKey(a.id)) === 'true') {
+                        continue;
+                    }
+                    // Ambil yang paling relevan/terbaru (list sudah diurut terbaru).
+                    candidate = a;
+                    break;
+                }
+                if (candidate) {
+                    this.selected = candidate;
+                    this.open = true;
+                }
+            },
+            close() {
+                // Menutup popup. Jika checkbox "Jangan tampilkan lagi" dicentang,
+                // tandai dismiss di sessionStorage (per-pengumuman) agar tidak
+                // muncul lagi selama sesi ini; jika tidak dicentang, popup tidak
+                // menandai apapun sehingga muncul lagi saat refresh.
+                // Preferensi sementara di browser, tidak mengubah status DB.
+                if (this.selected && this.checked) {
+                    sessionStorage.setItem(this.storageKey(this.selected.id), 'true');
+                }
+                this.open = false;
+            },
+        };
+    }
+</script>
 
 </x-app-layout>

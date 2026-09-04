@@ -6,10 +6,10 @@ use App\Models\BirthdayBannerPreference;
 use App\Models\BirthdayWish;
 use App\Models\Division;
 use App\Models\Employee;
-use App\Models\LeaveRequest;
 use App\Services\DashboardService;
-use Illuminate\Http\Request;
+use App\Support\DivisionMenu;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -52,14 +52,20 @@ class DashboardController extends Controller
 
         $bannerData = compact('birthdayEmployee', 'birthdayEmployees', 'birthdayWishes', 'hideBirthdayBanner', 'alreadySentWish');
 
+        // Popup Pengumuman memakai data pengumuman aktif/tayang dari menu
+        // Pengumuman (is_published = true), berlaku untuk semua role yang
+        // membuka dashboard. Dismiss per-id ditangani via sessionStorage.
+        $announcements = $this->dashboardService->getAnnouncements($user->id);
+
         if ($user->isStaff() || $user->isStaffCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg() || $user->isStaffIt() || $user->isKoordinatorCreative() || $user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isStaffAdmin() || $user->isStaffStock() || $user->isKoordinatorStock()) {
             $employee = $user->employee;
 
-            if (!$employee) {
+            if (! $employee) {
                 return view('dashboard.index', array_merge([
                     'karyawanView' => true,
                     'employee' => null,
                     'karyawanData' => null,
+                    'announcements' => $announcements,
                 ], $bannerData));
             }
 
@@ -69,6 +75,7 @@ class DashboardController extends Controller
                 'karyawanView' => true,
                 'employee' => $employee,
                 'karyawanData' => $karyawanData,
+                'announcements' => $announcements,
             ], $bannerData));
         }
 
@@ -104,7 +111,7 @@ class DashboardController extends Controller
             'latestPayroll', 'pendingLeaveRequests', 'pendingLeaveCount',
             'expiringContracts', 'expiringContractCount', 'meetingStats',
             'assetStats', 'koordinatorStats', 'managerReviewStats', 'employee',
-        ), $bannerData));
+        ), ['announcements' => $announcements], $bannerData));
     }
 
     public function storeBirthdayWish(Request $request)
@@ -115,7 +122,7 @@ class DashboardController extends Controller
         ]);
 
         $employee = Employee::findOrFail($validated['employee_id']);
-        if (!$employee->tanggal_lahir || !$employee->tanggal_lahir->isBirthday()) {
+        if (! $employee->tanggal_lahir || ! $employee->tanggal_lahir->isBirthday()) {
             return back()->with('error', 'Karyawan ini tidak berulang tahun hari ini.');
         }
 
@@ -142,12 +149,12 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        abort_unless($user->canViewAll() && !$user->isKoordinator(), 403);
+        abort_unless($user->canViewAll() && ! $user->isKoordinator(), 403);
 
         session(['division_menu' => $division->id]);
 
         $division->loadCount('employees');
-        $menu = \App\Support\DivisionMenu::for($division->nama);
+        $menu = DivisionMenu::for($division->nama);
         $employees = $division->employees()
             ->orderBy('employees.nama')
             ->get(['employees.id', 'employees.nama', 'employees.position', 'employees.foto', 'employees.updated_at']);

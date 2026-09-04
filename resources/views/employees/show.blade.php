@@ -502,6 +502,10 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $statusLabel[$employee->status] ?? ucfirst($employee->status) }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Status Pernikahan</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->status_pernikahan ? ucfirst($employee->status_pernikahan) : '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Tempat Lahir</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->tempat_lahir ?? '-' }}</span>
                             </div>
@@ -530,9 +534,29 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Pendidikan Terakhir</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->pendidikan_terakhir ? ucfirst($employee->pendidikan_terakhir) : '-' }}</span>
                             </div>
-                            <div class="px-5 py-3 last:border-b-0">
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Alamat Lengkap</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 leading-relaxed">{{ $employee->alamat ?? '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Provinsi</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->provinsi) ? ucwords(strtolower($employee->provinsi)) : '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kota/Kabupaten</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kota) ? ucwords(strtolower($employee->kota)) : '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kecamatan</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kecamatan) ? ucwords(strtolower($employee->kecamatan)) : '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kelurahan/Desa</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kelurahan) ? ucwords(strtolower($employee->kelurahan)) : '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Kode Pos</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ !empty($employee->kode_pos) ? $employee->kode_pos : '-' }}</span>
                             </div>
                         </div>
                     </div>
