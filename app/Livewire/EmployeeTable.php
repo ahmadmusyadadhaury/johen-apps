@@ -59,6 +59,8 @@ class EmployeeTable extends Component
 
     public string $pendidikan_terakhir = '';
 
+    public string $asal_sekolah = '';
+
     public string $informasi_lowongan = '';
 
     public string $alamat = '';
@@ -139,6 +141,8 @@ class EmployeeTable extends Component
 
     public string $catatan = '';
 
+    public string $device_user_id = '';
+
     public function updatedJamKerja($value): void
     {
         // Pilih shift otomatis mengisi jam masuk sebagai acuan telat
@@ -160,24 +164,9 @@ class EmployeeTable extends Component
 
     private function syncJobdeskFromPositions(): void
     {
-        if (empty($this->position_ids)) {
-            $this->jobdesk = '';
-
-            return;
-        }
-
-        $positions = Position::whereIn('id', $this->position_ids)->get()
-            ->sortBy('nama')
-            ->sortBy(fn ($pos) => $pos->id == (int) $this->main_position_id ? 0 : 1);
-
-        $blocks = $positions->map(function ($pos) {
-            $judul = strtoupper($pos->nama);
-            $deskripsi = trim(strip_tags($pos->deskripsi ?: ''));
-
-            return $judul.PHP_EOL.($deskripsi === '' ? '-' : $deskripsi);
-        });
-
-        $this->jobdesk = $blocks->implode(PHP_EOL.PHP_EOL);
+        $this->jobdesk = $this->position_ids
+            ? Employee::composeJobdesk($this->position_ids, $this->main_position_id !== '' ? (int) $this->main_position_id : null)
+            : '';
     }
 
     public function updatedProvinsi($value): void
@@ -258,6 +247,7 @@ class EmployeeTable extends Component
             'ukuran_baju' => 'required|in:S,M,L,XL,XXL',
             'agama' => 'required|string|max:50',
             'pendidikan_terakhir' => 'required|string|max:100',
+            'asal_sekolah' => 'nullable|string|max:255',
             'informasi_lowongan' => 'required|string|max:100',
             'alamat' => 'required|string',
             'provinsi' => 'required|string|max:150',
@@ -294,6 +284,7 @@ class EmployeeTable extends Component
             'status_bpjs' => ['required', 'in:aktif,tidak aktif,Other'],
             'tanggal_resign' => 'nullable|date',
             'catatan' => 'nullable|string',
+            'device_user_id' => 'nullable|string|max:50',
         ];
     }
 
@@ -302,9 +293,9 @@ class EmployeeTable extends Component
         $all = $this->rules();
 
         $fields = match ($step) {
-            1 => ['nik_ktp', 'nama', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'tipe', 'status_pernikahan', 'ukuran_baju', 'agama', 'pendidikan_terakhir', 'provinsi', 'kota', 'kecamatan', 'kelurahan', 'rt_rw', 'kode_pos', 'alamat'],
-            2 => ['nik', 'position_ids', 'main_position_id', 'division_ids', 'atasan', 'atasan2', 'tanggal_masuk', 'jenis_karyawan', 'lokasi_kerja', 'jenis_kerja', 'jam_kerja', 'jobdesk'],
-            3 => ['no_hp', 'email', 'informasi_lowongan', 'no_kontak_darurat1', 'hubungan_darurat1', 'no_kontak_darurat2', 'hubungan_darurat2', 'no_bpjs', 'status_bpjs'],
+            1 => ['nik_ktp', 'nama', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'tipe', 'status_pernikahan', 'ukuran_baju', 'agama', 'pendidikan_terakhir', 'asal_sekolah', 'provinsi', 'kota', 'kecamatan', 'kelurahan', 'rt_rw', 'kode_pos', 'alamat'],
+            2 => ['nik', 'position_ids', 'main_position_id', 'division_ids', 'atasan', 'atasan2', 'tanggal_masuk', 'jenis_karyawan', 'lokasi_kerja', 'jenis_kerja', 'jam_kerja', 'jam_masuk', 'tanggal_resign', 'jobdesk'],
+            3 => ['no_hp', 'email', 'informasi_lowongan', 'device_user_id', 'catatan', 'no_kontak_darurat1', 'hubungan_darurat1', 'no_kontak_darurat2', 'hubungan_darurat2', 'no_bpjs', 'status_bpjs'],
             default => array_keys($all),
         };
 
@@ -408,6 +399,7 @@ class EmployeeTable extends Component
         $this->ukuran_baju = $emp->ukuran_baju ?? '';
         $this->agama = $emp->agama ?? '';
         $this->pendidikan_terakhir = $emp->pendidikan_terakhir ?? '';
+        $this->asal_sekolah = $emp->asal_sekolah ?? '';
         $this->informasi_lowongan = $emp->informasi_lowongan ?? '';
         $this->alamat = $emp->alamat ?? '';
         $this->provinsi = $this->provinceIdForName($emp->provinsi ?? '');
@@ -447,6 +439,7 @@ class EmployeeTable extends Component
         $this->status_bpjs = $emp->status_bpjs ?? '';
         $this->tanggal_resign = $emp->tanggal_resign?->format('Y-m-d') ?? '';
         $this->catatan = $emp->catatan ?? '';
+        $this->device_user_id = $emp->device_user_id ?? '';
         $this->step = 1;
         $this->resetValidation();
         $this->showEditModal = true;
@@ -632,11 +625,7 @@ class EmployeeTable extends Component
 
     private function buildData(): array
     {
-        $positionNames = [];
-        if (! empty($this->position_ids)) {
-            $positionNames = Position::whereIn('id', $this->position_ids)->pluck('nama')->toArray();
-        }
-        $posStr = ! empty($positionNames) ? implode(' & ', $positionNames) : ($this->position ?: null);
+        $posStr = ! empty($this->position_ids) ? (Employee::composePositionString($this->position_ids) ?: null) : ($this->position ?: null);
 
         return [
             'nik' => $this->nik,
@@ -657,7 +646,9 @@ class EmployeeTable extends Component
             'ukuran_baju' => $this->ukuran_baju ?: null,
             'agama' => $this->agama ?: null,
             'pendidikan_terakhir' => $this->pendidikan_terakhir ?: null,
+            'asal_sekolah' => $this->asal_sekolah ?: null,
             'informasi_lowongan' => $this->informasi_lowongan ?: null,
+            'device_user_id' => $this->device_user_id ?: null,
             'position' => $posStr,
             'atasan' => $this->atasan ?: null,
             'atasan2' => $this->atasan2 ?: null,
@@ -693,6 +684,7 @@ class EmployeeTable extends Component
         $this->ukuran_baju = '';
         $this->agama = '';
         $this->pendidikan_terakhir = '';
+        $this->asal_sekolah = '';
         $this->informasi_lowongan = '';
         $this->alamat = '';
         $this->provinsi = '';
@@ -730,6 +722,7 @@ class EmployeeTable extends Component
         $this->status_bpjs = '';
         $this->tanggal_resign = '';
         $this->catatan = '';
+        $this->device_user_id = '';
         $this->step = 1;
         $this->resetErrorBag();
     }

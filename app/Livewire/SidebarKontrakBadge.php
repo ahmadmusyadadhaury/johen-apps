@@ -71,11 +71,19 @@ class SidebarKontrakBadge extends Component
         $descendantIds = $this->getAllDescendantIds($position);
         $descendantIds[] = $position->id;
 
-        return DB::table('employee_position')
+        $ids = DB::table('employee_position')
             ->whereIn('position_id', $descendantIds)
             ->distinct()
             ->pluck('employee_id')
             ->all();
+
+        // Jangan tampilkan/ hitung kontrak milik user yang sedang login.
+        $ownEmployeeId = $user->employee_id;
+        if ($ownEmployeeId !== null) {
+            $ids = array_values(array_diff($ids, [$ownEmployeeId]));
+        }
+
+        return $ids;
     }
 
     private function getScopedPositionName($user): ?string

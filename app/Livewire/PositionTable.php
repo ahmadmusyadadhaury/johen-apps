@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Division;
+use App\Models\Employee;
 use App\Models\Position;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -94,6 +95,8 @@ class PositionTable extends Component
         $this->validate($this->rules());
 
         $pos->update($this->buildData());
+
+        Employee::syncSnapshotsForPosition($pos->id);
 
         $this->closeModal();
         $this->dispatch('notify', type: 'success', message: 'Jabatan berhasil diperbarui.');

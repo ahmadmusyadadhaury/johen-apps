@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Employee extends Model
 {
@@ -160,6 +161,7 @@ class Employee extends Model
         'ukuran_baju',
         'agama',
         'pendidikan_terakhir',
+        'asal_sekolah',
         'informasi_lowongan',
         'position',
         'atasan',
@@ -260,6 +262,30 @@ class Employee extends Model
     public function divisionNames(): string
     {
         return $this->divisions->pluck('nama')->implode(' & ');
+    }
+
+    public function fullAddress(): string
+    {
+        $parts = [];
+
+        if ($this->alamat) {
+            $parts[] = $this->alamat;
+        }
+        if ($this->rt_rw) {
+            $parts[] = 'RT/RW '.$this->rt_rw;
+        }
+
+        foreach (['kelurahan', 'kecamatan', 'kota', 'provinsi'] as $field) {
+            if ($this->{$field}) {
+                $parts[] = ucwords(strtolower($this->{$field}));
+            }
+        }
+
+        if ($this->kode_pos) {
+            $parts[] = $this->kode_pos;
+        }
+
+        return implode(', ', $parts);
     }
 
     public function documents(): HasMany
@@ -580,6 +606,77 @@ class Employee extends Model
     public function positionNames(): string
     {
         return $this->positions->pluck('nama')->implode(' & ');
+    }
+
+    public static function composePositionString(array $positionIds): string
+    {
+        if (empty($positionIds)) {
+            return '';
+        }
+
+        return Position::whereIn('id', $positionIds)->pluck('nama')->implode(' & ');
+    }
+
+    public static function composeJobdesk(array $positionIds, ?int $mainPositionId): string
+    {
+        if (empty($positionIds)) {
+            return '';
+        }
+
+        $positions = Position::whereIn('id', $positionIds)->get()
+            ->sortBy('nama')
+            ->sortBy(fn ($pos) => $pos->id == (int) $mainPositionId ? 0 : 1);
+
+        $blocks = $positions->map(function ($pos) {
+            $judul = strtoupper($pos->nama);
+            $deskripsi = trim(strip_tags($pos->deskripsi ?: ''));
+
+            return $judul.':'.PHP_EOL.($deskripsi === '' ? '-' : $deskripsi);
+        });
+
+        return $blocks->implode(PHP_EOL.PHP_EOL);
+    }
+
+    public static function syncSnapshotsForPosition(int $positionId): int
+    {
+        $employeeIds = DB::table('employee_position')
+            ->where('position_id', $positionId)
+            ->pluck('employee_id');
+
+        if ($employeeIds->isEmpty()) {
+            return 0;
+        }
+
+        $grouped = DB::table('employee_position')
+            ->whereIn('employee_id', $employeeIds->unique())
+            ->get()
+            ->groupBy('employee_id');
+
+        $updated = 0;
+
+        foreach ($grouped as $employeeId => $rows) {
+            $ids = $rows->pluck('position_id')->all();
+            $mainRow = $rows->firstWhere('is_main', true);
+            $positionStr = self::composePositionString($ids) ?: null;
+            $jobdesk = self::composeJobdesk($ids, $mainRow?->position_id) ?: null;
+
+            $current = DB::table('employees')
+                ->where('id', $employeeId)
+                ->first(['position', 'jobdesk']);
+
+            if (! $current || ($current->position === $positionStr && $current->jobdesk === $jobdesk)) {
+                continue;
+            }
+
+            DB::table('employees')->where('id', $employeeId)->update([
+                'position' => $positionStr,
+                'jobdesk' => $jobdesk,
+            ]);
+
+            $updated++;
+        }
+
+        return $updated;
     }
 
     public function evaluationLevel(): int

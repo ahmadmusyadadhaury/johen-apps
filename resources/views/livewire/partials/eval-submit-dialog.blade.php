@@ -1,5 +1,4 @@
-<div x-data="{ open: false }"
-     x-init="Livewire.on('eval-open-submit', () => open = true)"
+<div x-data="{ open: $wire.entangle('showSubmitDialog') }"
      x-cloak x-show="open"
      class="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-gray-950/60 backdrop-blur-sm"
      x-transition.opacity
@@ -17,7 +16,7 @@
         </div>
         <div class="mt-6 flex items-center justify-end gap-3">
             <button type="button" @click="open = false" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">Batal</button>
-            <button type="button" @click="open = false; $wire.call('submit')"
+            <button type="button" wire:click="submit"
                     wire:loading.attr="disabled" wire:target="submit"
                     class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm transition-all">
                 <span wire:loading.remove wire:target="submit">Submit Evaluasi</span>

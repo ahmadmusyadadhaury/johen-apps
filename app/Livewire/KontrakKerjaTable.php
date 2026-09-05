@@ -292,11 +292,19 @@ class KontrakKerjaTable extends Component
             return [];
         }
 
-        return DB::table('employee_position')
+        $ids = DB::table('employee_position')
             ->whereIn('position_id', $descendantIds)
             ->distinct()
             ->pluck('employee_id')
             ->all();
+
+        // Jangan tampilkan kontrak/data milik user yang sedang login.
+        $ownEmployeeId = auth()->user()?->employee_id;
+        if ($ownEmployeeId !== null) {
+            $ids = array_values(array_diff($ids, [$ownEmployeeId]));
+        }
+
+        return $ids;
     }
 
     private function getScopedPositionName(): ?string

@@ -206,7 +206,7 @@ class KontrakEvaluasiWorkspace extends Component
             $this->persistDraft();
             $this->saveState = 'saved';
             $this->savedAt = now()->format('H:i');
-            $this->dispatch('notify', type: 'success', message: 'Draft evaluasi berhasil disimpan.');
+            $this->dispatch('notify', type: 'success', message: 'Draft evaluasi tersimpan (belum dikirim).');
         } catch (\Throwable) {
             $this->saveState = 'error';
         }
@@ -233,7 +233,7 @@ class KontrakEvaluasiWorkspace extends Component
     public function openSubmitDialog(): void
     {
         if (count($this->missingIndicators()) === 0) {
-            $this->dispatch('eval-open-submit');
+            $this->showSubmitDialog = true;
         } else {
             $this->addError('summary', 'Masih ada penilaian yang belum diisi. Lengkapi terlebih dahulu.');
         }

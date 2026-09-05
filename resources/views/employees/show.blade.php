@@ -540,9 +540,13 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->pendidikan_terakhir ? ucfirst($employee->pendidikan_terakhir) : '-' }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Asal Sekolah</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 whitespace-pre-line">{{ $employee->asal_sekolah ?: '-' }}</span>
+                            </div>
+                            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Alamat Lengkap</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 leading-relaxed">
-                                    {{ $employee->alamat ?? '-' }}@if(!empty($employee->kelurahan)){{ ', ' . ucwords(strtolower($employee->kelurahan)) }}@endif@if(!empty($employee->kecamatan)){{ ', ' . ucwords(strtolower($employee->kecamatan)) }}@endif@if(!empty($employee->rt_rw)){{ ', RT/RW ' . $employee->rt_rw }}@endif@if(!empty($employee->kota)){{ ', ' . ucwords(strtolower($employee->kota)) }}@endif@if(!empty($employee->provinsi)){{ ', ' . ucwords(strtolower($employee->provinsi)) }}@endif@if(!empty($employee->kode_pos)){{ ', ' . $employee->kode_pos }}@endif
+                                    {{ $employee->alamat ?? '-' }}@if(!empty($employee->rt_rw)){{ ', RT/RW ' . $employee->rt_rw }}@endif@if(!empty($employee->kelurahan)){{ ', ' . ucwords(strtolower($employee->kelurahan)) }}@endif@if(!empty($employee->kecamatan)){{ ', ' . ucwords(strtolower($employee->kecamatan)) }}@endif@if(!empty($employee->kota)){{ ', ' . ucwords(strtolower($employee->kota)) }}@endif@if(!empty($employee->provinsi)){{ ', ' . ucwords(strtolower($employee->provinsi)) }}@endif@if(!empty($employee->kode_pos)){{ ', ' . $employee->kode_pos }}@endif
                                 </span>
                             </div>
                         </div>
@@ -624,7 +628,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                             </div>
                             <div class="px-5 py-3 last:border-b-0">
                                 <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jobdesk</span>
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jobdesk ?? '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 whitespace-pre-line">{{ $employee->jobdesk ?? '-' }}</span>
                             </div>
                         </div>
                     </div>
