@@ -29,11 +29,11 @@
     ];
 @endphp
 
-<div>
+<div x-data="{ pdfUrl: null }">
     {{-- Stats Overview --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         @foreach ($statCards as $sc)
-            <button wire:click="$set('jenisFilter', '{{ $sc['key'] }}')" class="stat-card group text-left cursor-pointer focus:outline-none {{ $jenisFilter === $sc['key'] ? 'ring-2 ring-primary-300 dark:ring-primary-700' : '' }}">
+            <div class="stat-card group text-left">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br {{ $sc['gradient'] }} text-white shadow-lg {{ $sc['shadow'] }} group-hover:scale-110 transition-transform duration-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ $sc['path'] }}"/></svg>
@@ -42,7 +42,7 @@
                 </div>
                 <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($sc['value'], 0, ',', '.') }}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $sc['label'] }}</p>
-            </button>
+            </div>
         @endforeach
     </div>
 
@@ -139,13 +139,14 @@
                     {{-- Actions --}}
                     <div class="flex items-center gap-2 self-end md:self-center shrink-0">
                         @if($item['type'] === 'arsip' && $item['file_url'])
-                            <a href="{{ $item['file_url'] }}" target="_blank" rel="noopener"
+                            <button type="button"
+                                @click="pdfUrl = '{{ $item['file_url'] }}'"
                                 aria-label="Buka lampiran PDF"
-                                title="Buka / unduh file surat (PDF)"
+                                title="Lihat file surat (PDF)"
                                 class="inline-flex items-center gap-1.5 h-9 rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30 px-3 text-[11px] font-semibold text-primary-600 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-all duration-200">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                                 Buka File
-                            </a>
+                            </button>
                         @elseif($item['type'] === 'pengumuman')
                             @if(! $item['is_read'])
                                 <button wire:click="markRead({{ $item['id'] }})"
@@ -183,5 +184,49 @@
             {{ $inbox->links() }}
         </div>
         @endif
+    </div>
+
+    {{-- Modal Preview PDF --}}
+    <div x-show="pdfUrl !== null"
+         x-cloak
+         x-transition:enter="ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/70 backdrop-blur-sm"
+         @click="pdfUrl = null"
+         @keydown.escape.window="pdfUrl = null">
+        <div x-show="pdfUrl !== null"
+             x-transition:enter="ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.stop
+             class="relative w-full max-w-5xl h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
+            {{-- Header --}}
+            <div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/30 text-red-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">Preview File Surat</h3>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate">Dokumen PDF - klik di luar untuk menutup</p>
+                    </div>
+                </div>
+                <button type="button" @click="pdfUrl = null"
+                        class="shrink-0 rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Tutup preview">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {{-- PDF Viewer --}}
+            <div class="flex-1 min-h-0 bg-gray-100 dark:bg-gray-900">
+                <iframe :src="pdfUrl" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
     </div>
 </div>

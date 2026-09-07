@@ -177,26 +177,53 @@ class DashboardService
     {
         $divisionNames = Division::whereNotNull('nama')->get('nama')->pluck('nama');
 
-        $perDivision = Meeting::query()
-            ->get(['team'])
-            ->reject(fn ($m) => in_array(trim((string) $m->team), ['', '-'], true))
-            ->groupBy(function ($m) use ($divisionNames) {
-                $team = trim((string) $m->team);
-                $match = $divisionNames
-                    ->filter(fn ($name) => $name !== '' && mb_stripos($team, $name) !== false)
-                    ->sortByDesc(fn ($name) => mb_strlen($name))
-                    ->first();
+        $partitionDivision = static function ($meetings, $divisionNames) {
+            return $meetings
+                ->reject(fn ($m) => in_array(trim((string) $m->team), ['', '-'], true))
+                ->groupBy(function ($m) use ($divisionNames) {
+                    $team = trim((string) $m->team);
+                    $match = $divisionNames
+                        ->filter(fn ($name) => $name !== '' && mb_stripos($team, $name) !== false)
+                        ->sortByDesc(fn ($name) => mb_strlen($name))
+                        ->first();
 
-                return $match ?? $team;
-            })
-            ->map(fn ($group, $key) => ['nama' => $key, 'total' => $group->count()])
-            ->sortByDesc('total')
+                    return $match ?? $team;
+                })
+                ->map(fn ($group, $key) => ['nama' => $key, 'total' => $group->count()])
+                ->sortByDesc('total')
+                ->values()
+                ->toArray();
+        };
+
+        $meetings = Meeting::query()
+            ->whereNotNull('team')
+            ->where('team', '<>', '')
+            ->where('team', '<>', '-')
+            ->get(['team', 'date']);
+
+        $months = $meetings
+            ->groupBy(fn ($m) => $m->date?->format('Y-m') ?? 'Tanpa Bulan')
+            ->map(fn ($group, $monthKey) => [
+                'total' => $group->count(),
+                'per_division' => $partitionDivision($group, $divisionNames),
+            ]);
+
+        $availableMonths = $months
+            ->reject(fn ($data, $key) => $key === 'Tanpa Bulan')
+            ->sortKeysDesc()
+            ->map(fn ($data, $key) => [
+                'key' => $key,
+                'label' => Carbon::createFromFormat('Y-m', $key)->isoFormat('MMMM YYYY'),
+                'total' => $data['total'],
+            ])
             ->values()
             ->toArray();
 
         return [
-            'total_meetings' => Meeting::query()->whereNotNull('team')->where('team', '<>', '')->where('team', '<>', '-')->count(),
-            'per_division' => $perDivision,
+            'total_meetings' => $meetings->count(),
+            'per_division' => $partitionDivision($meetings, $divisionNames),
+            'available_months' => $availableMonths,
+            'months' => $months->sortKeysDesc()->toArray(),
         ];
     }
 

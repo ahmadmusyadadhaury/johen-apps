@@ -16,12 +16,27 @@ class PengarsipanTable extends Component
     public bool $showModal = false;
     public ?int $editId = null;
 
+    public string $search = '';
+    public string $filter = 'all';
+
     public string $jenis = 'surat_edaran';
     public string $nomor = '';
     public string $judul = '';
     public string $tanggal_surat = '';
     public string $keterangan = '';
     public $file = null;
+
+    protected $listeners = ['resetFilter' => 'resetFilter'];
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function openNew(): void
     {
@@ -77,6 +92,8 @@ class PengarsipanTable extends Component
 
         $this->resetInput();
         $this->showModal = false;
+        $this->resetFilter();
+        $this->resetPage();
     }
 
     public function delete(int $id): void
@@ -104,9 +121,30 @@ class PengarsipanTable extends Component
         $this->file = null;
     }
 
+    public function resetFilter(): void
+    {
+        $this->search = '';
+        $this->filter = 'all';
+    }
+
     public function render()
     {
-        $arsips = Pengarsipan::latest()->paginate(10);
+        $query = Pengarsipan::query();
+
+        if ($this->search) {
+            $search = $this->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%{$search}%")
+                  ->orWhere('nomor', 'like', "%{$search}%")
+                  ->orWhere('keterangan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($this->filter !== 'all') {
+            $query->where('jenis', $this->filter);
+        }
+
+        $arsips = $query->latest()->paginate(12);
 
         $stats = Pengarsipan::query()
             ->selectRaw('COUNT(*) as total')

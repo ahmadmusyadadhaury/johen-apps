@@ -48,21 +48,73 @@ class AssetViewController extends Controller
         $isMyAssets = $request->boolean('mine');
         // Nama pemilik aset dicocokkan dari PIC ke nama user maupun nama karyawan,
         // karena sumber data aset (API eksternal) memakai nama karyawan di kolom PIC.
-        $myAssetNames = collect();
+        // Pencocokan dilakukan secara fuzzy di PHP karena data PIC dari API eksternal
+        // sering tidak konsisten (mis. "Al-Fadhlih" vs "Al Fadlih"), sehingga kecocokan
+        // substring LIKE biasa rawan salah cocok maupun tidak ketemu.
+        $myAssetIds = collect();
+
         if ($isMyAssets) {
             $user = auth()->user();
             $myAssetNames = collect([$user->name, $user->employee?->nama])
                 ->filter()
                 ->map(fn ($n) => trim($n))
-                ->unique();
+                ->filter(fn ($n) => $n !== '')
+                ->unique()
+                ->values();
+
+            $normalize = static fn ($s) => preg_replace('/\s+/', ' ', mb_strtolower((string) $s));
+
+            $myAssetIds = Asset::query()
+                ->whereNotNull('metadata->pic')
+                ->get(['id', 'metadata'])
+                ->filter(function ($asset) use ($myAssetNames, $normalize) {
+                    $pic = $asset->metadata['pic'] ?? null;
+
+                    if (! is_string($pic) || trim($pic) === '') {
+                        return false;
+                    }
+
+                    $normPic = $normalize($pic);
+                    $picWords = array_flip(preg_split('/\s+/', trim($normPic)));
+
+                    foreach ($myAssetNames as $name) {
+                        $normName = $normalize($name);
+
+                        if ($normName === '') {
+                            continue;
+                        }
+
+                        // Toleran terhadap selisih kecil (typo/tanda baca), mis.
+                        // "Al-Fadhlih" vs "Al Fadlih".
+                        if (levenshtein($normPic, $normName) <= 2) {
+                            return true;
+                        }
+
+                        // Semua kata pembentuk nama user harus ada utuh (bukan
+                        // substring) di kolom PIC, supaya tidak menjaring aset
+                        // milik orang lain yang namanya mirip/sebagian.
+                        $allWordsPresent = true;
+
+                        foreach (preg_split('/\s+/', $normName) as $word) {
+                            if (! isset($picWords[$word])) {
+                                $allWordsPresent = false;
+
+                                break;
+                            }
+                        }
+
+                        if ($allWordsPresent) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                })
+                ->pluck('id');
         }
 
-        $applyMyAssetsFilter = function ($q) use ($myAssetNames) {
-            $q->where(function ($qq) use ($myAssetNames) {
-                foreach ($myAssetNames as $name) {
-                    $qq->orWhere('metadata->pic', 'like', '%'.$name.'%');
-                }
-            });
+        $applyMyAssetsFilter = function ($q) use ($myAssetIds) {
+            $q->whereIn('id', $myAssetIds);
         };
 
         $query = Asset::with(['category', 'creator']);

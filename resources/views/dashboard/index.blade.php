@@ -584,7 +584,13 @@
     @endif
 
     {{-- Ringkasan Menu --}}
-    <div x-data="{ openDivisiModal: false, openMeetingModal: false, openAssetModal: false }">
+    <div x-data="{
+        openDivisiModal: false,
+        openMeetingModal: false,
+        openAssetModal: false,
+        meetingMonth: @js($meetingStats['available_months'][0]['key'] ?? now()->format('Y-m')),
+        meetingData: @js($meetingStats['months'] ?? new stdClass),
+    }">
     <div class="grid {{ auth()->user()->isSuperAdmin() ? 'grid-cols-2' : 'grid-cols-1' }} md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-6">
         @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
         <div @click="openDivisiModal = true" class="group cursor-pointer rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300">
@@ -670,6 +676,7 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_assets'] }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Data Aset</p>
         </div>
+        @unless(auth()->user()->isGmCeo())
         @if(!auth()->user()->isStaffHr())
         <a href="{{ route('hris.cuti-izin') }}" class="group rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-300">
             <div class="flex items-center justify-between mb-3">
@@ -682,6 +689,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan Menunggu</p>
         </a>
         @endif
+        @endunless
         @else
         @if(!auth()->user()->isStaffHr())
         <a href="{{ route('hris.cuti-izin') }}" class="stat-card group">
@@ -842,29 +850,44 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Meeting per Divisi</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Total seluruh meeting</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total meeting per bulan</p>
                 </div>
-                <button @click="openMeetingModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                <div class="flex items-center gap-3">
+                    <div>
+                        <label for="meeting-month" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulan</label>
+                        <select id="meeting-month" x-model="meetingMonth" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-teal-500">
+                            @foreach($meetingStats['available_months'] as $month)
+                            <option value="{{ $month['key'] }}">{{ $month['label'] }} &middot; {{ $month['total'] }} meeting</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button @click="openMeetingModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="flex items-center justify-between p-4 rounded-xl border-2 border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-900/10">
                     <div>
                         <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Semua Divisi</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total meeting</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="(meetingData[meetingMonth]?.total ?? 0) + ' meeting'"></p>
                     </div>
-                    <span class="text-lg font-bold font-display text-teal-600 dark:text-teal-400">{{ $meetingStats['total_meetings'] }}</span>
+                    <span class="text-lg font-bold font-display text-teal-600 dark:text-teal-400" x-text="meetingData[meetingMonth]?.total ?? 0"></span>
                 </div>
-                @foreach($meetingStats['per_division'] as $md)
-                <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                    <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $md['nama'] }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $md['total'] }} meeting</p>
+                <template x-if="meetingData[meetingMonth] && meetingData[meetingMonth].per_division.length === 0">
+                    <div class="flex items-center justify-center p-4 rounded-xl border border-gray-100 dark:border-gray-700 col-span-2">
+                        <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada meeting pada bulan ini.</p>
                     </div>
-                    <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $md['total'] }}</span>
-                </div>
-                @endforeach
+                </template>
+                <template x-for="md in (meetingData[meetingMonth]?.per_division ?? [])" :key="md.nama">
+                    <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div>
+                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100" x-text="md.nama"></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="md.total + ' meeting'"></p>
+                        </div>
+                        <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100" x-text="md.total"></span>
+                    </div>
+                </template>
             </div>
         </div>
     </div>

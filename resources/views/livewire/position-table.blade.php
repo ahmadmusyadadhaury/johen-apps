@@ -72,7 +72,7 @@ $badgeColors = [
                     <th class="px-6 py-3">Divisi</th>
                     <th class="px-6 py-3">Atasan</th>
                     <th class="px-6 py-3">Bawahan</th>
-                    <th class="px-6 py-3">Deskripsi</th>
+                    <th class="px-6 py-3">Jobdesk</th>
                     <th class="px-6 py-3 text-center">Status</th>
                     @unless(auth()->user()->isGmCeo())
                     <th class="px-6 py-3 text-center">Aksi</th>
@@ -170,9 +170,9 @@ $badgeColors = [
     <div x-data="{ open: $wire.entangle('showCreateModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10 max-h-full overflow-y-auto">
 
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -216,7 +216,7 @@ $badgeColors = [
                 </div>
 
                 <div>
-                    <x-input-label for="create-deskripsi" value="Deskripsi" />
+                    <x-input-label for="create-deskripsi" value="Jobdesk" />
                     <textarea id="create-deskripsi" wire:model="deskripsi" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Deskripsi jabatan"></textarea>
                 </div>
 
@@ -242,9 +242,9 @@ $badgeColors = [
     <div x-data="{ open: $wire.entangle('showEditModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10 max-h-full overflow-y-auto">
 
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -288,7 +288,7 @@ $badgeColors = [
                 </div>
 
                 <div>
-                    <x-input-label for="edit-deskripsi" value="Deskripsi" />
+                    <x-input-label for="edit-deskripsi" value="Jobdesk" />
                     <textarea id="edit-deskripsi" wire:model="deskripsi" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"></textarea>
                 </div>
 
