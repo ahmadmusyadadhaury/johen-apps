@@ -6,8 +6,10 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\Region;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -30,6 +32,8 @@ class EmployeeTable extends Component
         $this->filterDivision = request('division', '');
         $this->provinceList = Region::provinces()->pluck('name', 'id')->toArray();
     }
+
+    public bool $modalOnly = false;
 
     public bool $showCreateModal = false;
 
@@ -385,10 +389,18 @@ class EmployeeTable extends Component
         $this->showCreateModal = true;
     }
 
+    #[On('open-employee-edit')]
+    public function openEditFromPopup(int $employeeId): void
+    {
+        $this->openEditModal($employeeId);
+    }
+
     public function openEditModal(int $id): void
     {
-        $this->authorizeWrite('update-data');
         $emp = Employee::with('positions', 'divisions')->findOrFail($id);
+        if (auth()->user()->employee_id !== $emp->id) {
+            $this->authorizeWrite('update-data');
+        }
         $this->editId = $emp->id;
         $this->nik = $emp->nik;
         $this->nik_ktp = $emp->nik_ktp ?? '';
@@ -522,8 +534,10 @@ class EmployeeTable extends Component
 
     public function update(): void
     {
-        $this->authorizeWrite('update-data');
         $emp = Employee::findOrFail($this->editId);
+        if (auth()->user()->employee_id !== $emp->id) {
+            $this->authorizeWrite('update-data');
+        }
 
         $rules = $this->rules();
         $rules['nik'] = ['required', 'string', 'max:30', 'unique:employees,nik,'.$this->editId];
@@ -553,6 +567,10 @@ class EmployeeTable extends Component
 
         $this->closeModal();
         $this->dispatch('notify', type: 'success', message: 'Data karyawan berhasil diperbarui.');
+
+        if ($this->modalOnly) {
+            $this->dispatch('employee-updated');
+        }
     }
 
     public function confirmDelete(int $id): void
@@ -590,6 +608,17 @@ class EmployeeTable extends Component
 
     public function render()
     {
+        $divisions = Division::where('is_active', true)->orderBy('nama')->get();
+        $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
+
+        if ($this->modalOnly) {
+            return view('livewire.employee-table', [
+                'employees' => new LengthAwarePaginator([], 0, 10),
+                'divisions' => $divisions,
+                'allPositions' => $allPositions,
+            ]);
+        }
+
         // listSelect: tanpa kolom foto (base64 besar) agar memori aman.
         $employees = Employee::with('divisions')->listSelect()
             ->when($this->search, function ($query) {
@@ -612,9 +641,6 @@ class EmployeeTable extends Component
                 $query->orderBy($this->sortField, $this->sortDirection);
             })
             ->paginate(10);
-
-        $divisions = Division::where('is_active', true)->orderBy('nama')->get();
-        $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
 
         return view('livewire.employee-table', [
             'employees' => $employees,

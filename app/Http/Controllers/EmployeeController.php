@@ -9,6 +9,7 @@ use App\Models\EmployeeContract;
 use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\PositionHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -29,6 +30,7 @@ class EmployeeController extends Controller
     public function creative()
     {
         $division = Division::firstOrCreate(['nama' => 'Creative']);
+
         return redirect()->route('hris.employees.index', ['division' => $division->id]);
     }
 
@@ -70,9 +72,9 @@ class EmployeeController extends Controller
         $payrollDetails = $employee->payrollDetails()
             ->with('payrollImport')
             ->get()
-            ->sortByDesc(fn($d) => $d->payrollImport?->periode ?? '')
+            ->sortByDesc(fn ($d) => $d->payrollImport?->periode ?? '')
             ->values()
-            ->map(fn($d) => [
+            ->map(fn ($d) => [
                 'id' => $d->id,
                 'periode' => $d->payrollImport?->periode ?? '-',
                 'gaji_pokok' => (float) $d->gaji_pokok,
@@ -93,8 +95,8 @@ class EmployeeController extends Controller
 
         $stats = [
             'gaji_pokok' => $payrollDetails->sum('gaji_pokok'),
-            'total_tunjangan' => $payrollDetails->sum(fn($d) => $d['tambahan_upah'] + $d['bonus'] + $d['thr'] + $d['apresiasi'] + $d['tunjangan_jabatan'] + $d['premi_bpjs_kesehatan']),
-            'total_potongan' => $payrollDetails->sum(fn($d) => $d['thr_dibayarkan'] + $d['potongan_pinjaman'] + $d['potongan_absensi'] + $d['potongan_bpjs_kesehatan_4'] + $d['potongan_bpjs_kesehatan_1']),
+            'total_tunjangan' => $payrollDetails->sum(fn ($d) => $d['tambahan_upah'] + $d['bonus'] + $d['thr'] + $d['apresiasi'] + $d['tunjangan_jabatan'] + $d['premi_bpjs_kesehatan']),
+            'total_potongan' => $payrollDetails->sum(fn ($d) => $d['thr_dibayarkan'] + $d['potongan_pinjaman'] + $d['potongan_absensi'] + $d['potongan_bpjs_kesehatan_4'] + $d['potongan_bpjs_kesehatan_1']),
             'gaji_bersih' => $payrollDetails->sum('take_home_pay'),
         ];
 
@@ -107,10 +109,35 @@ class EmployeeController extends Controller
         $divisions = Division::orderBy('nama')->get();
         $jenisDokumenList = ['KTP', 'KK', 'NPWP', 'Ijazah', 'Sertifikat', 'Kontrak', 'SK', 'Lainnya'];
         $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
+        $atasanOptions = Employee::ATASAN_OPTIONS;
+
+        $contracts = $employee->contracts->whereNotNull('tanggal_mulai');
+        $earliestContract = $contracts->sortBy('tanggal_mulai')->first();
+        $activeContracts = $contracts->where('status', 'berlaku')->whereNotNull('tanggal_berakhir');
+
+        $positionHistoryList = $employee->positions->map(function ($p) use ($activeContracts, $earliestContract) {
+            $matching = $activeContracts->first(fn ($c) => in_array(
+                $p->nama,
+                array_map('trim', explode(' & ', (string) $c->posisi))
+            ));
+            $alertContract = $matching ?? $activeContracts->sortBy('tanggal_berakhir')->first();
+
+            return [
+                'id' => 'pos_'.$p->id,
+                'is_main' => (bool) $p->pivot->is_main,
+                'jabatan' => $p->nama,
+                'divisi' => $p->division?->nama ?? '—',
+                'atasan' => $p->parent?->nama ?? '—',
+                'mulai' => $earliestContract?->tanggal_mulai?->format('Y-m-d'),
+                'selesai' => null,
+                'kontrak_berakhir' => $alertContract?->tanggal_berakhir?->format('Y-m-d'),
+                'status' => (bool) $p->pivot->is_main ? 'Utama' : 'Aktif',
+            ];
+        })->values();
 
         $canSeePayroll = auth()->user()->isGmCeo();
 
-        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'canSeePayroll');
+        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions');
     }
 
     public function edit(Employee $employee)
@@ -181,7 +208,7 @@ class EmployeeController extends Controller
         $file = $request->file('foto');
         $contents = base64_encode(file_get_contents($file->getRealPath()));
 
-        $employee->update(['foto' => 'base64:' . $contents]);
+        $employee->update(['foto' => 'base64:'.$contents]);
 
         return redirect()->route('hris.employees.show', $employee)
             ->with('success', 'Foto berhasil diperbarui.');
@@ -189,7 +216,7 @@ class EmployeeController extends Controller
 
     public function showPhoto(Employee $employee)
     {
-        if (!$employee->foto || !str_starts_with($employee->foto, 'base64:')) {
+        if (! $employee->foto || ! str_starts_with($employee->foto, 'base64:')) {
             abort(404);
         }
 
@@ -215,7 +242,7 @@ class EmployeeController extends Controller
         ]);
 
         $file = $request->file('file');
-        $filename = $employee->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $filename = $employee->id.'_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
 
         $file->storeAs('documents', $filename, 'public');
 
@@ -227,7 +254,7 @@ class EmployeeController extends Controller
             'keterangan' => $request->keterangan,
         ]);
 
-        return redirect(route('hris.employees.show', $employee) . '#dokumen')
+        return redirect(route('hris.employees.show', $employee).'#dokumen')
             ->with('doc_success', 'Dokumen berhasil ditambahkan.');
     }
 
@@ -251,14 +278,14 @@ class EmployeeController extends Controller
         ];
 
         if ($request->hasFile('file')) {
-            $oldPath = 'documents/' . $document->file;
+            $oldPath = 'documents/'.$document->file;
 
             if (Storage::disk('public')->exists($oldPath)) {
                 Storage::disk('public')->delete($oldPath);
             }
 
             $file = $request->file('file');
-            $filename = $employee->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $filename = $employee->id.'_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
             $file->storeAs('documents', $filename, 'public');
 
             $data['file'] = $filename;
@@ -267,7 +294,7 @@ class EmployeeController extends Controller
 
         $document->update($data);
 
-        return redirect(route('hris.employees.show', $employee) . '#dokumen')
+        return redirect(route('hris.employees.show', $employee).'#dokumen')
             ->with('doc_success', 'Dokumen berhasil diperbarui.');
     }
 
@@ -282,8 +309,8 @@ class EmployeeController extends Controller
         }
 
         return response($content, 200, [
-            'Content-Type' => mime_content_type('data://text/plain;base64,' . base64_encode($content)) ?: 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $document->nama_dokumen . '.' . $extension . '"',
+            'Content-Type' => mime_content_type('data://text/plain;base64,'.base64_encode($content)) ?: 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="'.$document->nama_dokumen.'.'.$extension.'"',
         ]);
     }
 
@@ -311,7 +338,7 @@ class EmployeeController extends Controller
             return base64_decode($document->file_content);
         }
 
-        $filePath = 'documents/' . $document->file;
+        $filePath = 'documents/'.$document->file;
         if (Storage::disk('public')->exists($filePath)) {
             return Storage::disk('public')->get($filePath);
         }
@@ -322,7 +349,7 @@ class EmployeeController extends Controller
     public function destroyDocument(Employee $employee, EmployeeDocument $document)
     {
         $this->authorizeManageEmployeeData();
-        $filePath = 'documents/' . $document->file;
+        $filePath = 'documents/'.$document->file;
 
         if (Storage::disk('public')->exists($filePath)) {
             Storage::disk('public')->delete($filePath);
@@ -330,7 +357,7 @@ class EmployeeController extends Controller
 
         $document->delete();
 
-        return redirect(route('hris.employees.show', $employee) . '#dokumen')
+        return redirect(route('hris.employees.show', $employee).'#dokumen')
             ->with('doc_success', 'Dokumen berhasil dihapus.');
     }
 
@@ -362,7 +389,7 @@ class EmployeeController extends Controller
             'file' => $this->storeContractFile($request, $employee->id),
         ]);
 
-        return redirect(route('hris.employees.show', $employee) . '#kontrak')
+        return redirect(route('hris.employees.show', $employee).'#kontrak')
             ->with('contract_success', 'Kontrak berhasil ditambahkan. Kontrak sebelumnya otomatis ditandai selesai.');
     }
 
@@ -377,7 +404,7 @@ class EmployeeController extends Controller
         $this->deleteContractFile($contract);
         $contract->delete();
 
-        return redirect(route('hris.employees.show', $employee) . '#kontrak')
+        return redirect(route('hris.employees.show', $employee).'#kontrak')
             ->with('contract_success', 'Kontrak berhasil dihapus.');
     }
 
@@ -403,7 +430,7 @@ class EmployeeController extends Controller
             'status' => $request->status,
         ]);
 
-        return redirect(route('hris.employees.show', $employee) . '#jabatan')
+        return redirect(route('hris.employees.show', $employee).'#jabatan')
             ->with('position_success', 'Riwayat jabatan berhasil ditambahkan.');
     }
 
@@ -428,7 +455,7 @@ class EmployeeController extends Controller
             'status' => $request->status,
         ]);
 
-        return redirect(route('hris.employees.show', $employee) . '#jabatan')
+        return redirect(route('hris.employees.show', $employee).'#jabatan')
             ->with('position_success', 'Riwayat jabatan berhasil diperbarui.');
     }
 
@@ -437,7 +464,7 @@ class EmployeeController extends Controller
         $this->authorizeManageEmployeeData();
         $positionHistory->delete();
 
-        return redirect(route('hris.employees.show', $employee) . '#jabatan')
+        return redirect(route('hris.employees.show', $employee).'#jabatan')
             ->with('position_success', 'Riwayat jabatan berhasil dihapus.');
     }
 
@@ -461,7 +488,7 @@ class EmployeeController extends Controller
             'tanggal_mulai' => $request->tanggal_mulai,
             'tanggal_berakhir' => $request->tanggal_berakhir,
             'keterangan' => $request->keterangan,
-            'status' => \Carbon\Carbon::parse($request->tanggal_berakhir)->endOfDay()->isPast() ? 'selesai' : 'berlaku',
+            'status' => Carbon::parse($request->tanggal_berakhir)->endOfDay()->isPast() ? 'selesai' : 'berlaku',
         ];
 
         if ($newFile = $this->storeContractFile($request, $employee->id)) {
@@ -471,41 +498,41 @@ class EmployeeController extends Controller
 
         $contract->update($data);
 
-        return redirect(route('hris.employees.show', $employee) . '#kontrak')
+        return redirect(route('hris.employees.show', $employee).'#kontrak')
             ->with('contract_success', 'Kontrak berhasil diperbarui.');
     }
 
     public function downloadContract(Employee $employee, EmployeeContract $contract)
     {
-        $filePath = 'contracts/' . $contract->file;
+        $filePath = 'contracts/'.$contract->file;
 
-        if (!$contract->file || !Storage::disk('public')->exists($filePath)) {
+        if (! $contract->file || ! Storage::disk('public')->exists($filePath)) {
             return redirect()->route('hris.employees.show', $employee)
                 ->with('error', 'File surat kontrak tidak ditemukan.');
         }
 
-        return Storage::disk('public')->download($filePath, 'surat-kontrak-' . $employee->nik . '.pdf');
+        return Storage::disk('public')->download($filePath, 'surat-kontrak-'.$employee->nik.'.pdf');
     }
 
     public function previewContract(Employee $employee, EmployeeContract $contract)
     {
-        $filePath = 'contracts/' . $contract->file;
+        $filePath = 'contracts/'.$contract->file;
 
-        if (!$contract->file || !Storage::disk('public')->exists($filePath)) {
+        if (! $contract->file || ! Storage::disk('public')->exists($filePath)) {
             abort(404);
         }
 
-        return Storage::disk('public')->response($filePath, 'surat-kontrak-' . $employee->nik . '.pdf');
+        return Storage::disk('public')->response($filePath, 'surat-kontrak-'.$employee->nik.'.pdf');
     }
 
     private function storeContractFile(Request $request, int $employeeId): ?string
     {
-        if (!$request->hasFile('file')) {
+        if (! $request->hasFile('file')) {
             return null;
         }
 
         $file = $request->file('file');
-        $filename = 'contract_' . $employeeId . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $filename = 'contract_'.$employeeId.'_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
         $file->storeAs('contracts', $filename, 'public');
 
         return $filename;
@@ -513,11 +540,11 @@ class EmployeeController extends Controller
 
     private function deleteContractFile(EmployeeContract $contract): void
     {
-        if (!$contract->file) {
+        if (! $contract->file) {
             return;
         }
 
-        $filePath = 'contracts/' . $contract->file;
+        $filePath = 'contracts/'.$contract->file;
         if (Storage::disk('public')->exists($filePath)) {
             Storage::disk('public')->delete($filePath);
         }

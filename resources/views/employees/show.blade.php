@@ -1,4 +1,4 @@
-@php
+﻿@php
     $isOwnView = $isOwnView ?? false;
     $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
     $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
@@ -53,16 +53,7 @@
             'updated_at' => $c->updated_at,
         ])->values()) }}"
          data-contract-success="{{ session('contract_success') }}"
-          data-position-histories="{{ json_encode($employee->positionHistories->map(fn($p) => [
-            'id' => $p->id,
-            'employee_id' => $p->employee_id,
-            'jabatan' => $p->jabatan,
-            'divisi' => $p->divisi,
-            'atasan' => $p->atasan ?? '—',
-            'mulai' => $p->mulai?->format('Y-m-d'),
-            'selesai' => $p->selesai?->format('Y-m-d'),
-            'status' => $p->status,
-        ])->values()) }}"
+          data-position-histories="{{ json_encode($positionHistoryList) }}"
           data-promotions="{{ json_encode($employee->promotions->map(fn($p) => [
             'id' => $p->id,
             'nomor_surat' => $p->nomor_surat,
@@ -80,6 +71,7 @@
           data-position-success="{{ session('position_success') }}"
 data-promotion-success="{{ session('promotion_success') }}"
          data-positions="{{ $allPositions->map(fn($p) => ['id' => $p->id, 'nama' => $p->nama])->values() }}"
+         data-atasan-options="{{ json_encode($atasanOptions) }}"
          data-payroll-details="{{ json_encode($payrollDetails) }}"
           data-payroll-stats="{{ json_encode($stats) }}"
           class="hidden"></div>
@@ -89,7 +81,6 @@ data-promotion-success="{{ session('promotion_success') }}"
     <div x-data="{
         activeTab: 'dasar',
         aksiOpen: false,
-        editModal: false,
         dokumenModal: false,
         viewDokumen: null,
         deleteDokumenId: null,
@@ -103,6 +94,7 @@ data-promotion-success="{{ session('promotion_success') }}"
         successMessage: '',
         documents: [],
         allPositions: [],
+        atasanOptions: [],
         posisiCari: '',
         openPos: false,
         kontrakModal: false,
@@ -153,6 +145,9 @@ data-promotion-success="{{ session('promotion_success') }}"
                 try {
                     this.allPositions = JSON.parse(data.dataset.positions || '[]');
                 } catch (e) { this.allPositions = []; }
+                try {
+                    this.atasanOptions = JSON.parse(data.dataset.atasanOptions || '[]');
+                } catch (e) { this.atasanOptions = []; }
                 try {
                     this.contracts = JSON.parse(data.dataset.contracts || '[]');
                 } catch (e) { this.contracts = []; }
@@ -265,6 +260,13 @@ data-promotion-success="{{ session('promotion_success') }}"
             const now = new Date();
             return Math.ceil((end - now) / (1000 * 60 * 60 * 24));
         },
+        jabatanDaysLeft(j) {
+            if (!j?.kontrak_berakhir) return null;
+            const end = new Date(j.kontrak_berakhir + 'T23:59:59');
+            const now = new Date();
+            const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+            return days >= 0 ? days : null;
+        },
         isKontrakSelesai(k) {
             if (k.status === 'selesai') return true;
             if (k.status === 'berlaku' && k.tanggal_berakhir) {
@@ -314,7 +316,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             this.formJabatanId = j.id;
             this.formJabatanJabatan = j.jabatan;
             this.formJabatanDivisi = j.divisi;
-            this.formJabatanAtasan = j.atasan && j.atasan !== '—' ? j.atasan : '';
+            this.formJabatanAtasan = j.atasan && j.atasan !== 'â€”' ? j.atasan : '';
             this.formJabatanMulai = j.mulai;
             this.formJabatanSelesai = j.selesai;
             this.editMasihMenjabat = !j.selesai;
@@ -340,7 +342,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                 <div class="flex items-center justify-between relative z-10 pt-6">
                     <div class="sm:ml-[164px] text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
                         @php $mainPos = $employee->mainPosition(); @endphp
-                        {{ $mainPos?->nama ?? '—' }}
+                        {{ $mainPos?->nama ?? 'â€”' }}
                         @if($employee->positions->count() > 1)
                             <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg bg-white/20 text-xs font-semibold">
                                 +{{ $employee->positions->count() - 1 }} lainnya
@@ -349,7 +351,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     </div>
                     <div class="flex items-center gap-2.5">
                         @if(!$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id))
-                                    <button @click="editModal = true" class="inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:ring-1 dark:ring-white/40 px-4 py-2 text-sm font-semibold transition-all">
+                                    <button type="button" @click="Livewire.dispatch('open-employee-edit', { employeeId: {{ $employee->id }} })" class="inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:ring-1 dark:ring-white/40 px-4 py-2 text-sm font-semibold transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Edit Informasi
                         </button>
@@ -438,8 +440,8 @@ data-promotion-success="{{ session('promotion_success') }}"
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                         NIK <strong class="text-gray-700 dark:text-gray-200 font-semibold">{{ $employee->nik }}</strong>
-                        &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : '—' }}
-                        &nbsp;&mdash;&nbsp; Divisi {{ $employee->divisionNames() ?: '—' }}
+                        &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : 'â€”' }}
+                        &nbsp;&mdash;&nbsp; Divisi {{ $employee->divisionNames() ?: 'â€”' }}
                     </p>
                     <div class="flex items-center justify-center sm:justify-start gap-5 flex-wrap">
                         @if($employee->no_hp)
@@ -802,7 +804,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                      :class="selectedFile ? 'border-solid border-blue-300 bg-blue-50 dark:bg-blue-950' : ''">
                                     <svg class="w-[26px] h-[26px] mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
                                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Klik atau seret file ke sini</div>
-                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG — maks 5MB</div>
+                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG â€” maks 5MB</div>
                                     <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png" class="hidden"
                                            @change="selectedFile = $event.target.files[0]?.name || null">
                                 </div>
@@ -938,7 +940,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                      :class="selectedFile ? 'border-solid border-blue-300 bg-blue-50 dark:bg-blue-950' : ''">
                                     <svg class="w-[26px] h-[26px] mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
                                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Klik atau seret file ke sini</div>
-                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG — maks 5MB</div>
+                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG â€” maks 5MB</div>
                                     <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden"
                                            @change="selectedFile = $event.target.files[0]?.name || null">
                                 </div>
@@ -1131,7 +1133,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                     <div class="flex justify-between items-center">
                                         <div class="text-xs text-gray-700 dark:text-gray-300">
                                             <b class="font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</b>
-                                            <span class="text-gray-400 mx-1.5">—</span>
+                                            <span class="text-gray-400 mx-1.5">â€”</span>
                                             <span x-text="k.posisi"></span>
                                         </div>
                                         <div class="flex items-center gap-1">
@@ -1187,11 +1189,6 @@ data-promotion-success="{{ session('promotion_success') }}"
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
                             Promosi / Mutasi
                         </button>
-                        <button @click="tambahJabatanModal = true; tambahMasihMenjabat = false; tambahJabatanSelesai = ''"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                            Tambah Jabatan
-                        </button>
                         @endif
                     </div>
                 </div>
@@ -1208,34 +1205,31 @@ data-promotion-success="{{ session('promotion_success') }}"
                                     <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Mulai</th>
                                     <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Selesai</th>
                                     <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
-                                    @if($canManageEmployeeData)
-                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider w-16">Aksi</th>
-                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
                                 <template x-for="(j, idx) in jabatanList" :key="j.id">
                                     <tr class="border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
                                         <td class="px-4 py-3.5 text-sm text-gray-400 dark:text-gray-500 font-medium" x-text="idx + 1"></td>
-                                        <td class="px-4 py-3.5 text-sm font-bold text-gray-900 dark:text-gray-100" x-text="j.jabatan"></td>
+                                        <td class="px-4 py-3.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+                                            <span x-text="j.jabatan"></span>
+                                            <span x-show="j.is_main" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300 text-[10px] font-bold uppercase tracking-wide">Utama</span>
+                                        </td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.divisi"></td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.atasan"></td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.mulai"></td>
-                                        <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.selesai || '—'"></td>
+                                        <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300">
+                                            <span x-show="jabatanDaysLeft(j) === null || jabatanDaysLeft(j) > 14" x-text="j.selesai || 'â€”'"></span>
+                                            <span x-show="jabatanDaysLeft(j) !== null && jabatanDaysLeft(j) <= 14"
+                                                  class="text-xs font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap"
+                                                  :class="jabatanDaysLeft(j) <= 3 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'"
+                                                  x-text="jabatanDaysLeft(j) + ' hari lagi'"></span>
+                                        </td>
                                         <td class="px-4 py-3.5">
                                             <span class="inline-flex text-xs font-bold px-2.5 py-0.5 rounded-full"
-                                                  :class="j.status === 'Aktif' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'"
+                                                  :class="j.status === 'Utama' ? 'bg-violet-50 text-violet-700' : 'bg-green-50 text-green-700'"
                                                   x-text="j.status"></span>
                                         </td>
-                                        @if($canManageEmployeeData)
-                                        <td class="px-4 py-3.5 text-center">
-                                            <button @click="openEditJabatan(j)"
-                                                    class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                Edit
-                                            </button>
-                                        </td>
-                                        @endif
                                     </tr>
                                 </template>
                             </tbody>
@@ -1247,7 +1241,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     <div class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600 rounded-xl">
                         <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
                         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Belum Ada Riwayat Jabatan</h4>
-                        <p class="text-xs">{{ $canManageEmployeeData ? 'Klik tombol "Tambah Jabatan" untuk menambahkan riwayat jabatan baru.' : 'Belum ada riwayat jabatan yang tercatat.' }}</p>
+                        <p class="text-xs">{{ $canManageEmployeeData ? 'Gunakan tombol "Promosi / Mutasi" untuk menambahkan riwayat jabatan baru.' : 'Belum ada riwayat jabatan yang tercatat.' }}</p>
                     </div>
                 </template>
 
@@ -1291,7 +1285,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 3h4a1 1 0 0 1 1 1v4"/><path d="M9.5 13.5 11 12l4 4-1.5 1.5a2.12 2.12 0 0 1-3-3z"/><path d="m13.5 8.5-4 4a2.12 2.12 0 0 0 0 3l3 3a2.12 2.12 0 0 0 3 0l4-4a2.12 2.12 0 0 0 0-3l-3-3a2.12 2.12 0 0 0-3 0z"/></svg>
                                                     Lihat Surat
                                                 </button>
-                                                <span x-show="!p.pdf_path" class="text-xs text-gray-400 dark:text-gray-500">—</span>
+                                                <span x-show="!p.pdf_path" class="text-xs text-gray-400 dark:text-gray-500">â€”</span>
                                             </td>
                                             <td class="px-4 py-3.5 text-center">
                                                 @if($canManageEmployeeData)
@@ -1373,178 +1367,6 @@ data-promotion-success="{{ session('promotion_success') }}"
 
         </div>
 
-    {{-- Edit Informasi Modal --}}
-    <div x-show="editModal" x-cloak
-         x-transition:enter="transition-opacity ease-linear duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition-opacity ease-linear duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
-         @click="editModal = false">
-        <div x-show="editModal" x-cloak
-             x-transition:enter="transition-all ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             x-transition:leave="transition-all ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             @click.stop
-             class="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
-                <div>
-                    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Edit Informasi Karyawan</h3>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Perbarui data profil karyawan</p>
-                </div>
-                <button @click="editModal = false" class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <form action="{{ route('hris.employees.update', $employee) }}" method="POST" class="overflow-y-auto p-6 space-y-4">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="_redirect" value="show">
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Nama Lengkap</label>
-                    <input type="text" name="nama" value="{{ old('nama', $employee->nama) }}" required
-                           class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">NIK</label>
-                    <input type="text" name="nik" value="{{ old('nik', $employee->nik) }}" required
-                           class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div x-data="{ open: false }" class="relative">
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Divisi</label>
-                        @php $selectedDivisionIds = old('division_ids', $employee->divisions->pluck('id')->toArray()); @endphp
-                        <button type="button" @click="open = !open"
-                                class="flex items-center justify-between w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                            <span>{{ count($selectedDivisionIds) > 0 ? count($selectedDivisionIds) . ' divisi dipilih' : 'Pilih divisi' }}</span>
-                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-                        </button>
-                        <div x-show="open" @click.outside="open = false" x-cloak
-                             class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
-                            @foreach($divisions as $division)
-                                <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($division->id, $selectedDivisionIds) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
-                                    <input type="checkbox" name="division_ids[]" value="{{ $division->id }}"
-                                           {{ in_array($division->id, $selectedDivisionIds) ? 'checked' : '' }}
-                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
-                                    <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $division->nama }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div x-data="{ open: false }" class="relative">
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Jabatan</label>
-                        <input type="hidden" name="position" value="{{ old('position', $employee->position) }}">
-                        @php $selectedIds = old('position_ids', $employee->positions->pluck('id')->toArray()); @endphp
-                        <button type="button" @click="open = !open"
-                                class="flex items-center justify-between w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                            <span>{{ count($selectedIds) > 0 ? count($selectedIds) . ' jabatan dipilih' : 'Pilih jabatan' }}</span>
-                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-                        </button>
-                        <div x-show="open" @click.outside="open = false" x-cloak
-                             class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg max-h-48 overflow-y-auto p-1.5 space-y-0.5">
-                            @foreach($allPositions as $pos)
-                                <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors {{ in_array($pos->id, $selectedIds) ? 'bg-primary-50 dark:bg-primary-900/20' : '' }}">
-                                    <input type="checkbox" name="position_ids[]" value="{{ $pos->id }}"
-                                           {{ in_array($pos->id, $selectedIds) ? 'checked' : '' }}
-                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
-                                    <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ $pos->nama }}</span>
-                                    <input type="radio" name="main_position_id" value="{{ $pos->id }}"
-                                           {{ $employee->mainPosition()?->id === $pos->id ? 'checked' : '' }}
-                                           onclick="event.stopPropagation()"
-                                           class="text-primary-600 focus:ring-primary-500">
-                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">Utama</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Atasan 1</label>
-                        <input type="text" name="atasan" value="{{ old('atasan', $employee->atasan) }}"
-                               class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Atasan 2</label>
-                        <input type="text" name="atasan2" value="{{ old('atasan2', $employee->atasan2) }}"
-                               class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Tipe Karyawan</label>
-                    <select name="tipe" required
-                            class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                        <option value="karyawan_aktif" {{ $employee->tipe == 'karyawan_aktif' ? 'selected' : '' }}>Karyawan Aktif</option>
-                        <option value="calon_karyawan" {{ $employee->tipe == 'calon_karyawan' ? 'selected' : '' }}>Calon Karyawan</option>
-                        <option value="mantan_karyawan" {{ $employee->tipe == 'mantan_karyawan' ? 'selected' : '' }}>Mantan Karyawan</option>
-                    </select>
-                </div>
-
-                @if($canManageEmployeeData)
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Jenis Kerja <span class="font-normal text-gray-400">(acuan hari libur mingguan)</span></label>
-                    <select name="jenis_kerja"
-                            class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                        <option value="">Pilih jenis kerja</option>
-                        @php $jenisKerjaTersimpan = old('jenis_kerja', $employee->jenis_kerja ?? ''); @endphp
-                        @foreach(\App\Models\Employee::JENIS_KERJA_OPTIONS as $jenis => $ket)
-                            <option value="{{ $jenis }}" {{ $jenisKerjaTersimpan === $jenis ? 'selected' : '' }}>{{ $jenis }} — {{ $ket }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Jam Kerja <span class="font-normal text-gray-400">(acuan status presensi, toleransi telat +5 menit)</span></label>
-                    @php
-                        $jamKerjaOptions = \App\Models\Employee::SHIFT_OPTIONS;
-                        $jamKerjaTersimpan = old('jam_kerja', $employee->jam_kerja ?? '');
-                    @endphp
-                    <select name="jam_kerja"
-                            class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                        <option value="">Pilih jam kerja</option>
-                        @foreach($jamKerjaOptions as $label => $mulai)
-                            <option value="{{ $label }}" {{ $jamKerjaTersimpan === $label ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                        @if($jamKerjaTersimpan !== '' && ! array_key_exists($jamKerjaTersimpan, $jamKerjaOptions))
-                            <option value="{{ $jamKerjaTersimpan }}" selected>{{ $jamKerjaTersimpan }} (nilai lama)</option>
-                        @endif
-                    </select>
-                </div>
-                @endif
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">No. HP</label>
-                        <input type="text" name="no_hp" value="{{ old('no_hp', $employee->no_hp) }}"
-                               class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
-                        <input type="email" name="email" value="{{ old('email', $employee->email) }}"
-                               class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all">
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-                    <button type="button" @click="editModal = false"
-                            class="px-5 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-all">
-                        Batal
-                    </button>
-                    <button type="submit"
-                            class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm">
-                        Simpan Perubahan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     {{-- Modal Lihat Kontrak --}}
     <div x-show="viewKontrak" x-cloak
@@ -1606,7 +1428,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <div class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                             NIK {{ $employee->nik }}
-                            <span class="text-gray-300 dark:text-gray-600 mx-1.5">•</span>
+                            <span class="text-gray-300 dark:text-gray-600 mx-1.5">â€¢</span>
                             <span x-text="viewKontrak?.posisi"></span>
                         </div>
                     </div>
@@ -1614,7 +1436,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <div class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Periode</div>
                         <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-0.5 whitespace-nowrap">
                             <span x-text="formatTanggalIndo(viewKontrak?.tanggal_mulai)"></span>
-                            <span class="text-gray-300 dark:text-gray-500 mx-1.5">→</span>
+                            <span class="text-gray-300 dark:text-gray-500 mx-1.5">â†’</span>
                             <span x-text="formatTanggalIndo(viewKontrak?.tanggal_berakhir)"></span>
                         </div>
                     </div>
@@ -1647,7 +1469,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             Atasan
                         </div>
-                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="viewKontrak?.atasan || '—'"></div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="viewKontrak?.atasan || 'â€”'"></div>
                     </div>
                 </div>
 
@@ -1673,7 +1495,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         Lihat Surat
                     </button>
                     @if($canManageEmployeeData)
-                    <button @click="viewKontrak = null; editKontrak(viewKontrak)"
+                    <button @click="editKontrak(viewKontrak); viewKontrak = null"
                             class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                         Edit
@@ -1708,7 +1530,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Surat Kontrak</h3>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         <span x-text="viewSuratKontrak?.jenis_kontrak"></span>
-                        <span class="text-gray-300 dark:text-gray-600 mx-1">—</span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1">â€”</span>
                         <span x-text="viewSuratKontrak?.posisi"></span>
                     </p>
                 </div>
@@ -1759,7 +1581,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
                               :class="viewSuratPromosi?.jenis === 'promosi' ? 'bg-green-50 text-green-700' : (viewSuratPromosi?.jenis === 'demosi' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700')"
                               x-text="viewSuratPromosi?.jenis"></span>
-                        <span class="text-gray-300 dark:text-gray-600 mx-1.5">—</span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1.5">â€”</span>
                         <span x-text="viewSuratPromosi?.posisi_lama"></span>
                         <svg class="w-3.5 h-3.5 inline mx-1 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         <span class="font-semibold" x-text="viewSuratPromosi?.posisi_baru"></span>
@@ -1865,8 +1687,13 @@ data-promotion-success="{{ session('promotion_success') }}"
                 </div>
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Atasan</label>
-                    <input type="text" name="atasan" placeholder="Nama atasan langsung"
-                           class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                    <select name="atasan"
+                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                        <option value="">-- Pilih atasan --</option>
+                        @foreach($atasanOptions as $namaAtasan)
+                            <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" @click="tambahKontrakModal = false"
@@ -1962,8 +1789,14 @@ data-promotion-success="{{ session('promotion_success') }}"
                 </div>
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700">Atasan</label>
-                    <input type="text" name="atasan" placeholder="Nama atasan langsung" x-model="formKontrakAtasan"
-                           class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                    <select name="atasan" x-model="formKontrakAtasan"
+                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 outline-none hover:border-gray-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
+                        <option value="">-- Pilih atasan --</option>
+                        <template x-for="nama in atasanOptions" :key="nama">
+                            <option :value="nama" x-text="nama"></option>
+                        </template>
+                        <option :value="formKontrakAtasan" x-show="formKontrakAtasan && !atasanOptions.includes(formKontrakAtasan) && formKontrakAtasan !== 'Other'" x-text="formKontrakAtasan"></option>
+                    </select>
                 </div>
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
                     <button type="button" @click="editKontrakModal = false"
@@ -2163,7 +1996,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <option value="Operational">Operational</option>
                     </select>
                 </div>
-                <div class="space-y-1">
+<div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Atasan</label>
                     <input type="text" name="atasan" placeholder="Nama atasan langsung" x-model="formJabatanAtasan"
                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.25)] transition-all">
@@ -2239,7 +2072,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold text-white uppercase tracking-wide"
                                       x-text="formPromosiJenis"></span>
                             </div>
-                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} · NIK {{ $employee->nik }}</p>
+                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} Â· NIK {{ $employee->nik }}</p>
                         </div>
                     </div>
                     <button @click="promosiModal = false" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 text-white hover:bg-white/25 transition-all">
@@ -2251,8 +2084,8 @@ data-promotion-success="{{ session('promotion_success') }}"
                 @csrf
 
                 {{-- Jenis --}}
-                <div class="grid grid-cols-3 gap-2 rounded-xl bg-gray-100 dark:bg-gray-800 p-1.5">
-                    <template x-for="jt in ['promosi', 'mutasi', 'demosi']" :key="jt">
+                <div class="grid grid-cols-2 gap-2 rounded-xl bg-gray-100 dark:bg-gray-800 p-1.5">
+                    <template x-for="jt in ['promosi', 'mutasi']" :key="jt">
                         <button type="button" @click="formPromosiJenis = jt"
                                 class="rounded-lg py-2 text-sm font-semibold capitalize transition-all"
                                 :class="formPromosiJenis === jt
@@ -2270,7 +2103,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                            placeholder="Contoh: IT Manager"
                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.25)] transition-all">
                     <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                        Posisi saat ini: <b>{{ $employee->position ?? '—' }}</b>
+                        Posisi saat ini: <b>{{ $employee->position ?? 'â€”' }}</b>
                     </p>
                 </div>
 
@@ -2292,7 +2125,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi</label>
                     <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-                        Saat ini: <b>{{ $employee->divisionNames() ?: '—' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
+                        Saat ini: <b>{{ $employee->divisionNames() ?: 'â€”' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
                     </p>
                     <div class="mt-1.5 grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto rounded-xl bg-gray-50 dark:bg-gray-800/50 p-2">
                         @foreach($divisions as $division)
@@ -2319,10 +2152,10 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                         <div class="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
                             <b class="font-bold">Yang akan terjadi:</b><br>
-                            • Posisi karyawan akan diperbarui<br>
-                            • Riwayat jabatan lama otomatis ditutup<br>
-                            • Kontrak addendum baru dibuat (tgl berakhir ikut kontrak lama)<br>
-                            • Surat adendum yang diunggah tersedia di tab Riwayat Jabatan
+                            â€¢ Posisi karyawan akan diperbarui<br>
+                            â€¢ Riwayat jabatan lama otomatis ditutup<br>
+                            â€¢ Kontrak addendum baru dibuat (tgl berakhir ikut kontrak lama)<br>
+                            â€¢ Surat adendum yang diunggah tersedia di tab Riwayat Jabatan
                         </div>
                     </div>
                 </div>
@@ -2385,10 +2218,17 @@ data-promotion-success="{{ session('promotion_success') }}"
             </div>
         </div>
     </div>
-
-
-
-
 </div>
+
+    {{-- Modal Edit Karyawan (reuse dari livewire employee-table) --}}
+    <livewire:employee-table :modal-only="true" />
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('employee-updated', () => {
+                window.location.reload();
+            });
+        });
+    </script>
 
 </x-app-layout>

@@ -3,8 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\ContractApproval;
-use App\Models\ContractEvaluation;
-use App\Models\Employee;
 use App\Models\EmployeeContract;
 use App\Models\Position;
 use App\Support\ContractEvaluationConfig;
@@ -45,7 +43,7 @@ class KontrakKerjaTable extends Component
 
     public function openPenilaian(int $contractId): void
     {
-        if (!auth()->user()?->canViewEvaluationDetail()) {
+        if (! auth()->user()?->canViewEvaluationDetail()) {
             session()->flash('eval_error', 'Anda tidak berhak melihat hasil penilaian.');
 
             return;
@@ -175,7 +173,7 @@ class KontrakKerjaTable extends Component
     {
         $this->validate([
             'approveContractId' => 'required|integer|exists:employee_contracts,id',
-            'approveDecision' => 'required|in:' . ContractApproval::DECISION_SETUJU . ',' . ContractApproval::DECISION_TIDAK,
+            'approveDecision' => 'required|in:'.ContractApproval::DECISION_SETUJU.','.ContractApproval::DECISION_TIDAK,
             'approveCatatan' => 'nullable|string|max:2000',
         ]);
 
@@ -191,13 +189,75 @@ class KontrakKerjaTable extends Component
             ]
         );
 
-        session()->flash('eval_success', 'Keputusan approval kontrak berhasil disimpan.');
+        $extended = $this->extendContractIfFullyApproved($contract);
+
+        session()->flash(
+            'eval_success',
+            $extended
+                ? 'Keputusan approval berhasil disimpan. Kontrak otomatis diperpanjang & kontrak baru (addendum) telah dibuat.'
+                : 'Keputusan approval kontrak berhasil disimpan.'
+        );
 
         if ($contract = EmployeeContract::with(['employee', 'evaluations.evaluator', 'approvals.approver'])->find($this->approveContractId)) {
             $this->hasSubmittedEval = $contract->evaluations()->whereNotNull('submitted_at')->exists();
             $this->hasAnyEvaluation = $contract->evaluations()->exists();
             $this->loadPenilaianEntries($contract);
         }
+    }
+
+    private function extendContractIfFullyApproved(EmployeeContract $contract): bool
+    {
+        $contract = EmployeeContract::with(['approvals.approver', 'evaluations'])->find($contract->id);
+
+        if (! $contract) {
+            return false;
+        }
+
+        $managerApproval = $contract->approvals->first(fn ($a) => $a->approver?->isManager());
+        $gmApproval = $contract->approvals->first(fn ($a) => $a->approver?->isGmCeo());
+
+        $fullyApproved = $managerApproval?->decision === ContractApproval::DECISION_SETUJU
+            && $gmApproval?->decision === ContractApproval::DECISION_SETUJU;
+
+        if (! $fullyApproved) {
+            return false;
+        }
+
+        // Hindari duplikat: jika addendum dari kontrak ini sudah pernah dibuat.
+        if (EmployeeContract::where('extended_from_contract_id', $contract->id)->exists()) {
+            return false;
+        }
+
+        // Rekomendasi perpanjangan dari koordinator (evaluasi non-super-admin).
+        $recommendation = $contract->evaluations
+            ->filter(fn ($e) => $e->rekomendasi === 'perpanjang'
+                && $e->perpanjangan_mulai !== null
+                && $e->perpanjangan_berakhir !== null)
+            ->sortByDesc('submitted_at')
+            ->first();
+
+        if (! $recommendation) {
+            return false;
+        }
+
+        DB::transaction(function () use ($contract, $recommendation) {
+            $contract->update(['status' => 'selesai']);
+
+            EmployeeContract::create([
+                'employee_id' => $contract->employee_id,
+                'jenis_kontrak' => $contract->jenis_kontrak,
+                'posisi' => $contract->posisi,
+                'atasan' => $contract->atasan,
+                'tanggal_mulai' => $recommendation->perpanjangan_mulai,
+                'tanggal_berakhir' => $recommendation->perpanjangan_berakhir,
+                'status' => 'berlaku',
+                'keterangan' => 'Addendum perpanjangan otomatis dari evaluasi kontrak.',
+                'is_addendum' => true,
+                'extended_from_contract_id' => $contract->id,
+            ]);
+        });
+
+        return true;
     }
 
     public function render()
@@ -235,7 +295,7 @@ class KontrakKerjaTable extends Component
             ->when($this->search, function ($query) {
                 $query->whereHas('employee', function ($q) {
                     $q->where('nama', 'like', "%{$this->search}%")
-                      ->orWhere('nik', 'like', "%{$this->search}%");
+                        ->orWhere('nik', 'like', "%{$this->search}%");
                 });
             })
             ->orderBy('tanggal_berakhir', 'asc')
@@ -276,12 +336,12 @@ class KontrakKerjaTable extends Component
     private function getScopedTeamEmployeeIds(): array
     {
         $positionName = $this->getScopedPositionName();
-        if (!$positionName) {
+        if (! $positionName) {
             return [];
         }
 
         $position = Position::where('nama', $positionName)->first();
-        if (!$position) {
+        if (! $position) {
             return [];
         }
 
@@ -310,7 +370,7 @@ class KontrakKerjaTable extends Component
     private function getScopedPositionName(): ?string
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 

@@ -19,6 +19,7 @@ class EmployeeContract extends Model
         'status',
         'keterangan',
         'is_addendum',
+        'extended_from_contract_id',
         'file',
     ];
 

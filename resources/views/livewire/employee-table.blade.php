@@ -1,4 +1,5 @@
 <div>
+    @if(!$modalOnly)
     <div class="flex items-center justify-between px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl">
         @php
             $tipeCounts = [
@@ -194,6 +195,7 @@
         </div>
     @endif
     </div>
+    @endif
 
     {{-- ============ CREATE MODAL ============ --}}
     <template x-teleport="body">

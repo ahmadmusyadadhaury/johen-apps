@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeContract;
+use App\Models\Position;
 use App\Models\PositionHistory;
 use App\Models\Promotion;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -30,6 +31,11 @@ class PromotionService
                 ->implode(' & ');
             $divisiBaru = $divisiBaru ?: $divisiLama;
 
+            $positionBaru = $this->findOrCreatePosition(
+                $data['posisi_baru'],
+                $newDivisionIds[0] ?? null
+            );
+
             $promotion = Promotion::create([
                 'employee_id' => $employee->id,
                 'posisi_lama' => $posisiLama ?? '—',
@@ -46,6 +52,10 @@ class PromotionService
             $employee->update([
                 'position' => $data['posisi_baru'],
                 'atasan' => $data['atasan_baru'] ?? $atasanLama,
+            ]);
+
+            $employee->positions()->sync([
+                $positionBaru->id => ['is_main' => true],
             ]);
 
             $employee->divisions()->sync($newDivisionIds);
@@ -87,7 +97,7 @@ class PromotionService
                     'tanggal_mulai' => $data['tanggal_efektif'],
                     'tanggal_berakhir' => $activeContract->tanggal_berakhir,
                     'status' => 'berlaku',
-                    'keterangan' => 'Addendum promosi: ' . $posisiLama . ' → ' . $data['posisi_baru'],
+                    'keterangan' => 'Addendum promosi: '.$posisiLama.' → '.$data['posisi_baru'],
                     'is_addendum' => true,
                 ]);
             }
@@ -145,7 +155,7 @@ class PromotionService
         $fullPath = Storage::disk('public')->path($path);
         $dir = dirname($fullPath);
 
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
@@ -171,6 +181,16 @@ class PromotionService
                 'position' => $promotion->posisi_lama,
                 'atasan' => $promotion->atasan_lama,
             ]);
+
+            if ($promotion->posisi_lama && $promotion->posisi_lama !== '—') {
+                $positionLama = $this->findOrCreatePosition(
+                    $promotion->posisi_lama,
+                    $divisiIdsLama[0] ?? null
+                );
+                $employee->positions()->sync([
+                    $positionLama->id => ['is_main' => true],
+                ]);
+            }
 
             $employee->divisions()->sync($divisiIdsLama);
 
@@ -224,5 +244,24 @@ class PromotionService
 
             $promotion->delete();
         });
+    }
+
+    protected function findOrCreatePosition(string $nama, ?int $divisionId): Position
+    {
+        $position = Position::where('nama', $nama)->first();
+
+        if ($position) {
+            $position->update([
+                'division_id' => $position->division_id ?? $divisionId,
+            ]);
+
+            return $position;
+        }
+
+        return Position::create([
+            'nama' => $nama,
+            'division_id' => $divisionId,
+            'is_active' => true,
+        ]);
     }
 }
