@@ -38,6 +38,14 @@ return new class extends Migration
         // Index gabungan pc_id+jadwal harus dilepas lebih dulu agar drop
         // kolom jadwal berjalan di semua driver (SQLite menolak drop column
         // yang masih menjadi bagian dari index).
+        // MySQL butuh index untuk mendukung foreign key di kolom pc_id,
+        // jadi pastikan ada index khusus pc_id sebelum index gabungan di-drop.
+        if (DB::getDriverName() === 'mysql') {
+            Schema::table('it_maintenance_schedules', function (Blueprint $table) {
+                $table->index('pc_id');
+            });
+        }
+
         Schema::table('it_maintenance_schedules', function (Blueprint $table) {
             $table->dropIndex(['pc_id', 'jadwal']);
         });

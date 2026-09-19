@@ -57,7 +57,7 @@ class MeetingController extends Controller
             fn ($m) => in_array($this->meetingSignature($m), $localSignatures, true)
         );
 
-        $meetings = $meetings->merge($externalMeetings);
+        $meetings = $meetings->concat($externalMeetings);
 
         $meetings = $meetings->map(function ($m) {
             $display = $m->status ?? 'booked';
