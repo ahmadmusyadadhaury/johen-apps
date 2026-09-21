@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Ucapan Ulang Tahun</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Pilih karyawan untuk melihat detail ucapan</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Pilih karyawan untuk melihat detail ucapan</p>
     </div>
 @endpush
 

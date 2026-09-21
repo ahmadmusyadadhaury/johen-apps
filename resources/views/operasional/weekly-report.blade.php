@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Weekly Plan Report</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Laporan rencana kerja mingguan</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Laporan rencana kerja mingguan</p>
     </div>
 @endpush
 

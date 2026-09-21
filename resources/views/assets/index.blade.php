@@ -1,10 +1,10 @@
-﻿<x-app-layout :title="$isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset')">
+<x-app-layout :title="$isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset')">
     @push('topbar-left')
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {{ $isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset') }}
             </h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $isMyAssets ? 'Menampilkan aset dengan PIC atas nama Anda' : 'Kelola data asset perusahaan' }}</p>
+            <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">{{ $isMyAssets ? 'Menampilkan aset dengan PIC atas nama Anda' : 'Kelola data asset perusahaan' }}</p>
         </div>
     @endpush
 
@@ -13,7 +13,7 @@
             $startNo = $assets instanceof \Illuminate\Pagination\LengthAwarePaginator ? ($assets->firstItem() ?: 1) : 1;
         @endphp
         @if($isSimCard)
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        <div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
@@ -71,7 +71,7 @@
             </div>
         </div>
         @elseif($isKendaraan)
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        <div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
@@ -261,7 +261,7 @@
             </div>
         </div>
         @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        <div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
             <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50 group-hover:scale-110 transition-transform duration-300">
@@ -859,7 +859,7 @@
                 <div class="max-h-[62vh] overflow-y-auto px-6 py-6 sm:px-8 sm:py-7">
                     <div x-show="loading" class="flex flex-col items-center justify-center py-16">
                         <svg class="h-9 w-9 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span class="mt-3 text-sm font-medium text-gray-400 dark:text-gray-500">Memuat detail asetâ€¦</span>
+                        <span class="mt-3 text-sm font-medium text-gray-400 dark:text-gray-500">Memuat detail aset…</span>
                     </div>
                     <template x-if="!loading && rows().length">
                         <dl class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">

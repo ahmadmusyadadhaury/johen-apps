@@ -1,13 +1,13 @@
-<x-app-layout title="Registri Aset Digital">
+<x-app-layout title="Aset Digital">
     @push('topbar-left')
         <div>
-            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Registri Aset Digital</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Data langganan & akun digital tersinkron dari server office</p>
+            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Aset Digital</h1>
+            <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">Data langganan & akun digital tersinkron dari server office</p>
         </div>
     @endpush
 
     <div class="space-y-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/30 group-hover:scale-110 transition-transform duration-300">

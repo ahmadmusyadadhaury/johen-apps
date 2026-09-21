@@ -1,7 +1,7 @@
-﻿@push('topbar-left')
+@push('topbar-left')
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Kalender Event</h1>
-            <p class="text-xs text-gray-400 mt-0.5">Kelola kegiatan event</p>
+            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Kelola kegiatan event</p>
         </div>
     @endpush
 
@@ -92,7 +92,7 @@
                     <div class="flex-shrink-0 w-1 h-10 rounded-full bg-blue-500"></div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $event->kegiatan }}
-                            @if($event->waktu_mulai) <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">· {{ $event->waktu_mulai }}@if($event->waktu_selesai)-{{ $event->waktu_selesai }}@endif</span> @endif
+                            @if($event->waktu_mulai) <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">� {{ $event->waktu_mulai }}@if($event->waktu_selesai)-{{ $event->waktu_selesai }}@endif</span> @endif
                         </p>
                         @if($event->keterangan)
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $event->keterangan }}</p>

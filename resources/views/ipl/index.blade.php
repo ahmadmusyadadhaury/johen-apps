@@ -1,8 +1,8 @@
-﻿<x-app-layout title="IPL Ruko">
+<x-app-layout title="IPL Ruko">
     @push('topbar-left')
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">IPL Ruko</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Kelola tagihan IPL Ruko</p>
+            <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">Kelola tagihan IPL Ruko</p>
         </div>
     @endpush
 

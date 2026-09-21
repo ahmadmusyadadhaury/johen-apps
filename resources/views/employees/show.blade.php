@@ -1,4 +1,4 @@
-﻿@php
+@php
     $isOwnView = $isOwnView ?? false;
     $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
     $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
@@ -27,7 +27,7 @@
         @endif
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}</h1>
-            <p class="text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : 'Kelola data personal, dokumen, dan riwayat karyawan di sini' }}</p>
+            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : 'Kelola data personal, dokumen, dan riwayat karyawan di sini' }}</p>
         </div>
     </div>
 @endpush
@@ -316,7 +316,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             this.formJabatanId = j.id;
             this.formJabatanJabatan = j.jabatan;
             this.formJabatanDivisi = j.divisi;
-            this.formJabatanAtasan = j.atasan && j.atasan !== 'â€”' ? j.atasan : '';
+            this.formJabatanAtasan = j.atasan && j.atasan !== '—' ? j.atasan : '';
             this.formJabatanMulai = j.mulai;
             this.formJabatanSelesai = j.selesai;
             this.editMasihMenjabat = !j.selesai;
@@ -342,7 +342,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                 <div class="flex items-center justify-between relative z-10 pt-6">
                     <div class="sm:ml-[164px] text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
                         @php $mainPos = $employee->mainPosition(); @endphp
-                        {{ $mainPos?->nama ?? 'â€”' }}
+                        {{ $mainPos?->nama ?? '—' }}
                         @if($employee->positions->count() > 1)
                             <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg bg-white/20 text-xs font-semibold">
                                 +{{ $employee->positions->count() - 1 }} lainnya
@@ -440,8 +440,8 @@ data-promotion-success="{{ session('promotion_success') }}"
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                         NIK <strong class="text-gray-700 dark:text-gray-200 font-semibold">{{ $employee->nik }}</strong>
-                        &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : 'â€”' }}
-                        &nbsp;&mdash;&nbsp; Divisi {{ $employee->divisionNames() ?: 'â€”' }}
+                        &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : '—' }}
+                        &nbsp;&mdash;&nbsp; Divisi {{ $employee->divisionNames() ?: '—' }}
                     </p>
                     <div class="flex items-center justify-center sm:justify-start gap-5 flex-wrap">
                         @if($employee->no_hp)
@@ -804,7 +804,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                      :class="selectedFile ? 'border-solid border-blue-300 bg-blue-50 dark:bg-blue-950' : ''">
                                     <svg class="w-[26px] h-[26px] mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
                                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Klik atau seret file ke sini</div>
-                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG â€” maks 5MB</div>
+                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG — maks 5MB</div>
                                     <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png" class="hidden"
                                            @change="selectedFile = $event.target.files[0]?.name || null">
                                 </div>
@@ -940,7 +940,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                      :class="selectedFile ? 'border-solid border-blue-300 bg-blue-50 dark:bg-blue-950' : ''">
                                     <svg class="w-[26px] h-[26px] mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
                                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Klik atau seret file ke sini</div>
-                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG â€” maks 5MB</div>
+                                    <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, JPG, atau PNG — maks 5MB</div>
                                     <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden"
                                            @change="selectedFile = $event.target.files[0]?.name || null">
                                 </div>
@@ -1133,7 +1133,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                     <div class="flex justify-between items-center">
                                         <div class="text-xs text-gray-700 dark:text-gray-300">
                                             <b class="font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</b>
-                                            <span class="text-gray-400 mx-1.5">â€”</span>
+                                            <span class="text-gray-400 mx-1.5">—</span>
                                             <span x-text="k.posisi"></span>
                                         </div>
                                         <div class="flex items-center gap-1">
@@ -1219,7 +1219,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.atasan"></td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300" x-text="j.mulai"></td>
                                         <td class="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300">
-                                            <span x-show="jabatanDaysLeft(j) === null || jabatanDaysLeft(j) > 14" x-text="j.selesai || 'â€”'"></span>
+                                            <span x-show="jabatanDaysLeft(j) === null || jabatanDaysLeft(j) > 14" x-text="j.selesai || '—'"></span>
                                             <span x-show="jabatanDaysLeft(j) !== null && jabatanDaysLeft(j) <= 14"
                                                   class="text-xs font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap"
                                                   :class="jabatanDaysLeft(j) <= 3 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'"
@@ -1285,7 +1285,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 3h4a1 1 0 0 1 1 1v4"/><path d="M9.5 13.5 11 12l4 4-1.5 1.5a2.12 2.12 0 0 1-3-3z"/><path d="m13.5 8.5-4 4a2.12 2.12 0 0 0 0 3l3 3a2.12 2.12 0 0 0 3 0l4-4a2.12 2.12 0 0 0 0-3l-3-3a2.12 2.12 0 0 0-3 0z"/></svg>
                                                     Lihat Surat
                                                 </button>
-                                                <span x-show="!p.pdf_path" class="text-xs text-gray-400 dark:text-gray-500">â€”</span>
+                                                <span x-show="!p.pdf_path" class="text-xs text-gray-400 dark:text-gray-500">—</span>
                                             </td>
                                             <td class="px-4 py-3.5 text-center">
                                                 @if($canManageEmployeeData)
@@ -1428,7 +1428,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <div class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                             NIK {{ $employee->nik }}
-                            <span class="text-gray-300 dark:text-gray-600 mx-1.5">â€¢</span>
+                            <span class="text-gray-300 dark:text-gray-600 mx-1.5">•</span>
                             <span x-text="viewKontrak?.posisi"></span>
                         </div>
                     </div>
@@ -1436,7 +1436,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <div class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Periode</div>
                         <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-0.5 whitespace-nowrap">
                             <span x-text="formatTanggalIndo(viewKontrak?.tanggal_mulai)"></span>
-                            <span class="text-gray-300 dark:text-gray-500 mx-1.5">â†’</span>
+                            <span class="text-gray-300 dark:text-gray-500 mx-1.5">→</span>
                             <span x-text="formatTanggalIndo(viewKontrak?.tanggal_berakhir)"></span>
                         </div>
                     </div>
@@ -1469,7 +1469,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             Atasan
                         </div>
-                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="viewKontrak?.atasan || 'â€”'"></div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100 mt-1.5" x-text="viewKontrak?.atasan || '—'"></div>
                     </div>
                 </div>
 
@@ -1530,7 +1530,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Surat Kontrak</h3>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         <span x-text="viewSuratKontrak?.jenis_kontrak"></span>
-                        <span class="text-gray-300 dark:text-gray-600 mx-1">â€”</span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1">—</span>
                         <span x-text="viewSuratKontrak?.posisi"></span>
                     </p>
                 </div>
@@ -1581,7 +1581,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
                               :class="viewSuratPromosi?.jenis === 'promosi' ? 'bg-green-50 text-green-700' : (viewSuratPromosi?.jenis === 'demosi' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700')"
                               x-text="viewSuratPromosi?.jenis"></span>
-                        <span class="text-gray-300 dark:text-gray-600 mx-1.5">â€”</span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1.5">—</span>
                         <span x-text="viewSuratPromosi?.posisi_lama"></span>
                         <svg class="w-3.5 h-3.5 inline mx-1 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         <span class="font-semibold" x-text="viewSuratPromosi?.posisi_baru"></span>
@@ -2072,7 +2072,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold text-white uppercase tracking-wide"
                                       x-text="formPromosiJenis"></span>
                             </div>
-                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} Â· NIK {{ $employee->nik }}</p>
+                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} · NIK {{ $employee->nik }}</p>
                         </div>
                     </div>
                     <button @click="promosiModal = false" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 text-white hover:bg-white/25 transition-all">
@@ -2103,7 +2103,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                            placeholder="Contoh: IT Manager"
                            class="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 outline-none hover:border-gray-300 dark:hover:border-gray-500 focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.25)] transition-all">
                     <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                        Posisi saat ini: <b>{{ $employee->position ?? 'â€”' }}</b>
+                        Posisi saat ini: <b>{{ $employee->position ?? '—' }}</b>
                     </p>
                 </div>
 
@@ -2125,7 +2125,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Divisi</label>
                     <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-                        Saat ini: <b>{{ $employee->divisionNames() ?: 'â€”' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
+                        Saat ini: <b>{{ $employee->divisionNames() ?: '—' }}</b>. Biarkan semua kosong untuk tetap pada divisi saat ini.
                     </p>
                     <div class="mt-1.5 grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto rounded-xl bg-gray-50 dark:bg-gray-800/50 p-2">
                         @foreach($divisions as $division)
@@ -2152,10 +2152,10 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                         <div class="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
                             <b class="font-bold">Yang akan terjadi:</b><br>
-                            â€¢ Posisi karyawan akan diperbarui<br>
-                            â€¢ Riwayat jabatan lama otomatis ditutup<br>
-                            â€¢ Kontrak addendum baru dibuat (tgl berakhir ikut kontrak lama)<br>
-                            â€¢ Surat adendum yang diunggah tersedia di tab Riwayat Jabatan
+                            • Posisi karyawan akan diperbarui<br>
+                            • Riwayat jabatan lama otomatis ditutup<br>
+                            • Kontrak addendum baru dibuat (tgl berakhir ikut kontrak lama)<br>
+                            • Surat adendum yang diunggah tersedia di tab Riwayat Jabatan
                         </div>
                     </div>
                 </div>

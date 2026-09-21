@@ -2,7 +2,7 @@
     @push('topbar-left')
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Pembayaran Internet</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Kelola tagihan WiFi dan pengecekan usage internet</p>
+            <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">Kelola tagihan WiFi dan pengecekan usage internet</p>
         </div>
     @endpush
 

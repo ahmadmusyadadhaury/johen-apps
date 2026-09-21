@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Jabatan</h1>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Kelola struktur jabatan dan hierarki di perusahaan</p>
+        <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">Kelola struktur jabatan dan hierarki di perusahaan</p>
     </div>
 @endpush
 

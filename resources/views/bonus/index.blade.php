@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Bonus &amp; Insentif</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Kelola data bonus dan insentif karyawan</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Kelola data bonus dan insentif karyawan</p>
     </div>
 @endpush
 

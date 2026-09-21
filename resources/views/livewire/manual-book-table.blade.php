@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Manual Book</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Panduan & dokumentasi</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Panduan & dokumentasi</p>
     </div>
 @endpush
 
@@ -11,7 +11,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">Koleksi panduan & dokumentasi</p>
         </div>
         @if(auth()->user()->isSuperAdminLike())
-        <button wire:click="openNew" class="btn-primary text-xs py-2">
+        <button wire:click="openNew" class="btn-primary text-xs py-2 whitespace-nowrap">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Tambah Buku
         </button>
@@ -19,21 +19,21 @@
     </div>
 
     {{-- Kategori Filter (Card) --}}
-    <div class="flex flex-wrap items-center gap-2 mb-6">
+    <div class="flex items-center gap-2 mb-6 overflow-x-auto">
         <button wire:click="$set('filterKategori', '')"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterKategori === '' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
+                class="shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterKategori === '' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
             Semua
         </button>
         @foreach($kategoriOptions as $opt)
         <button wire:click="$set('filterKategori', '{{ $opt }}')"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterKategori === $opt ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
+                class="shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterKategori === $opt ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
             {{ $opt }}
         </button>
         @endforeach
     </div>
 
     {{-- Bookshelf Grid --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
         @forelse($books as $book)
         <div class="group relative rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden">
             {{-- Thumbnail --}}

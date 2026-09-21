@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Pengumuman</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Kelola informasi & pengumuman untuk karyawan</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Kelola informasi & pengumuman untuk karyawan</p>
     </div>
 @endpush
 
@@ -70,7 +70,7 @@
                 </div>
 
                 {{-- Status Filter --}}
-                <div class="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 self-start sm:self-auto">
+                <div class="flex sm:inline-flex w-full sm:w-auto justify-center items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 self-start sm:self-auto">
                     @php $tabs = [['key' => 'semua', 'label' => 'Semua', 'count' => $statTotal], ['key' => 'publish', 'label' => 'Tayang', 'count' => $statPublished], ['key' => 'draft', 'label' => 'Draft', 'count' => $statDraft]]; @endphp
                     @foreach($tabs as $t)
                         <button wire:click="$set('statusFilter', '{{ $t['key'] }}')"

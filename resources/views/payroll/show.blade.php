@@ -163,7 +163,7 @@
     @push('topbar-left')
         <div>
             <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Detail Payroll</h1>
-            <p class="text-xs text-gray-400 mt-0.5">Periode {{ $import->periode }}</p>
+            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Periode {{ $import->periode }}</p>
         </div>
     @endpush
     @push('topbar-right')
@@ -288,5 +288,4 @@
     </div>
 
 </x-app-layout>
-
 
