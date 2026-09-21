@@ -3,7 +3,7 @@
     <div class="relative" @click="focusedId = {{ $node['id'] }}">
         @php $treeEmployees = $node['employees'] ?? collect(); @endphp
         @if($treeEmployees->count() > 1)
-            <div class="flex items-start justify-center gap-1.5 sm:gap-3">
+            <div class="flex items-start justify-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
                 @foreach($treeEmployees as $treeEmp)
                     @include('livewire.struktur-organisasi-tree-card', [
                         'cardNode' => $node,
@@ -30,19 +30,19 @@
     @if(count($node['children']) > 0)
         <template x-if="!collapsed">
             <div>
-                <div class="w-0.5 h-4 sm:h-6 bg-gray-300 dark:bg-gray-600 mx-auto"></div>
+                <div class="w-0.5 h-3 sm:h-4 md:h-5 lg:h-6 bg-gray-300 dark:bg-gray-600 mx-auto"></div>
 
-                <div class="relative flex items-start justify-center gap-3 sm:gap-6 lg:gap-10">
+                <div class="relative flex items-start justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-10">
                     @if(count($node['children']) > 1)
-                        <div class="absolute top-0 left-[8%] right-[8%] h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                        <div class="absolute top-0 left-[5%] right-[5%] h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     @endif
 
                     @foreach($node['children'] as $child)
                         <div class="flex flex-col items-center shrink-0">
                             @if(count($node['children']) > 1)
-                                <div class="w-0.5 h-4 sm:h-6 bg-gray-300 dark:bg-gray-600"></div>
+                                <div class="w-0.5 h-3 sm:h-4 md:h-5 lg:h-6 bg-gray-300 dark:bg-gray-600"></div>
                             @else
-                                <div class="h-2"></div>
+                                <div class="h-1.5 sm:h-2"></div>
                             @endif
 
                             @include('livewire.struktur-organisasi-tree', ['node' => $child, 'level' => $level + 1, 'notesByPosition' => $notesByPosition, 'myPositionId' => $myPositionId, 'canGiveNotesByPosition' => $canGiveNotesByPosition])

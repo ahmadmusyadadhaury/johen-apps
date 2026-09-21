@@ -1,5 +1,5 @@
 <div x-data="strukturOrganisasi()">
-    <div class="py-6 px-4 sm:px-8 overflow-x-auto">
+    <div class="py-4 sm:py-6 px-3 sm:px-6 md:px-8 lg:px-10 overflow-x-auto">
         {{-- Full tree view --}}
         <div x-show="!focusedId"
              x-transition:enter="transition ease-out duration-200"
@@ -31,95 +31,95 @@
              {{-- Parent --}}
              <template x-if="parent">
                  <div>
-                     <div class="flex items-start justify-center gap-2 sm:gap-3">
+                     <div class="flex items-start justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-5">
                          <template x-for="card in positionCards(parent)" :key="card.cardKey">
-                             <div :class="childCards.length > 4 ? 'w-28 sm:w-40 lg:w-48 p-2 sm:p-3 lg:p-3.5' : 'w-36 sm:w-52 lg:w-64 p-2.5 sm:p-3.5 lg:p-4'"
+                             <div :class="childCards.length > 4 ? 'w-24 sm:w-36 md:w-40 lg:w-48 p-2 sm:p-2.5 md:p-3 lg:p-3.5' : 'w-28 sm:w-44 md:w-52 lg:w-60 xl:w-64 p-2 sm:p-3 md:p-3.5 lg:p-4'"
                                   class="relative cursor-pointer rounded-xl bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-sm text-center hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-md transition-all"
                                   @click="focusedId = parent.id">
-                                 <span class="text-[8px] sm:text-[9px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Atasan</span>
+                                 <span class="text-[8px] sm:text-[9px] md:text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Atasan</span>
                                  <div class="flex items-center justify-center mb-0.5 sm:mb-1">
                                      <template x-if="card.emp && card.emp.foto_url">
                                          <img :src="card.emp.foto_url" :alt="card.emp.nama"
-                                              :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-6 h-6 sm:w-8 sm:h-8'"
-                                              class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
+                                              :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9'"
+                                              class="rounded-lg object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                                      </template>
                                      <template x-if="card.emp && !card.emp.foto_url">
-                                         <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-[11px]' : 'w-6 h-6 sm:w-8 sm:h-8 text-[11px] sm:text-[13px]'"
-                                              class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-amber-500">
+                                         <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[10px] sm:text-[11px] md:text-xs' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 text-[11px] sm:text-xs md:text-sm'"
+                                              class="flex items-center justify-center rounded-lg text-white font-bold shrink-0 bg-amber-500">
                                              <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
                                          </div>
                                      </template>
                                      <template x-if="!card.emp">
-                                         <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-[11px]' : 'w-6 h-6 sm:w-8 sm:h-8 text-[11px] sm:text-[13px]'"
-                                              class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-amber-500">
+                                         <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[10px] sm:text-[11px] md:text-xs' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 text-[11px] sm:text-xs md:text-sm'"
+                                              class="flex items-center justify-center rounded-lg text-white font-bold shrink-0 bg-amber-500">
                                              <span x-text="parent.nama.charAt(0).toUpperCase()"></span>
                                          </div>
                                      </template>
                                  </div>
-                                <p :class="childCards.length > 4 ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'" class="font-semibold text-gray-900 dark:text-gray-100 leading-tight" x-text="parent.nama"></p>
+                                <p :class="childCards.length > 4 ? 'text-[10px] sm:text-xs md:text-sm' : 'text-xs sm:text-sm md:text-sm lg:text-base'" class="font-semibold text-gray-900 dark:text-gray-100 leading-tight" x-text="parent.nama"></p>
                                 <template x-if="card.emp">
-                                    <p class="text-[8px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="card.emp.nama"></p>
+                                    <p class="text-[8px] sm:text-[10px] md:text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="card.emp.nama"></p>
                                 </template>
                                 <template x-if="!card.emp">
-                                    <p class="text-[8px] sm:text-[10px] text-gray-300 dark:text-gray-600 mt-0.5 italic">Kosong</p>
+                                    <p class="text-[8px] sm:text-[10px] md:text-xs text-gray-300 dark:text-gray-600 mt-0.5 italic">Kosong</p>
                                 </template>
                             </div>
                         </template>
                     </div>
-                    <div class="w-0.5 h-4 sm:h-6 bg-gray-300 dark:bg-gray-600 mx-auto"></div>
+                    <div class="w-0.5 h-3 sm:h-4 md:h-5 lg:h-6 bg-gray-300 dark:bg-gray-600 mx-auto"></div>
                 </div>
             </template>
 
              {{-- Focused position --}}
-             <div class="flex items-start justify-center gap-2 sm:gap-3">
+             <div class="flex items-start justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-5">
                  <template x-for="card in positionCards(focused)" :key="card.cardKey">
-                     <div :class="childCards.length > 4 ? 'w-28 sm:w-40 lg:w-48 p-2 sm:p-3 lg:p-3.5' : 'w-36 sm:w-52 lg:w-64 p-2.5 sm:p-3.5 lg:p-4'"
+                     <div :class="childCards.length > 4 ? 'w-24 sm:w-36 md:w-40 lg:w-48 p-2 sm:p-2.5 md:p-3 lg:p-3.5' : 'w-28 sm:w-44 md:w-52 lg:w-60 xl:w-64 p-2 sm:p-3 md:p-3.5 lg:p-4'"
                           class="relative rounded-xl bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-950 dark:to-blue-950 border-2 border-primary-500 shadow-lg shadow-primary-100 dark:shadow-primary-900/30 text-center ring-2 ring-primary-200 dark:ring-primary-800">
-                         <span class="text-[8px] sm:text-[9px] font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">Terfokus</span>
+                         <span class="text-[8px] sm:text-[9px] md:text-[10px] font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">Terfokus</span>
                          <div class="flex items-center justify-center mb-0.5 sm:mb-1">
                              <template x-if="card.emp && card.emp.foto_url">
                                  <img :src="card.emp.foto_url" :alt="card.emp.nama"
-                                      :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-6 h-6 sm:w-8 sm:h-8'"
-                                      class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
+                                      :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9'"
+                                      class="rounded-lg object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                              </template>
                              <template x-if="card.emp && !card.emp.foto_url">
-                                 <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-[11px]' : 'w-6 h-6 sm:w-8 sm:h-8 text-[11px] sm:text-[13px]'"
-                                      class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-primary-600">
+                                 <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[10px] sm:text-[11px] md:text-xs' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 text-[11px] sm:text-xs md:text-sm'"
+                                      class="flex items-center justify-center rounded-lg text-white font-bold shrink-0 bg-primary-600">
                                       <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
                                  </div>
                              </template>
                              <template x-if="!card.emp">
-                                 <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-[11px]' : 'w-6 h-6 sm:w-8 sm:h-8 text-[11px] sm:text-[13px]'"
-                                      class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-primary-600">
+                                 <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[10px] sm:text-[11px] md:text-xs' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 text-[11px] sm:text-xs md:text-sm'"
+                                      class="flex items-center justify-center rounded-lg text-white font-bold shrink-0 bg-primary-600">
                                       <span x-text="focused.nama.charAt(0).toUpperCase()"></span>
                                  </div>
                              </template>
                          </div>
-                         <p :class="childCards.length > 4 ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'" class="font-bold text-primary-800 dark:text-primary-200 leading-tight" x-text="focused.nama"></p>
+                         <p :class="childCards.length > 4 ? 'text-[10px] sm:text-xs md:text-sm' : 'text-xs sm:text-sm md:text-sm lg:text-base'" class="font-bold text-primary-800 dark:text-primary-200 leading-tight" x-text="focused.nama"></p>
                          <template x-if="card.emp">
-                             <p class="text-[8px] sm:text-[10px] text-primary-600 dark:text-primary-400 mt-0.5 truncate font-medium" x-text="card.emp.nama"></p>
+                             <p class="text-[8px] sm:text-[10px] md:text-xs text-primary-600 dark:text-primary-400 mt-0.5 truncate font-medium" x-text="card.emp.nama"></p>
                          </template>
                          <template x-if="!card.emp">
-                             <p class="text-[8px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic">Kosong</p>
+                             <p class="text-[8px] sm:text-[10px] md:text-xs text-gray-400 dark:text-gray-500 mt-0.5 italic">Kosong</p>
                          </template>
 
                          {{-- Note buttons for focused --}}
-                          <div class="flex items-center justify-center gap-1 sm:gap-2 mt-1.5 sm:mt-2.5">
+                          <div class="flex items-center justify-center gap-1 sm:gap-1.5 md:gap-2 mt-1.5 sm:mt-2 md:mt-2.5">
                               <template x-if="canGiveNotes[focused.id]">
                                   <button @click.stop="$wire.openNoteModal(focused.id, 'history')"
-                                          class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-[8px] sm:text-[10px] font-medium transition-colors">
-                                      <svg class="w-2 h-2 sm:w-3 sm:h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                       <span class="hidden sm:inline">Evaluasi</span>
+                                          class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 md:px-2.5 md:py-1 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-[8px] sm:text-[9px] md:text-[10px] font-medium transition-colors">
+                                      <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                       <span class="hidden md:inline">Evaluasi</span>
                                    </button>
                                    <button @click.stop="$wire.openNoteModal(focused.id, 'history')"
-                                           class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 text-[8px] sm:text-[10px] font-medium transition-colors">
-                                       <svg class="w-2 h-2 sm:w-3 sm:h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                       <span class="hidden sm:inline">Riwayat Evaluasi</span>
+                                           class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 md:px-2.5 md:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 text-[8px] sm:text-[9px] md:text-[10px] font-medium transition-colors">
+                                       <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                       <span class="hidden md:inline">Riwayat Evaluasi</span>
                                   </button>
                               </template>
                               <template x-if="!canGiveNotes[focused.id] && focused.id === myPositionId">
 <button @click.stop="$wire.openNoteModal(focused.id, 'history')"
-                                            class="relative flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[8px] sm:text-[10px] font-medium transition-colors">
+                                            class="relative flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 md:px-2.5 md:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[8px] sm:text-[9px] md:text-[10px] font-medium transition-colors">
                                        Lihat Evaluasi
                                        <template x-if="(unseenNotes[focused.id] || 0) > 0">
                                            <span class="inline-flex h-3 min-w-3 sm:h-3.5 sm:min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[7px] sm:text-[9px] font-bold leading-none text-white shadow-sm" x-text="unseenNotes[focused.id]"></span>
@@ -134,62 +134,62 @@
             {{-- Children --}}
             <template x-if="children.length > 0">
                 <div>
-                    <div class="w-0.5 h-4 sm:h-6 bg-gray-300 dark:bg-gray-600 mx-auto"></div>
-                    <div class="relative flex items-start justify-center" :class="childCards.length > 4 ? 'gap-2 sm:gap-6 lg:gap-8' : 'gap-3 sm:gap-8 lg:gap-12'">
+                    <div class="w-0.5 h-3 sm:h-4 md:h-5 lg:h-6 bg-gray-300 dark:bg-gray-600 mx-auto"></div>
+                    <div class="relative flex items-start justify-center" :class="childCards.length > 4 ? 'gap-2 sm:gap-4 md:gap-6 lg:gap-8' : 'gap-2 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-10'">
                         <template x-if="childCards.length > 1">
                             <div class="absolute top-0 left-[5%] right-[5%] h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                         </template>
                         <template x-for="card in childCards" :key="card.cardKey">
                             <div class="flex flex-col items-center shrink-0">
-                                <div class="w-0.5 h-4 sm:h-6 bg-gray-300 dark:bg-gray-600"></div>
+                                <div class="w-0.5 h-3 sm:h-4 md:h-5 lg:h-6 bg-gray-300 dark:bg-gray-600"></div>
                                  <div @click="focusedId = card.id"
-                                      :class="childCards.length > 4 ? 'w-28 sm:w-40 lg:w-48 p-2 sm:p-3 lg:p-3.5' : 'w-36 sm:w-52 lg:w-64 p-2.5 sm:p-3.5 lg:p-4'"
+                                      :class="childCards.length > 4 ? 'w-24 sm:w-36 md:w-40 lg:w-48 p-2 sm:p-2.5 md:p-3 lg:p-3.5' : 'w-28 sm:w-44 md:w-52 lg:w-60 xl:w-64 p-2 sm:p-3 md:p-3.5 lg:p-4'"
                                       class="relative cursor-pointer rounded-xl bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-sm text-center hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-md transition-all">
-                                      <span class="text-[8px] sm:text-[9px] font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">Bawahan</span>
+                                      <span class="text-[8px] sm:text-[9px] md:text-[10px] font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">Bawahan</span>
                                       <div class="flex items-center justify-center mb-0.5 sm:mb-1">
                                           <template x-if="card.emp && card.emp.foto_url">
                                               <img :src="card.emp.foto_url" :alt="card.emp.nama"
-                                                   :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-6 h-6 sm:w-8 sm:h-8'"
-                                                   class="rounded object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
+                                                   :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9'"
+                                                   class="rounded-lg object-cover bg-gray-50 dark:bg-gray-700 shrink-0 shadow-sm">
                                           </template>
                                           <template x-if="card.emp && !card.emp.foto_url">
-                                              <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-[11px]' : 'w-6 h-6 sm:w-8 sm:h-8 text-[11px] sm:text-[13px]'"
-                                                   class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-purple-500">
+                                              <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[10px] sm:text-[11px] md:text-xs' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 text-[11px] sm:text-xs md:text-sm'"
+                                                   class="flex items-center justify-center rounded-lg text-white font-bold shrink-0 bg-purple-500">
                                                   <span x-text="card.emp.nama.charAt(0).toUpperCase()"></span>
                                               </div>
                                           </template>
                                           <template x-if="!card.emp">
-                                              <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-[11px]' : 'w-6 h-6 sm:w-8 sm:h-8 text-[11px] sm:text-[13px]'"
-                                                   class="flex items-center justify-center rounded text-white font-bold shrink-0 bg-purple-500">
+                                              <div :class="childCards.length > 4 ? 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[10px] sm:text-[11px] md:text-xs' : 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 text-[11px] sm:text-xs md:text-sm'"
+                                                   class="flex items-center justify-center rounded-lg text-white font-bold shrink-0 bg-purple-500">
                                                   <span x-text="card.nama.charAt(0).toUpperCase()"></span>
                                               </div>
                                           </template>
                                       </div>
-                                     <p :class="childCards.length > 4 ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'" class="font-semibold text-gray-900 dark:text-gray-100 leading-tight" x-text="card.nama"></p>
+                                     <p :class="childCards.length > 4 ? 'text-[10px] sm:text-xs md:text-sm' : 'text-xs sm:text-sm md:text-sm lg:text-base'" class="font-semibold text-gray-900 dark:text-gray-100 leading-tight" x-text="card.nama"></p>
                                      <template x-if="card.emp">
-                                         <p class="text-[8px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="card.emp.nama"></p>
+                                         <p class="text-[8px] sm:text-[10px] md:text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="card.emp.nama"></p>
                                      </template>
                                      <template x-if="!card.emp">
-                                         <p class="text-[8px] sm:text-[10px] text-gray-300 dark:text-gray-600 mt-0.5 italic">Kosong</p>
+                                         <p class="text-[8px] sm:text-[10px] md:text-xs text-gray-300 dark:text-gray-600 mt-0.5 italic">Kosong</p>
                                      </template>
 
                                         {{-- Note buttons for child --}}
-                                       <div class="flex items-center justify-center gap-1 sm:gap-2 mt-1.5 sm:mt-2.5">
+                                       <div class="flex items-center justify-center gap-1 sm:gap-1.5 md:gap-2 mt-1.5 sm:mt-2 md:mt-2.5">
                                            <template x-if="canGiveNotes[card.id]">
                                                <button @click.stop="$wire.openNoteModal(card.id, 'history')"
-                                                       class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-[8px] sm:text-[10px] font-medium transition-colors">
-                                                   <svg class="w-2 h-2 sm:w-3 sm:h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                                    <span class="hidden sm:inline">Evaluasi</span>
+                                                       class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 md:px-2.5 md:py-1 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-[8px] sm:text-[9px] md:text-[10px] font-medium transition-colors">
+                                                   <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                                    <span class="hidden md:inline">Evaluasi</span>
                                                 </button>
                                                 <button @click.stop="$wire.openNoteModal(card.id, 'history')"
-                                                        class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 text-[8px] sm:text-[10px] font-medium transition-colors">
-                                                    <svg class="w-2 h-2 sm:w-3 sm:h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                    <span class="hidden sm:inline">Riwayat Evaluasi</span>
+                                                        class="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 md:px-2.5 md:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 text-[8px] sm:text-[9px] md:text-[10px] font-medium transition-colors">
+                                                    <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    <span class="hidden md:inline">Riwayat Evaluasi</span>
                                                </button>
                                            </template>
                                             <template x-if="!canGiveNotes[card.id] && card.id === myPositionId">
                                                 <button @click.stop="$wire.openNoteModal(card.id, 'history')"
-                                                        class="relative flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[8px] sm:text-[10px] font-medium transition-colors">
+                                                        class="relative flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 md:px-2.5 md:py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 text-[8px] sm:text-[9px] md:text-[10px] font-medium transition-colors">
                                                         Lihat Evaluasi
                                                         <template x-if="(unseenNotes[card.id] || 0) > 0">
                                                             <span class="inline-flex h-3 min-w-3 sm:h-3.5 sm:min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[7px] sm:text-[9px] font-bold leading-none text-white shadow-sm" x-text="unseenNotes[card.id]"></span>
