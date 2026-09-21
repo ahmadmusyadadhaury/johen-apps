@@ -340,7 +340,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-7 py-3 pb-5 relative">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(255,255,255,0.18),transparent_55%)] pointer-events-none"></div>
                 <div class="flex items-center justify-between relative z-10 pt-6">
-                    <div class="sm:ml-[164px] text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+                    <div class="sm:ml-[164px] text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight hidden sm:block">
                         @php $mainPos = $employee->mainPosition(); @endphp
                         {{ $mainPos?->nama ?? '—' }}
                         @if($employee->positions->count() > 1)
@@ -350,13 +350,13 @@ data-promotion-success="{{ session('promotion_success') }}"
                         @endif
                     </div>
                     <div class="flex items-center gap-2.5">
-                        @if(!$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id))
+                        @if(!$isOwnView && !$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id))
                                     <button type="button" @click="Livewire.dispatch('open-employee-edit', { employeeId: {{ $employee->id }} })" class="inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:ring-1 dark:ring-white/40 px-4 py-2 text-sm font-semibold transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Edit Informasi
                         </button>
                         @endif
-                        @if(!$isOwnReadOnly)
+                        @if(!$isOwnView && !$isOwnReadOnly)
                         <div class="relative" @click.outside="aksiOpen = false">
                             <button @click="aksiOpen = !aksiOpen" class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white border border-white/60 hover:bg-white/20 transition-all">
                                 Aksi Lainnya
@@ -418,7 +418,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     @enderror
                     @endif
                 </div>
-                <div class="text-center sm:text-left sm:pt-24 pt-4">
+                <div class="text-center sm:text-left sm:pt-24 pt-1">
                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
                         <h2 class="text-xl font-extrabold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</h2>
                         @php
@@ -438,6 +438,8 @@ data-promotion-success="{{ session('promotion_success') }}"
                             {{ $statusLabel[$employee->tipe] ?? ucfirst($employee->tipe) }}
                         </span>
                     </div>
+                    @php $mainPosMobile = $employee->mainPosition(); @endphp
+                    <p class="sm:hidden text-base font-bold text-blue-600 dark:text-blue-400 mb-2">{{ $mainPosMobile?->nama ?? '—' }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                         NIK <strong class="text-gray-700 dark:text-gray-200 font-semibold">{{ $employee->nik }}</strong>
                         &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : '—' }}
