@@ -603,7 +603,7 @@
                     <p class="text-[11px] text-gray-400 dark:text-gray-500">Karyawan & Divisi</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4 text-sm">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4 text-sm">
                 <div class="flex items-baseline gap-1">
                     <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['total_employees'] }}</span>
                     <span class="text-xs text-gray-400">Karyawan</span>
@@ -741,38 +741,38 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
-            <div class="flex items-center justify-between mb-6">
+             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-4 sm:p-8 shadow-2xl my-10">
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
-                    <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Pilih Divisi</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Klik divisi untuk melihat menu divisi</p>
+                    <h3 class="text-sm sm:text-lg font-display font-bold text-gray-900 dark:text-gray-100">Pilih Divisi</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Klik divisi untuk melihat menu divisi</p>
                 </div>
                 <button @click="openDivisiModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <a href="{{ route('hris.employees.index') }}"
-                   class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-primary-100 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 transition-all group">
+                   class="w-full flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 border-primary-100 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 transition-all group">
                     <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Semua Karyawan</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Seluruh divisi</p>
+                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">Semua Karyawan</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">Seluruh divisi</p>
                     </div>
-                    <span class="text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
+                    <span class="text-base sm:text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
                 </a>
                 <div class="my-1 flex items-center gap-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
                     <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
                     <span>Pilih Divisi</span>
                     <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2 sm:gap-3">
                 @foreach($divisionStats as $ds)
                 <a href="{{ (auth()->user()->isManager() || auth()->user()->isSuperAdmin()) ? route('hris.employees.index', ['division' => $ds['id']]) : route('dashboard.division', $ds['id']) }}"
-                   class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
+                   class="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
                     <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $ds['nama'] }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $ds['total'] }} karyawan</p>
+                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">{{ $ds['nama'] }}</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $ds['total'] }} karyawan</p>
                     </div>
-                    <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $ds['total'] }}</span>
+                    <span class="text-base sm:text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $ds['total'] }}</span>
                 </a>
                 @endforeach
             </div>
@@ -796,33 +796,33 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
-            <div class="flex items-center justify-between mb-6">
+             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-4 sm:p-8 shadow-2xl my-10">
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
-                    <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Data Aset per Kategori</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Jumlah seluruh aset</p>
+                    <h3 class="text-sm sm:text-lg font-display font-bold text-gray-900 dark:text-gray-100">Data Aset per Kategori</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Jumlah seluruh aset</p>
                 </div>
                 <button @click="openAssetModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="flex items-center justify-between p-4 rounded-xl border-2 border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                <div class="flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10 col-span-2">
                     <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Semua Kategori</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total seluruh aset</p>
+                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">Semua Kategori</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total seluruh aset</p>
                     </div>
-                    <span class="text-lg font-bold font-display text-blue-600 dark:text-blue-400">{{ $stats['total_assets'] }}</span>
+                    <span class="text-base sm:text-lg font-bold font-display text-blue-600 dark:text-blue-400">{{ $stats['total_assets'] }}</span>
                 </div>
                 @foreach($assetStats as $as)
                 @php $assetSlug = strtolower(str_replace(' ', '-', $as['nama'])); @endphp
                 <a href="{{ route('assets.category', $assetSlug === 'asset-ruko' ? 'aset-ruko' : $assetSlug) }}"
-                   class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-all group">
+                   class="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-all group">
                     <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $as['nama'] }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $as['total'] }} aset</p>
+                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">{{ $as['nama'] }}</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $as['total'] }} aset</p>
                     </div>
-                    <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $as['total'] }}</span>
+                    <span class="text-base sm:text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $as['total'] }}</span>
                 </a>
                 @endforeach
             </div>
@@ -846,46 +846,44 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
-            <div class="flex items-center justify-between mb-6">
+             @click.stop class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-4 sm:p-8 shadow-2xl my-10">
+            <button @click="openMeetingModal = false" class="absolute top-3 right-3 sm:top-4 sm:right-4 rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all z-10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
                 <div>
-                    <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Meeting per Divisi</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Total meeting per bulan</p>
+                    <h3 class="text-sm sm:text-lg font-display font-bold text-gray-900 dark:text-gray-100">Meeting per Divisi</h3>
+                    <p class="text-[11px] sm:text-sm text-gray-500 dark:text-gray-400">Total meeting per bulan</p>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div>
-                        <label for="meeting-month" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulan</label>
-                        <select id="meeting-month" x-model="meetingMonth" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-teal-500">
-                            @foreach($meetingStats['available_months'] as $month)
-                            <option value="{{ $month['key'] }}">{{ $month['label'] }} &middot; {{ $month['total'] }} meeting</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <button @click="openMeetingModal = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                <div class="flex-1 sm:flex-none sm:w-48">
+                    <label for="meeting-month" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulan</label>
+                    <select id="meeting-month" x-model="meetingMonth" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-[11px] sm:text-sm font-medium text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-teal-500">
+                        @foreach($meetingStats['available_months'] as $month)
+                        <option value="{{ $month['key'] }}">{{ $month['label'] }} &middot; {{ $month['total'] }} Meeting</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="flex items-center justify-between p-4 rounded-xl border-2 border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-900/10">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                <div class="flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-900/10 col-span-2">
                     <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Semua Divisi</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="(meetingData[meetingMonth]?.total ?? 0) + ' meeting'"></p>
+                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">Semua Divisi</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="(meetingData[meetingMonth]?.total ?? 0) + ' meeting'"></p>
                     </div>
-                    <span class="text-lg font-bold font-display text-teal-600 dark:text-teal-400" x-text="meetingData[meetingMonth]?.total ?? 0"></span>
+                    <span class="text-base sm:text-lg font-bold font-display text-teal-600 dark:text-teal-400" x-text="meetingData[meetingMonth]?.total ?? 0"></span>
                 </div>
                 <template x-if="meetingData[meetingMonth] && meetingData[meetingMonth].per_division.length === 0">
-                    <div class="flex items-center justify-center p-4 rounded-xl border border-gray-100 dark:border-gray-700 col-span-2">
-                        <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada meeting pada bulan ini.</p>
+                    <div class="flex items-center justify-center p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 col-span-2">
+                        <p class="text-xs sm:text-sm text-gray-400 dark:text-gray-500">Tidak ada meeting pada bulan ini.</p>
                     </div>
                 </template>
                 <template x-for="md in (meetingData[meetingMonth]?.per_division ?? [])" :key="md.nama">
-                    <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700">
                         <div>
-                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100" x-text="md.nama"></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="md.total + ' meeting'"></p>
+                            <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100" x-text="md.nama"></p>
+                            <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="md.total + ' meeting'"></p>
                         </div>
-                        <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100" x-text="md.total"></span>
+                        <span class="text-base sm:text-lg font-bold font-display text-gray-900 dark:text-gray-100" x-text="md.total"></span>
                     </div>
                 </template>
             </div>
