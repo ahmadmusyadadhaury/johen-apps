@@ -1,6 +1,6 @@
 @push('topbar-left')
     <div>
-        <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Jadwal Meeting</h1>
+        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Jadwal Meeting</h1>
         <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Kalender jadwal meeting</p>
     </div>
 @endpush
@@ -39,6 +39,10 @@
         'description' => $m->description ?? '-',
         'recurring_type' => $m->recurring_type,
         'recurring_day' => $m->recurring_day,
+        'recurring_start_date' => $m->recurring_start_date ?? null
+            ? (\Carbon\Carbon::parse($m->recurring_start_date)->format('Y-m-d'))
+            : null,
+        'recurring_prev_day' => $m->recurring_prev_day ?? null,
         'creator' => $m->requested_by_name ?? $m->creator?->name ?? '-',
     ])->values()->toArray();
 
@@ -236,25 +240,35 @@
                             $isCurrentMonth = $date->month === $month;
                             $dayMeetings = $meetings->filter(function ($m) use ($date) {
                                 if ($m->recurring_day) {
-                                    return strtolower($date->englishDayOfWeek) === strtolower($m->recurring_day);
+                                    $effDay = method_exists($m, 'effectiveRecurringDay') ? $m->effectiveRecurringDay($date) : null;
+                                    return strtolower($date->englishDayOfWeek) === strtolower($effDay ?? $m->recurring_day);
                                 }
                                 return $m->date && $m->date->isSameDay($date);
+                            })->sort(function ($a, $b) {
+                                $aPin = $a->recurring_type ? 0 : 1;
+                                $bPin = $b->recurring_type ? 0 : 1;
+                                if ($aPin !== $bPin) return $aPin <=> $bPin;
+                                $at = $a->start_time ? \Carbon\Carbon::parse($a->start_time)->format('H:i') : '99:99';
+                                $bt = $b->start_time ? \Carbon\Carbon::parse($b->start_time)->format('H:i') : '99:99';
+                                return $at <=> $bt;
                             });
+                            $dayMeetingIds = $dayMeetings->pluck('id')->map(fn ($id) => is_numeric($id) ? (int) $id : (string) $id)->values()->toArray();
+                            $dayLabel = $days[$date->dayOfWeek] . ', ' . $date->day . ' ' . $idMonths[$date->month - 1] . ' ' . $date->year;
                         @endphp
-                        <div class="min-h-[112px] px-1.5 pt-2 pb-1 border-r border-b border-gray-100 dark:border-gray-800 {{ $isCurrentMonth ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/70 dark:bg-gray-950/50' }} {{ $isToday ? 'bg-blue-50/70 dark:bg-blue-950/30' : '' }}">
+                        <div class="min-h-[150px] px-1.5 pt-2 pb-1 border-r border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-colors {{ $isToday ? 'bg-blue-100/80 dark:bg-blue-900/50 border-2 border-blue-500 dark:border-blue-400' : ($isCurrentMonth ? 'bg-white dark:bg-gray-900 hover:bg-blue-50/50 dark:hover:bg-blue-950/20' : 'bg-gray-50/70 dark:bg-gray-950/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20') }}" @click="$dispatch('open-day', { label: '{{ $dayLabel }}', ids: {{ json_encode($dayMeetingIds) }} })">
                             <div class="flex items-center justify-center h-6 w-6 mx-auto mb-1.5 {{ $isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : ($isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600') }}">
                                 {{ $date->day }}
                             </div>
                             <div class="space-y-1">
-                                @foreach($dayMeetings->take(3) as $meeting)
-                                    <div @click="$dispatch('open-detail', { id: {{ is_numeric($meeting->id) ? $meeting->id : json_encode($meeting->id) }} })"
+                                @foreach($dayMeetings->take(4) as $meeting)
+                                    <div @click.stop="$dispatch('open-detail', { id: {{ is_numeric($meeting->id) ? $meeting->id : json_encode($meeting->id) }} })"
                                          class="flex items-center gap-1 rounded-md border-l-2 px-1.5 py-1 text-[10px] font-medium cursor-pointer transition-all hover:shadow-sm hover:scale-[1.01] {{ $meeting->recurring_type ? $recurringChip : ($statusChip[$meeting->display_status ?? $meeting->status] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 border-gray-400 dark:text-gray-300') }}">
                                         <span class="shrink-0 font-semibold">{{ $meeting->start_time ? \Carbon\Carbon::parse($meeting->start_time)->format('H:i') : '--:--' }}</span>
                                         <span class="truncate">{{ $meeting->recurring_type ? '⟳ ' : '' }}{{ $meeting->title }}</span>
                                     </div>
                                 @endforeach
-                                @if($dayMeetings->count() > 3)
-                                    <p class="text-[10px] text-gray-400 pl-1.5">+{{ $dayMeetings->count() - 3 }} lainnya</p>
+                                @if($dayMeetings->count() > 4)
+                                    <p class="text-[10px] text-gray-400 pl-1.5">+{{ $dayMeetings->count() - 4 }} lainnya</p>
                                 @endif
                             </div>
                         </div>
@@ -286,8 +300,9 @@
                         $dayKey = $wd->isoFormat('YYYY-MM-DD');
                         $dayEvents = [];
                         foreach ($meetings as $m) {
+                            $effDay = method_exists($m, 'effectiveRecurringDay') ? $m->effectiveRecurringDay($wd) : null;
                             $occur = $m->recurring_day
-                                ? strtolower($wd->englishDayOfWeek) === strtolower($m->recurring_day)
+                                ? strtolower($wd->englishDayOfWeek) === strtolower($effDay ?? $m->recurring_day)
                                 : ($m->date ? $m->date->isSameDay($wd) : false);
                             if (!$occur) continue;
                             $start = $m->start_time ? \Carbon\Carbon::parse($m->start_time) : null;
@@ -375,7 +390,8 @@
             <div x-show="mode === 'day'" class="p-3 sm:p-4 lg:p-5">
                 @php
                     $dayMeetings = $meetings->filter(function ($m) use ($focus) {
-                        if ($m->recurring_day) return strtolower($focus->englishDayOfWeek) === strtolower($m->recurring_day);
+                        $effDay = method_exists($m, 'effectiveRecurringDay') ? $m->effectiveRecurringDay($focus) : null;
+                        if ($m->recurring_day) return strtolower($focus->englishDayOfWeek) === strtolower($effDay ?? $m->recurring_day);
                         return $m->date && $m->date->isSameDay($focus);
                     })->sortBy('start_time');
 
@@ -543,6 +559,86 @@
                 </div>
             </div>
         </div>
+
+        {{-- Day List Modal: daftar seluruh meeting per tanggal --}}
+        <div x-data="{
+                 open: false,
+                 dayLabel: '',
+                 ids: [],
+                 get dayList() {
+                     const all = {{ $meetingsJson }};
+                     return this.ids
+                         .map(id => all.find(m => m.id === id))
+                         .filter(Boolean)
+                         .sort((a, b) => ((a.recurring_type ? 0 : 1) - (b.recurring_type ? 0 : 1)) || a.start_time.localeCompare(b.start_time));
+                 },
+                 openDetail(m) {
+                     this.open = false;
+                     window.dispatchEvent(new CustomEvent('open-detail', { detail: { id: m.id } }));
+                 }
+             }"
+             @open-day.window="open = true; dayLabel = $event.detail.label; ids = $event.detail.ids"
+             x-transition:enter.opacity.duration.200ms
+             x-show="open" x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/50 backdrop-blur-sm overflow-y-auto"
+             @click="open = false">
+            <div @click.stop x-transition:enter.opacity.scale.90 x-show="open"
+                 class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-2xl shadow-gray-900/20 ring-1 ring-gray-200 dark:ring-gray-800">
+                <div class="relative px-6 pt-6 pb-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-900">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 leading-snug" x-text="dayLabel"></h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <span x-text="ids.length"></span> meeting
+                            </p>
+                        </div>
+                        <button @click="open = false"
+                                class="shrink-0 rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="px-6 py-5 space-y-2.5 max-h-[60vh] overflow-y-auto">
+                    <template x-for="m in dayList" :key="m.id">
+                        <div @click="openDetail(m)"
+                             class="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 px-3.5 py-2.5 cursor-pointer transition-all hover:shadow-sm hover:scale-[1.01]">
+                            <div class="shrink-0 text-center w-12">
+                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100" x-text="m.start_time"></p>
+                                <p class="text-[10px] text-gray-400" x-text="m.end_time"></p>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    <span x-show="m.recurring_type" class="text-purple-500">⟳ </span><span x-text="m.title"></span>
+                                </p>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="[m.room, m.team].filter(Boolean).join(' • ')"></p>
+                            </div>
+                            <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                  :class="m.status_class">
+                                <span class="h-1.5 w-1.5 rounded-full" :class="
+                                    m.status === 'completed' ? 'bg-emerald-500' :
+                                    m.status === 'cancelled' ? 'bg-red-500' :
+                                    m.status === 'booked' ? 'bg-blue-500' :
+                                    (m.status === 'ongoing' || m.status === 'queue') ? 'bg-yellow-500' : 'bg-gray-400'
+                                "></span>
+                                <span x-text="m.status_label"></span>
+                            </span>
+                        </div>
+                    </template>
+                    <div x-show="!dayList.length" class="py-10 text-center">
+                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Belum Ada Meeting</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tidak ada jadwal meeting pada hari ini</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end border-t border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 px-6 py-3.5">
+                    <button @click="open = false"
+                            class="rounded-lg bg-gray-900 dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-gray-900 transition-colors hover:bg-gray-700 dark:hover:bg-gray-200">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -554,6 +650,17 @@
             const pad = (n) => String(n).padStart(2, '0');
             const fmtDate = (d) => d && `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
             const todayDate = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+            const effectiveWeekStart = (dateStr) => {
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const dt = new Date(y, m - 1, d);
+                dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+                return fmtDate(dt);
+            };
+            const effectiveRecurringDay = (m, iso) => {
+                if (!m.recurring_day) return null;
+                if (!m.recurring_start_date) return m.recurring_day;
+                return iso >= effectiveWeekStart(m.recurring_start_date) ? m.recurring_day : (m.recurring_prev_day || m.recurring_day);
+            };
 
             return {
                 mode: @js($view),
@@ -574,7 +681,10 @@
                     const iso = fmtDate(d);
                     const dayName = DAYS_EN[d.getDay()];
                     return this.meetings.filter(m => {
-                        if (m.recurring_day) return m.recurring_day.toLowerCase() === dayName;
+                        if (m.recurring_day) {
+                            const eff = effectiveRecurringDay(m, iso);
+                            return eff && eff.toLowerCase() === dayName;
+                        }
                         return m.date === iso;
                     });
                 },

@@ -1,7 +1,7 @@
 <x-app-layout title="Pembayaran Internet">
     @push('topbar-left')
         <div>
-            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Pembayaran Internet</h1>
+            <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Pembayaran Internet</h1>
             <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">Kelola tagihan WiFi dan pengecekan usage internet</p>
         </div>
     @endpush

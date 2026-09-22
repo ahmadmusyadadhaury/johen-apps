@@ -1,6 +1,6 @@
 @push('topbar-left')
     <div>
-        <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Dashboard</h1>
         <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Ringkasan seluruh data dan aktivitas</p>
     </div>
 @endpush

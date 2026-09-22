@@ -1,6 +1,6 @@
 @push('topbar-left')
     <div>
-        <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Detail Histori Payroll</h1>
+        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Detail Histori Payroll</h1>
         <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Periode {{ $import->periode }}</p>
     </div>
 @endpush

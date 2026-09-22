@@ -26,7 +26,7 @@
         </a>
         @endif
         <div>
-            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}</h1>
+            <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}</h1>
             <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : 'Kelola data personal, dokumen, dan riwayat karyawan di sini' }}</p>
         </div>
     </div>

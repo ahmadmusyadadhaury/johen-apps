@@ -9,8 +9,8 @@
 
 @push('topbar-left')
     <div>
-        <h1 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100">Ticketing IT</h1>
-        <p class="mt-0.5 text-xs text-gray-400">Permintaan bantuan dan pekerjaan lintas divisi</p>
+        <h1 class="text-base sm:text-lg font-display font-bold text-gray-900 dark:text-gray-100 truncate">Ticketing IT</h1>
+        <p class="hidden sm:block mt-0.5 text-xs text-gray-400">Permintaan bantuan dan pekerjaan lintas divisi</p>
     </div>
 @endpush
 

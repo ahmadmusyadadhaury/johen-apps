@@ -1,7 +1,7 @@
 <x-app-layout :title="$isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset')">
     @push('topbar-left')
         <div>
-            <h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
                 {{ $isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset') }}
             </h1>
             <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">{{ $isMyAssets ? 'Menampilkan aset dengan PIC atas nama Anda' : 'Kelola data asset perusahaan' }}</p>
