@@ -55,9 +55,9 @@
     <div class="card">
         <div class="p-6">
             {{-- Meeting Info --}}
-            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30 text-center">
-                <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $currentMeeting->title }}</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $currentMeeting->meeting_date->format('d F Y') }}</p>
+            <div class="mb-6 text-center">
+                <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100">Presensi Weekly Meeting</h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $currentMeeting->meeting_date->format('d F Y') }}</p>
             </div>
 
             {{-- Status Message --}}
