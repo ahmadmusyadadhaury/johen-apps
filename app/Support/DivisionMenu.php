@@ -119,7 +119,7 @@ class DivisionMenu
                 ['label' => 'Cuti & Izin', 'route' => 'hris.cuti-izin', 'icon' => 'cuti', 'desc' => 'Pengajuan cuti dan izin'],
                 ['label' => 'Kontrak Kerja', 'route' => 'hris.kontrak-kerja', 'icon' => 'report', 'desc' => 'Data kontrak kerja karyawan'],
                 ['label' => 'Struktur Organisasi', 'route' => 'hris.struktur-organisasi', 'icon' => 'users', 'desc' => 'Bagan organisasi perusahaan'],
-                ['label' => 'Manual Book', 'route' => 'hris.manual-book', 'icon' => 'manual', 'desc' => 'Panduan penggunaan aplikasi'],
+                ['label' => 'Pelatihan', 'route' => 'hris.manual-book', 'icon' => 'manual', 'desc' => 'Panduan & video pelatihan aplikasi'],
             ],
         ],
     ];

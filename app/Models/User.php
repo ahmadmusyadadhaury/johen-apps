@@ -55,6 +55,7 @@ class User extends Authenticatable
     {
         return in_array($this->role, [
             self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN_MASTER,
             self::ROLE_KOORDINATOR,
             self::ROLE_KOORDINATOR_IT,
             self::ROLE_KOORDINATOR_CREATIVE,
@@ -110,20 +111,26 @@ class User extends Authenticatable
     public const ROLE_KOORDINATOR_STOCK = 'koordinator_stock';
     public const ROLE_STAFF_STOCK = 'staff_stock';
     public const ROLE_STAFF_HR = 'staff_hr';
+    public const ROLE_ADMIN_MASTER = 'admin_master';
 
     public function isSuperAdmin(): bool
     {
         return $this->role === self::ROLE_SUPER_ADMIN;
     }
 
-    public function isStaffHr(): bool
+    public function isAdminMaster(): bool
     {
-        return $this->role === self::ROLE_STAFF_HR;
+        return $this->role === self::ROLE_ADMIN_MASTER;
     }
 
     public function isSuperAdminLike(): bool
     {
-        return $this->isSuperAdmin() || $this->isStaffHr();
+        return $this->isSuperAdmin() || $this->isStaffHr() || $this->isAdminMaster();
+    }
+
+    public function isStaffHr(): bool
+    {
+        return $this->role === self::ROLE_STAFF_HR;
     }
 
     public function canEvaluateContract(): bool
@@ -618,6 +625,7 @@ class User extends Authenticatable
             $this->isKoordinator() => 'Koordinator',
             $this->isStaff() => 'Staff',
             $this->isSuperAdmin() => 'Super Admin',
+            $this->isAdminMaster() => 'Admin Master',
             $this->isStaffHr() => 'Staff HR',
             $this->isGmCeo() => 'GM / CEO',
             default => $this->employee?->position,
@@ -662,6 +670,7 @@ class User extends Authenticatable
 
     public const PENGUMUMAN_ADMIN_ROLES = [
         self::ROLE_SUPER_ADMIN,
+        self::ROLE_ADMIN_MASTER,
         self::ROLE_STAFF_HR,
     ];
 
@@ -690,32 +699,33 @@ class User extends Authenticatable
         self::ROLE_STAFF_HOST_ROBLOX,
         self::ROLE_STAFF_HOST_MONKEY_PUBG,
         self::ROLE_STAFF_STOCK,
+        self::ROLE_ADMIN_MASTER,
     ];
 
     public function canCreateData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
     }
 
     public function canUpdateData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_STAFF_HR]);
     }
 
     public function canDeleteData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
     }
 
     public function canViewAll(): bool
     {
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_KOORDINATOR, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_KOORDINATOR, self::ROLE_STAFF_HR]);
     }
 
     /**

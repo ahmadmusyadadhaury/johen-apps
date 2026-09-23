@@ -76,7 +76,7 @@ $activeMenu = match (true) {
     request()->routeIs('hris.influencer', 'hris.kalender-event', 'hris.content-plan') => '',
     request()->routeIs('hris.kontrak-kerja') && auth()->user()->isGmCeo() => 'operasional',
     request()->routeIs('hris.kontrak-kerja') && auth()->user()->isKoordinatorGame() => '',
-    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.pengumuman-saya', 'hris.pengarsipan', 'hris.birthday-wishes*', 'history.*') => 'operasional',
+    request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.pengumuman-saya', 'hris.pengarsipan', 'hris.birthday-wishes*', 'history.*', 'hris.weekly-meeting*') => 'operasional',
     request()->routeIs('hris.*') => 'sdm',
     request()->routeIs('bonus.*', 'reimbursement') => auth()->user()->isManager() ? 'operasional' : '',
     request()->routeIs('it.tickets.*') && !auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() && !auth()->user()->isHeadOfStore2() => 'operasional',
@@ -262,7 +262,7 @@ if ($divisionViewUser) {
                             @endif
                             @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isSuperAdminLike())
                             <a href="{{ route('hris.manual-book') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.manual-book') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                Manual Book
+                                Pelatihan
                             </a>
                             @endif
                             @if((auth()->user()->isKoordinator() || auth()->user()->isManager() || auth()->user()->isKoordinatorCreative()) && !auth()->user()->isHeadOfStore())
@@ -286,6 +286,18 @@ if ($divisionViewUser) {
                             @if(auth()->user()->isManager() && !auth()->user()->isHeadOfStore2())
                             <a href="{{ route('reimbursement') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('reimbursement') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Reimbursement
+                            </a>
+                            @endif
+                            {{-- Weekly Meeting - Admin Master --}}
+                            @if(auth()->user()->isAdminMaster())
+                            <a href="{{ route('hris.weekly-meeting.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-meeting*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Weekly Meeting
+                            </a>
+                            @endif
+                            {{-- Weekly Meeting - Other Roles (Scan QR) --}}
+                            @if(!auth()->user()->isAdminMaster())
+                            <a href="{{ route('hris.weekly-meeting.scan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-meeting.scan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Weekly Meeting
                             </a>
                             @endif
                             @if(auth()->user()->isSuperAdminLike())

@@ -23,6 +23,7 @@
                 <select wire:model.live="filterRole" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                     <option value="">Semua Role</option>
                     <option value="super_admin">Super Admin</option>
+                    <option value="admin_master">Admin Master</option>
                     <option value="gm_ceo">GM / CEO</option>
                     <option value="staff_hr">Staff HR</option>
                     <option value="manager">Manager</option>
@@ -83,6 +84,8 @@
                             <td class="table-cell">
                                 @if($u->role === 'super_admin')
                                     <span class="badge-success">Super Admin</span>
+                                @elseif($u->role === 'admin_master')
+                                    <span class="badge-success">Admin Master</span>
                                 @elseif($u->role === 'gm_ceo')
                                     <span class="badge-warning">GM / CEO</span>
                                 @elseif($u->role === 'manager')
@@ -256,6 +259,7 @@
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>
                         <option value="super_admin">Super Admin</option>
+                        <option value="admin_master">Admin Master</option>
                         <option value="staff_hr">Staff HR</option>
                     </select>
                     @error('role') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
@@ -354,6 +358,7 @@
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>
                         <option value="super_admin">Super Admin</option>
+                        <option value="admin_master">Admin Master</option>
                         <option value="staff_hr">Staff HR</option>
                     </select>
                 </div>
