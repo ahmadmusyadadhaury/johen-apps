@@ -94,8 +94,8 @@
                     <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4 text-center">QR Code untuk Absen (Bagikan ke Peserta)</h4>
                     <div class="flex flex-col items-center gap-3">
                         <div class="relative">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={{ urlencode($qrCode) }}" alt="QR Code" class="w-64 h-64 bg-white p-2 rounded-lg border border-gray-200 dark:border-gray-600 {{ $qrLocked ? 'opacity-25' : '' }}">
-                            @if($qrLocked)
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={{ urlencode($qrCode) }}" alt="QR Code" class="w-64 h-64 bg-white p-2 rounded-lg border border-gray-200 dark:border-gray-600 {{ $this->qrLocked ? 'opacity-25' : '' }}">
+                            @if($this->qrLocked)
                             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 rounded-lg">
                                 <svg class="w-8 h-8 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
                                 <p class="text-xs font-semibold text-red-500 text-center px-3">QR Code aktif 15 menit sebelum jam mulai<br>{{ $meeting->meeting_date->format('d F Y') }} - {{ $meeting->start_time->format('H:i') }}</p>
