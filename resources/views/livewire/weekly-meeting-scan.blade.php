@@ -155,11 +155,12 @@ document.addEventListener('livewire:init', () => {
     let cameraRequestId = 0;
     let pausedUntil = 0;
     let cachedLocation = '';
+    let pendingDispatch = false;
 
     // Best-effort device geolocation for the "Lokasi" column in the
-    // admin attendance table. Resolves asynchronously; we always return
-    // whatever we have (possibly empty) so scanning is never blocked.
-    function getDeviceLocation() {
+    // admin attendance table. Start the request as soon as the camera is
+    // opened so the position has time to resolve before a QR is scanned.
+    function primeLocation() {
         if (!cachedLocation && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function (pos) {
                 cachedLocation = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
@@ -167,7 +168,39 @@ document.addEventListener('livewire:init', () => {
                 cachedLocation = '';
             }, { timeout: 4000, maximumAge: 120000 });
         }
+    }
+
+    function getDeviceLocation() {
         return cachedLocation;
+    }
+
+    // When a QR is detected, if the location is not ready yet we briefly
+    // hold the scan (max ~3s) so the position gets included. If no fix is
+    // available we still dispatch so attendance is never blocked.
+    function dispatchScan(qrCode) {
+        if (pendingDispatch) return;
+        pendingDispatch = true;
+
+        const send = function (loc) {
+            pendingDispatch = false;
+            Livewire.dispatch('qrScanned', { qrCode: qrCode, deviceLocation: loc });
+        };
+
+        const location = getDeviceLocation();
+        if (location || !navigator.geolocation) {
+            send(location);
+            return;
+        }
+
+        primeLocation();
+        const start = Date.now();
+        const check = setInterval(function () {
+            const loc = getDeviceLocation();
+            if (loc || Date.now() - start > 3000) {
+                clearInterval(check);
+                send(loc);
+            }
+        }, 200);
     }
 
     // Friendly, non-technical messages for camera errors
@@ -270,10 +303,7 @@ document.addEventListener('livewire:init', () => {
                 // keeps the same QR in front of the camera.
                 if (code && code.data && now >= pausedUntil) {
                     pausedUntil = now + 2500;
-                    Livewire.dispatch('qrScanned', {
-                        qrCode: code.data,
-                        deviceLocation: getDeviceLocation()
-                    });
+                    dispatchScan(code.data);
                 }
             }
         }
@@ -289,6 +319,9 @@ document.addEventListener('livewire:init', () => {
         //    then always stop any running camera first (prevents double-camera conflict).
         const token = ++cameraRequestId;
         stopScanner();
+
+        // 1b. Kick off geolocation right away so it is ready by scan time.
+        primeLocation();
 
         // 2. Camera API needs a secure context (HTTPS / localhost).
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {

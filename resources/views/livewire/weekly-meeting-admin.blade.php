@@ -178,7 +178,8 @@
                                         </span>
                                         <span class="text-xs text-gray-400 dark:text-gray-500">· {{ ucfirst($att->method) }}</span>
                                     @else
-                                        <span class="badge-secondary">{{ ucfirst($att->method) }}</span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">Lokasi tidak terdeteksi</span>
+                                        <span class="badge-secondary ml-1.5">{{ ucfirst($att->method) }}</span>
                                     @endif
                                 </td>
                             </tr>
