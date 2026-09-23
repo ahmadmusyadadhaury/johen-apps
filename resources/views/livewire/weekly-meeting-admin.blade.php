@@ -28,7 +28,7 @@
         </button>
     </div>
     @elseif($mode === 'attendance')
-    <div class="flex items-center justify-between" wire:poll.60s="regenerateQrAuto">
+    <div class="flex items-center justify-between" wire:poll.30s="regenerateQrAuto">
         <div class="flex items-center gap-2">
             <button wire:click="backToList" class="btn-secondary text-xs">Kembali ke Daftar</button>
         </div>
@@ -102,15 +102,10 @@
                 @endphp
                 @if($qrCode)
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">QR Code untuk Absen (Bagikan ke Peserta)</h4>
-                    <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <div class="flex-shrink-0">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($qrCode) }}" alt="QR Code" class="w-48 h-48 bg-white p-2 rounded-lg border border-gray-200 dark:border-gray-600">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-mono text-gray-700 dark:text-gray-300 break-all bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">{{ $qrCode }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Peserta memindai QR ini menggunakan kamera HP di menu <strong>Operasional > Weekly Meeting</strong></p>
-                        </div>
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4 text-center">QR Code untuk Absen (Bagikan ke Peserta)</h4>
+                    <div class="flex flex-col items-center gap-3">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={{ urlencode($qrCode) }}" alt="QR Code" class="w-64 h-64 bg-white p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Peserta memindai QR ini menggunakan kamera HP di menu <strong>Operasional > Weekly Meeting</strong></p>
                     </div>
                 </div>
                 @endif
