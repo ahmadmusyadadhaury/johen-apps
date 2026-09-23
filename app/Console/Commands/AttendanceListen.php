@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SyncAttendanceToCloud;
 use App\Models\AttendancePunch;
 use App\Services\AttendanceSyncService;
 use App\Services\ZkMachine\ZkClient;
@@ -9,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 use Throwable;
 
@@ -36,22 +38,24 @@ class AttendanceListen extends Command
             try {
                 $client = new ZkClient($host, $port, $commKey, $timeout);
 
-                if (!$client->connect()) {
-                    $this->warn('[' . now()->format('H:i:s') . "] Koneksi gagal, coba lagi dalam 5 detik...");
+                if (! $client->connect()) {
+                    $this->warn('['.now()->format('H:i:s').'] Koneksi gagal, coba lagi dalam 5 detik...');
                     sleep(5);
+
                     continue;
                 }
 
                 $this->maybeCatchUp($sync, $client, $lastCatchUpAt, $catchUpEvery, $dryRun);
 
-                if (!$client->enableRealtime()) {
-                    $this->warn('[' . now()->format('H:i:s') . "] Registrasi realtime gagal, reconnect...");
+                if (! $client->enableRealtime()) {
+                    $this->warn('['.now()->format('H:i:s').'] Registrasi realtime gagal, reconnect...');
                     $client->disconnect();
                     sleep(5);
+
                     continue;
                 }
 
-                $this->info('[' . now()->format('H:i:s') . '] Terkoneksi. Menunggu event tap...');
+                $this->info('['.now()->format('H:i:s').'] Terkoneksi. Menunggu event tap...');
 
                 while (true) {
                     $this->maybeCatchUp($sync, $client, $lastCatchUpAt, $catchUpEvery, $dryRun);
@@ -59,9 +63,10 @@ class AttendanceListen extends Command
                     $event = $client->readRealtimeEvent(5);
 
                     if ($event === null) {
-                        if (!$client->isConnected()) {
+                        if (! $client->isConnected()) {
                             throw new RuntimeException('Koneksi terputus');
                         }
+
                         continue;
                     }
 
@@ -76,7 +81,7 @@ class AttendanceListen extends Command
                     }
                 }
             } catch (Throwable $e) {
-                $this->error('[' . now()->format('H:i:s') . '] Error: ' . $e->getMessage());
+                $this->error('['.now()->format('H:i:s').'] Error: '.$e->getMessage());
                 sleep(5);
             }
 
@@ -103,8 +108,8 @@ class AttendanceListen extends Command
     {
         $last = AttendancePunch::max('punch_at');
         $sinceTs = $since
-            ? strtotime($since . ' 00:00:00')
-            : strtotime(($last ? substr($last, 0, 10) : now()->toDateString()) . ' 00:00:00');
+            ? strtotime($since.' 00:00:00')
+            : strtotime(($last ? substr($last, 0, 10) : now()->toDateString()).' 00:00:00');
 
         $logs = $client->getAttendanceLogs();
         if ($logs === []) {
@@ -124,6 +129,7 @@ class AttendanceListen extends Command
         foreach ($logs as $log) {
             if (strtotime($log['record_time']) < $sinceTs) {
                 $skipped++;
+
                 continue;
             }
 
@@ -150,6 +156,10 @@ class AttendanceListen extends Command
             ));
         }
 
+        if ($new > 0) {
+            $this->requestCloudSync();
+        }
+
         if ($unmatched > 0) {
             $this->warn('Ada user mesin yang belum dipetakan ke karyawan. Jalankan `attendance:sync-users` untuk melihat daftarnya.');
         }
@@ -162,10 +172,10 @@ class AttendanceListen extends Command
             : $sync->recordPunch($event['user_id'], $event['record_time'], 'mesin');
 
         $label = match ($result['status']) {
-            'ok' => "OK",
-            'duplicate' => "DUPLIKAT",
-            'unmatched' => "TIDAK TERMAPPING",
-            'dry-run' => "DRY-RUN",
+            'ok' => 'OK',
+            'duplicate' => 'DUPLIKAT',
+            'unmatched' => 'TIDAK TERMAPPING',
+            'dry-run' => 'DRY-RUN',
             default => $result['status'],
         };
 
@@ -177,5 +187,29 @@ class AttendanceListen extends Command
             $event['record_time'],
             $event['state']
         ));
+
+        if ($result['status'] === 'ok') {
+            $this->requestCloudSync();
+        }
+    }
+
+    /**
+     * Minta sinkronisasi instan ke cloud. Dipicu dari event tap baru; job
+     * ditunda 3 detik agar tap beruntun digabung dalam satu push, dan
+     * dibatasi agar tidak membanjiri antrean.
+     */
+    private function requestCloudSync(): void
+    {
+        if (! config('services.attendance_cloud.enabled')) {
+            return;
+        }
+
+        if (Cache::has('attendance:push:queued')) {
+            return;
+        }
+
+        Cache::put('attendance:push:queued', true, now()->addSeconds(5));
+
+        SyncAttendanceToCloud::dispatch()->delay(now()->addSeconds(3));
     }
 }
