@@ -28,6 +28,27 @@ class WeeklyMeetingAdmin extends Component
     public bool $showModal = false;
     public bool $showAttendanceModal = false;
 
+    // Filter list berdasarkan bulan & tahun
+    public string $filterMonth = '';
+    public string $filterYear = '';
+
+    public function updatedFilterMonth(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterYear(): void
+    {
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->filterMonth = '';
+        $this->filterYear = '';
+        $this->resetPage();
+    }
+
     protected function rules(): array
     {
         return [
@@ -243,6 +264,8 @@ class WeeklyMeetingAdmin extends Component
     {
         return WeeklyMeeting::with(['creator', 'attendances.employee'])
             ->withCount('attendances')
+            ->when($this->filterMonth !== '', fn ($q) => $q->whereMonth('meeting_date', $this->filterMonth))
+            ->when($this->filterYear !== '', fn ($q) => $q->whereYear('meeting_date', $this->filterYear))
             ->orderBy('meeting_date', 'asc')
             ->orderBy('created_at', 'asc')
             ->paginate(10);

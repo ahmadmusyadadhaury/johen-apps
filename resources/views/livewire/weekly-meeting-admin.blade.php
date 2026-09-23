@@ -17,6 +17,34 @@
             Buat Rapat Baru
         </button>
     </div>
+
+    @php
+        $bulanList = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+        $tahunList = \App\Models\WeeklyMeeting::query()->selectRaw('YEAR(meeting_date) as y')->distinct()->orderBy('y', 'desc')->pluck('y')->toArray();
+        if (!in_array(\Carbon\Carbon::now()->year, $tahunList)) {
+            $tahunList[] = \Carbon\Carbon::now()->year;
+        }
+        rsort($tahunList);
+    @endphp
+    <div class="flex flex-wrap items-center gap-3">
+        <select wire:model.live="filterMonth" class="input-field !w-auto !py-2 text-xs">
+            <option value="">Semua Bulan</option>
+            @foreach($bulanList as $num => $nama)
+                <option value="{{ str_pad($num, 2, '0', STR_PAD_LEFT) }}">{{ $nama }}</option>
+            @endforeach
+        </select>
+        <select wire:model.live="filterYear" class="input-field !w-auto !py-2 text-xs">
+            <option value="">Semua Tahun</option>
+            @foreach($tahunList as $tahun)
+                <option value="{{ $tahun }}">{{ $tahun }}</option>
+            @endforeach
+        </select>
+        @if($filterMonth !== '' || $filterYear !== '')
+        <button wire:click="clearFilters" class="btn-ghost text-xs">
+            Reset Filter
+        </button>
+        @endif
+    </div>
     @elseif($mode === 'attendance')
     <div class="flex items-center justify-between" wire:poll.30s="regenerateQrAuto">
         <div class="flex items-center gap-2">
@@ -98,7 +126,7 @@
                             @if($this->qrLocked)
                             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 rounded-lg">
                                 <svg class="w-8 h-8 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-                                <p class="text-xs font-semibold text-red-500 text-center px-3">QR Code aktif 15 menit sebelum jam mulai<br>{{ $meeting->meeting_date->format('d F Y') }} - {{ $meeting->start_time->format('H:i') }}</p>
+                                <p class="text-[10px] font-semibold text-red-500 text-center px-3">QR Code aktif 15 menit sebelum jam mulai<br>{{ $meeting->meeting_date->format('d F Y') }} - {{ $meeting->start_time->format('H:i') }}</p>
                             </div>
                             @endif
                         </div>
