@@ -35,20 +35,22 @@ class WeeklyMeetingScan extends Component
 
     public function checkActiveMeeting(): void
     {
-        // First try: meeting for today
-        $today = Carbon::today();
-        $this->currentMeeting = WeeklyMeeting::where('meeting_date', $today)
-            ->where('is_active', true)
-            ->first();
+        $now = Carbon::now();
 
-        // Fallback: most recent active meeting (within last 7 days)
-        if (!$this->currentMeeting) {
-            $this->currentMeeting = WeeklyMeeting::where('is_active', true)
-                ->where('meeting_date', '>=', Carbon::today()->subDays(7))
-                ->orderBy('meeting_date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->first();
-        }
+        // Rapat dianggap "aktif" hanya selama jadwalnya belum lewat jam selesai:
+        // - hari ini -> masih berlaku selama end_time belum terlewati
+        // - hari berikutnya -> rapat terdekat yang masih di depan
+        // - jika semuanya sudah lewat -> null, user melihat "Belum ada weekly meeting"
+        $this->currentMeeting = WeeklyMeeting::where('is_active', true)
+            ->whereDate('meeting_date', '>=', $now->toDateString())
+            ->where(function ($query) use ($now) {
+                $query->whereDate('meeting_date', '>', $now->toDateString())
+                    ->orWhereNull('end_time')
+                    ->orWhereTime('end_time', '>', $now->toTimeString());
+            })
+            ->orderBy('meeting_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->first();
     }
 
     public function handleQrScan(string $qrCode, ?string $deviceLocation = null): void
@@ -62,7 +64,7 @@ class WeeklyMeetingScan extends Component
     {
         if (!$this->currentMeeting) {
             $this->status = 'error';
-            $this->message = 'Tidak ada rapat mingguan aktif saat ini. Rapat paling lama 7 hari lalu akan ditampilkan.';
+            $this->message = 'Belum ada weekly meeting yang tersedia untuk saat ini.';
             return;
         }
 

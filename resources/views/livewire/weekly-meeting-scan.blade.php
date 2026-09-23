@@ -22,8 +22,8 @@
             <div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mx-auto mb-4">
                 <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tidak Ada Rapat Aktif</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Saat ini tidak ada rapat mingguan yang dijadwalkan (7 hari terakhir).</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Belum ada weekly meeting</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Jadwal belum tersedia atau waktu rapat telah berakhir.</p>
             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Silakan hubungi Admin Master untuk membuat jadwal rapat baru.</p>
         </div>
     </div>
@@ -91,13 +91,13 @@
                         <span>Pilih Kamera</span>
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </button>
-                    <div x-show="open" @click.away="open = false" x-cloak class="absolute left-1/2 -translate-x-1/2 z-20 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl">
-                        <button type="button" wire:click="selectCamera('user')" @click="open = false" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <div x-show="open" @click.away="open = false" x-cloak class="absolute left-1/2 -translate-x-1/2 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl">
+                        <button type="button" wire:click="selectCamera('user')" @click="open = false" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors whitespace-nowrap">
+                            <svg class="w-5 h-5 shrink-0 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             Kamera Depan
                         </button>
-                        <button type="button" wire:click="selectCamera('environment')" @click="open = false" class="flex w-full items-center gap-3 border-t border-gray-100 dark:border-gray-700 px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <button type="button" wire:click="selectCamera('environment')" @click="open = false" class="flex w-full items-center gap-3 border-t border-gray-100 dark:border-gray-700 px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors whitespace-nowrap">
+                            <svg class="w-5 h-5 shrink-0 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             Kamera Belakang
                         </button>
                     </div>
@@ -123,19 +123,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-                        <p class="text-xs text-white/80 bg-black/50 px-3 py-1 rounded-full">Posisikan QR code di dalam kotak</p>
-                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-center gap-3">
                     <button wire:click="resetScanner" class="btn-secondary text-xs">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Ganti Kamera
-                    </button>
-                    <button wire:click="resetScanner" class="btn-secondary text-xs" id="stop-scanner-btn" style="display: none;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Hentikan Scanner
                     </button>
                 </div>
             </div>
@@ -370,15 +363,12 @@ document.addEventListener('livewire:init', () => {
             stream = null;
         }
         scanning = false;
-        const stopBtn = document.getElementById('stop-scanner-btn');
-        if (stopBtn) stopBtn.style.display = 'none';
     }
 
     // Open the device camera and attach the live stream to the preview video.
     function startScanner(facingMode, token, retries) {
         retries = retries || 0;
         const video = document.getElementById('scanner-video');
-        const stopBtn = document.getElementById('stop-scanner-btn');
 
         // A newer camera request superseded this one: abort the stale attempt.
         if (token !== cameraRequestId) return;
