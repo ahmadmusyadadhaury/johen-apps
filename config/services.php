@@ -42,6 +42,12 @@ return [
         'timeout' => env('ATTENDANCE_MACHINE_TIMEOUT', 5),
     ],
 
+    'attendance_cloud' => [
+        'url' => env('ATTENDANCE_PUSH_URL'),
+        'token' => env('ATTENDANCE_PUSH_API_TOKEN'),
+        'enabled' => env('ATTENDANCE_PUSH_ENABLED', false),
+    ],
+
     'meeting' => [
         'url' => env('MEETING_API_URL'),
         'login_path' => env('MEETING_API_LOGIN_PATH', '/api/login'),

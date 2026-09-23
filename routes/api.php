@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\Api\AssetCategoryController;
 use App\Http\Controllers\Api\AssetController;
+use App\Http\Controllers\Api\AttendanceApiController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\MeetingApiController;
 use App\Http\Controllers\Api\DigitalAssetApiController;
 use App\Http\Controllers\Api\ElectricityApiController;
 use App\Http\Controllers\Api\InternetApiController;
 use App\Http\Controllers\Api\IplRukoApiController;
 use App\Http\Controllers\Api\JadwalMeetingApiController;
+use App\Http\Controllers\Api\MeetingApiController;
 use App\Http\Controllers\Api\PaymentCategoryController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentSubmissionApiController;
@@ -25,6 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Attendance sync (di-push dari mesin kolektor lokal)
+    Route::post('/attendance/push', [AttendanceApiController::class, 'push']);
 
     // Meetings
     Route::get('/meetings', [MeetingApiController::class, 'index'])->name('api.meetings');
