@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\WeeklyMeeting;
 use App\Models\WeeklyMeetingAttendance;
 use App\Models\Employee;
+use App\Events\WeeklyMeetingAttendanceCreated;
 use Livewire\Component;
 use Carbon\Carbon;
 
@@ -84,12 +85,15 @@ class WeeklyMeetingScan extends Component
         }
 
         // Record attendance
-        WeeklyMeetingAttendance::create([
+        $attendance = WeeklyMeetingAttendance::create([
             'weekly_meeting_id' => $this->currentMeeting->id,
             'employee_id' => $employee->id,
             'attended_at' => Carbon::now(),
             'method' => 'qr_scan',
         ]);
+
+        // Broadcast real-time update to admin master
+        WeeklyMeetingAttendanceCreated::dispatch($attendance);
 
         $this->status = 'success';
         $this->message = 'Absen berhasil! Selamat datang, ' . $employee->nama;

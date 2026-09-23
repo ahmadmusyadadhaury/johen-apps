@@ -157,17 +157,14 @@ class WeeklyMeetingAdmin extends Component
     }
 
     /**
-     * Listen for real-time attendance updates via Laravel Echo/Reverb
+     * Listen for real-time attendance updates via Laravel Echo/Reverb.
+     * Livewire auto re-renders after this listener returns, so the
+     * computed attendance/meetings properties fetch fresh data.
      */
     #[On('echo:weekly-meeting.admin,WeeklyMeetingAttendanceCreated')]
     public function refreshAttendance(array $data): void
     {
-        // Only refresh if the event is for the currently viewed meeting
-        if ($this->mode === 'attendance' && $this->selectedMeetingId == ($data['meeting_id'] ?? null)) {
-            $this->dispatch('notify', type: 'info', message: "{$data['employee_name']} baru saja hadir ({$data['attended_at']})");
-            // Force re-render by touching a dummy property
-            $this->render();
-        }
+        $this->dispatch('notify', type: 'info', message: "{$data['employee_name']} baru saja hadir ({$data['attended_at']})");
     }
 
     public function getMeetingsProperty()
