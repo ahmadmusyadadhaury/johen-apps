@@ -96,7 +96,7 @@
 
     {{-- Attendance View --}}
     @if($mode === 'attendance' && $selectedMeetingId)
-    <div class="card">
+    <div class="card" wire:poll.3s="refreshAttendanceData">
         <div class="p-6">
             <div class="mb-6">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">

@@ -143,6 +143,16 @@ class WeeklyMeetingAdmin extends Component
         }
     }
 
+    /**
+     * Dipicu wire:poll.3s pada kartu absensi di mode attendance sehingga data
+     * peserta yang baru selesai scan langsung muncul tanpa refresh halaman.
+     * No-op: Livewire otomatis re-render setelah aksi, dan properti computed
+     * ($attendance) diambil fresh dari database.
+     */
+    public function refreshAttendanceData(): void
+    {
+    }
+
     public function deleteMeeting(int $meetingId): void
     {
         WeeklyMeeting::findOrFail($meetingId)->delete();
