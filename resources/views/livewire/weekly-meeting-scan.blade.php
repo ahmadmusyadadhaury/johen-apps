@@ -154,29 +154,59 @@ document.addEventListener('livewire:init', () => {
     let lastScanAt = 0;
     let cameraRequestId = 0;
     let pausedUntil = 0;
-    let cachedLocation = '';
+    let cachedCoords = '';
+    let cachedName = '';
+    let locationInFlight = false;
+    let geocodeInFlight = false;
     let pendingDispatch = false;
 
     // Best-effort device geolocation for the "Lokasi" column in the
     // admin attendance table. Start the request as soon as the camera is
     // opened so the position has time to resolve before a QR is scanned.
     function primeLocation() {
-        if (!cachedLocation && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function (pos) {
-                cachedLocation = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
-            }, function () {
-                cachedLocation = '';
-            }, { timeout: 4000, maximumAge: 120000 });
-        }
+        if (locationInFlight || cachedCoords || !navigator.geolocation) return;
+        locationInFlight = true;
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            cachedCoords = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
+            reverseGeocode(pos.coords);
+        }, function () {
+            locationInFlight = false;
+        }, { timeout: 10000, maximumAge: 120000 });
+    }
+
+    // Reverse-geocode the coordinates into a readable place name using the
+    // free OpenStreetMap Nominatim service (no API key). Falls back to the
+    // raw coordinates if it fails or the device is offline.
+    function reverseGeocode(coords) {
+        if (geocodeInFlight) return;
+        geocodeInFlight = true;
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&addressdetails=1&accept-language=id&lat='
+            + coords.latitude + '&lon=' + coords.longitude;
+        fetch(url, { headers: { 'accept-language': 'id' } })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                const a = data && data.address;
+                if (a) {
+                    const street = a.road || a.footway || a.pedestrian || a.neighbourhood || a.suburb || a.quarter || '';
+                    const area = a.village || a.town || a.city || a.state_district || '';
+                    const parts = [];
+                    if (street) parts.push(street);
+                    if (area) parts.push(area);
+                    cachedName = parts.join(', ') || data.display_name || cachedCoords;
+                }
+            })
+            .catch(function () { cachedName = ''; })
+            .finally(function () { geocodeInFlight = false; });
     }
 
     function getDeviceLocation() {
-        return cachedLocation;
+        return cachedName || cachedCoords;
     }
 
-    // When a QR is detected, if the location is not ready yet we briefly
-    // hold the scan (max ~3s) so the position gets included. If no fix is
-    // available we still dispatch so attendance is never blocked.
+    // When a QR is detected, if the location is not ready yet we hold the
+    // scan until the position (and reverse geocode) has time to resolve.
+    // If no fix is available (permission denied, no GPS, offline, etc.) we
+    // still dispatch so attendance is never blocked.
     function dispatchScan(qrCode) {
         if (pendingDispatch) return;
         pendingDispatch = true;
@@ -192,11 +222,13 @@ document.addEventListener('livewire:init', () => {
             return;
         }
 
-        primeLocation();
+        // Never (re)trigger the location permission here: it is only requested
+        // once when the meeting page opens. We simply wait for that pending
+        // request, then dispatch even if it turned out empty.
         const start = Date.now();
         const check = setInterval(function () {
             const loc = getDeviceLocation();
-            if (loc || Date.now() - start > 3000) {
+            if (loc || Date.now() - start > 15000 || (!locationInFlight && !geocodeInFlight)) {
                 clearInterval(check);
                 send(loc);
             }
@@ -311,6 +343,10 @@ document.addEventListener('livewire:init', () => {
         requestAnimationFrame(scanLoop);
     }
 
+    // The location permission prompt is only shown right here, when this
+    // meeting page opens — never again later at camera/scan time.
+    primeLocation();
+
     // Dipicu oleh `$this->dispatch('camera-selected')` dari selectCamera()
     // setelah Livewire selesai merender scanner box, jadi #scanner-video sudah
     // pasti ada di DOM sebelum kamera dinyalakan (tanpa race / tanpa @this).
@@ -319,9 +355,6 @@ document.addEventListener('livewire:init', () => {
         //    then always stop any running camera first (prevents double-camera conflict).
         const token = ++cameraRequestId;
         stopScanner();
-
-        // 1b. Kick off geolocation right away so it is ready by scan time.
-        primeLocation();
 
         // 2. Camera API needs a secure context (HTTPS / localhost).
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
