@@ -127,9 +127,59 @@ class WeeklyMeetingAdmin extends Component
         $this->dispatch('notify', type: 'success', message: 'QR Code berhasil digenerate ulang.');
     }
 
+    /**
+     * Dipanggil otomatis oleh wire:poll.60s pada mode attendance.
+     * Regenerate QR setiap menit tanpa spam notifikasi.
+     */
+    public function regenerateQrAuto(): void
+    {
+        if ($this->mode === 'attendance' && $this->selectedMeetingId) {
+            try {
+                $meeting = WeeklyMeeting::findOrFail($this->selectedMeetingId);
+                $meeting->generateQrCode();
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+    }
+
     public function deleteMeeting(int $meetingId): void
     {
         WeeklyMeeting::findOrFail($meetingId)->delete();
+        $this->dispatch('notify', type: 'success', message: 'Rapat mingguan berhasil dihapus.');
+    }
+
+    /**
+     * Livewire Live modal delete (x:confirm-delete-modal):
+     *  - confirmDelete   => buka modal konfirmasi
+     *  - cancelDelete    => batal
+     *  - executeDelete   => hapus
+     *
+     * Semua metode ini DIPANGGIL oleh komponen `confirm-delete-modal`
+     * (showDeleteConfirm / cancelDelete / executeDelete) sehingga tombol
+     * "Hapus" di bladenya selalu punya handler di sisi komponen.
+     */
+    public bool $showDeleteConfirm = false;
+    public ?int $deleteTargetId = null;
+
+    public function confirmDelete(int $meetingId): void
+    {
+        $this->deleteTargetId = $meetingId;
+        $this->showDeleteConfirm = true;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->deleteTargetId = null;
+        $this->showDeleteConfirm = false;
+    }
+
+    public function executeDelete(): void
+    {
+        if ($this->deleteTargetId) {
+            WeeklyMeeting::findOrFail($this->deleteTargetId)->delete();
+        }
+        $this->cancelDelete();
         $this->dispatch('notify', type: 'success', message: 'Rapat mingguan berhasil dihapus.');
     }
 

@@ -12,6 +12,7 @@ class WeeklyMeetingAttendance extends Model
         'employee_id',
         'attended_at',
         'method',
+        'device_location',
     ];
 
     protected $casts = [

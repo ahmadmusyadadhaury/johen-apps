@@ -5,6 +5,15 @@
     </div>
 @endpush
 
+<style>
+    @keyframes qrPop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes qrCheckDraw { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
+    @keyframes qrRing { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.45); } 70% { box-shadow: 0 0 0 22px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+    @keyframes qrPopIn { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .animate-scan-ring { animation: qrRing 1.9s ease-out infinite; }
+    .animate-scan-check { animation: qrPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .animate-scan-check .check-path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: qrCheckDraw 0.55s ease-out 0.22s forwards; }
+</style>
 <div class="space-y-4 max-w-xl mx-auto">
     @if(!$currentMeeting)
     {{-- No Active Meeting --}}
@@ -23,8 +32,8 @@
     {{-- Already Attended --}}
     <div class="card">
         <div class="p-12 text-center">
-            <div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-green-50 dark:bg-green-900/20 mx-auto mb-4">
-                <svg class="w-12 h-12 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            <div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-green-50 dark:bg-green-900/20 mx-auto mb-4 animate-scan-ring">
+                <svg class="w-12 h-12 text-green-600 dark:text-green-400 animate-scan-check" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path class="check-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Absensi Berhasil!</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">{{ $message }}</p>
@@ -138,6 +147,21 @@ document.addEventListener('livewire:init', () => {
     let lastScanAt = 0;
     let cameraRequestId = 0;
     let pausedUntil = 0;
+    let cachedLocation = '';
+
+    // Best-effort device geolocation for the "Lokasi" column in the
+    // admin attendance table. Resolves asynchronously; we always return
+    // whatever we have (possibly empty) so scanning is never blocked.
+    function getDeviceLocation() {
+        if (!cachedLocation && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                cachedLocation = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
+            }, function () {
+                cachedLocation = '';
+            }, { timeout: 4000, maximumAge: 120000 });
+        }
+        return cachedLocation;
+    }
 
     // Friendly, non-technical messages for camera errors
     const CAMERA_ERRORS = {
@@ -239,7 +263,7 @@ document.addEventListener('livewire:init', () => {
                 // keeps the same QR in front of the camera.
                 if (code && code.data && now >= pausedUntil) {
                     pausedUntil = now + 2500;
-                    @this.call('handleQrScan', code.data);
+                    @this.call('handleQrScan', code.data, getDeviceLocation());
                 }
             }
         }

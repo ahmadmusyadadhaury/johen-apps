@@ -19,6 +19,13 @@ class WeeklyMeetingScan extends Component
     public string $selectedCamera = ''; // 'user' = depan, 'environment' = belakang
     public bool $alreadyAttended = false;
 
+    /**
+     * Geolokasi device pengguna saat melakukan scan, dikirim dari
+     * navigator.geolocation via JavaScript (dengan fallback ke lokasi rapat
+     * bila GPS tidak diizinkan / tidak tersedia).
+     */
+    public ?string $deviceLocation = null;
+
     protected $listeners = ['qrScanned' => 'handleQrScan'];
 
     public function mount(): void
@@ -44,9 +51,10 @@ class WeeklyMeetingScan extends Component
         }
     }
 
-    public function handleQrScan(string $qrCode): void
+    public function handleQrScan(string $qrCode, ?string $deviceLocation = null): void
     {
         $this->scannedQr = $qrCode;
+        $this->deviceLocation = $deviceLocation;
         $this->processAttendance();
     }
 
@@ -58,7 +66,12 @@ class WeeklyMeetingScan extends Component
             return;
         }
 
-        if ($this->scannedQr !== $this->currentMeeting->qr_code) {
+        // QR diubah otomatis oleh admin (auto-regen tiap 1 menit), jadi harus
+        // selalu bandingkan dengan nilai QR paling baru dari DB, bukan yang
+        // tersimpan di memori komponen saat mount.
+        $latestQr = WeeklyMeeting::find($this->currentMeeting->id)?->qr_code;
+
+        if ($this->scannedQr !== $latestQr) {
             $this->status = 'error';
             $this->message = 'QR Code tidak valid untuk rapat ini.';
             return;
@@ -90,6 +103,7 @@ class WeeklyMeetingScan extends Component
             'employee_id' => $employee->id,
             'attended_at' => Carbon::now(),
             'method' => 'qr_scan',
+            'device_location' => $this->deviceLocation,
         ]);
 
         // Broadcast real-time update to admin master.

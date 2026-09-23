@@ -28,15 +28,12 @@
         </button>
     </div>
     @elseif($mode === 'attendance')
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between" wire:poll.60s="regenerateQrAuto">
         <div>
             <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Absensi Rapat: {{ $meetings->firstWhere('id', $selectedMeetingId)?->title ?? 'Rapat' }}</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">QR Code diperbarui otomatis setiap 1 menit.</p>
         </div>
         <div class="flex items-center gap-2">
-            <button wire:click="generateQrCode" class="btn-secondary text-xs">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                Regenerate QR
-            </button>
             <button wire:click="$set('mode', 'list')" class="btn-secondary text-xs">Kembali ke Daftar</button>
         </div>
     </div>
@@ -162,7 +159,7 @@
                             <th class="px-6 py-3">NIK</th>
                             <th class="px-6 py-3">Divisi</th>
                             <th class="px-6 py-3">Waktu Absen</th>
-                            <th class="px-6 py-3">Metode</th>
+                            <th class="px-6 py-3">Lokasi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -174,7 +171,15 @@
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->employee->divisionNames() ?: '-' }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->attended_at->format('H:i:s') }}</td>
                                 <td class="table-cell">
-                                    <span class="badge-secondary">{{ ucfirst($att->method) }}</span>
+                                    @if($att->device_location)
+                                        <span class="badge-secondary inline-flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            {{ $att->device_location }}
+                                        </span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">· {{ ucfirst($att->method) }}</span>
+                                    @else
+                                        <span class="badge-secondary">{{ ucfirst($att->method) }}</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
