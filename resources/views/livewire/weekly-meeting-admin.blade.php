@@ -112,9 +112,9 @@
             </div>
 
             {{-- Attendance List --}}
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto max-h-[24rem]">
                 <table class="w-full text-sm">
-                    <thead>
+                    <thead class="sticky top-0 z-10">
                         <tr class="table-header">
                             <th class="px-6 py-3 w-12 text-center">No</th>
                             <th class="px-6 py-3">Nama</th>
