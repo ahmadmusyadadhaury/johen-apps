@@ -92,8 +92,14 @@ class WeeklyMeetingScan extends Component
             'method' => 'qr_scan',
         ]);
 
-        // Broadcast real-time update to admin master
-        WeeklyMeetingAttendanceCreated::dispatch($attendance);
+        // Broadcast real-time update to admin master.
+        // ShouldBroadcastNow -> synchronous delivery to Reverb for instant UI refresh.
+        // Wrapped in try/catch so a Reverb outage never breaks the scan flow.
+        try {
+            WeeklyMeetingAttendanceCreated::dispatch($attendance);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $this->status = 'success';
         $this->message = 'Absen berhasil! Selamat datang, ' . $employee->nama;

@@ -75,7 +75,13 @@ class WeeklyMeetingController extends Controller
         ]);
 
         // Broadcast real-time update to admin master
-        WeeklyMeetingAttendanceCreated::dispatch($attendance);
+        // ShouldBroadcastNow -> synchronous delivery to Reverb; try/catch so an
+        // outage never breaks the attend response after the record is already saved.
+        try {
+            WeeklyMeetingAttendanceCreated::dispatch($attendance);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return response()->json([
             'success' => true,
