@@ -159,19 +159,69 @@ document.addEventListener('livewire:init', () => {
     let locationInFlight = false;
     let geocodeInFlight = false;
     let pendingDispatch = false;
+    let locationDenied = false;
 
-    // Best-effort device geolocation for the "Lokasi" column in the
-    // admin attendance table. Start the request as soon as the camera is
-    // opened so the position has time to resolve before a QR is scanned.
-    function primeLocation() {
+    // Request device geolocation for the "Lokasi" column in the admin
+    // attendance table. Shown when the Weekly Meeting menu (scan page) opens,
+    // and again whenever the user scans a QR without location enabled yet.
+    function requestLocation(showToast) {
         if (locationInFlight || cachedCoords || !navigator.geolocation) return;
+
+        if (locationDenied) {
+            // Browser tidak akan memunculkan prompt lagi setelah izin ditolak
+            // permanen — beri tahu user cara mengaktifkannya.
+            if (showToast) Livewire.dispatch('notify', {
+                type: 'error',
+                message: 'Izin lokasi belum aktif. Aktifkan lokasi pada pengaturan browser/perangkat, lalu scan ulang QR.'
+            });
+            return;
+        }
+
+        // Chrome Android kerap mengabaikan permintaan geolokasi yang dikirim
+        // saat tab belum terlihat (proses load awal), sehingga prompt tidak
+        // muncul. Tunggu sampai halaman benar-benar tampak dulu.
+        if (document.visibilityState && document.visibilityState !== 'visible') {
+            document.addEventListener('visibilitychange', function onVis() {
+                if (document.visibilityState === 'visible') {
+                    document.removeEventListener('visibilitychange', onVis);
+                    requestLocation(showToast);
+                }
+            });
+            return;
+        }
+
         locationInFlight = true;
-        navigator.geolocation.getCurrentPosition(function (pos) {
-            cachedCoords = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
-            reverseGeocode(pos.coords);
-        }, function () {
-            locationInFlight = false;
-        }, { timeout: 10000, maximumAge: 120000 });
+
+        const askPosition = function () {
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                cachedCoords = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
+                reverseGeocode(pos.coords);
+            }, function (err) {
+                locationInFlight = false;
+                if (err && err.code === 1) locationDenied = true;
+            }, { timeout: 20000, maximumAge: 120000 });
+        };
+
+        // Pakai Permission API bila tersedia: kalau sudah ditolak permanen,
+        // prompt tidak akan muncul lagi walau dipanggil berkali-kali.
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function (status) {
+                if (status.state === 'denied') {
+                    locationInFlight = false;
+                    locationDenied = true;
+                    if (showToast) Livewire.dispatch('notify', {
+                        type: 'error',
+                        message: 'Izin lokasi belum aktif. Aktifkan lokasi pada pengaturan browser/perangkat, lalu scan ulang QR.'
+                    });
+                    return;
+                }
+                askPosition();
+            }).catch(function () {
+                askPosition();
+            });
+        } else {
+            askPosition();
+        }
     }
 
     // Reverse-geocode the coordinates into a readable place name using the
@@ -203,10 +253,10 @@ document.addEventListener('livewire:init', () => {
         return cachedName || cachedCoords;
     }
 
-    // When a QR is detected, if the location is not ready yet we hold the
-    // scan until the position (and reverse geocode) has time to resolve.
-    // If no fix is available (permission denied, no GPS, offline, etc.) we
-    // still dispatch so attendance is never blocked.
+    // Pengguna hanya boleh absen (scan QR) setelah lokasi aktif. Ketika QR
+    // terdeteksi tapi lokasi belum didapat, minta izin lagi sekarang dan tunda
+    // pengiriman sampai posisi tersedia. Kalau belum mengizinkan, prompt
+    // muncul lagi setiap kali user scan ulang.
     function dispatchScan(qrCode) {
         if (pendingDispatch) return;
         pendingDispatch = true;
@@ -217,22 +267,37 @@ document.addEventListener('livewire:init', () => {
         };
 
         const location = getDeviceLocation();
-        if (location || !navigator.geolocation) {
+        if (location) {
             send(location);
             return;
         }
 
-        // Never (re)trigger the location permission here: it is only requested
-        // once when the meeting page opens. We simply wait for that pending
-        // request, then dispatch even if it turned out empty.
+        if (!navigator.geolocation) {
+            pendingDispatch = false;
+            Livewire.dispatch('notify', {
+                type: 'error',
+                message: 'Perangkat tidak mendukung lokasi. Aktifkan lokasi untuk melakukan absensi QR.'
+            });
+            return;
+        }
+
+        requestLocation(true);
+
         const start = Date.now();
         const check = setInterval(function () {
             const loc = getDeviceLocation();
-            if (loc || Date.now() - start > 15000 || (!locationInFlight && !geocodeInFlight)) {
+            if (loc) {
                 clearInterval(check);
                 send(loc);
+            } else if (locationDenied || Date.now() - start > 60000) {
+                clearInterval(check);
+                pendingDispatch = false;
+                if (!locationDenied) Livewire.dispatch('notify', {
+                    type: 'error',
+                    message: 'Lokasi belum aktif. Aktifkan lokasi, lalu scan ulang QR.'
+                });
             }
-        }, 200);
+        }, 400);
     }
 
     // Friendly, non-technical messages for camera errors
@@ -343,9 +408,16 @@ document.addEventListener('livewire:init', () => {
         requestAnimationFrame(scanLoop);
     }
 
-    // The location permission prompt is only shown right here, when this
-    // meeting page opens — never again later at camera/scan time.
-    primeLocation();
+    // The location permission prompt is shown right here, when this meeting
+    // page (menu Weekly Meeting) opens — and again at scan time until the
+    // user enables location.
+    requestLocation(false);
+
+    // Jaga agar prompt muncul konsisten: jika panggilan pertama dibuang browser
+    // (mis. tab masih loading), coba sekali lagi sesaat kemudian.
+    setTimeout(function () {
+        if (!cachedCoords) requestLocation(false);
+    }, 1500);
 
     // Dipicu oleh `$this->dispatch('camera-selected')` dari selectCamera()
     // setelah Livewire selesai merender scanner box, jadi #scanner-video sudah
