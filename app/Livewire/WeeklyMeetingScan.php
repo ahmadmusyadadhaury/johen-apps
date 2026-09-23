@@ -125,6 +125,10 @@ class WeeklyMeetingScan extends Component
     {
         $this->selectedCamera = $camera;
         $this->showScanner = true;
+
+        // Beri tahu client bahwa scanner box sudah dirender (#scanner-video ada
+        // di DOM) sehingga kamera bisa dinyalakan tanpa race/hilang video.
+        $this->dispatch('camera-selected', camera: $camera);
     }
 
     public function resetScanner(): void

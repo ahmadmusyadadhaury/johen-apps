@@ -5,6 +5,7 @@
     </div>
 @endpush
 
+<div class="space-y-4 max-w-xl mx-auto">
 <style>
     @keyframes qrPop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
     @keyframes qrCheckDraw { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
@@ -14,7 +15,6 @@
     .animate-scan-check { animation: qrPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
     .animate-scan-check .check-path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: qrCheckDraw 0.55s ease-out 0.22s forwards; }
 </style>
-<div class="space-y-4 max-w-xl mx-auto">
     @if(!$currentMeeting)
     {{-- No Active Meeting --}}
     <div class="card">
@@ -86,15 +86,22 @@
             @if(!$selectedCamera)
             <div class="mb-6 text-center">
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Pilih kamera untuk mulai memindai QR Code absensi:</p>
-                <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-                    <button type="button" onclick="window.openScanCamera && window.openScanCamera('user')" class="flex flex-col items-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all p-5">
-                        <svg class="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Kamera Depan</span>
+                <div x-data="{ open: false }" class="relative inline-block text-left">
+                    <button type="button" @click="open = !open" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>Pilih Kamera</span>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </button>
-                    <button type="button" onclick="window.openScanCamera && window.openScanCamera('environment')" class="flex flex-col items-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all p-5">
-                        <svg class="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Kamera Belakang</span>
-                    </button>
+                    <div x-show="open" @click.away="open = false" x-cloak class="absolute left-1/2 -translate-x-1/2 z-20 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl">
+                        <button type="button" wire:click="selectCamera('user')" @click="open = false" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Kamera Depan
+                        </button>
+                        <button type="button" wire:click="selectCamera('environment')" @click="open = false" class="flex w-full items-center gap-3 border-t border-gray-100 dark:border-gray-700 px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Kamera Belakang
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -263,7 +270,10 @@ document.addEventListener('livewire:init', () => {
                 // keeps the same QR in front of the camera.
                 if (code && code.data && now >= pausedUntil) {
                     pausedUntil = now + 2500;
-                    @this.call('handleQrScan', code.data, getDeviceLocation());
+                    Livewire.dispatch('qrScanned', {
+                        qrCode: code.data,
+                        deviceLocation: getDeviceLocation()
+                    });
                 }
             }
         }
@@ -271,8 +281,10 @@ document.addEventListener('livewire:init', () => {
         requestAnimationFrame(scanLoop);
     }
 
-    // Called when the user taps "Kamera Depan" / "Kamera Belakang".
-    window.openScanCamera = function (facingMode) {
+    // Dipicu oleh `$this->dispatch('camera-selected')` dari selectCamera()
+    // setelah Livewire selesai merender scanner box, jadi #scanner-video sudah
+    // pasti ada di DOM sebelum kamera dinyalakan (tanpa race / tanpa @this).
+    Livewire.on('camera-selected', ({ camera }) => {
         // 1. Bump the request id so any older/in-flight camera attempt is discarded,
         //    then always stop any running camera first (prevents double-camera conflict).
         const token = ++cameraRequestId;
@@ -288,19 +300,9 @@ document.addEventListener('livewire:init', () => {
             return;
         }
 
-        // 3. Sync server state so the scanner box renders, wait for the DOM
-        //    to be updated, then start the real camera.
-        var request = @this.call('selectCamera', facingMode);
-        if (request && typeof request.then === 'function') {
-            request.then(function () {
-                setTimeout(function () { startScanner(facingMode, token); }, 100);
-            }).catch(function (err) {
-                console.error('[WeeklyMeetingScan] selectCamera failed:', err);
-            });
-        } else {
-            setTimeout(function () { startScanner(facingMode, token); }, 100);
-        }
-    };
+        // 3. Open the requested camera and start scanning.
+        startScanner(camera, token);
+    });
 
     // Stop the camera whenever the scanner node leaves the page (success,
     // "Ganti Kamera", component destroyed) so the camera light turns off.
