@@ -42,11 +42,11 @@ class AttendancePush extends Command
         }
 
         if ($dryRun) {
-            $query->with('employee:id,name,nik')
+            $query->with('employee:id,nama,nik')
                 ->take(10)
                 ->get()
                 ->each(fn (AttendancePunch $p) => $this->line(
-                    sprintf('  %s | %s | %s | %s', $p->punch_at?->format('Y-m-d H:i:s'), $p->machine_user_id, $p->employee?->name ?? '(belum termapping)', $p->method)
+                    sprintf('  %s | %s | %s | %s', $p->punch_at?->format('Y-m-d H:i:s'), $p->machine_user_id, $p->employee?->nama ?? '(belum termapping)', $p->method)
                 ));
 
             $this->warn('DRY RUN — tidak ada data yang dikirim.');
