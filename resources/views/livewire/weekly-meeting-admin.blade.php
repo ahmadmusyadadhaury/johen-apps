@@ -30,7 +30,7 @@
     @elseif($mode === 'attendance')
     <div class="flex items-center justify-between" wire:poll.60s="regenerateQrAuto">
         <div class="flex items-center gap-2">
-            <button wire:click="$set('mode', 'list')" class="btn-secondary text-xs">Kembali ke Daftar</button>
+            <button wire:click="backToList" class="btn-secondary text-xs">Kembali ke Daftar</button>
         </div>
     </div>
     @endif

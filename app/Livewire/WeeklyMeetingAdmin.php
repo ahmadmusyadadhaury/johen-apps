@@ -116,8 +116,15 @@ class WeeklyMeetingAdmin extends Component
 
     public function viewAttendance(int $meetingId): void
     {
-        $this->selectedMeetingId = $meetingId;
-        $this->mode = 'attendance';
+        // Navigasi ke rute detail attendance agar URL ikut berubah. Dengan
+        // begitu ketika halaman di-refresh, user tetap di halaman detail
+        // (yang berisi QR) bukan kembali ke daftar.
+        $this->redirectRoute('hris.weekly-meeting.attendance', ['weeklyMeeting' => $meetingId]);
+    }
+
+    public function backToList(): void
+    {
+        $this->redirectRoute('hris.weekly-meeting.index');
     }
 
     public function generateQrCode(): void
