@@ -29,10 +29,6 @@
     </div>
     @elseif($mode === 'attendance')
     <div class="flex items-center justify-between" wire:poll.60s="regenerateQrAuto">
-        <div>
-            <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Absensi Rapat: {{ $meetings->firstWhere('id', $selectedMeetingId)?->title ?? 'Rapat' }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">QR Code diperbarui otomatis setiap 1 menit.</p>
-        </div>
         <div class="flex items-center gap-2">
             <button wire:click="$set('mode', 'list')" class="btn-secondary text-xs">Kembali ke Daftar</button>
         </div>
@@ -99,35 +95,6 @@
     <div class="card" wire:poll.3s="refreshAttendanceData">
         <div class="p-6">
             <div class="mb-6">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $meetings->firstWhere('id', $selectedMeetingId)?->title }}</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {{ $meetings->firstWhere('id', $selectedMeetingId)?->meeting_date->format('d F Y') }}
-                            @if($meetings->firstWhere('id', $selectedMeetingId)?->start_time)
-                                , {{ $meetings->firstWhere('id', $selectedMeetingId)?->start_time->format('H:i') }} - {{ $meetings->firstWhere('id', $selectedMeetingId)?->end_time->format('H:i') }}
-                            @endif
-                            @if($meetings->firstWhere('id', $selectedMeetingId)?->location)
-                                @ {{ $meetings->firstWhere('id', $selectedMeetingId)?->location }}
-                            @endif
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $attendance->count() }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Hadir</div>
-                        </div>
-                        <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ $totalEmployees - $attendance->count() }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Belum Hadir</div>
-                        </div>
-                        <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalEmployees }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Total Karyawan</div>
-                        </div>
-                    </div>
-                </div>
-
                 {{-- QR Code Display --}}
                 @php
                     $meeting = $meetings->firstWhere('id', $selectedMeetingId);

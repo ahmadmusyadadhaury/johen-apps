@@ -161,6 +161,33 @@ document.addEventListener('livewire:init', () => {
     let pendingDispatch = false;
     let locationDenied = false;
 
+    // Lokasi kantor tetap: label ini selalu dipakai saat GPS koordinator
+    // berada di dalam radius titik tersebut, menggantikan nama acak dari
+    // reverse-geocode yang kadang tidak konsisten.
+    const FIXED_SPOTS = [
+        { name: 'Topaz Commercial, Kota Bandung', lat: -6.959635, lon: 107.698876, radius: 500 },
+        { name: 'Jl Bulevar Raya, Kota Bandung', lat: -6.962124, lon: 107.704894, radius: 500 }
+    ];
+
+    function distanceMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const toRad = function (d) { return d * Math.PI / 180; };
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const s = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * R * Math.asin(Math.sqrt(s));
+    }
+
+    function matchFixedSpot(lat, lon) {
+        for (let i = 0; i < FIXED_SPOTS.length; i++) {
+            if (distanceMeters(lat, lon, FIXED_SPOTS[i].lat, FIXED_SPOTS[i].lon) <= FIXED_SPOTS[i].radius) {
+                return FIXED_SPOTS[i].name;
+            }
+        }
+        return '';
+    }
+
     function notifyLocationBlocked(showToast) {
         if (!showToast) return;
         Livewire.dispatch('notify', {
@@ -201,7 +228,12 @@ document.addEventListener('livewire:init', () => {
         locationInFlight = true;
         navigator.geolocation.getCurrentPosition(function (pos) {
             cachedCoords = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
-            reverseGeocode(pos.coords);
+            const spot = matchFixedSpot(pos.coords.latitude, pos.coords.longitude);
+            if (spot) {
+                cachedName = spot;
+            } else {
+                reverseGeocode(pos.coords);
+            }
         }, function (err) {
             locationInFlight = false;
             if (err && err.code === 1) {
@@ -253,7 +285,17 @@ document.addEventListener('livewire:init', () => {
     }
 
     function getDeviceLocation() {
-        return cachedName || cachedCoords;
+        if (cachedName) return cachedName;
+        if (cachedCoords) {
+            // Fallback: kalau nama belum siap, pastikan koordinat di dekat
+            // lokasi kantor tetap tetap memakai label yang sudah ditentukan.
+            const p = cachedCoords.split(', ');
+            if (p.length === 2) {
+                const spot = matchFixedSpot(parseFloat(p[0]), parseFloat(p[1]));
+                if (spot) return spot;
+            }
+        }
+        return cachedCoords;
     }
 
     // Pengguna hanya boleh absen (scan QR) setelah lokasi aktif. Ketika QR
