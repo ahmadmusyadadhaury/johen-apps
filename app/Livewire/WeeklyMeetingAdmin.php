@@ -243,8 +243,8 @@ class WeeklyMeetingAdmin extends Component
     {
         return WeeklyMeeting::with(['creator', 'attendances.employee'])
             ->withCount('attendances')
-            ->orderBy('meeting_date', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('meeting_date', 'asc')
+            ->orderBy('created_at', 'asc')
             ->paginate(10);
     }
 
@@ -261,6 +261,29 @@ class WeeklyMeetingAdmin extends Component
     public function getTotalEmployeesProperty(): int
     {
         return Employee::where('tipe', Employee::TIPE_KARYAWAN_AKTIF)->count();
+    }
+
+    /**
+     * QR Code "terkunci" (overlay hitam) selama belum mendekati jadwal rapat,
+     * yaitu sebelum 15 menit jelang jam mulai pada hari jadwal. Status ini
+     * dihitung fresh tiap render sehingga otomatis terbuka saat polling
+     * 3 detik masuk jendela aktif.
+     */
+    public function getQrLockedProperty(): bool
+    {
+        if (!$this->selectedMeetingId) {
+            return false;
+        }
+
+        $meeting = WeeklyMeeting::find($this->selectedMeetingId);
+
+        if (!$meeting || !$meeting->start_time) {
+            return false;
+        }
+
+        $startAt = Carbon::parse($meeting->meeting_date->toDateString() . ' ' . $meeting->start_time->format('H:i'))->subMinutes(15);
+
+        return Carbon::now()->lt($startAt);
     }
 
     public function render()
