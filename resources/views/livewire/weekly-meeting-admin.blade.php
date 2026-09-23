@@ -17,16 +17,6 @@
             Buat Rapat Baru
         </button>
     </div>
-    @elseif($mode === 'create')
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $selectedMeetingId ? 'Edit Rapat' : 'Buat Rapat Baru' }}</h2>
-        </div>
-        <button wire:click="closeModal" class="btn-secondary text-xs">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            Kembali
-        </button>
-    </div>
     @elseif($mode === 'attendance')
     <div class="flex items-center justify-between" wire:poll.30s="regenerateQrAuto">
         <div class="flex items-center gap-2">
@@ -36,46 +26,46 @@
     @endif
 
     {{-- Create/Edit Modal --}}
-    @if($mode === 'create')
-    <div class="card">
+    <x-modal name="meeting-form" :show="$showModal" maxWidth="2xl">
         <div class="p-6">
-            <form wire:submit.prevent="{{ $selectedMeetingId ? 'updateMeeting' : 'createMeeting' }}" class="space-y-4 max-w-2xl">
+            <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">{{ $selectedMeetingId ? 'Edit Rapat' : 'Buat Rapat Baru' }}</h3>
+                <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form wire:submit.prevent="{{ $selectedMeetingId ? 'updateMeeting' : 'createMeeting' }}" class="space-y-4">
+                <div>
+                    <x-input-label for="meeting_date" value="Tanggal Rapat *" />
+                    <x-text-input id="meeting_date" wire:model="meeting_date" type="date" class="mt-1 block w-full" />
+                    @error('meeting_date') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <x-input-label for="title" value="Judul Rapat *" />
+                    <x-text-input id="title" wire:model="title" type="text" class="mt-1 block w-full" :disabled="! $selectedMeetingId" />
+                    @error('title') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <x-input-label for="title" value="Judul Rapat *" />
-                        <x-text-input id="title" wire:model="title" type="text" class="mt-1 block w-full" placeholder="Contoh: Rapat Mingguan Divisi Creative" />
-                        @error('title') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <x-input-label for="meeting_date" value="Tanggal Rapat *" />
-                        <x-text-input id="meeting_date" wire:model="meeting_date" type="date" class="mt-1 block w-full" />
-                        @error('meeting_date') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
                     <div>
                         <x-input-label for="start_time" value="Jam Mulai" />
-                        <x-text-input id="start_time" wire:model="start_time" type="time" class="mt-1 block w-full" />
+                        <x-text-input id="start_time" wire:model="start_time" type="time" class="mt-1 block w-full" :disabled="! $selectedMeetingId" />
                         @error('start_time') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <x-input-label for="end_time" value="Jam Selesai" />
-                        <x-text-input id="end_time" wire:model="end_time" type="time" class="mt-1 block w-full" />
+                        <x-text-input id="end_time" wire:model="end_time" type="time" class="mt-1 block w-full" :disabled="! $selectedMeetingId" />
                         @error('end_time') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
+                </div>
 
-                    <div class="md:col-span-2">
-                        <x-input-label for="location" value="Lokasi" />
-                        <x-text-input id="location" wire:model="location" type="text" class="mt-1 block w-full" placeholder="Contoh: Ruang Rapat Lt. 2 / Zoom Meeting" />
-                        @error('location') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <x-input-label for="description" value="Deskripsi / Agenda" />
-                        <textarea id="description" wire:model="description" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" placeholder="Agenda rapat, catatan, atau informasi tambahan..."></textarea>
-                        @error('description') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                <div>
+                    <x-input-label for="location" value="Lokasi" />
+                    <x-text-input id="location" wire:model="location" type="text" class="mt-1 block w-full" :disabled="! $selectedMeetingId" />
+                    @error('location') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -87,8 +77,7 @@
                 </div>
             </form>
         </div>
-    </div>
-    @endif
+    </x-modal>
 
     {{-- Attendance View --}}
     @if($mode === 'attendance' && $selectedMeetingId)

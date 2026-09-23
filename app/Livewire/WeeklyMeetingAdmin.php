@@ -18,11 +18,11 @@ class WeeklyMeetingAdmin extends Component
     public ?int $selectedMeetingId = null;
 
     // Form fields
-    public string $title = '';
+    public string $title = 'Weekly Meeting';
     public string $meeting_date = '';
-    public string $start_time = '';
-    public string $end_time = '';
-    public string $location = '';
+    public string $start_time = '13:00';
+    public string $end_time = '14:30';
+    public string $location = 'Ruangan Meeting Lantai 1';
     public string $description = '';
 
     public bool $showModal = false;
@@ -43,13 +43,13 @@ class WeeklyMeetingAdmin extends Component
     public function mount(?WeeklyMeeting $weeklyMeeting = null): void
     {
         $this->meeting_date = Carbon::today()->format('Y-m-d');
-        $this->start_time = '09:00';
-        $this->end_time = '11:00';
+        $this->start_time = '13:00';
+        $this->end_time = '14:30';
 
         $routeName = request()->route()->getName() ?? '';
 
         if (str_contains($routeName, '.create')) {
-            $this->mode = 'create';
+            $this->mode = 'list';
             $this->showModal = true;
         } elseif (str_contains($routeName, '.attendance') && $weeklyMeeting) {
             $this->mode = 'attendance';
@@ -78,6 +78,7 @@ class WeeklyMeetingAdmin extends Component
 
         $this->resetForm();
         $this->mode = 'list';
+        $this->dispatch('close-modal', name: 'meeting-form');
         $this->dispatch('notify', type: 'success', message: 'Rapat mingguan berhasil dibuat dan QR code digenerate.');
     }
 
@@ -91,8 +92,9 @@ class WeeklyMeetingAdmin extends Component
         $this->end_time = $meeting->end_time?->format('H:i') ?? '';
         $this->location = $meeting->location ?? '';
         $this->description = $meeting->description ?? '';
-        $this->mode = 'create';
+        $this->mode = 'list';
         $this->showModal = true;
+        $this->dispatch('open-modal', name: 'meeting-form');
     }
 
     public function updateMeeting(): void
@@ -111,6 +113,7 @@ class WeeklyMeetingAdmin extends Component
 
         $this->resetForm();
         $this->mode = 'list';
+        $this->dispatch('close-modal', name: 'meeting-form');
         $this->dispatch('notify', type: 'success', message: 'Rapat mingguan berhasil diperbarui.');
     }
 
@@ -204,16 +207,17 @@ class WeeklyMeetingAdmin extends Component
     {
         $this->reset(['title', 'meeting_date', 'start_time', 'end_time', 'location', 'description', 'selectedMeetingId', 'showModal', 'showAttendanceModal']);
         $this->meeting_date = Carbon::today()->format('Y-m-d');
-        $this->start_time = '09:00';
-        $this->end_time = '11:00';
+        $this->start_time = '13:00';
+        $this->end_time = '14:30';
         $this->resetValidation();
     }
 
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->mode = 'create';
+        $this->mode = 'list';
         $this->showModal = true;
+        $this->dispatch('open-modal', name: 'meeting-form');
     }
 
     public function closeModal(): void
@@ -221,6 +225,7 @@ class WeeklyMeetingAdmin extends Component
         $this->resetForm();
         $this->mode = 'list';
         $this->showModal = false;
+        $this->dispatch('close-modal', name: 'meeting-form');
     }
 
     /**
