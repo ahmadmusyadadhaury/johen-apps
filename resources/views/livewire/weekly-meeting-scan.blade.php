@@ -161,19 +161,27 @@ document.addEventListener('livewire:init', () => {
     let pendingDispatch = false;
     let locationDenied = false;
 
+    function notifyLocationBlocked(showToast) {
+        if (!showToast) return;
+        Livewire.dispatch('notify', {
+            type: 'error',
+            message: 'Izin lokasi diblokir browser. Ketuk ikon gembok di address bar, izinkan akses lokasi, lalu scan ulang QR.'
+        });
+    }
+
     // Request device geolocation for the "Lokasi" column in the admin
-    // attendance table. Shown when the Weekly Meeting menu (scan page) opens,
-    // and again whenever the user scans a QR without location enabled yet.
+    // attendance table. Prompt izin lokasi dimunculkan saat menu Weekly
+    // Meeting (halaman scan) dibuka DAN setiap kali user scan QR walau lokasi
+    // belum aktif. Panggilan getCurrentPosition dilakukan langsung — itu cara
+    // paling andal untuk memunculkan prompt browser.
     function requestLocation(showToast) {
         if (locationInFlight || cachedCoords || !navigator.geolocation) return;
 
+        // Browser baru akan menampilkan prompt lagi jika status masih "belum
+        // diputuskan". Setelah diblokir permanen, prompt tidak akan muncul —
+        // beri tahu user cara mengizinkannya lewat pengaturan situs.
         if (locationDenied) {
-            // Browser tidak akan memunculkan prompt lagi setelah izin ditolak
-            // permanen — beri tahu user cara mengaktifkannya.
-            if (showToast) Livewire.dispatch('notify', {
-                type: 'error',
-                message: 'Izin lokasi belum aktif. Aktifkan lokasi pada pengaturan browser/perangkat, lalu scan ulang QR.'
-            });
+            notifyLocationBlocked(showToast);
             return;
         }
 
@@ -191,59 +199,54 @@ document.addEventListener('livewire:init', () => {
         }
 
         locationInFlight = true;
-
-        const askPosition = function () {
-            navigator.geolocation.getCurrentPosition(function (pos) {
-                cachedCoords = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
-                reverseGeocode(pos.coords);
-            }, function (err) {
-                locationInFlight = false;
-                if (err && err.code === 1) locationDenied = true;
-            }, { timeout: 20000, maximumAge: 120000 });
-        };
-
-        // Pakai Permission API bila tersedia: kalau sudah ditolak permanen,
-        // prompt tidak akan muncul lagi walau dipanggil berkali-kali.
-        if (navigator.permissions && navigator.permissions.query) {
-            navigator.permissions.query({ name: 'geolocation' }).then(function (status) {
-                if (status.state === 'denied') {
-                    locationInFlight = false;
-                    locationDenied = true;
-                    if (showToast) Livewire.dispatch('notify', {
-                        type: 'error',
-                        message: 'Izin lokasi belum aktif. Aktifkan lokasi pada pengaturan browser/perangkat, lalu scan ulang QR.'
-                    });
-                    return;
-                }
-                askPosition();
-            }).catch(function () {
-                askPosition();
-            });
-        } else {
-            askPosition();
-        }
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            cachedCoords = (pos.coords.latitude).toFixed(6) + ', ' + (pos.coords.longitude).toFixed(6);
+            reverseGeocode(pos.coords);
+        }, function (err) {
+            locationInFlight = false;
+            if (err && err.code === 1) {
+                locationDenied = true;
+                notifyLocationBlocked(showToast);
+            } else if (showToast) {
+                Livewire.dispatch('notify', {
+                    type: 'error',
+                    message: 'Lokasi tidak terdeteksi. Aktifkan lokasi perangkat/browser, lalu scan ulang QR.'
+                });
+            }
+        }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 });
     }
 
     // Reverse-geocode the coordinates into a readable place name using the
-    // free OpenStreetMap Nominatim service (no API key). Falls back to the
-    // raw coordinates if it fails or the device is offline.
+    // free OpenStreetMap Nominatim service (no API key). Picks the most
+    // specific label possible (nama tempat/bangunan, lalu jalan, lalu area).
+    // Kalau hasilnya terlalu generik (hanya kota/postcode), fallback ke
+    // koordinat mentah yang lebih presisi.
     function reverseGeocode(coords) {
         if (geocodeInFlight) return;
         geocodeInFlight = true;
-        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&addressdetails=1&accept-language=id&lat='
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=id&lat='
             + coords.latitude + '&lon=' + coords.longitude;
         fetch(url, { headers: { 'accept-language': 'id' } })
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const a = data && data.address;
-                if (a) {
-                    const street = a.road || a.footway || a.pedestrian || a.neighbourhood || a.suburb || a.quarter || '';
-                    const area = a.village || a.town || a.city || a.state_district || '';
-                    const parts = [];
-                    if (street) parts.push(street);
-                    if (area) parts.push(area);
-                    cachedName = parts.join(', ') || data.display_name || cachedCoords;
-                }
+                if (!a) return;
+
+                const precCoords = (coords.latitude).toFixed(6) + ', ' + (coords.longitude).toFixed(6);
+                const poi = data.name
+                    || a.building || a.tourism || a.shop || a.amenity
+                    || a.leisure || a.office || a.attraction || a.cafe || a.restaurant || '';
+                const road = a.road || a.footway || a.pedestrian || a.residential || a.cycleway || '';
+                const area = a.neighbourhood || a.hamlet || a.suburb || a.quarter || a.village || a.area || a.town || '';
+
+                const specific = [poi, road, area].filter(function (p) {
+                    // Buang bagian yang cuma angka (postcode) — bukan nama tempat.
+                    return p && !/^\d+$/.test(String(p).trim());
+                });
+
+                // Tampilkan nama hanya jika ada label spesifik (tempat/jalan/area).
+                // Kalau cuma kota/postcode — terlalu generik — pakai koordinat presisi.
+                cachedName = specific.length ? specific.slice(0, 2).join(', ') : precCoords;
             })
             .catch(function () { cachedName = ''; })
             .finally(function () { geocodeInFlight = false; });
