@@ -92,8 +92,8 @@
 
     {{-- Attendance View --}}
     @if($mode === 'attendance' && $selectedMeetingId)
-    <div class="card" wire:poll.3s="refreshAttendanceData">
-        <div class="p-6">
+    <div class="card flex flex-col" wire:poll.3s="refreshAttendanceData" style="height: calc(100vh - 175px);">
+        <div class="p-6 flex flex-col min-h-0">
             <div class="mb-6">
                 {{-- QR Code Display --}}
                 @php
@@ -112,7 +112,7 @@
             </div>
 
             {{-- Attendance List --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-[24rem]">
+            <div id="attendance-table-scroll" class="flex-1 min-h-0 overflow-auto overscroll-contain">
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 z-10">
                         <tr class="table-header">
@@ -255,3 +255,18 @@
 
     <x:confirm-delete-modal title="Hapus Rapat" message="Apakah Anda yakin ingin menghapus rapat mingguan ini? Data absensi juga akan terhapus." />
 </div>
+
+@push('scripts')
+<script>
+// Saat ada baris absensi baru ditambahkan (data terbaru di bawah), gulir
+// otomatis ke bawah agar baris yang baru masuk selalu terlihat.
+document.addEventListener('livewire:init', () => {
+    Livewire.hook('morph.added', ({ el }) => {
+        if (el.tagName === 'TR') {
+            const wrap = document.getElementById('attendance-table-scroll');
+            if (wrap) wrap.scrollTop = wrap.scrollHeight;
+        }
+    });
+});
+</script>
+@endpush
