@@ -289,4 +289,9 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/aset/{code}', [AssetViewController::class, 'publicShow'])->name('aset.public');
 
+// Livewire update endpoint bersifat POST-only. GET yang masuk (bot/crawler/
+// scanner) tidak seharusnya menghasilkan halaman error 405, cukup 204 kosong.
+Route::get('livewire/update', fn () => response()->noContent());
+Route::get('livewire-{hash}/update', fn () => response()->noContent());
+
 require __DIR__.'/auth.php';
