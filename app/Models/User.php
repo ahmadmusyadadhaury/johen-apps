@@ -111,6 +111,7 @@ class User extends Authenticatable
     public const ROLE_KOORDINATOR_STOCK = 'koordinator_stock';
     public const ROLE_STAFF_STOCK = 'staff_stock';
     public const ROLE_STAFF_HR = 'staff_hr';
+    public const ROLE_KOORDINATOR_PROJECT = 'koordinator_project';
     public const ROLE_ADMIN_MASTER = 'admin_master';
 
     public function isSuperAdmin(): bool
@@ -212,7 +213,12 @@ class User extends Authenticatable
 
     public function isStaff(): bool
     {
-        return $this->role === self::ROLE_STAFF;
+        return in_array($this->role, [self::ROLE_STAFF, self::ROLE_KOORDINATOR_PROJECT]);
+    }
+
+    public function isKoordinatorProject(): bool
+    {
+        return $this->role === self::ROLE_KOORDINATOR_PROJECT;
     }
 
     public function isKoordinatorIt(): bool
@@ -552,6 +558,7 @@ class User extends Authenticatable
             self::ROLE_MANAGER => 3,
             self::ROLE_KOORDINATOR => 2,
             self::ROLE_STAFF => 1,
+            self::ROLE_KOORDINATOR_PROJECT => 1,
             self::ROLE_KOORDINATOR_IT => 1,
             self::ROLE_STAFF_IT => 1,
             self::ROLE_KOORDINATOR_CREATIVE => 1,
@@ -623,6 +630,7 @@ class User extends Authenticatable
             $this->isStaffStock() => 'Staff Stock',
             $this->isManager() => 'Manager',
             $this->isKoordinator() => 'Koordinator',
+            $this->isKoordinatorProject() => 'Koordinator Project',
             $this->isStaff() => 'Staff',
             $this->isSuperAdmin() => 'Super Admin',
             $this->isAdminMaster() => 'Admin Master',
@@ -688,6 +696,7 @@ class User extends Authenticatable
         self::ROLE_KOORDINATOR_MONKEY_PUBG,
         self::ROLE_KOORDINATOR_STOCK,
         self::ROLE_STAFF,
+        self::ROLE_KOORDINATOR_PROJECT,
         self::ROLE_STAFF_IT,
         self::ROLE_STAFF_CREATIVE,
         self::ROLE_STAFF_ADMIN,

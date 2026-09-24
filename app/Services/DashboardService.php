@@ -496,11 +496,14 @@ class DashboardService
                     : '-',
             ]);
 
+        $defaultPeriode = $now->day >= 26 ? $now->copy()->addMonthNoOverflow() : $now;
+        $periodeBulan = $defaultPeriode->copy()->startOfMonth();
+        $periodeMulai = $periodeBulan->copy()->subMonthNoOverflow()->day(26)->startOfDay();
+        $periodeSelesai = $periodeBulan->copy()->day(25)->endOfDay();
+
         $totalHadir = Attendance::where('employee_id', $employeeId)
-            ->whereBetween('date', [$now->startOfMonth()->format('Y-m-d'), $now->endOfMonth()->format('Y-m-d')])
-            ->where(function ($q) {
-                $q->where('status', 'hadir')->orWhere('status', 'present');
-            })
+            ->whereBetween('date', [$periodeMulai->toDateString(), $periodeSelesai->toDateString()])
+            ->where('status', 'hadir')
             ->count();
 
         $totalTerlambat = Attendance::with('employee')
