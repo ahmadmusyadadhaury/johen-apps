@@ -458,26 +458,34 @@ document.addEventListener('livewire:init', () => {
 
         // Ask browser permission + open the actual device camera.
         // 'user' = kamera depan, 'environment' = kamera belakang.
-        navigator.mediaDevices.getUserMedia({
-            video: { facingMode: facingMode }
-        }).then(function (mediaStream) {
-            if (token !== cameraRequestId || !document.getElementById('scanner-video')) {
-                // Scanner switched camera or was closed while permission was pending.
-                mediaStream.getTracks().forEach(function (track) { track.stop(); });
-                return;
-            }
-            stream = mediaStream;
-            video.srcObject = mediaStream;
-            scanning = true;
-            if (stopBtn) stopBtn.style.display = 'inline-flex';
+        const openCamera = function (withFacing) {
+            navigator.mediaDevices.getUserMedia({
+                video: withFacing ? { facingMode: facingMode } : true
+            }).then(function (mediaStream) {
+                if (token !== cameraRequestId || !document.getElementById('scanner-video')) {
+                    // Scanner switched camera or was closed while permission was pending.
+                    mediaStream.getTracks().forEach(function (track) { track.stop(); });
+                    return;
+                }
+                stream = mediaStream;
+                video.srcObject = mediaStream;
+                scanning = true;
 
-            // Give the stream a moment to start producing frames, then loop.
-            setTimeout(function () { requestAnimationFrame(scanLoop); }, 300);
-        }).catch(function (err) {
-            if (token !== cameraRequestId) return;
-            showCameraError(err);
-            if (stopBtn) stopBtn.style.display = 'none';
-        });
+                // Give the stream a moment to start producing frames, then loop.
+                setTimeout(function () { requestAnimationFrame(scanLoop); }, 300);
+            }).catch(function (err) {
+                if (token !== cameraRequestId) return;
+                // Beberapa device/browser menolak constraint facingMode
+                // (OverconstrainedError) walau izin kamera sudah diberikan.
+                // Coba sekali lagi memakai kamera apa pun yang tersedia.
+                if (withFacing && (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError')) {
+                    openCamera(false);
+                    return;
+                }
+                showCameraError(err);
+            });
+        };
+        openCamera(true);
     }
 
     // Continuously grab frames from the live video and run jsQR on them.
