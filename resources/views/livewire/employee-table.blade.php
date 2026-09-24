@@ -191,7 +191,7 @@
 
     @if($employees->hasPages())
         <div class="px-6 py-3 border-t border-gray-50 dark:border-gray-800">
-            {{ $employees->links() }}
+            {{ $employees->links('pagination.blue-active') }}
         </div>
     @endif
     </div>

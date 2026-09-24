@@ -440,7 +440,7 @@ class DashboardService
                 $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
             }
 
-            $skipHrApproval = $employee->user && ($employee->user->isAnyKoordinator() || $employee->user->isStaffAdmin() || $employee->user->isStaffHostPubg() || $employee->user->isStaffHostFf() || $employee->user->isStaffIt() || $employee->user->isStaffHostMlbb() || $employee->user->isStaffHostEfootball() || $employee->user->isStaffHostValorant() || $employee->user->isStaffHostRoblox() || $employee->user->isStaffHostMonkeyPubg());
+            $skipHrApproval = $employee->user && ($employee->user->isAnyKoordinator() || $employee->user->isStaffAdmin() || $employee->user->isStaffHostPubg() || $employee->user->isStaffHostFf() || $employee->user->isStaffIt() || $employee->user->isStaffHostMlbb() || $employee->user->isStaffHostEfootball() || $employee->user->isStaffHostValorant() || $employee->user->isStaffHostRoblox() || $employee->user->isStaffHostMonkeyPubg() || $employee->user->isStaffHostFcMobile());
             if (! $skipHrApproval) {
                 $usedCutiQuery->where('persetujuan_hr', 'disetujui');
             }

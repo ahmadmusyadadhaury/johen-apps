@@ -122,11 +122,10 @@ class CutiIzinTable extends Component
             if (! $user->isAnyKoordinator()) {
                 $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
             }
-            if (! $user->isAnyKoordinator() && ! $user->isStaffAdmin() && ! $user->isStaffHostPubg() && ! $user->isStaffHostFf() && ! $user->isStaffIt() && ! $user->isStaffHostMlbb() && ! $user->isStaffHostEfootball() && ! $user->isStaffHostValorant() && ! $user->isStaffHostRoblox() && ! $user->isStaffHostMonkeyPubg() && ! $user->isStaffStock()) {
+            if (! $user->isAnyKoordinator() && ! $user->isStaffAdmin() && ! $user->isStaffHostPubg() && ! $user->isStaffHostFf() && ! $user->isStaffIt() && ! $user->isStaffHostMlbb() && ! $user->isStaffHostEfootball() && ! $user->isStaffHostValorant() && ! $user->isStaffHostRoblox() && ! $user->isStaffHostMonkeyPubg() && ! $user->isStaffHostFcMobile() && ! $user->isStaffStock()) {
                 $usedCutiQuery->where('persetujuan_hr', 'disetujui');
             }
-            $usedCuti = $usedCutiQuery->get()
-                ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
+            $usedCuti = $usedCutiQuery->get()->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
             $sisa = max(0, $accrual['earned'] - $usedCuti);
             if ($durasi > $sisa) {
                 $this->dispatch('notify', type: 'error', message: "Saldo cuti tidak mencukupi. Sisa saldo Anda {$sisa} hari.");
@@ -617,7 +616,7 @@ class CutiIzinTable extends Component
                 $usedCutiQuery->where('persetujuan_atasan2', 'disetujui');
             }
 
-            if (! $user->isAnyKoordinator() && ! $user->isStaffAdmin() && ! $user->isStaffHostPubg() && ! $user->isStaffHostFf() && ! $user->isStaffIt() && ! $user->isStaffHostMlbb() && ! $user->isStaffHostEfootball() && ! $user->isStaffHostValorant() && ! $user->isStaffHostRoblox() && ! $user->isStaffHostMonkeyPubg() && ! $user->isStaffStock()) {
+            if (! $user->isAnyKoordinator() && ! $user->isStaffAdmin() && ! $user->isStaffHostPubg() && ! $user->isStaffHostFf() && ! $user->isStaffIt() && ! $user->isStaffHostMlbb() && ! $user->isStaffHostEfootball() && ! $user->isStaffHostValorant() && ! $user->isStaffHostRoblox() && ! $user->isStaffHostMonkeyPubg() && ! $user->isStaffHostFcMobile() && ! $user->isStaffStock()) {
                 $usedCutiQuery->where('persetujuan_hr', 'disetujui');
             }
 
@@ -666,7 +665,7 @@ class CutiIzinTable extends Component
             || $user->isStaffHostEfootball()
             || $user->isStaffHostValorant()
             || $user->isStaffHostRoblox()
-            || $user->isStaffHostMonkeyPubg();
+            || $user->isStaffHostMonkeyPubg() || $user->isStaffHostFcMobile();
 
         return view('livewire.cuti-izin-table', compact(
             'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'totalJatah', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'terakumulasiCuti', 'usedCuti', 'jatahBulanIni', 'usedJatah', 'sisaJatah', 'jatahAvailable', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'

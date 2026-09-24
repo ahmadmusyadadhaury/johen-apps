@@ -108,6 +108,7 @@ class User extends Authenticatable
     public const ROLE_STAFF_HOST_ROBLOX = 'staff_host_roblox';
     public const ROLE_KOORDINATOR_MONKEY_PUBG = 'koordinator_monkey_pubg';
     public const ROLE_STAFF_HOST_MONKEY_PUBG = 'staff_host_monkey_pubg';
+    public const ROLE_STAFF_HOST_FC_MOBILE = 'staff_host_fc_mobile';
     public const ROLE_KOORDINATOR_STOCK = 'koordinator_stock';
     public const ROLE_STAFF_STOCK = 'staff_stock';
     public const ROLE_STAFF_HR = 'staff_hr';
@@ -473,6 +474,28 @@ class User extends Authenticatable
         return $employee->positions()->whereIn('position_id', $descendantIds)->exists();
     }
 
+    public function isStaffHostFcMobile(): bool
+    {
+        if ($this->role === self::ROLE_STAFF_HOST_FC_MOBILE) {
+            return true;
+        }
+
+        if (!$this->isAnyKoordinator()) {
+            return false;
+        }
+
+        $employee = $this->employee;
+        if (!$employee) return false;
+
+        $root = Position::where('nama', 'Koordinator FC Mobile')->first();
+        if (!$root) return false;
+
+        $descendantIds = $this->getAllDescendantIdsForPosition($root);
+        $descendantIds[] = $root->id;
+
+        return $employee->positions()->whereIn('position_id', $descendantIds)->exists();
+    }
+
     public function isKoordinatorFcMobile(): bool
     {
         return $this->hasDivisionPosition('Koordinator FC Mobile');
@@ -579,6 +602,7 @@ class User extends Authenticatable
             self::ROLE_STAFF_HOST_ROBLOX => 1,
             self::ROLE_KOORDINATOR_MONKEY_PUBG => 1,
             self::ROLE_STAFF_HOST_MONKEY_PUBG => 1,
+            self::ROLE_STAFF_HOST_FC_MOBILE => 1,
             self::ROLE_KOORDINATOR_STOCK => 1,
             self::ROLE_STAFF_STOCK => 1,
             default => 0,
@@ -624,6 +648,7 @@ class User extends Authenticatable
             $this->isStaffHostValorant() => 'Staff Host Valorant',
             $this->isStaffHostRoblox() => 'Staff Host Roblox',
             $this->isStaffHostMonkeyPubg() => 'Staff Host Monkey PUBG',
+            $this->isStaffHostFcMobile() => 'Staff Host FC Mobile',
             $this->isStaffIt() => 'Staff IT',
             $this->isStaffCreative() => 'Staff Creative',
             $this->isStaffAdmin() => 'Staff Admin',
@@ -661,6 +686,7 @@ class User extends Authenticatable
             $this->isStaffHostValorant() => 'Valorant',
             $this->isStaffHostRoblox() => 'Roblox',
             $this->isStaffHostMonkeyPubg() => 'Monkey PUBG',
+            $this->isStaffHostFcMobile() => 'FC Mobile',
             $this->isStaffHr() => 'HR',
             default => $this->employee?->divisionNames() ?: null,
         };
@@ -707,6 +733,7 @@ class User extends Authenticatable
         self::ROLE_STAFF_HOST_VALORANT,
         self::ROLE_STAFF_HOST_ROBLOX,
         self::ROLE_STAFF_HOST_MONKEY_PUBG,
+        self::ROLE_STAFF_HOST_FC_MOBILE,
         self::ROLE_STAFF_STOCK,
         self::ROLE_ADMIN_MASTER,
     ];

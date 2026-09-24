@@ -260,7 +260,7 @@ if ($divisionViewUser) {
                                 Ticketing IT
                             </a>
                             @endif
-                            @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isSuperAdminLike())
+                            @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isStaffHostFcMobile() || auth()->user()->isSuperAdminLike())
                             <a href="{{ route('hris.manual-book') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.manual-book') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Pelatihan
                             </a>
@@ -617,7 +617,7 @@ if ($divisionViewUser) {
                     </div>
                     @endif
 
-                    @if(auth()->user()->hasDivisionPosition('Koordinator FC Mobile'))
+                    @if(auth()->user()->hasDivisionPosition('Koordinator FC Mobile') || auth()->user()->isStaffHostFcMobile())
                     <div class="mt-4">
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi FC Mobile</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ (request()->routeIs('pubg.daily-tracking') && request()->query('divisi') === 'FC Mobile') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">

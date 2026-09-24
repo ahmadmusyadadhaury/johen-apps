@@ -50,6 +50,7 @@
                     <option value="staff_host_valorant">Staff Host Valorant</option>
                     <option value="staff_host_roblox">Staff Host Roblox</option>
                     <option value="staff_host_monkey_pubg">Staff Host Monkey PUBG</option>
+                    <option value="staff_host_fc_mobile">Staff Host FC Mobile</option>
                     <option value="staff_admin">Staff Admin</option>
                     <option value="staff_stock">Staff Admin Stock</option>
                 </select>
@@ -133,6 +134,8 @@
                                     <span class="badge-secondary">Koordinator Monkey PUBG</span>
                                 @elseif($u->role === 'staff_host_monkey_pubg')
                                     <span class="badge-secondary">Staff Host Monkey PUBG</span>
+                                @elseif($u->role === 'staff_host_fc_mobile')
+                                    <span class="badge-secondary">Staff Host FC Mobile</span>
                                 @elseif($u->role === 'staff_admin')
                                     <span class="badge-secondary">Staff Admin</span>
                                 @elseif($u->role === 'staff_stock')
@@ -257,6 +260,7 @@
                         <option value="staff_host_valorant">Staff Host Valorant</option>
                         <option value="staff_host_roblox">Staff Host Roblox</option>
                         <option value="staff_host_monkey_pubg">Staff Host Monkey PUBG</option>
+                        <option value="staff_host_fc_mobile">Staff Host FC Mobile</option>
                         <option value="staff_admin">Staff Admin</option>
                     <option value="staff_stock">Staff Admin Stock</option>
                         <option value="koordinator">Koordinator</option>
@@ -357,6 +361,7 @@
                         <option value="staff_host_valorant">Staff Host Valorant</option>
                         <option value="staff_host_roblox">Staff Host Roblox</option>
                         <option value="staff_host_monkey_pubg">Staff Host Monkey PUBG</option>
+                        <option value="staff_host_fc_mobile">Staff Host FC Mobile</option>
                         <option value="staff_admin">Staff Admin</option>
                     <option value="staff_stock">Staff Admin Stock</option>
                         <option value="koordinator">Koordinator</option>
