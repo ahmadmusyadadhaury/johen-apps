@@ -21,7 +21,8 @@ class EmployeeController extends Controller
         $stats = [
             'total' => Employee::count(),
             'aktif' => Employee::where('tipe', 'karyawan_aktif')->count(),
-            'divisi' => Division::count(),
+            'calon' => Employee::where('tipe', 'calon_karyawan')->count(),
+            'mantan' => Employee::where('tipe', 'mantan_karyawan')->count(),
         ];
 
         return view('employees.index', compact('stats'));
