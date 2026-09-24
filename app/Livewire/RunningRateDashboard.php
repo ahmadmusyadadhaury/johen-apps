@@ -642,6 +642,7 @@ class RunningRateDashboard extends Component
             'isStaffHostValorant' => 'Valorant',
             'isStaffHostRoblox' => 'Roblox',
             'isStaffHostMonkeyPubg' => 'Monkey PUBG',
+            'isStaffHostFcMobile' => 'FC Mobile',
         ];
 
         foreach ($staffMap as $method => $division) {

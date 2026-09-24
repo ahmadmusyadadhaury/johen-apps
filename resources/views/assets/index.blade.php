@@ -774,7 +774,7 @@
             </div>
             @if(method_exists($assets, 'hasPages') && $assets->hasPages())
             <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-                {{ $assets->links() }}
+                {{ $assets->links('pagination.blue-active-url') }}
             </div>
             @endif
         </div>

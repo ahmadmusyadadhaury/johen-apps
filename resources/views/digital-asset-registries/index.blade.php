@@ -118,7 +118,7 @@
             </div>
             @if($registries->hasPages())
             <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-                {{ $registries->links() }}
+                {{ $registries->links('pagination.blue-active-url') }}
             </div>
             @endif
         </div>

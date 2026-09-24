@@ -165,7 +165,7 @@ class BonusHostLiveTable extends Component
         $this->resetForm();
 
         $user = auth()->user();
-        if ($user->employee && ($user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg())) {
+        if ($user->employee && ($user->isStaffHostPubg() || $user->isStaffHostFf() || $user->isStaffHostMlbb() || $user->isStaffHostEfootball() || $user->isStaffHostValorant() || $user->isStaffHostRoblox() || $user->isStaffHostMonkeyPubg() || $user->isStaffHostFcMobile())) {
             $this->nik = $user->employee->nik;
             $this->nama = $user->employee->nama;
             $this->jabatan = $user->employee->position;

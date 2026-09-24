@@ -347,6 +347,7 @@ class PubgDailyTrackingTable extends Component
             $user->isKoordinatorValorant(), $user->isStaffHostValorant() => 'Valorant',
             $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
              $user->isKoordinatorMonkeyPubg(), $user->isStaffHostMonkeyPubg() => 'Monkey PUBG',
+             $user->isKoordinatorFcMobile(), $user->isStaffHostFcMobile() => 'FC Mobile',
             $user->isKoordinatorFf(), $user->isStaffHostFf() => 'Free Fire',
             $user->isKoordinatorPubg(), $user->isStaffHostPubg() => 'PUBG',
             default => 'PUBG',
@@ -543,6 +544,7 @@ class PubgDailyTrackingTable extends Component
             'isKoordinatorValorant' => User::ROLE_STAFF_HOST_VALORANT,
             'isKoordinatorRoblox' => User::ROLE_STAFF_HOST_ROBLOX,
             'isKoordinatorMonkeyPubg' => User::ROLE_STAFF_HOST_MONKEY_PUBG,
+            'isKoordinatorFcMobile' => User::ROLE_STAFF_HOST_FC_MOBILE,
         ];
 
         foreach ($roleMap as $method => $staffRole) {
