@@ -288,14 +288,14 @@ if ($divisionViewUser) {
                                 Reimbursement
                             </a>
                             @endif
-                            {{-- Weekly Meeting - Admin Master --}}
-                            @if(auth()->user()->isAdminMaster())
+                            {{-- Weekly Meeting - Super Admin / Staff HR --}}
+                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isStaffHr())
                             <a href="{{ route('hris.weekly-meeting.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-meeting*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Weekly Meeting
                             </a>
                             @endif
                             {{-- Weekly Meeting - Other Roles (Scan QR) --}}
-                            @if(!auth()->user()->isAdminMaster())
+                            @if(!auth()->user()->isSuperAdmin() && !auth()->user()->isStaffHr())
                             <a href="{{ route('hris.weekly-meeting.scan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-meeting.scan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Weekly Meeting
                             </a>

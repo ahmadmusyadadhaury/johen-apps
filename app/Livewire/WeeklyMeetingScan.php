@@ -14,6 +14,16 @@ class WeeklyMeetingScan extends Component
     public string $scannedQr = '';
     public string $status = ''; // success, error, info
     public string $message = '';
+    /**
+     * Mode "embedded" = komponen dirender sebagai anak dalam halaman admin
+     * Weekly Meeting (tab "Weekly Saya" khusus Staff HR), bukan sebagai
+     * halaman scan lengkap. Dalam mode ini:
+     *  - header topbar tidak ikut di-push (menghindari judul ganda),
+     *  - prompt lokasi tidak dimunculkan otomatis saat halaman dibuka
+     *    (pengguna memicunya sendiri dari tombol scanner di tab).
+     */
+    public bool $embedded = false;
+
     public ?WeeklyMeeting $currentMeeting = null;
     public bool $showScanner = false;
     public string $selectedCamera = ''; // 'user' = depan, 'environment' = belakang
@@ -28,8 +38,9 @@ class WeeklyMeetingScan extends Component
 
     protected $listeners = ['qrScanned' => 'handleQrScan'];
 
-    public function mount(): void
+    public function mount(bool $embedded = false): void
     {
+        $this->embedded = $embedded;
         $this->checkActiveMeeting();
     }
 

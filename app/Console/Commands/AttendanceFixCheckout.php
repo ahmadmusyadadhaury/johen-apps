@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-#[Signature('attendance:fix-checkout {--dry-run : Proses tanpa menulis ke database} {--employee= : NIK karyawan tertentu (opsional)}')]
+#[Signature('attendance:fix-checkout {--dry-run : Proses tanpa menulis ke database} {--employee= : NIK karyawan tertentu (opsional)} {--skip= : NIK yang dilewati, dipisah koma (opsional)}')]
 #[Description('Perbaiki absen yang hanya tap pulang: rekap "absen pulang saja" dan kedatangan hari berikutnya dipisah ke tanggalnya masing-masing')]
 class AttendanceFixCheckout extends Command
 {
@@ -18,10 +18,17 @@ class AttendanceFixCheckout extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
         $employeeFilter = $this->option('employee');
+        $skip = collect(explode(',', (string) $this->option('skip')))
+            ->map(fn (string $nik) => trim($nik))
+            ->filter()
+            ->values();
 
         $query = Employee::query()->where('tipe', 'karyawan_aktif')->orderBy('nik')->listSelect();
         if ($employeeFilter) {
             $query->where('nik', $employeeFilter);
+        }
+        if ($skip->isNotEmpty()) {
+            $query->whereNotIn('nik', $skip);
         }
 
         $employees = $query->get();

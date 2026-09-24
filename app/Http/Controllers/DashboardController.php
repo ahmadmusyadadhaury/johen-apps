@@ -91,6 +91,7 @@ class DashboardController extends Controller
         $expiringContracts = $this->dashboardService->getExpiringContracts();
         $expiringContractCount = count($expiringContracts);
         $meetingStats = $this->dashboardService->getMeetingStats();
+        $upcomingPayments = $this->dashboardService->getUpcomingPayments();
 
         $managerReviewStats = $user->isManager()
             ? $this->dashboardService->getManagerReviewStats($user)
@@ -111,6 +112,7 @@ class DashboardController extends Controller
             'latestPayroll', 'pendingLeaveRequests', 'pendingLeaveCount',
             'expiringContracts', 'expiringContractCount', 'meetingStats',
             'assetStats', 'koordinatorStats', 'managerReviewStats', 'employee',
+            'upcomingPayments',
         ), ['announcements' => $announcements], $bannerData));
     }
 

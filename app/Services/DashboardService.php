@@ -8,11 +8,14 @@ use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\Attendance;
 use App\Models\BonusPubg;
+use App\Models\DigitalAsset;
 use App\Models\DigitalAssetRegistry;
 use App\Models\Division;
 use App\Models\EmailLog;
 use App\Models\Employee;
 use App\Models\EmployeeContract;
+use App\Models\IplRukoPayment;
+use App\Models\InternetPayment;
 use App\Models\LeaveRequest;
 use App\Models\Meeting;
 use App\Models\MeetingRequest;
@@ -242,6 +245,69 @@ class DashboardService
                 'days_remaining' => now()->diffInDays($c->tanggal_berakhir, false),
             ])
             ->toArray();
+    }
+
+    /**
+     * Pembayaran yang belum lunas (menunggu/terlambat) dari menu pembayaran
+     * (Internet, IPL Ruko, Digital) untuk kartu "Pembayaran Mendatang" di
+     * dashboard. Listrik tidak masuk karena top-up token bersifat riwayat
+     * pembayaran (punya tanggal_bayar, tanpa konsep jatuh tempo/tagihan).
+     */
+    public function getUpcomingPayments(): array
+    {
+        $today = today();
+
+        $build = static fn ($jenis, $nama, $dueDate, $nominal, $status, $url): ?array => $dueDate
+            ? [
+                'jenis' => $jenis,
+                'nama' => $nama,
+                'due_date' => $dueDate,
+                'days_remaining' => (int) $today->diffInDays($dueDate, false),
+                'is_late' => $status === 'terlambat' || $dueDate->lt($today),
+                'nominal' => (float) $nominal,
+                'url' => $url,
+            ]
+            : null;
+
+        $items = collect();
+
+        foreach (InternetPayment::where('status', '!=', 'lunas')->get() as $p) {
+            $item = $build('Internet', $p->nama_internet, $p->masa_tenggang, $p->biaya, $p->status, route('internet.index'));
+            if ($item) {
+                $items->push($item);
+            }
+        }
+
+        foreach (IplRukoPayment::where('status', '!=', 'lunas')->get() as $p) {
+            $item = $build('IPL Ruko', $p->periode, $p->jatuh_tempo, $p->nominal, $p->status, route('ipl.index'));
+            if ($item) {
+                $items->push($item);
+            }
+        }
+
+        foreach (DigitalAsset::where('status', '!=', 'lunas')->get() as $p) {
+            $item = $build('Digital', $p->nama_aset, $p->jatuh_tempo, $p->nominal, $p->status, route('digital.index'));
+            if ($item) {
+                $items->push($item);
+            }
+        }
+
+        $sorted = $items->sortBy('due_date')->values();
+
+        $names = $sorted->groupBy('jenis')
+            ->map->count()
+            ->toArray();
+
+        return [
+            'items' => $sorted->map(fn ($i) => $i + ['due_date_label' => $i['due_date']->isoFormat('D MMM YYYY')])->toArray(),
+            'total' => $sorted->count(),
+            'late' => $sorted->where('is_late', true)->count(),
+            'counts' => [
+                'internet' => $names['Internet'] ?? 0,
+                'ipl' => $names['IPL Ruko'] ?? 0,
+                'digital' => $names['Digital'] ?? 0,
+            ],
+        ];
     }
 
     public function getManagerReviewStats($user): array

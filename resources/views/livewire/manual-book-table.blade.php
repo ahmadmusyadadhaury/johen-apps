@@ -5,14 +5,6 @@
     </div>
 @endpush
 
-@php
-    // Tambahkan video baru dengan menambah entry di array ini.
-    // 'url' berupa link embed (YouTube: https://www.youtube.com/embed/XXXX).
-    $videos = [
-        // ['title' => 'Cara Login Aplikasi', 'kategori' => 'Operasional', 'url' => 'https://www.youtube.com/embed/XXXX'],
-    ];
-@endphp
-
 <div x-data="{ tab: 'manual', previewBook: null }">
     {{-- Tab Navigation --}}
     <div class="mb-6">
@@ -121,7 +113,19 @@
     </div>
 
     <div x-show="tab === 'video'" x-cloak>
-        @if(empty($videos))
+        <div class="flex items-center justify-between gap-4 mb-6">
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Koleksi video tutorial & pelatihan</p>
+            </div>
+            @if(auth()->user()->isSuperAdminLike())
+            <button wire:click="openVideoNew" class="btn-primary text-xs py-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Tambah Video
+            </button>
+            @endif
+        </div>
+
+        @if($videos->isEmpty())
         <div class="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center">
             <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -134,17 +138,23 @@
             @foreach($videos as $video)
             <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
                 <div class="aspect-video bg-black">
-                    <iframe src="{{ $video['url'] }}" title="{{ $video['title'] }}" frameborder="0"
+                    <iframe src="{{ $video->url }}" title="{{ $video->nama }}" frameborder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen class="w-full h-full"></iframe>
                 </div>
                 <div class="p-4">
-                    @if(!empty($video['kategori']))
+                    @if($video->kategori)
                     <span class="inline-block rounded-lg bg-blue-50 dark:bg-blue-950 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                        {{ $video['kategori'] }}
+                        {{ $video->kategori }}
                     </span>
                     @endif
-                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $video['title'] }}</p>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $video->nama }}</p>
+                    @if(auth()->user()->isSuperAdminLike())
+                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <button wire:click="openVideoEdit({{ $video->id }})" class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">Edit</button>
+                        <button wire:click="confirmVideoDelete({{ $video->id }})" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 font-medium">Hapus</button>
+                    </div>
+                    @endif
                 </div>
             </div>
             @endforeach
@@ -272,6 +282,97 @@
             <div class="flex items-center justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <button @click="open = false; $wire.cancelDelete()" class="btn-secondary text-xs px-6">Batal</button>
                 <button wire:click="executeDelete" class="btn-danger text-xs px-6 inline-flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                    Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Video Modal Tambah/Edit --}}
+    <div wire:ignore.self class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         x-data="{ open: false }"
+         x-init="$watch('$wire.showVideoModal', value => open = value)"
+         x-show="open" x-cloak
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="open = false; $wire.closeVideo()">
+        <div x-show="open"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             @click.stop class="relative w-full max-w-xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-auto">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $videoEditId ? 'Edit' : 'Tambah' }} Video</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $videoEditId ? 'Perbarui' : 'Isi' }} data video pelatihan</p>
+                </div>
+                <button wire:click="closeVideo" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form wire:submit.prevent="saveVideo" class="space-y-4">
+                <div>
+                    <x-input-label value="Judul Video *" />
+                    <x-text-input type="text" wire:model="videoNama" class="mt-1 block w-full" placeholder="Judul video pelatihan" />
+                    @error('videoNama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label value="Kategori" />
+                    <select wire:model="videoKategori" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                        <option value="">-- Pilih Kategori --</option>
+                        @foreach($videoKategoriOptions as $opt)
+                            <option value="{{ $opt }}">{{ $opt }}</option>
+                        @endforeach
+                    </select>
+                    @error('videoKategori') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label value="Link Video (YouTube) *" />
+                    <x-text-input type="text" wire:model="videoUrl" class="mt-1 block w-full" placeholder="https://www.youtube.com/watch?v=..." />
+                    <p class="text-xs text-gray-400 mt-1">Link YouTube biasa (watch, youtu.be, shorts) akan otomatis diubah menjadi link embed.</p>
+                    @error('videoUrl') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <button type="button" wire:click="closeVideo" class="btn-secondary text-xs">Batal</button>
+                    <button type="submit" class="btn-primary text-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        {{ $videoEditId ? 'Perbarui' : 'Simpan' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Video Delete Confirm Modal --}}
+    <div x-data="{ open: $wire.entangle('showVideoDeleteConfirmModal') }"
+         x-show="open" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click="open = false; $wire.cancelVideoDelete()">
+        <div @click.stop class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
+                <svg class="w-7 h-7 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center mb-2">Hapus Video</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">Apakah Anda yakin ingin menghapus video pelatihan ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="flex items-center justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button @click="open = false; $wire.cancelVideoDelete()" class="btn-secondary text-xs px-6">Batal</button>
+                <button wire:click="executeVideoDelete" class="btn-danger text-xs px-6 inline-flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                     Ya, Hapus
                 </button>

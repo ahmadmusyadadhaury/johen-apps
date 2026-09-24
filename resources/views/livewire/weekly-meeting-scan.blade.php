@@ -1,9 +1,11 @@
+@if(! $embedded)
 @push('topbar-left')
     <div>
         <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Weekly Meeting</h1>
         <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Scan QR Code untuk absensi rapat mingguan</p>
     </div>
 @endpush
+@endif
 
 <div class="space-y-4 max-w-xl mx-auto">
 <style>
@@ -528,13 +530,19 @@ document.addEventListener('livewire:init', () => {
     // The location permission prompt is shown right here, when this meeting
     // page (menu Weekly Meeting) opens — and again at scan time until the
     // user enables location.
+    // (When embedded as a tab inside the admin page, skip the automatic prompt;
+    // location is requested on demand when the user actually scans.)
+    @if(! $embedded)
     requestLocation(false);
+    @endif
 
     // Jaga agar prompt muncul konsisten: jika panggilan pertama dibuang browser
     // (mis. tab masih loading), coba sekali lagi sesaat kemudian.
+    @if(! $embedded)
     setTimeout(function () {
         if (!cachedCoords) requestLocation(false);
     }, 1500);
+    @endif
 
     // Dipicu oleh `$this->dispatch('camera-selected')` dari selectCamera()
     // setelah Livewire selesai merender scanner box, jadi #scanner-video sudah

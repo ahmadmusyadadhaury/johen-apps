@@ -138,11 +138,11 @@ Route::middleware(['auth'])->group(function () {
 
         // Weekly Meeting routes
         Route::prefix('weekly-meeting')->name('weekly-meeting.')->group(function () {
-            // Admin Master - manage meetings
-            Route::get('/', \App\Livewire\WeeklyMeetingAdmin::class)->name('index')->middleware('role:admin_master');
-            Route::get('/create', \App\Livewire\WeeklyMeetingAdmin::class)->name('create')->middleware('role:admin_master');
-            Route::get('/{weeklyMeeting}/attendance', \App\Livewire\WeeklyMeetingAdmin::class)->name('attendance')->middleware('role:admin_master');
-            Route::post('/{weeklyMeeting}/generate-qr', [\App\Http\Controllers\WeeklyMeetingController::class, 'generateQr'])->name('generate-qr')->middleware('role:admin_master');
+            // Super Admin & Staff HR - manage meetings & scan (tab QR Code / Weekly Saya)
+            Route::get('/', \App\Livewire\WeeklyMeetingAdmin::class)->name('index')->middleware('role:super_admin,staff_hr');
+            Route::get('/create', \App\Livewire\WeeklyMeetingAdmin::class)->name('create')->middleware('role:super_admin,staff_hr');
+            Route::get('/{weeklyMeeting}/attendance', \App\Livewire\WeeklyMeetingAdmin::class)->name('attendance')->middleware('role:super_admin,staff_hr');
+            Route::post('/{weeklyMeeting}/generate-qr', [\App\Http\Controllers\WeeklyMeetingController::class, 'generateQr'])->name('generate-qr')->middleware('role:super_admin,staff_hr');
 
             // All other roles - scan QR to attend
             Route::get('/scan', \App\Livewire\WeeklyMeetingScan::class)->name('scan');

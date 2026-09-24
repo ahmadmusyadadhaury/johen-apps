@@ -6,8 +6,22 @@
 @endpush
 
 <div class="space-y-4">
+    {{-- Tab QR Code / Weekly Saya (khusus Super Admin & Staff HR) --}}
+    @if($this->showTabs && $mode === 'list')
+    <div class="flex items-center gap-1 w-fit bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+        <button wire:click="setTab('qr')" class="flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'qr' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 6.75h.008v.008H6.75V6.75zm7.5 7.5h.008v.008h-.008v-.008zm7.5 0h.008v.008h-.008v-.008zM13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z"/></svg>
+            QR Code
+        </button>
+        <button wire:click="setTab('weekly')" class="flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'weekly' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Weekly Saya
+        </button>
+    </div>
+    @endif
+
     {{-- Create Meeting Button / Back to List --}}
-    @if($mode === 'list')
+    @if($mode === 'list' && (!$this->showTabs || $tab === 'qr'))
     <div class="flex items-center justify-between">
         <div>
             <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Daftar Rapat Mingguan</h2>
@@ -108,7 +122,7 @@
     </x-modal>
 
     {{-- Attendance View --}}
-    @if($mode === 'attendance' && $selectedMeetingId)
+    @if($mode === 'attendance' && $selectedMeetingId && (!$this->showTabs || $tab === 'qr'))
     <div class="card flex flex-col" wire:poll.3s="refreshAttendanceData" style="height: calc(100vh - 175px);">
         <div class="p-6 flex flex-col min-h-0">
             <div class="mb-6">
@@ -189,7 +203,7 @@
     @endif
 
     {{-- List View --}}
-    @if($mode === 'list')
+    @if($mode === 'list' && (!$this->showTabs || $tab === 'qr'))
     <div class="card">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -276,6 +290,11 @@
             </div>
         @endif
     </div>
+    @endif
+
+    {{-- Tab "Weekly Saya" (khusus Super Admin & Staff HR): scan QR absen --}}
+    @if($this->showTabs && $mode === 'list' && $tab === 'weekly')
+    <livewire:weekly-meeting-scan :embedded="true" wire:key="weekly-scan-tab" />
     @endif
 
     <x:confirm-delete-modal title="Hapus Rapat" message="Apakah Anda yakin ingin menghapus rapat mingguan ini? Data absensi juga akan terhapus." />

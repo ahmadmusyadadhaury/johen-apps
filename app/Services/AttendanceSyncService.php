@@ -92,11 +92,18 @@ class AttendanceSyncService
         $records = Attendance::where('employee_id', $employee->id)
             ->where('status', 'hadir')
             ->whereNotNull('time_in')
-            ->whereNotNull('time_out')
             ->get();
 
         return $records->contains(function (Attendance $a) use ($employee) {
             $isMalamPosition = str_contains((string) $employee->position, '(Malam)');
+
+            if ($a->time_out === null) {
+                // Rekap masih terbuka dengan jam masuk yang tidak masuk akal
+                // untuk shift karyawan: hasil tap pulang saja yang keliru
+                // terekam sebagai absen datang (mis. pulang 20:31 tanpa absen
+                // datang) — bukan sesi datang sah yang belum ditutup.
+                return ! $this->isPlausibleCheckInForShift($employee, $a->date, $a->time_in);
+            }
 
             if ($a->time_out < $a->time_in) {
                 // Pola lama: jam keluar lebih awal dari jam masuk. Karyawan
@@ -231,11 +238,19 @@ class AttendanceSyncService
             ->first();
 
         if (! $attendance) {
+            // Punch tunggal yang tidak masuk akal sebagai absen datang untuk
+            // shift karyawan (mis. hanya tap pulang sore/malam karena lupa
+            // absen masuk) dicatat sebagai rekap "absen pulang saja": jam
+            // dicatat di kolom jam KELUAR, jam masuk dibiarkan kosong. Bukan
+            // menciptakan jam masuk palsu seperti contoh 20:31 di tab
+            // Presensi Karyawan.
+            $isCheckoutOnly = ! $this->isPlausibleCheckInForShift($employee, Carbon::parse($punchDate), $time);
+
             Attendance::create([
                 'employee_id' => $employee->id,
                 'date' => $punchDate,
-                'time_in' => $time,
-                'time_out' => null,
+                'time_in' => $isCheckoutOnly ? null : $time,
+                'time_out' => $isCheckoutOnly ? $time : null,
                 'status' => 'hadir',
                 'method' => $method,
             ]);
@@ -386,16 +401,35 @@ class AttendanceSyncService
         $parts = explode(':', $timeIn);
         $minutes = ((int) ($parts[0] ?? 0) * 60) + (int) ($parts[1] ?? 0);
 
-        if ($minutes < 7 * 60 || $minutes >= 18 * 60) {
+        if ($minutes < 7 * 60) {
             return true;
         }
 
         $shift = $employee->shiftOn($sessionDate->toDateString());
         $isMalam = str_contains((string) $employee->position, '(Malam)');
+        $isSubuh = str_contains((string) $employee->position, '(Subuh)');
         $start = Employee::shiftStartFrom($shift['jam_kerja'], $shift['jam_masuk'], $isMalam);
+        $end = Employee::shiftEndFrom($shift['jam_kerja']);
 
         $min = $start - (int) config('attendance.checkin_early_arrival_minutes', 120);
         $max = $start + (int) config('attendance.checkin_late_tolerance_minutes', 240);
+
+        // Punch sore/malam (>= 18:00).
+        if ($minutes >= 18 * 60) {
+            // Karyawan Malam/Subuh, shift lintas malam, maupun shift yang
+            // waktu selesainya tidak diketahui: pertahankan perilaku lama —
+            // dianggap bisa absen datang (konservatif, tidak bisa dibedakan).
+            if ($isMalam || $isSubuh
+                || $end === null
+                || $this->isOvernightCheckoutShift($employee, $sessionDate)) {
+                return true;
+            }
+
+            // Shift hari biasa yang sudah berakhir: punch ini bukan absen
+            // datang yang masuk akal — melainkan jam PULANG dari hari yang
+            // lupa di-absen masuk (mis. pulang 20:31 tanpa absen datang).
+            return $minutes < $end;
+        }
 
         return $minutes >= $min && $minutes <= $max;
     }

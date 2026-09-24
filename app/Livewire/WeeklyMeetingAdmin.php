@@ -17,6 +17,21 @@ class WeeklyMeetingAdmin extends Component
     public string $mode = 'list'; // list, create, attendance
     public ?int $selectedMeetingId = null;
 
+    // Tab "Weekly Saya" — saat staff_hr memilih menu Weekly Meeting, tampilkan
+    // 2 tab: "QR Code" (kelola daftar rapat) dan "Weekly Saya" (scan QR absen).
+    public string $tab = 'qr'; // qr | weekly
+
+    public function setTab(string $tab): void
+    {
+        $this->tab = $tab === 'weekly' ? 'weekly' : 'qr';
+    }
+
+    // Tab "QR Code" / "Weekly Saya" hanya untuk Super Admin & Staff HR.
+    public function getShowTabsProperty(): bool
+    {
+        return auth()->user()->isSuperAdmin() || auth()->user()->isStaffHr();
+    }
+
     // Form fields
     public string $title = 'Weekly Meeting';
     public string $meeting_date = '';

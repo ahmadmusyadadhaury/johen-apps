@@ -1179,28 +1179,72 @@
                 </div>
             </div>
             <div class="p-5 sm:p-6 flex-1">
-                @php
-                    $internetDays = 5;
-                    $isUrgent = $internetDays <= 3;
-                    $internetWarnClass = $isUrgent ? 'bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30' : 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30';
-                @endphp
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between p-3 rounded-xl {{ $internetWarnClass }}">
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
-                            <div class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg {{ $isUrgent ? 'bg-rose-100 dark:bg-rose-900/20' : 'bg-amber-100 dark:bg-amber-900/20' }}">
-                                <svg class="w-4 h-4 {{ $isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }}" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"/></svg>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-semibold text-gray-900 dark:text-gray-100">Internet</p>
-                                <p class="text-[11px] {{ $isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }}">Mendekati masa tenggang — {{ $internetDays }} hari lagi</p>
-                            </div>
+                @if($upcomingPayments['total'] > 0)
+                    <div class="space-y-2.5">
+                        @foreach(array_slice($upcomingPayments['items'], 0, 4) as $pay)
+                            @php
+                                $payBad = $pay['is_late'];
+                                $payDanger = ! $payBad && $pay['days_remaining'] <= 3;
+                                $payWarn = ! $payBad && ! $payDanger && $pay['days_remaining'] <= 7;
+                                $payRowClass = $payBad || $payDanger
+                                    ? 'bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30'
+                                    : ($payWarn
+                                        ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30'
+                                        : 'bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30');
+                                $payTextClass = $payBad || $payDanger
+                                    ? 'text-rose-600 dark:text-rose-400'
+                                    : ($payWarn
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : 'text-emerald-600 dark:text-emerald-400');
+                                $payIconClass = $payBad || $payDanger
+                                    ? 'bg-rose-100 dark:bg-rose-900/20'
+                                    : ($payWarn
+                                        ? 'bg-amber-100 dark:bg-amber-900/20'
+                                        : 'bg-emerald-100 dark:bg-emerald-900/20');
+                            @endphp
+                            <a href="{{ $pay['url'] }}" class="flex items-center justify-between gap-3 p-3 rounded-xl {{ $payRowClass }}">
+                                <div class="flex items-center gap-3 min-w-0 flex-1">
+                                    <div class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg {{ $payIconClass }}">
+                                        <svg class="w-4 h-4 {{ $payTextClass }}" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $pay['jenis'] }} — {{ $pay['nama'] }}</p>
+                                        <p class="text-[11px] {{ $payTextClass }}">
+                                            @if($pay['is_late'])
+                                                Terlambat {{ abs($pay['days_remaining']) }} hari
+                                            @else
+                                                Tenggang {{ $pay['days_remaining'] }} hari lagi
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                        <span class="text-xs font-semibold {{ $upcomingPayments['late'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }}">{{ $upcomingPayments['total'] }} pembayaran perlu diperhatikan</span>
+                        <div class="flex items-center gap-2 text-xs">
+                            @foreach([
+                                ['label' => 'Internet', 'count' => $upcomingPayments['counts']['internet'], 'url' => route('internet.index')],
+                                ['label' => 'IPL Ruko', 'count' => $upcomingPayments['counts']['ipl'], 'url' => route('ipl.index')],
+                                ['label' => 'Digital', 'count' => $upcomingPayments['counts']['digital'], 'url' => route('digital.index')],
+                            ] as $payLink)
+                                @if($payLink['count'] > 0)
+                                    <a href="{{ $payLink['url'] }}" class="shrink-0 font-semibold text-primary-600 hover:text-primary-700 hover:underline">{{ $payLink['label'] }} ({{ $payLink['count'] }})</a>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                    <span class="text-xs font-semibold {{ $isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }}">1 pembayaran perlu diperhatikan</span>
-                    <span class="text-xs font-semibold text-gray-400 cursor-default">Lihat Selengkapnya &rarr;</span>
-                </div>
+                @else
+                    <div class="flex items-center justify-center h-full py-6">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Semua tagihan sudah lunas</p>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
         @endif
