@@ -21,12 +21,12 @@
 
 @push('topbar-left')
     <div class="flex items-center gap-3">
-        @if(!$isOwnView)
-        <a href="{{ route('hris.employees.index') }}" class="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all hover:-translate-x-0.5">
+        <a href="{{ $isOwnView ? route('dashboard') : route('hris.employees.index') }}"
+           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all hover:-translate-x-0.5 {{ $isOwnView ? 'md:hidden' : '' }}"
+           aria-label="{{ $isOwnView ? 'Kembali ke dashboard' : $k('Kembali ke daftar karyawan') }}">
             <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
-        @endif
-        <div>
+        <div class="min-w-0">
             <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ $isOwnView ? 'Informasi Saya' : $k('Detail Karyawan') }}</h1>
             <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : $k('Kelola data personal, dokumen, dan riwayat karyawan di sini') }}</p>
         </div>
@@ -78,6 +78,10 @@ data-promotion-success="{{ session('promotion_success') }}"
           data-payroll-unread="{{ $viewedUnreadPayroll }}"
           data-payroll-mark-read="{{ auth()->user()?->employee_id === $employee->id ? route('payroll.mark-read') : '' }}"
           class="hidden"></div>
+
+    @if($isOwnView)
+        @include('employees.informasi-saya-mobile')
+    @endif
 
     @php $tabsJson = json_encode(array_filter(['dasar', 'dokumen', 'kontrak', 'jabatan', $canSeePayroll ? 'payroll' : null])); @endphp
 
@@ -369,7 +373,7 @@ data-promotion-success="{{ session('promotion_success') }}"
             this.formPromosiJenis = 'promosi';
             this.promosiModal = true;
         },
-    }" class="space-y-5">
+    }" class="{{ $isOwnView ? 'hidden md:block space-y-5' : 'space-y-5' }}">
 
         {{-- Hero Card --}}
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
