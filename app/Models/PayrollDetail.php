@@ -18,20 +18,32 @@ class PayrollDetail extends Model
         'divisi',
         'gaji_pokok',
         'tambahan_upah',
+        'bonus_absensi_full',
+        'pengembalian',
+        'tips_pelanggan',
+        'insentif_creative',
         'bonus',
         'thr',
         'apresiasi',
         'tunjangan_jabatan',
         'premi_bpjs_kesehatan',
+        'tambahan_upah_sold',
         'thr_dibayarkan',
         'potongan_pinjaman',
         'potongan_absensi',
+        'potongan_absensi_ketidakhadiran',
+        'potongan_absensi_keterlambatan',
         'potongan_bpjs_kesehatan_4',
         'potongan_bpjs_kesehatan_1',
         'take_home_pay',
         'pdf_password',
         'pdf_path',
         'status',
+        'read_at',
+    ];
+
+    protected $casts = [
+        'read_at' => 'datetime',
     ];
 
     public function payrollImport(): BelongsTo
@@ -51,11 +63,11 @@ class PayrollDetail extends Model
 
     public function getTotalPenghasilanBrutoAttribute(): float
     {
-        return (float) ($this->gaji_pokok + $this->tambahan_upah + $this->bonus + $this->thr + $this->apresiasi + $this->tunjangan_jabatan + $this->premi_bpjs_kesehatan);
+        return (float) ($this->gaji_pokok + $this->tambahan_upah + $this->tambahan_upah_sold + $this->bonus + $this->thr + $this->apresiasi + $this->tunjangan_jabatan + $this->premi_bpjs_kesehatan);
     }
 
     public function getTotalPengeluaranAttribute(): float
     {
-        return (float) ($this->thr_dibayarkan + $this->potongan_pinjaman + $this->potongan_absensi + $this->potongan_bpjs_kesehatan_4 + $this->potongan_bpjs_kesehatan_1);
+        return (float) ($this->thr_dibayarkan + $this->potongan_pinjaman + $this->potongan_absensi + $this->potongan_absensi_ketidakhadiran + $this->potongan_absensi_keterlambatan + $this->potongan_bpjs_kesehatan_4 + $this->potongan_bpjs_kesehatan_1);
     }
 }

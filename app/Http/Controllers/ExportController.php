@@ -5,12 +5,87 @@ namespace App\Http\Controllers;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeContract;
+use App\Models\PayrollDetail;
+use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
+    public function payroll(Request $request)
+    {
+        $year = $request->integer('year', now()->year);
+
+        $fields = [
+            ['Periode', fn (PayrollDetail $d) => $d->payrollImport?->periode],
+            ['NIK', fn (PayrollDetail $d) => $d->nik],
+            ['Nama', fn (PayrollDetail $d) => $d->nama],
+            ['Divisi', fn (PayrollDetail $d) => $d->divisi ?? '-'],
+            ['Jabatan', fn (PayrollDetail $d) => $d->jabatan],
+            ['Gaji Pokok', fn (PayrollDetail $d) => (float) $d->gaji_pokok],
+            ['Tunjangan Jabatan', fn (PayrollDetail $d) => (float) $d->tunjangan_jabatan],
+            ['Tambahan Upah (Bonus Absensi, Pengembalian, Tips Pelanggan, Insentif Creative, Resepsionist, IT)', fn (PayrollDetail $d) => (float) $d->tambahan_upah],
+            ['Bonus Absensi Full 1 Bulan', fn (PayrollDetail $d) => (float) $d->bonus_absensi_full],
+            ['Pengembalian', fn (PayrollDetail $d) => (float) $d->pengembalian],
+            ['Tips Pelanggan', fn (PayrollDetail $d) => (float) $d->tips_pelanggan],
+            ['Insentif View / Sold Creative; Content Creator, Video Editor & Resepsionist', fn (PayrollDetail $d) => (float) $d->insentif_creative],
+            ['Premi BPJS Kesehatan (4%)', fn (PayrollDetail $d) => (float) $d->premi_bpjs_kesehatan],
+            ['Tambahan Upah (Bonus Sold, View, dll)', fn (PayrollDetail $d) => (float) $d->tambahan_upah_sold],
+            ['THR', fn (PayrollDetail $d) => (float) $d->thr],
+            ['THR Dibayarkan', fn (PayrollDetail $d) => (float) $d->thr_dibayarkan],
+            ['Potongan Pinjaman', fn (PayrollDetail $d) => (float) $d->potongan_pinjaman],
+            ['Potongan Absensi (Ketidakhadiran)', fn (PayrollDetail $d) => (float) $d->potongan_absensi_ketidakhadiran],
+            ['Potongan Absensi (Keterlambatan)', fn (PayrollDetail $d) => (float) $d->potongan_absensi_keterlambatan],
+            ['Potongan BPJS Kesehatan (4%) - Tanggungan Perusahaan', fn (PayrollDetail $d) => (float) $d->potongan_bpjs_kesehatan_4],
+            ['Potongan BPJS Kesehatan (1%) - Tanggungan Karyawan', fn (PayrollDetail $d) => (float) $d->potongan_bpjs_kesehatan_1],
+            ['Password PDF', fn (PayrollDetail $d) => $d->pdf_password],
+            ['Total Diterima', fn (PayrollDetail $d) => (float) $d->take_home_pay],
+        ];
+
+        $details = PayrollDetail::with('payrollImport:id,periode')
+            ->whereHas('payrollImport', fn ($q) => $q->where('periode', 'LIKE', "%{$year}"))
+            ->get()
+            ->sortBy([
+                fn ($d) => $d->payrollImport?->periode ?? '',
+                fn ($d) => $d->nik,
+            ])
+            ->values();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Slip Gaji');
+
+        foreach ($fields as $i => [$header]) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->setCellValue($col . '1', $header);
+            $sheet->getStyle($col . '1')->getFont()->setBold(true);
+        }
+
+        $row = 2;
+        foreach ($details as $detail) {
+            foreach ($fields as $i => [, $resolver]) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                $sheet->setCellValue($col . $row, $resolver($detail));
+            }
+            $row++;
+        }
+
+        foreach ($fields as $i => [$header]) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+
+        return new StreamedResponse(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="slip-gaji-' . $year . '.xlsx"',
+        ]);
+    }
+
     public function employees()
     {
         $columns = [

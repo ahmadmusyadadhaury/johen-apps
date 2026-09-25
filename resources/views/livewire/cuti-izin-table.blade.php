@@ -29,7 +29,7 @@
     @endif
 
         {{-- Stats --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6">
+        <div class="grid grid-cols-2 {{ $jatahAvailable ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-3 sm:gap-5 mb-6">
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
@@ -50,20 +50,20 @@
                 </div>
                 <div class="flex items-baseline gap-1">
                     @if($cutiEligible)
-                    <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $sisaCuti }}</span>
-                    <span class="text-sm font-medium text-gray-400">/ {{ $jatahCuti }} hari</span>
+                    <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $usedCuti }}</span>
+                    <span class="text-sm font-medium text-gray-400">/ {{ $sisaBulan }} bulan</span>
                     @else
                     <span class="text-2xl font-bold font-display text-gray-400 dark:text-gray-500">—</span>
                     <span class="text-sm font-medium text-gray-400">belum aktif</span>
                     @endif
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Cuti Tahunan</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+                    Cuti Terpakai (Tahunan)
+                    <span class="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">Sisa {{ $sisaCuti }}x cuti</span>
+                </p>
                 @if($cutiEligible)
-                    <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1">
-                        Akumulasi {{ $terakumulasiCuti }} hari &bull; Terpakai {{ $usedCuti }} hari
-                    </p>
                     <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $jatahCuti > 0 ? ($sisaCuti / $jatahCuti) * 100 : 0 }}%"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $sisaBulan > 0 ? ($usedCuti / $sisaBulan) * 100 : 0 }}%"></div>
                     </div>
                 @else
                     <p class="mt-2 text-[11px] font-medium text-amber-600 dark:text-amber-400">

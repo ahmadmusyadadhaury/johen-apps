@@ -31,13 +31,10 @@ class Employee extends Model
 
     public const TIPE_KARYAWAN_AKTIF = 'karyawan_aktif';
 
-    public const TIPE_CALON_KARYAWAN = 'calon_karyawan';
-
     public const TIPE_MANTAN_KARYAWAN = 'mantan_karyawan';
 
     public const TIPE_OPTIONS = [
         self::TIPE_KARYAWAN_AKTIF => 'Karyawan Aktif',
-        self::TIPE_CALON_KARYAWAN => 'Calon Karyawan',
         self::TIPE_MANTAN_KARYAWAN => 'Mantan Karyawan',
     ];
 

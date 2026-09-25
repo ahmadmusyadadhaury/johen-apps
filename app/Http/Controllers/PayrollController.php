@@ -7,6 +7,7 @@ use App\Models\PayrollImport;
 use App\Services\PdfGenerationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class PayrollController extends Controller
@@ -104,5 +105,22 @@ class PayrollController extends Controller
             $detail->pdf_path,
             sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode)
         );
+    }
+
+    public function markRead(Request $request): JsonResponse
+    {
+        $employee = auth()->user()?->employee;
+
+        if (!$employee) {
+            return response()->json(['marked' => 0]);
+        }
+
+        $marked = PayrollDetail::query()
+            ->where('employee_id', $employee->id)
+            ->where('status', 'sent')
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json(['marked' => $marked]);
     }
 }

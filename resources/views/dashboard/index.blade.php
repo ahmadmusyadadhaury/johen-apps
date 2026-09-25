@@ -69,20 +69,20 @@
             </div>
             <div class="flex items-baseline gap-1">
                 @if($karyawanData['cuti_aktif'] ?? true)
-                <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $karyawanData['sisa_cuti'] }}</span>
-                <span class="text-sm font-medium text-gray-400">/ {{ $karyawanData['jatah_cuti'] }} hari</span>
+                <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $karyawanData['used_cuti'] }}</span>
+                <span class="text-sm font-medium text-gray-400">/ {{ $karyawanData['sisa_bulan'] }} bulan</span>
                 @else
                 <span class="text-2xl font-bold font-display text-gray-400 dark:text-gray-500">—</span>
                 <span class="text-sm font-medium text-gray-400">belum aktif</span>
                 @endif
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Cuti Tahunan</p>
-            @if($karyawanData['cuti_aktif'] ?? true)
-            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1">
-                Akumulasi {{ $karyawanData['terakumulasi_cuti'] }} hari &bull; Terpakai {{ $karyawanData['used_cuti'] }} hari
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+                Cuti Terpakai (Tahunan)
+                <span class="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">Sisa {{ $karyawanData['sisa_cuti'] }}x cuti</span>
             </p>
+            @if($karyawanData['cuti_aktif'] ?? true)
             <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $karyawanData['jatah_cuti'] > 0 ? ($karyawanData['sisa_cuti'] / $karyawanData['jatah_cuti']) * 100 : 0 }}%"></div>
+                <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $karyawanData['sisa_bulan'] > 0 ? ($karyawanData['used_cuti'] / $karyawanData['sisa_bulan']) * 100 : 0 }}%"></div>
             </div>
             @else
             <p class="mt-2 text-[11px] font-medium text-amber-600 dark:text-amber-400">
@@ -541,15 +541,15 @@
                 <span class="badge-success text-[10px]">Tahunan</span>
             </div>
             <div class="flex items-baseline gap-1">
-                <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $koordinatorStats['sisa_cuti'] }}</span>
-                <span class="text-sm font-medium text-gray-400">/ {{ $koordinatorStats['jatah_cuti'] }} hari</span>
+                <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $koordinatorStats['used_cuti'] }}</span>
+                <span class="text-sm font-medium text-gray-400">/ {{ $koordinatorStats['sisa_bulan'] }} bulan</span>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisa Cuti Tahunan</p>
-            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1">
-                Akumulasi {{ $koordinatorStats['terakumulasi_cuti'] }} hari &bull; Terpakai {{ $koordinatorStats['used_cuti'] }} hari
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+                Cuti Terpakai (Tahunan)
+                <span class="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">Sisa {{ $koordinatorStats['sisa_cuti'] }}x cuti</span>
             </p>
             <div class="mt-2 w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $koordinatorStats['jatah_cuti'] > 0 ? ($koordinatorStats['sisa_cuti'] / $koordinatorStats['jatah_cuti']) * 100 : 0 }}%"></div>
+                <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500" style="width: {{ $koordinatorStats['sisa_bulan'] > 0 ? ($koordinatorStats['used_cuti'] / $koordinatorStats['sisa_bulan']) * 100 : 0 }}%"></div>
             </div>
         </div>
 

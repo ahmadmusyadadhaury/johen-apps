@@ -207,6 +207,20 @@ class User extends Authenticatable
         return $this->role === self::ROLE_MANAGER;
     }
 
+    public function usesPegawaiTerm(): bool
+    {
+        return $this->isSuperAdmin() || $this->isGmCeo() || $this->isManager();
+    }
+
+    public function pegawaiLabel(string $label): string
+    {
+        if (!$this->usesPegawaiTerm()) {
+            return $label;
+        }
+
+        return str_replace('Karyawan', 'Pegawai', $label);
+    }
+
     public function isKoordinator(): bool
     {
         return $this->role === self::ROLE_KOORDINATOR;

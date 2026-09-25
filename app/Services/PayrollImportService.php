@@ -30,19 +30,24 @@ class PayrollImportService
                 'nama' => trim($row[1] ?? ''),
                 'divisi' => trim($row[2] ?? ''),
                 'jabatan' => trim($row[3] ?? ''),
-                'gaji_pokok' => (float) ($row[4] ?? 0),
-                'tambahan_upah' => (float) ($row[5] ?? 0),
-                'bonus' => (float) ($row[6] ?? 0),
-                'thr' => (float) ($row[7] ?? 0),
-                'apresiasi' => (float) ($row[8] ?? 0),
-                'tunjangan_jabatan' => (float) ($row[9] ?? 0),
-                'premi_bpjs_kesehatan' => (float) ($row[10] ?? 0),
-                'thr_dibayarkan' => (float) ($row[11] ?? 0),
-                'potongan_pinjaman' => (float) ($row[12] ?? 0),
-                'potongan_absensi' => (float) ($row[13] ?? 0),
-                'potongan_bpjs_kesehatan_4' => (float) ($row[14] ?? 0),
-                'potongan_bpjs_kesehatan_1' => (float) ($row[15] ?? 0),
-                'pdf_password' => trim($row[16] ?? ''),
+                'gaji_pokok' => $this->parseAmount($row[4] ?? 0),
+                'tunjangan_jabatan' => $this->parseAmount($row[5] ?? 0),
+                'tambahan_upah' => $this->parseAmount($row[6] ?? 0),
+                'bonus_absensi_full' => $this->parseAmount($row[7] ?? 0),
+                'pengembalian' => $this->parseAmount($row[8] ?? 0),
+                'tips_pelanggan' => $this->parseAmount($row[9] ?? 0),
+                'insentif_creative' => $this->parseAmount($row[10] ?? 0),
+                'premi_bpjs_kesehatan' => $this->parseAmount($row[11] ?? 0),
+                'tambahan_upah_sold' => $this->parseAmount($row[12] ?? 0),
+                'thr' => $this->parseAmount($row[13] ?? 0),
+                'thr_dibayarkan' => $this->parseAmount($row[14] ?? 0),
+                'potongan_pinjaman' => $this->parseAmount($row[15] ?? 0),
+                'potongan_absensi_ketidakhadiran' => $this->parseAmount($row[16] ?? 0),
+                'potongan_absensi_keterlambatan' => $this->parseAmount($row[17] ?? 0),
+                'potongan_bpjs_kesehatan_4' => $this->parseAmount($row[18] ?? 0),
+                'potongan_bpjs_kesehatan_1' => $this->parseAmount($row[19] ?? 0),
+                'pdf_password' => trim($row[20] ?? ''),
+                'total_diterima_sumber' => trim($row[21] ?? ''),
             ];
 
             $validator = Validator::make($rowData, [
@@ -51,18 +56,22 @@ class PayrollImportService
                 'divisi' => 'nullable|string|max:255',
                 'jabatan' => 'required|string|max:255',
                 'gaji_pokok' => 'required|numeric|min:0',
-                'tambahan_upah' => 'numeric|min:0',
-                'bonus' => 'numeric|min:0',
-                'thr' => 'numeric|min:0',
-                'apresiasi' => 'numeric|min:0',
                 'tunjangan_jabatan' => 'numeric|min:0',
+                'tambahan_upah' => 'numeric|min:0',
+                'bonus_absensi_full' => 'numeric|min:0',
+                'pengembalian' => 'numeric|min:0',
+                'tips_pelanggan' => 'numeric|min:0',
+                'insentif_creative' => 'numeric|min:0',
                 'premi_bpjs_kesehatan' => 'numeric|min:0',
+                'tambahan_upah_sold' => 'numeric|min:0',
+                'thr' => 'numeric|min:0',
                 'thr_dibayarkan' => 'numeric|min:0',
                 'potongan_pinjaman' => 'numeric|min:0',
-                'potongan_absensi' => 'numeric|min:0',
+                'potongan_absensi_ketidakhadiran' => 'numeric|min:0',
+                'potongan_absensi_keterlambatan' => 'numeric|min:0',
                 'potongan_bpjs_kesehatan_4' => 'numeric|min:0',
                 'potongan_bpjs_kesehatan_1' => 'numeric|min:0',
-                'pdf_password' => 'required|string|min:1|max:50',
+                'pdf_password' => 'nullable|string|max:50',
             ]);
 
             if ($validator->fails()) {
@@ -86,7 +95,26 @@ class PayrollImportService
 
             $rowData['employee_id'] = $employee->id;
             $rowData['email'] = $employee->email ?? $employee->user?->email ?? '';
-            $rowData['take_home_pay'] = $rowData['gaji_pokok'] + $rowData['tambahan_upah'] + $rowData['bonus'] + $rowData['thr'] + $rowData['apresiasi'] + $rowData['tunjangan_jabatan'] + $rowData['premi_bpjs_kesehatan'] - $rowData['thr_dibayarkan'] - $rowData['potongan_pinjaman'] - $rowData['potongan_absensi'] - $rowData['potongan_bpjs_kesehatan_4'] - $rowData['potongan_bpjs_kesehatan_1'];
+
+            if ($rowData['tambahan_upah'] <= 0) {
+                $rowData['tambahan_upah'] = $rowData['bonus_absensi_full'] + $rowData['pengembalian'] + $rowData['tips_pelanggan'] + $rowData['insentif_creative'];
+            }
+
+            $rowData['take_home_pay'] = $rowData['gaji_pokok'] + $rowData['tunjangan_jabatan'] + $rowData['tambahan_upah'] + $rowData['premi_bpjs_kesehatan'] + $rowData['tambahan_upah_sold'] + $rowData['thr'] - $rowData['thr_dibayarkan'] - $rowData['potongan_pinjaman'] - $rowData['potongan_absensi_ketidakhadiran'] - $rowData['potongan_absensi_keterlambatan'] - $rowData['potongan_bpjs_kesehatan_4'] - $rowData['potongan_bpjs_kesehatan_1'];
+
+            if ($rowData['total_diterima_sumber'] !== '' && $rowData['total_diterima_sumber'] !== '-' && (float) $rowData['total_diterima_sumber'] > 0) {
+                $totalSumber = $this->parseAmount($rowData['total_diterima_sumber']);
+                $selisih = abs($totalSumber - $rowData['take_home_pay']);
+                if ($selisih > 1) {
+                    $errors[] = [
+                        'row' => $rowNumber,
+                        'data' => $rowData,
+                        'errors' => ['total_diterima' => ['Kolom Total Diterima (' . number_format($totalSumber, 0, ',', '.') . ') tidak sesuai dengan perhitungan sistem (' . number_format($rowData['take_home_pay'], 0, ',', '.') . ').']],
+                    ];
+                    continue;
+                }
+            }
+
             $validData[] = $rowData;
         }
 
@@ -96,6 +124,8 @@ class PayrollImportService
                 'file_name' => 'Payroll ' . $periode,
                 'total_employee' => count($validData),
                 'total_payroll' => collect($validData)->sum('take_home_pay'),
+                'errors' => $errors,
+                'invalid_rows' => count($errors),
                 'uploaded_by' => $uploadedBy,
             ]);
 
@@ -109,15 +139,19 @@ class PayrollImportService
                     'divisi' => $data['divisi'],
                     'jabatan' => $data['jabatan'],
                     'gaji_pokok' => $data['gaji_pokok'],
-                    'tambahan_upah' => $data['tambahan_upah'],
-                    'bonus' => $data['bonus'],
-                    'thr' => $data['thr'],
-                    'apresiasi' => $data['apresiasi'],
                     'tunjangan_jabatan' => $data['tunjangan_jabatan'],
+                    'tambahan_upah' => $data['tambahan_upah'],
+                    'bonus_absensi_full' => $data['bonus_absensi_full'],
+                    'pengembalian' => $data['pengembalian'],
+                    'tips_pelanggan' => $data['tips_pelanggan'],
+                    'insentif_creative' => $data['insentif_creative'],
                     'premi_bpjs_kesehatan' => $data['premi_bpjs_kesehatan'],
+                    'tambahan_upah_sold' => $data['tambahan_upah_sold'],
+                    'thr' => $data['thr'],
                     'thr_dibayarkan' => $data['thr_dibayarkan'],
                     'potongan_pinjaman' => $data['potongan_pinjaman'],
-                    'potongan_absensi' => $data['potongan_absensi'],
+                    'potongan_absensi_ketidakhadiran' => $data['potongan_absensi_ketidakhadiran'],
+                    'potongan_absensi_keterlambatan' => $data['potongan_absensi_keterlambatan'],
                     'potongan_bpjs_kesehatan_4' => $data['potongan_bpjs_kesehatan_4'],
                     'potongan_bpjs_kesehatan_1' => $data['potongan_bpjs_kesehatan_1'],
                     'take_home_pay' => $data['take_home_pay'],
@@ -128,10 +162,36 @@ class PayrollImportService
             return $import;
         });
 
-        $payrollImport->setAttribute('errors', $errors);
-        $payrollImport->setAttribute('invalid_rows', count($errors));
-
         return $payrollImport;
+    }
+
+    private function parseAmount(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        $cleaned = trim((string) $value);
+        $cleaned = str_replace(['Rp', 'RP', 'rp', ' '], '', $cleaned);
+
+        if ($cleaned === '' || $cleaned === '-' || in_array($cleaned, ['0', '0.0', '0,0'])) {
+            return 0.0;
+        }
+
+        // Titik ribuan ala Indonesia: "5.000", "500.000", "5.000.000", opsional koma desimal
+        if (preg_match('/^-?\d{1,3}(\.\d{3})+(,\d+)?$/', $cleaned)) {
+            $cleaned = str_replace('.', '', $cleaned);
+            $cleaned = str_replace(',', '.', $cleaned);
+            return (float) $cleaned;
+        }
+
+        // Koma desimal saja: "1,5"
+        if (str_contains($cleaned, ',') && !str_contains($cleaned, '.')) {
+            $cleaned = str_replace(',', '.', $cleaned);
+            return (float) $cleaned;
+        }
+
+        return (float) $cleaned;
     }
 
     public function validate(array $data): array
@@ -147,18 +207,22 @@ class PayrollImportService
                 'divisi' => 'nullable|string|max:255',
                 'jabatan' => 'required|string|max:255',
                 'gaji_pokok' => 'required|numeric|min:0',
-                'tambahan_upah' => 'numeric|min:0',
-                'bonus' => 'numeric|min:0',
-                'thr' => 'numeric|min:0',
-                'apresiasi' => 'numeric|min:0',
                 'tunjangan_jabatan' => 'numeric|min:0',
+                'tambahan_upah' => 'numeric|min:0',
+                'bonus_absensi_full' => 'numeric|min:0',
+                'pengembalian' => 'numeric|min:0',
+                'tips_pelanggan' => 'numeric|min:0',
+                'insentif_creative' => 'numeric|min:0',
                 'premi_bpjs_kesehatan' => 'numeric|min:0',
+                'tambahan_upah_sold' => 'numeric|min:0',
+                'thr' => 'numeric|min:0',
                 'thr_dibayarkan' => 'numeric|min:0',
                 'potongan_pinjaman' => 'numeric|min:0',
-                'potongan_absensi' => 'numeric|min:0',
+                'potongan_absensi_ketidakhadiran' => 'numeric|min:0',
+                'potongan_absensi_keterlambatan' => 'numeric|min:0',
                 'potongan_bpjs_kesehatan_4' => 'numeric|min:0',
                 'potongan_bpjs_kesehatan_1' => 'numeric|min:0',
-                'pdf_password' => 'required|string|min:1|max:50',
+                'pdf_password' => 'nullable|string|max:50',
             ]);
 
             if ($validator->fails()) {

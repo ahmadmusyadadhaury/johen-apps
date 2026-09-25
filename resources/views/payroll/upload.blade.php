@@ -141,7 +141,7 @@
                 @enderror
             </div>
 
-            <div class="flex items-center gap-3 pt-2">
+            <div class="flex items-center justify-end gap-3 pt-2">
                 <button type="submit" class="btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Upload & Validasi
@@ -149,36 +149,6 @@
                 <a href="{{ route('dashboard') }}" class="btn-ghost">Batal</a>
             </div>
         </form>
-    </div>
-
-    <div class="card p-6 mt-4">
-        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Urutan Kolom File Excel</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Baris pertama file Excel akan dianggap sebagai header dan dilewati. Urutan kolom wajib sebagai berikut:</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            @foreach([
-                '1. NIK',
-                '2. Nama',
-                '3. Divisi',
-                '4. Jabatan',
-                '5. Gaji Pokok',
-                '6. Tambahan Upah',
-                '7. Bonus',
-                '8. THR',
-                '9. Apresiasi',
-                '10. Tunjangan Jabatan',
-                '11. Premi BPJS Kesehatan (4%)',
-                '12. THR Dibayarkan',
-                '13. Potongan Pinjaman',
-                '14. Potongan Absensi',
-                '15. Potongan BPJS Kesehatan (4%)',
-                '16. Potongan BPJS Kesehatan (1%)',
-                '17. Password PDF',
-            ] as $col)
-                <div class="flex items-center gap-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800 px-3 py-2">
-                    <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ $col }}</span>
-                </div>
-            @endforeach
-        </div>
     </div>
 
 </x-app-layout>

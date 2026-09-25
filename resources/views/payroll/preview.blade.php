@@ -37,6 +37,52 @@
         </div>
     </div>
 
+    @if (count($import->errors ?? []) > 0)
+        <div class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl p-5">
+            <div class="flex items-start gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white shadow-lg shadow-rose-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-rose-700 dark:text-rose-300">{{ count($import->errors) }} baris data tidak valid</h2>
+                    <p class="text-xs text-rose-600/80 dark:text-rose-400/80 mt-0.5">Baris-baris ini dilewati dan tidak masuk ke slip gaji. Perbaiki di file Excel lalu Upload Ulang.</p>
+                </div>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+                <table class="min-w-full text-xs">
+                    <thead>
+                        <tr class="text-left text-rose-700 dark:text-rose-300 border-b border-rose-200 dark:border-rose-800">
+                            <th class="px-3 py-2 font-semibold">Baris</th>
+                            <th class="px-3 py-2 font-semibold">NIK</th>
+                            <th class="px-3 py-2 font-semibold">Nama</th>
+                            <th class="px-3 py-2 font-semibold">Kolom</th>
+                            <th class="px-3 py-2 font-semibold">Pesan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($import->errors as $err)
+                            <tr class="border-b border-rose-100 dark:border-rose-900/50 align-top">
+                                <td class="px-3 py-2 font-mono text-rose-700 dark:text-rose-300 whitespace-nowrap">{{ $err['row'] }}</td>
+                                <td class="px-3 py-2 font-mono text-rose-600/90 dark:text-rose-400/90 whitespace-nowrap">{{ $err['data']['nik'] ?? '-' }}</td>
+                                <td class="px-3 py-2 text-rose-600/90 dark:text-rose-400/90 whitespace-nowrap">{{ $err['data']['nama'] ?? '-' }}</td>
+                                <td class="px-3 py-2 font-mono text-rose-600/90 dark:text-rose-400/90 whitespace-nowrap">
+                                    {{ implode(', ', array_keys($err['errors'])) }}
+                                </td>
+                                <td class="px-3 py-2 text-rose-600/90 dark:text-rose-400/90">
+                                    @foreach ($err['errors'] as $messages)
+                                        @foreach ($messages as $message)
+                                            <div>{{ $message }}</div>
+                                        @endforeach
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div class="stat-card">
             <div class="flex items-center gap-3 mb-2">

@@ -31,7 +31,7 @@ class StoreEmployeeRequest extends FormRequest
             'division_ids.*' => 'exists:divisions,id',
             'atasan' => 'nullable|string|max:255',
             'atasan2' => 'nullable|string|max:255',
-            'tipe' => 'required|in:karyawan_aktif,calon_karyawan,mantan_karyawan',
+            'tipe' => 'required|in:karyawan_aktif,mantan_karyawan',
             'jenis_kerja' => 'nullable|in:Operasional,Office',
             'jam_kerja' => 'nullable|string|max:255',
             'tanggal_masuk' => 'nullable|date',

@@ -1,37 +1,30 @@
 <div>
+    @php
+        $pegawaiLabel = auth()->user();
+        $k = function ($s) use ($pegawaiLabel) { return $pegawaiLabel->pegawaiLabel($s); };
+    @endphp
     @if(!$modalOnly)
     <div class="flex items-center justify-between px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl">
         @php
             $tipeCounts = [
                 'karyawan_aktif' => \App\Models\Employee::where('tipe', 'karyawan_aktif')->count(),
-                'calon_karyawan' => \App\Models\Employee::where('tipe', 'calon_karyawan')->count(),
                 'mantan_karyawan' => \App\Models\Employee::where('tipe', 'mantan_karyawan')->count(),
             ];
         @endphp
         <button wire:click="$set('filterStatus', 'karyawan_aktif')"
-            class="flex-1 justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'karyawan_aktif' ? 'bg-emerald-500 text-white shadow-sm' : 'text-gray-600 hover:text-emerald-600 dark:text-white dark:hover:text-emerald-300' }}">
+            class="flex-1 justify-center px-3 py-3 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'karyawan_aktif' ? 'bg-emerald-500 text-white shadow-sm' : 'text-gray-600 hover:text-emerald-600 dark:text-white dark:hover:text-emerald-300' }}">
             <span class="inline-flex items-center gap-1">
                 @if($filterStatus === 'karyawan_aktif')
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                 @endif
-                Karyawan Aktif
+                {{ $k('Karyawan Aktif') }}
                 <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] {{ $filterStatus === 'karyawan_aktif' ? 'bg-emerald-600 text-emerald-100' : 'bg-gray-300 text-gray-700 dark:bg-white/20 dark:text-white' }}">{{ $tipeCounts['karyawan_aktif'] }}</span>
             </span>
         </button>
-        <button wire:click="$set('filterStatus', 'calon_karyawan')"
-            class="flex-1 justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'calon_karyawan' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-600 hover:text-blue-600 dark:text-white dark:hover:text-blue-300' }}">
-            <span class="inline-flex items-center gap-1">
-                @if($filterStatus === 'calon_karyawan')
-                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
-                @endif
-                Calon Karyawan
-                <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] {{ $filterStatus === 'calon_karyawan' ? 'bg-blue-600 text-blue-100' : 'bg-gray-300 text-gray-700 dark:bg-white/20 dark:text-white' }}">{{ $tipeCounts['calon_karyawan'] }}</span>
-            </span>
-        </button>
         <button wire:click="$set('filterStatus', 'mantan_karyawan')"
-            class="flex-1 justify-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'mantan_karyawan' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-600 hover:text-red-600 dark:text-white dark:hover:text-red-300' }}">
+            class="flex-1 justify-center px-3 py-3 rounded-lg text-xs font-semibold transition-all duration-200 {{ $filterStatus === 'mantan_karyawan' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-600 hover:text-red-600 dark:text-white dark:hover:text-red-300' }}">
             <span class="inline-flex items-center gap-1">
-                Mantan Karyawan
+                {{ $k('Mantan Karyawan') }}
                 <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] {{ $filterStatus === 'mantan_karyawan' ? 'bg-red-600 text-red-100' : 'bg-gray-300 text-gray-700 dark:bg-white/20 dark:text-white' }}">{{ $tipeCounts['mantan_karyawan'] }}</span>
             </span>
         </button>
@@ -45,7 +38,7 @@
                 <input
                     type="text"
                     wire:model.live.debounce.300ms="search"
-                    placeholder="Cari NIK, nama, email..."
+                    placeholder="Cari NIP, nama, email..."
                     class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"
                 >
             </div>
@@ -67,7 +60,7 @@
             @if(auth()->user()->canCreateData() && ! auth()->user()->isGmCeo())
             <button wire:click="openCreateModal" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Tambah Karyawan
+                {{ $k('Tambah Karyawan') }}
             </button>
             @endif
         </div>
@@ -80,7 +73,7 @@
                     <th class="px-6 py-3 w-12 text-center">No</th>
                     <th class="px-6 py-3 cursor-pointer" wire:click="sortBy('nik')">
                         <div class="flex items-center gap-1">
-                            NIK
+                            NIP
                             @if($sortField === 'nik')
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $sortDirection === 'asc' ? 'M19.5 8.25l-7.5 7.5-7.5-7.5' : 'M4.5 15.75l7.5-7.5 7.5 7.5' }}"/></svg>
                             @endif
@@ -123,11 +116,9 @@
                         <td class="table-cell text-gray-500 dark:text-gray-400">{{ $emp->tanggal_masuk?->format('d M Y') ?? '-' }}</td>
                         <td class="table-cell">
                             @if($emp->tipe == 'karyawan_aktif')
-                                <span class="badge-success">Karyawan Aktif</span>
-                            @elseif($emp->tipe == 'calon_karyawan')
-                                <span class="badge-info">Calon Karyawan</span>
+                                <span class="badge-success">{{ $k('Karyawan Aktif') }}</span>
                             @else
-                                <span class="badge-danger">Mantan Karyawan</span>
+                                <span class="badge-danger">{{ $k('Mantan Karyawan') }}</span>
                             @endif
                         </td>
                         <td class="table-cell text-center whitespace-nowrap">
@@ -173,12 +164,12 @@
                                 <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                     <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                                 </div>
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data karyawan</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tambah karyawan pertama untuk memulai</p>
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $k('Belum ada data karyawan') }}</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $k('Tambah karyawan pertama untuk memulai') }}</p>
                                 @if(auth()->user()->canCreateData() && ! auth()->user()->isGmCeo())
                                 <button wire:click="openCreateModal" class="btn-primary mt-4 text-xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                    Tambah Karyawan
+                                    {{ $k('Tambah Karyawan') }}
                                 </button>
                                 @endif
                             </div>
@@ -209,8 +200,8 @@
             {{-- HEADER --}}
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tambah Karyawan</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Lengkapi data karyawan baru</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $k('Tambah Karyawan') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $k('Lengkapi data karyawan baru') }}</p>
                 </div>
                 <button wire:click="closeModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -261,7 +252,7 @@
                         </div>
                         <div>
                             <x-input-label for="create-nama" value="Nama Lengkap *" />
-                            <x-text-input id="create-nama" wire:model="nama" type="text" class="mt-1 block w-full {{ $errors->has('nama') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="Masukan nama karyawan" />
+                            <x-text-input id="create-nama" wire:model="nama" type="text" class="mt-1 block w-full {{ $errors->has('nama') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="{{ $k('Masukan nama karyawan') }}" />
                             <x-input-error :messages="$errors->get('nama')" class="mt-2" />
                         </div>
                         <div>
@@ -284,11 +275,10 @@
                             <x-input-error :messages="$errors->get('jenis_kelamin')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="create-tipe" value="Tipe Karyawan *" />
+                            <x-input-label for="create-tipe" value="{{ $k('Tipe Karyawan *') }}" />
                             <select id="create-tipe" wire:model="tipe" class="mt-1 block w-full rounded-xl border @error('tipe') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                                <option value="karyawan_aktif">Karyawan Aktif</option>
-                                <option value="calon_karyawan">Calon Karyawan</option>
-                                <option value="mantan_karyawan">Mantan Karyawan</option>
+                                <option value="karyawan_aktif">{{ $k('Karyawan Aktif') }}</option>
+                                <option value="mantan_karyawan">{{ $k('Mantan Karyawan') }}</option>
                             </select>
                             <x-input-error :messages="$errors->get('tipe')" class="mt-2" />
                         </div>
@@ -495,7 +485,7 @@
                             <x-input-error :messages="$errors->get('tanggal_masuk')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="create-jenis_karyawan" value="Jenis Karyawan" />
+                            <x-input-label for="create-jenis_karyawan" value="{{ $k('Jenis Karyawan') }}" />
                             <select id="create-jenis_karyawan" wire:model="jenis_karyawan" class="mt-1 block w-full rounded-xl border @error('jenis_karyawan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="tetap">Tetap</option>
@@ -692,8 +682,8 @@
 
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Karyawan</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Perbarui data karyawan</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $k('Edit Karyawan') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $k('Perbarui data karyawan') }}</p>
                 </div>
                 <button wire:click="closeModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -766,11 +756,10 @@
                             <x-input-error :messages="$errors->get('jenis_kelamin')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="edit-tipe" value="Tipe Karyawan *" />
+                            <x-input-label for="edit-tipe" value="{{ $k('Tipe Karyawan *') }}" />
                             <select id="edit-tipe" wire:model="tipe" class="mt-1 block w-full rounded-xl border @error('tipe') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                                <option value="karyawan_aktif">Karyawan Aktif</option>
-                                <option value="calon_karyawan">Calon Karyawan</option>
-                                <option value="mantan_karyawan">Mantan Karyawan</option>
+                                <option value="karyawan_aktif">{{ $k('Karyawan Aktif') }}</option>
+                                <option value="mantan_karyawan">{{ $k('Mantan Karyawan') }}</option>
                             </select>
                             <x-input-error :messages="$errors->get('tipe')" class="mt-2" />
                         </div>
@@ -977,7 +966,7 @@
                             <x-input-error :messages="$errors->get('tanggal_masuk')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label for="edit-jenis_karyawan" value="Jenis Karyawan" />
+                            <x-input-label for="edit-jenis_karyawan" value="{{ $k('Jenis Karyawan') }}" />
                             <select id="edit-jenis_karyawan" wire:model="jenis_karyawan" class="mt-1 block w-full rounded-xl border @error('jenis_karyawan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih --</option>
                                 <option value="tetap">Tetap</option>
@@ -1156,7 +1145,7 @@
 
             <div class="flex items-center justify-between mb-4 shrink-0">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pratinjau Data Karyawan</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $k('Pratinjau Data Karyawan') }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Periksa kembali data sebelum menyimpan</p>
                 </div>
                 <button wire:click="closeModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -1177,7 +1166,7 @@
                         <div class="preview-field"><span class="preview-label">Tempat Lahir</span><span class="preview-value">{{ $tempat_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Tanggal Lahir</span><span class="preview-value">{{ $tanggal_lahir ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kelamin</span><span class="preview-value">{{ $jenis_kelamin == 'L' ? 'Laki-laki' : ($jenis_kelamin == 'P' ? 'Perempuan' : '-') }}</span></div>
-                        <div class="preview-field"><span class="preview-label">Tipe Karyawan</span><span class="preview-value">{{ \App\Models\Employee::TIPE_OPTIONS[$tipe] ?? ucfirst($tipe) }}</span></div>
+                        <div class="preview-field"><span class="preview-label">{{ $k('Tipe Karyawan') }}</span><span class="preview-value">{{ $k(\App\Models\Employee::TIPE_OPTIONS[$tipe] ?? ucfirst($tipe)) }}</span></div>
                         <div class="preview-field"><span class="preview-label">Status Pernikahan</span><span class="preview-value">{{ $status_pernikahan ? ucfirst($status_pernikahan) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Ukuran Baju</span><span class="preview-value">{{ $ukuran_baju ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Agama</span><span class="preview-value">{{ $agama ? ucfirst($agama) : '-' }}</span></div>
@@ -1217,7 +1206,7 @@
                         <div class="preview-field"><span class="preview-label">Atasan 1</span><span class="preview-value">{{ $atasan ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Atasan 2</span><span class="preview-value">{{ $atasan2 ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Tanggal Bergabung</span><span class="preview-value">{{ $tanggal_masuk ?: '-' }}</span></div>
-                        <div class="preview-field"><span class="preview-label">Jenis Karyawan</span><span class="preview-value">{{ $jenis_karyawan ? ucfirst($jenis_karyawan) : '-' }}</span></div>
+                        <div class="preview-field"><span class="preview-label">{{ $k('Jenis Karyawan') }}</span><span class="preview-value">{{ $jenis_karyawan ? ucfirst($jenis_karyawan) : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Lokasi Kerja</span><span class="preview-value">{{ $lokasi_kerja ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jenis Kerja</span><span class="preview-value">{{ $jenis_kerja ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Jam Kerja</span><span class="preview-value">{{ $jam_kerja ?: '-' }}</span></div>
@@ -1291,7 +1280,7 @@
     </div>
     </template>
 
-    <x:confirm-delete-modal title="Hapus Karyawan" message="Apakah Anda yakin ingin menghapus data karyawan ini? Semua data terkait juga akan dihapus." />
+    <x:confirm-delete-modal title="{{ $k('Hapus Karyawan') }}" message="{{ $k('Apakah Anda yakin ingin menghapus data karyawan ini? Semua data terkait juga akan dihapus.') }}" />
 
     <script>
         document.addEventListener('livewire:init', () => {

@@ -515,7 +515,10 @@ class DashboardService
                 ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
 
-        $jatahCuti = 12;
+        $sisaBulan = 0;
+        if ($cutiAktif && $accrual['cycle_start']) {
+            $sisaBulan = 13 - (int) $accrual['cycle_start']->month;
+        }
         $sisaCuti = max(0, $terakumulasiCuti - $usedCuti);
 
         $pendingCount = LeaveRequest::where('employee_id', $employeeId)
@@ -620,7 +623,7 @@ class DashboardService
                 'status' => $employee->status,
             ],
             'sisa_cuti' => $sisaCuti,
-            'jatah_cuti' => $jatahCuti,
+            'sisa_bulan' => $sisaBulan,
             'used_cuti' => $usedCuti,
             'terakumulasi_cuti' => $terakumulasiCuti,
             'cuti_aktif' => $cutiAktif,

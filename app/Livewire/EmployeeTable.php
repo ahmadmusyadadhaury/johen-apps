@@ -260,7 +260,7 @@ class EmployeeTable extends Component
             'kelurahan' => 'required|string|max:150',
             'rt_rw' => 'nullable|string|max:20',
             'kode_pos' => 'required|string|max:10',
-            'tipe' => 'required|in:karyawan_aktif,calon_karyawan,mantan_karyawan',
+            'tipe' => 'required|in:karyawan_aktif,mantan_karyawan',
             'status_pernikahan' => 'required|in:sudah menikah,belum menikah',
             'position' => 'nullable|string|max:255',
             'position_ids' => 'required|array|min:1',

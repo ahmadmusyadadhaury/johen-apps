@@ -165,6 +165,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/detail/{detail}/retry', [PayrollController::class, 'retryFailed'])->name('retry-failed');
         Route::get('/{import}', [PayrollController::class, 'show'])->name('show');
         Route::get('/detail/{detail}/download', [PayrollController::class, 'downloadPdf'])->name('download-pdf');
+        Route::post('/mark-read', [PayrollController::class, 'markRead'])->name('mark-read');
 
         Route::get('/{import}/progress-json', [PayrollController::class, 'progressJson'])->name('progress-json');
         Route::get('/{import}/email-logs', [EmailLogController::class, 'index'])->name('email-logs');
@@ -173,6 +174,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('history')->name('history.')->group(function () {
+        Route::get('/export', [ExportController::class, 'payroll'])->name('export');
         Route::get('/', [HistoryController::class, 'index'])->name('index');
         Route::get('/{import}', [HistoryController::class, 'show'])->name('show');
     });

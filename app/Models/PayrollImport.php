@@ -13,7 +13,13 @@ class PayrollImport extends Model
         'file_name',
         'total_employee',
         'total_payroll',
+        'errors',
+        'invalid_rows',
         'uploaded_by',
+    ];
+
+    protected $casts = [
+        'errors' => 'array',
     ];
 
     public function uploadedBy(): BelongsTo

@@ -1,5 +1,6 @@
 @php
     $isOwnView = $isOwnView ?? false;
+    $k = fn($s) => auth()->user()?->pegawaiLabel($s) ?? $s;
     $canManageEmployeeData = !$isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
     $isOwnReadOnly = $isOwnView && (auth()->user()?->isSuperAdminLike() ?? false);
     $canSeePayroll = ($canSeePayroll ?? false) || $isOwnView;
@@ -26,13 +27,13 @@
         </a>
         @endif
         <div>
-            <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}</h1>
-            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : 'Kelola data personal, dokumen, dan riwayat karyawan di sini' }}</p>
+            <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ $isOwnView ? 'Informasi Saya' : $k('Detail Karyawan') }}</h1>
+            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : $k('Kelola data personal, dokumen, dan riwayat karyawan di sini') }}</p>
         </div>
     </div>
 @endpush
 
-<x-app-layout title="{{ $isOwnView ? 'Informasi Saya' : 'Detail Karyawan' }}">
+<x-app-layout title="{{ $isOwnView ? 'Informasi Saya' : $k('Detail Karyawan') }}">
 
     <div id="page-data"
          data-documents="{{ $employee->documents->toJson() }}"
@@ -74,6 +75,8 @@ data-promotion-success="{{ session('promotion_success') }}"
          data-atasan-options="{{ json_encode($atasanOptions) }}"
          data-payroll-details="{{ json_encode($payrollDetails) }}"
           data-payroll-stats="{{ json_encode($stats) }}"
+          data-payroll-unread="{{ $viewedUnreadPayroll }}"
+          data-payroll-mark-read="{{ auth()->user()?->employee_id === $employee->id ? route('payroll.mark-read') : '' }}"
           class="hidden"></div>
 
     @php $tabsJson = json_encode(array_filter(['dasar', 'dokumen', 'kontrak', 'jabatan', $canSeePayroll ? 'payroll' : null])); @endphp
@@ -135,6 +138,9 @@ data-promotion-success="{{ session('promotion_success') }}"
         viewSuratPromosi: null,
         payrollList: [],
         payrollStats: { gaji_pokok: 0, total_tunjangan: 0, total_potongan: 0, gaji_bersih: 0 },
+        unreadPayroll: 0,
+        markReadUrl: '',
+        payrollMarked: false,
         tabs: {{ $tabsJson }},
         init() {
             const data = document.getElementById('page-data');
@@ -163,6 +169,10 @@ data-promotion-success="{{ session('promotion_success') }}"
                 try {
                     this.payrollStats = JSON.parse(data.dataset.payrollStats || '{}');
                 } catch (e) { this.payrollStats = { gaji_pokok: 0, total_tunjangan: 0, total_potongan: 0, gaji_bersih: 0 }; }
+                try {
+                    this.unreadPayroll = parseInt(data.dataset.payrollUnread || '0', 10) || 0;
+                } catch (e) { this.unreadPayroll = 0; }
+                this.markReadUrl = data.dataset.payrollMarkRead || '';
                 if (data.dataset.docSuccess || data.dataset.contractSuccess || data.dataset.positionSuccess || data.dataset.promotionSuccess) {
                     this.successMessage = data.dataset.docSuccess || data.dataset.contractSuccess || data.dataset.positionSuccess || data.dataset.promotionSuccess;
                     this.showSuccess = true;
@@ -177,6 +187,32 @@ data-promotion-success="{{ session('promotion_success') }}"
         setTab(tab) {
             this.activeTab = tab;
             history.replaceState(null, '', '#' + tab);
+        },
+        markPayrollRead() {
+            if (this.payrollMarked || !this.markReadUrl || this.unreadPayroll <= 0) {
+                return;
+            }
+            this.payrollMarked = true;
+            fetch(this.markReadUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.marked > 0) {
+                        this.unreadPayroll = 0;
+                        if (window.Livewire) window.Livewire.dispatch('payroll-slip-read');
+                    }
+                })
+                .catch(() => {
+                    this.payrollMarked = false;
+                });
         },
         get dokumenFiltered() {
             if (!this.cariDokumen) return this.documents;
@@ -391,25 +427,23 @@ data-promotion-success="{{ session('promotion_success') }}"
                         <h2 class="text-xl font-extrabold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</h2>
                         @php
                             $statusLabel = [
-                                'karyawan_aktif' => 'Karyawan Aktif',
-                                'calon_karyawan' => 'Calon Karyawan',
-                                'mantan_karyawan' => 'Mantan Karyawan',
+                                'karyawan_aktif' => $k('Karyawan Aktif'),
+                                'mantan_karyawan' => $k('Mantan Karyawan'),
                             ];
                             $statusClasses = [
                                 'karyawan_aktif' => 'bg-emerald-50 text-emerald-700',
-                                'calon_karyawan' => 'bg-blue-50 text-blue-700',
                                 'mantan_karyawan' => 'bg-gray-100 text-gray-600',
                             ];
                         @endphp
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full {{ $statusClasses[$employee->tipe] ?? 'bg-gray-50 text-gray-700' }}">
-                            <span class="w-1.5 h-1.5 rounded-full {{ $employee->tipe === 'karyawan_aktif' ? 'bg-emerald-600' : ($employee->tipe === 'calon_karyawan' ? 'bg-blue-600' : 'bg-gray-400') }}"></span>
+                            <span class="w-1.5 h-1.5 rounded-full {{ $employee->tipe === 'karyawan_aktif' ? 'bg-emerald-600' : 'bg-gray-400' }}"></span>
                             {{ $statusLabel[$employee->tipe] ?? ucfirst($employee->tipe) }}
                         </span>
                     </div>
                     @php $mainPosMobile = $employee->mainPosition(); @endphp
                     <p class="sm:hidden text-base font-bold text-blue-600 dark:text-blue-400 mb-2">{{ $mainPosMobile?->nama ?? '—' }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                        NIK <strong class="text-gray-700 dark:text-gray-200 font-semibold">{{ $employee->nik }}</strong>
+                        NIP <strong class="text-gray-700 dark:text-gray-200 font-semibold">{{ $employee->nik }}</strong>
                         &nbsp;&mdash;&nbsp; {{ $employee->positions->count() > 0 ? $employee->positions->pluck('nama')->implode(' & ') : '—' }}
                         &nbsp;&mdash;&nbsp; Divisi {{ $employee->divisionNames() ?: '—' }}
                     </p>
@@ -445,11 +479,16 @@ data-promotion-success="{{ session('promotion_success') }}"
                     @endif
                 ]" :key="tab.key">
                     <button type="button"
-                        @click="setTab(tab.key)"
+                        @click="setTab(tab.key); if (tab.key === 'payroll') markPayrollRead()"
                         class="relative px-1 py-4 text-sm font-semibold whitespace-nowrap mr-4 transition-colors"
                         :class="activeTab === tab.key ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
                     >
-                        <span x-text="tab.label"></span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span x-text="tab.label"></span>
+                            <span x-show="tab.key === 'payroll' && unreadPayroll > 0"
+                                  class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold tabular-nums leading-none text-white shadow-sm"
+                                  x-text="unreadPayroll"></span>
+                        </span>
                         <span x-show="activeTab === tab.key"
                             class="absolute left-0 right-0 bottom-0 h-0.5 bg-blue-600 rounded-t-sm"></span>
                     </button>
@@ -471,11 +510,11 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->nama }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">NIK</span>
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">NIP</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->nik }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Tipe Karyawan</span>
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Tipe {{ $k('Karyawan') }}</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $statusLabel[$employee->tipe] ?? ucfirst($employee->tipe) }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
@@ -580,7 +619,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                             </div>
                             @endif
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jenis Karyawan</span>
+                                <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">Jenis {{ $k('Karyawan') }}</span>
                                 <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{{ $employee->jenis_karyawan ?? '-' }}</span>
                             </div>
                             <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
@@ -1299,8 +1338,8 @@ data-promotion-success="{{ session('promotion_success') }}"
                                         <td class="px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400" x-text="i + 1"></td>
                                         <td class="px-4 py-3.5 text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="p.periode"></td>
                                         <td class="px-4 py-3.5 text-sm text-right font-medium text-gray-900 dark:text-gray-100" x-text="'Rp ' + Number(p.gaji_pokok).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-emerald-600" x-text="'Rp ' + Number(p.tambahan_upah + p.bonus + p.thr + p.apresiasi + p.tunjangan_jabatan + p.premi_bpjs_kesehatan).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-red-600" x-text="'Rp ' + Number(p.thr_dibayarkan + p.potongan_pinjaman + p.potongan_absensi + p.potongan_bpjs_kesehatan_4 + p.potongan_bpjs_kesehatan_1).toLocaleString('id-ID')"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-emerald-600" x-text="'Rp ' + Number(p.tambahan_upah + p.tambahan_upah_sold + p.bonus + p.thr + p.apresiasi + p.tunjangan_jabatan + p.premi_bpjs_kesehatan).toLocaleString('id-ID')"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-red-600" x-text="'Rp ' + Number(p.thr_dibayarkan + p.potongan_pinjaman + p.potongan_absensi + p.potongan_absensi_ketidakhadiran + p.potongan_absensi_keterlambatan + p.potongan_bpjs_kesehatan_4 + p.potongan_bpjs_kesehatan_1).toLocaleString('id-ID')"></td>
                                         <td class="px-4 py-3.5 text-sm text-right font-bold text-gray-900 dark:text-gray-100" x-text="'Rp ' + Number(p.take_home_pay).toLocaleString('id-ID')"></td>
                                         <td class="px-4 py-3.5 text-center">
                                             <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
@@ -1397,7 +1436,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                            NIK {{ $employee->nik }}
+NIP {{ $employee->nik }}
                             <span class="text-gray-300 dark:text-gray-600 mx-1.5">•</span>
                             <span x-text="viewKontrak?.posisi"></span>
                         </div>
@@ -2042,7 +2081,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold text-white uppercase tracking-wide"
                                       x-text="formPromosiJenis"></span>
                             </div>
-                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} · NIK {{ $employee->nik }}</p>
+                            <p class="text-xs text-white/80 mt-1 truncate">{{ $employee->nama }} · NIP {{ $employee->nik }}</p>
                         </div>
                     </div>
                     <button @click="promosiModal = false" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 text-white hover:bg-white/25 transition-all">

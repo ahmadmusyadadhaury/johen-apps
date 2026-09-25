@@ -602,7 +602,6 @@ class CutiIzinTable extends Component
             ->latest()
             ->paginate(10);
 
-        $jatahCuti = 12;
         $accrual = $userEmployee?->cutiAccrual();
         $terakumulasiCuti = $accrual['earned'] ?? 0;
         $usedCuti = 0;
@@ -624,6 +623,11 @@ class CutiIzinTable extends Component
                 ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
         $sisaCuti = max(0, $terakumulasiCuti - $usedCuti);
+
+        $sisaBulan = 0;
+        if ($accrual['eligible'] ?? false) {
+            $sisaBulan = 13 - (int) $accrual['cycle_start']->month;
+        }
 
         $jatahBulanIni = 4;
         $usedJatah = 0;
@@ -668,7 +672,7 @@ class CutiIzinTable extends Component
             || $user->isStaffHostMonkeyPubg() || $user->isStaffHostFcMobile();
 
         return view('livewire.cuti-izin-table', compact(
-            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'totalJatah', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'jatahCuti', 'terakumulasiCuti', 'usedCuti', 'jatahBulanIni', 'usedJatah', 'sisaJatah', 'jatahAvailable', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
+            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'totalJatah', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'sisaBulan', 'terakumulasiCuti', 'usedCuti', 'jatahBulanIni', 'usedJatah', 'sisaJatah', 'jatahAvailable', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
         ))->with('karyawanView', false);
     }
 

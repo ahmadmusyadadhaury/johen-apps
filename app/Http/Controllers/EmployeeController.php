@@ -20,8 +20,6 @@ class EmployeeController extends Controller
     {
         $stats = [
             'total' => Employee::count(),
-            'aktif' => Employee::where('tipe', 'karyawan_aktif')->count(),
-            'calon' => Employee::where('tipe', 'calon_karyawan')->count(),
             'mantan' => Employee::where('tipe', 'mantan_karyawan')->count(),
         ];
 
@@ -46,7 +44,7 @@ class EmployeeController extends Controller
         Employee::create($request->validated());
 
         return redirect()->route('hris.employees.index')
-            ->with('success', 'Karyawan berhasil ditambahkan.');
+            ->with('success', auth()->user()->pegawaiLabel('Karyawan berhasil ditambahkan.'));
     }
 
     public function show(Employee $employee)
@@ -80,6 +78,7 @@ class EmployeeController extends Controller
                 'periode' => $d->payrollImport?->periode ?? '-',
                 'gaji_pokok' => (float) $d->gaji_pokok,
                 'tambahan_upah' => (float) $d->tambahan_upah,
+                'tambahan_upah_sold' => (float) $d->tambahan_upah_sold,
                 'bonus' => (float) $d->bonus,
                 'thr' => (float) $d->thr,
                 'apresiasi' => (float) $d->apresiasi,
@@ -88,6 +87,8 @@ class EmployeeController extends Controller
                 'thr_dibayarkan' => (float) $d->thr_dibayarkan,
                 'potongan_pinjaman' => (float) $d->potongan_pinjaman,
                 'potongan_absensi' => (float) $d->potongan_absensi,
+                'potongan_absensi_ketidakhadiran' => (float) $d->potongan_absensi_ketidakhadiran,
+                'potongan_absensi_keterlambatan' => (float) $d->potongan_absensi_keterlambatan,
                 'potongan_bpjs_kesehatan_4' => (float) $d->potongan_bpjs_kesehatan_4,
                 'potongan_bpjs_kesehatan_1' => (float) $d->potongan_bpjs_kesehatan_1,
                 'take_home_pay' => (float) $d->take_home_pay,
@@ -96,14 +97,13 @@ class EmployeeController extends Controller
 
         $stats = [
             'gaji_pokok' => $payrollDetails->sum('gaji_pokok'),
-            'total_tunjangan' => $payrollDetails->sum(fn ($d) => $d['tambahan_upah'] + $d['bonus'] + $d['thr'] + $d['apresiasi'] + $d['tunjangan_jabatan'] + $d['premi_bpjs_kesehatan']),
-            'total_potongan' => $payrollDetails->sum(fn ($d) => $d['thr_dibayarkan'] + $d['potongan_pinjaman'] + $d['potongan_absensi'] + $d['potongan_bpjs_kesehatan_4'] + $d['potongan_bpjs_kesehatan_1']),
+            'total_tunjangan' => $payrollDetails->sum(fn ($d) => $d['tambahan_upah'] + $d['tambahan_upah_sold'] + $d['bonus'] + $d['thr'] + $d['apresiasi'] + $d['tunjangan_jabatan'] + $d['premi_bpjs_kesehatan']),
+            'total_potongan' => $payrollDetails->sum(fn ($d) => $d['thr_dibayarkan'] + $d['potongan_pinjaman'] + $d['potongan_absensi'] + $d['potongan_absensi_ketidakhadiran'] + $d['potongan_absensi_keterlambatan'] + $d['potongan_bpjs_kesehatan_4'] + $d['potongan_bpjs_kesehatan_1']),
             'gaji_bersih' => $payrollDetails->sum('take_home_pay'),
         ];
 
         $statusClasses = [
             'karyawan_aktif' => 'bg-emerald-50 text-emerald-700',
-            'calon_karyawan' => 'bg-blue-50 text-blue-700',
             'mantan_karyawan' => 'bg-gray-100 text-gray-600',
         ];
 
@@ -138,7 +138,12 @@ class EmployeeController extends Controller
 
         $canSeePayroll = auth()->user()->isGmCeo();
 
-        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions');
+        $viewedUnreadPayroll = $employee->payrollDetails
+            ->where('status', 'sent')
+            ->whereNull('read_at')
+            ->count();
+
+        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions', 'viewedUnreadPayroll');
     }
 
     public function edit(Employee $employee)
@@ -190,11 +195,11 @@ class EmployeeController extends Controller
 
         if ($request->input('_redirect') === 'show') {
             return redirect()->route('hris.employees.show', $employee)
-                ->with('success', 'Data karyawan berhasil diperbarui.');
+->with('success', auth()->user()->pegawaiLabel('Data karyawan berhasil diperbarui.'));
         }
 
         return redirect()->route('hris.employees.index')
-            ->with('success', 'Data karyawan berhasil diperbarui.');
+            ->with('success', auth()->user()->pegawaiLabel('Data karyawan berhasil diperbarui.'));
     }
 
     public function uploadPhoto(Request $request, Employee $employee)
@@ -557,7 +562,7 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return redirect()->route('hris.employees.index')
-            ->with('success', 'Karyawan berhasil dihapus.');
+            ->with('success', auth()->user()->pegawaiLabel('Karyawan berhasil dihapus.'));
     }
 
     private function authorizeManageEmployeeData(): void

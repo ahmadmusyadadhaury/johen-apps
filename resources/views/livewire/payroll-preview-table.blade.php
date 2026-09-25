@@ -38,18 +38,22 @@
                     <th class="px-3 py-3 whitespace-nowrap">Divisi</th>
                     <th class="px-3 py-3 whitespace-nowrap">Jabatan</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">Gaji Pokok</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">Tamb. Upah</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">Bonus</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">Total Diterima</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">Apresiasi</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">Tunj. Jabatan</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Tamb. Upah</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Bonus Absensi</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Pengembalian</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Tips</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Insentif</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">Premi BPJS (4%)</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Tamb. Upah Sold</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">THR</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">THR Dibayar</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">Pot. Pinjaman</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">Pot. Absensi</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Abs. Ketidakhadiran</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Abs. Keterlambatan</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">Pot. BPJS (4%)</th>
                     <th class="px-3 py-3 text-right whitespace-nowrap">Pot. BPJS (1%)</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">THR</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Total Diterima</th>
                     <th class="px-3 py-3 whitespace-nowrap">Password</th>
                 </tr>
             </thead>
@@ -61,23 +65,27 @@
                         <td class="px-3 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $detail->divisi }}</td>
                         <td class="px-3 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $detail->jabatan }}</td>
                         <td class="px-3 py-3 text-right text-gray-900 dark:text-gray-100 whitespace-nowrap">Rp {{ number_format($detail->gaji_pokok, 0, ',', '.') }}</td>
-                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->tambahan_upah > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->tambahan_upah > 0 ? 'Rp ' . number_format($detail->tambahan_upah, 0, ',', '.') : '-' }}</td>
-                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->bonus > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->bonus > 0 ? 'Rp ' . number_format($detail->bonus, 0, ',', '.') : '-' }}</td>
-                        <td class="px-3 py-3 text-right font-semibold text-primary-700 whitespace-nowrap">Rp {{ number_format($detail->take_home_pay, 0, ',', '.') }}</td>
-                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->apresiasi > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->apresiasi > 0 ? 'Rp ' . number_format($detail->apresiasi, 0, ',', '.') : '-' }}</td>
                         <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->tunjangan_jabatan > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->tunjangan_jabatan > 0 ? 'Rp ' . number_format($detail->tunjangan_jabatan, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->tambahan_upah > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->tambahan_upah > 0 ? 'Rp ' . number_format($detail->tambahan_upah, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->bonus_absensi_full > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->bonus_absensi_full > 0 ? 'Rp ' . number_format($detail->bonus_absensi_full, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->pengembalian > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->pengembalian > 0 ? 'Rp ' . number_format($detail->pengembalian, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->tips_pelanggan > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->tips_pelanggan > 0 ? 'Rp ' . number_format($detail->tips_pelanggan, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->insentif_creative > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->insentif_creative > 0 ? 'Rp ' . number_format($detail->insentif_creative, 0, ',', '.') : '-' }}</td>
                         <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->premi_bpjs_kesehatan > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->premi_bpjs_kesehatan > 0 ? 'Rp ' . number_format($detail->premi_bpjs_kesehatan, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->tambahan_upah_sold > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->tambahan_upah_sold > 0 ? 'Rp ' . number_format($detail->tambahan_upah_sold, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->thr > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->thr > 0 ? 'Rp ' . number_format($detail->thr, 0, ',', '.') : '-' }}</td>
                         <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->thr_dibayarkan > 0 ? 'Rp ' . number_format($detail->thr_dibayarkan, 0, ',', '.') : '-' }}</td>
                         <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->potongan_pinjaman > 0 ? 'Rp ' . number_format($detail->potongan_pinjaman, 0, ',', '.') : '-' }}</td>
-                        <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->potongan_absensi > 0 ? 'Rp ' . number_format($detail->potongan_absensi, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->potongan_absensi_ketidakhadiran > 0 ? 'Rp ' . number_format($detail->potongan_absensi_ketidakhadiran, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->potongan_absensi_keterlambatan > 0 ? 'Rp ' . number_format($detail->potongan_absensi_keterlambatan, 0, ',', '.') : '-' }}</td>
                         <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->potongan_bpjs_kesehatan_4 > 0 ? 'Rp ' . number_format($detail->potongan_bpjs_kesehatan_4, 0, ',', '.') : '-' }}</td>
                         <td class="px-3 py-3 text-right text-red-600 whitespace-nowrap">{{ $detail->potongan_bpjs_kesehatan_1 > 0 ? 'Rp ' . number_format($detail->potongan_bpjs_kesehatan_1, 0, ',', '.') : '-' }}</td>
-                        <td class="px-3 py-3 text-right whitespace-nowrap {{ $detail->thr > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600' }}">{{ $detail->thr > 0 ? 'Rp ' . number_format($detail->thr, 0, ',', '.') : '-' }}</td>
+                        <td class="px-3 py-3 text-right font-semibold text-primary-700 whitespace-nowrap">Rp {{ number_format($detail->take_home_pay, 0, ',', '.') }}</td>
                         <td class="px-3 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs whitespace-nowrap">{{ $detail->pdf_password }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="18" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="22" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             Tidak ada data karyawan ditemukan.
                         </td>
                     </tr>
