@@ -24,6 +24,7 @@ class ManualBookTable extends Component
     public string $successMessage = '';
 
     public string $filterKategori = '';
+    public string $filterVideoKategori = '';
 
     public string $nama = '';
     public string $kategori = '';
@@ -261,7 +262,12 @@ class ManualBookTable extends Component
         return view('livewire.manual-book-table', [
             'books' => $books,
             'kategoriOptions' => ManualBook::KATEGORI_OPTIONS,
-            'videos' => TrainingVideo::query()->latest()->get(),
+            'videos' => TrainingVideo::query()
+                ->when($this->filterVideoKategori !== '', function ($query) {
+                    $query->where('kategori', $this->filterVideoKategori);
+                })
+                ->latest()
+                ->get(),
             'videoKategoriOptions' => TrainingVideo::KATEGORI_OPTIONS,
         ]);
     }

@@ -125,6 +125,20 @@
             @endif
         </div>
 
+        {{-- Kategori Filter (Card) --}}
+        <div class="flex items-center gap-2 mb-6 overflow-x-auto">
+            <button wire:click="$set('filterVideoKategori', '')"
+                    class="shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterVideoKategori === '' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
+                Semua
+            </button>
+            @foreach($videoKategoriOptions as $opt)
+            <button wire:click="$set('filterVideoKategori', '{{ $opt }}')"
+                    class="shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterVideoKategori === $opt ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-300 dark:hover:border-primary-700' }}">
+                {{ $opt }}
+            </button>
+            @endforeach
+        </div>
+
         @if($videos->isEmpty())
         <div class="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center">
             <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
