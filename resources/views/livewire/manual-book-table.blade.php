@@ -137,7 +137,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach($videos as $video)
             <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-                <div class="aspect-video bg-black">
+                <div class="aspect-[4/3] bg-black">
                     <iframe src="{{ $video->url }}" title="{{ $video->nama }}" frameborder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen class="w-full h-full"></iframe>
