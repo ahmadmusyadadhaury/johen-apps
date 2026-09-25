@@ -7,9 +7,12 @@ use App\Models\Employee;
 use App\Models\Position;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class PositionTable extends Component
 {
+    use WithPagination;
+
     public string $search = '';
 
     public bool $showCreateModal = false;
@@ -151,6 +154,16 @@ class PositionTable extends Component
         $this->selectedDivision = $divisionId;
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSelectedDivision(): void
+    {
+        $this->resetPage();
+    }
+
     private array $colorPalette = [
         'primary',
         'purple',
@@ -179,7 +192,11 @@ class PositionTable extends Component
                 $query->where('division_id', $this->selectedDivision);
             })
             ->orderBy('nama')
-            ->get();
+            ->paginate(10);
+
+        $totalPositions = Position::count();
+        $activePositions = Position::where('is_active', true)->count();
+        $inactivePositions = $totalPositions - $activePositions;
 
         $parentOptions = Position::where('is_active', true)
             ->where(function ($q) {
@@ -198,7 +215,7 @@ class PositionTable extends Component
 
         $colorMap = $divisions->pluck('color', 'id');
 
-        return view('livewire.position-table', compact('positions', 'parentOptions', 'divisions', 'colorMap'));
+        return view('livewire.position-table', compact('positions', 'parentOptions', 'divisions', 'colorMap', 'totalPositions', 'activePositions', 'inactivePositions'));
     }
 
     private function buildData(): array
