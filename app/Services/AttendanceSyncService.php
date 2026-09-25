@@ -113,6 +113,17 @@ class AttendanceSyncService
                     && ! $this->isPlausibleCheckInForShift($employee, $a->date, $a->time_in);
             }
 
+            // Pola lanjutan: shift hari biasa — jam masuk terjadi setelah jam
+            // pulang shift (mis. in=18:39 bagi shift 08.00-17.00) dan jam
+            // keluar juga terisi. Kedua tap terjadi setelah jam kerja usai;
+            // rebuild akan merekapnya sebagai "absen pulang saja" (jam masuk
+            // kosong). Karyawan shift lintas malam dikecualikan.
+            if (! $isMalamPosition
+                && ! $this->isPlausibleCheckInForShift($employee, $a->date, $a->time_in)
+                && ! $this->isOvernightCheckoutShift($employee, $a->date)) {
+                return true;
+            }
+
             // Pola baru: jam masuk dini hari (< batas jam checkout) dengan
             // durasi lebih dari 8 jam sampai jam keluar di sore/malam hari —
             // ciri khas tap pulang yang tertukar menjadi absen masuk.
@@ -271,7 +282,11 @@ class AttendanceSyncService
                 $attendance->time_out = $time;
             }
         } elseif ($attendance->time_in === null) {
-            $attendance->time_in = $time;
+            if (! $this->isPlausibleCheckInForShift($employee, Carbon::parse($punchDate), $time)) {
+                $attendance->time_out = $time;
+            } else {
+                $attendance->time_in = $time;
+            }
         } elseif ($time < $attendance->time_in) {
             $attendance->time_in = $time;
         } elseif ($attendance->time_out === null) {
@@ -416,19 +431,27 @@ class AttendanceSyncService
 
         // Punch sore/malam (>= 18:00).
         if ($minutes >= 18 * 60) {
-            // Karyawan Malam/Subuh, shift lintas malam, maupun shift yang
-            // waktu selesainya tidak diketahui: pertahankan perilaku lama —
-            // dianggap bisa absen datang (konservatif, tidak bisa dibedakan).
+            // Karyawan Malam/Subuh dan shift lintas malam: pertahankan
+            // perilaku lama — dianggap bisa absen datang (konservatif, tidak
+            // bisa dibedakan).
             if ($isMalam || $isSubuh
-                || $end === null
                 || $this->isOvernightCheckoutShift($employee, $sessionDate)) {
                 return true;
             }
 
-            // Shift hari biasa yang sudah berakhir: punch ini bukan absen
-            // datang yang masuk akal — melainkan jam PULANG dari hari yang
-            // lupa di-absen masuk (mis. pulang 20:31 tanpa absen datang).
-            return $minutes < $end;
+            // Waktu selesai shift yang tidak diketahui (jam kerja kosong atau
+            // tidak bisa diparse) memakai jam pulang default (config
+            // attendance.default_shift_end, default 17:00). Punch yang sudah
+            // melewati jam pulang ini bukan absen datang yang masuk akal —
+            // melainkan jam PULANG dari hari yang lupa di-absen masuk (mis.
+            // pulang 20:31 tanpa absen datang).
+            $effectiveEnd = $end;
+            if ($effectiveEnd === null) {
+                $defaultParts = explode(':', (string) config('attendance.default_shift_end', '17:00'));
+                $effectiveEnd = ((int) ($defaultParts[0] ?? 17) * 60) + (int) ($defaultParts[1] ?? 0);
+            }
+
+            return $minutes < $effectiveEnd;
         }
 
         return $minutes >= $min && $minutes <= $max;

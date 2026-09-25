@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Jam pulang default (tanpa jam kerja / tidak bisa diparse)
+    |--------------------------------------------------------------------------
+    | Dipakai sebagai jam pulang (jam selesai shift) untuk karyawan yang
+    | konfigurasi jam kerjanya kosong atau tidak bisa diparse waktu selesainya.
+    | Punch yang melewati jam ini (mis. >= 17:00) dianggap JAM PULANG sehingga
+    | dicatat di kolom jam keluar, bukan dijadikan jam masuk palsu.
+    */
+
+    'default_shift_end' => env('ATTENDANCE_DEFAULT_SHIFT_END', '17:00'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Ambang tap ganda pada modal Detail Absen
     |--------------------------------------------------------------------------
     | Punch berurutan dengan jeda lebih kecil dari nilai ini (detik) dianggap
