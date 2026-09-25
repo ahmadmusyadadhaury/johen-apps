@@ -11,6 +11,19 @@ import QRCode from 'qrcode';
 window.JsBarcode = JsBarcode;
 window.QRCode = QRCode;
 
+let deferredPwaInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredPwaInstallPrompt = event;
+    window.dispatchEvent(new CustomEvent('pwa:installable'));
+});
+
+window.addEventListener('appinstalled', () => {
+    deferredPwaInstallPrompt = null;
+    window.dispatchEvent(new CustomEvent('pwa:installed'));
+});
+
 document.addEventListener('alpine:init', () => {
     // Toast notifications (top-right)
     Alpine.store('toast', {
@@ -82,6 +95,73 @@ document.addEventListener('alpine:init', () => {
             this.open = false;
         },
     });
+
+    Alpine.data('pwaInstall', () => ({
+        installed: window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true,
+        installing: false,
+        hasInstallPrompt: deferredPwaInstallPrompt !== null,
+
+        init() {
+            this.onInstallable = () => {
+                this.hasInstallPrompt = true;
+            };
+
+            this.onInstalled = () => {
+                this.hasInstallPrompt = false;
+                this.installed = true;
+            };
+
+            window.addEventListener('pwa:installable', this.onInstallable);
+            window.addEventListener('pwa:installed', this.onInstalled);
+        },
+
+        installMessage() {
+            const isLocal = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+            const isIos = /iPad|iPhone|iPod/.test(window.navigator.userAgent)
+                || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+
+            if (isLocal) {
+                return 'Prompt instalasi PWA tidak aktif di localhost. Jalankan build production melalui HTTPS.';
+            }
+
+            if (isIos) {
+                return 'Di iPhone atau iPad, tap ikon Bagikan lalu pilih Add to Home Screen.';
+            }
+
+            return 'Browser ini belum menampilkan prompt instalasi. Gunakan Chrome atau Edge, atau pilih Install Johen App dari menu browser.';
+        },
+
+        async install() {
+            const installPrompt = deferredPwaInstallPrompt;
+
+            if (this.installed || this.installing) {
+                return;
+            }
+
+            if (!installPrompt) {
+                this.hasInstallPrompt = false;
+                window.alert(this.installMessage());
+                return;
+            }
+
+            this.installing = true;
+
+            try {
+                await installPrompt.prompt();
+                const choice = await installPrompt.userChoice;
+                this.installed = choice.outcome === 'accepted';
+            } finally {
+                deferredPwaInstallPrompt = null;
+                this.hasInstallPrompt = false;
+                this.installing = false;
+            }
+        },
+
+        destroy() {
+            window.removeEventListener('pwa:installable', this.onInstallable);
+            window.removeEventListener('pwa:installed', this.onInstalled);
+        },
+    }));
 });
 
 /**
@@ -91,3 +171,12 @@ document.addEventListener('alpine:init', () => {
  */
 
 import './echo';
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/build/sw.js', {
+            scope: '/',
+            updateViaCache: 'none',
+        }).catch(() => undefined);
+    }, { once: true });
+}

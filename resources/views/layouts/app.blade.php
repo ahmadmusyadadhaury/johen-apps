@@ -4,10 +4,20 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="application-name" content="{{ config('app.name', 'Johen Sukses Abadi') }}">
+        <meta name="theme-color" content="#0987F5">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="Johen App">
 
         <title>{{ config('app.name', 'Johen Sukses Abadi') }} @if($title ?? null) - {{ $title }} @endif</title>
 
-        <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+        @if (file_exists(public_path('build/manifest.webmanifest')))
+            <link rel="manifest" href="{{ asset('build/manifest.webmanifest') }}">
+        @endif
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('pwa-192x192.png') }}">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('pwa-192x192.png') }}">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
         <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:500,600,700,800&display=swap" rel="stylesheet" />
@@ -773,7 +783,30 @@ if ($divisionViewUser) {
                         @stack('topbar-right')
 
                         <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl px-1.5 py-1.5 bg-white dark:bg-gray-800 shadow-sm">
-                            <button @click="toggleTheme()" x-data="themeToggle()" class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                            <div x-data="pwaInstall()" x-show="!installed" x-cloak class="mr-1.5 flex h-8 items-center border-r border-gray-200 pr-1.5 dark:border-gray-700">
+                                <button
+                                    type="button"
+                                    @click="install"
+                                    :disabled="installing"
+                                    :aria-busy="installing"
+                                    class="flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-primary-600 transition-colors hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:cursor-wait disabled:opacity-60 dark:text-primary-400 dark:hover:bg-primary-500/10"
+                                    title="Pasang Johen App"
+                                    aria-label="Pasang Johen App di perangkat"
+                                >
+                                    <svg x-show="!installing" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 10.5L12 15m0 0l4.5-4.5M12 15V3"/></svg>
+                                    <svg x-show="installing" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path class="opacity-75" fill="currentColor" d="M21 12a9 9 0 00-9-9v3a6 6 0 016 6h3z"/></svg>
+                                    <span x-show="!installing" class="hidden sm:inline">Pasang</span>
+                                    <span x-show="installing" x-cloak class="hidden sm:inline">Memuat</span>
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                @click="toggleTheme()"
+                                x-data="themeToggle()"
+                                :aria-label="isDark ? 'Aktifkan tema terang' : 'Aktifkan tema gelap'"
+                                :aria-pressed="isDark"
+                                class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                            >
                                 <svg x-show="!isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
                                 <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
                             </button>
