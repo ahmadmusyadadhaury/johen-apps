@@ -29,6 +29,7 @@
     @endif
 
         {{-- Stats --}}
+        @unless(auth()->user()->isGmCeo())
         <div class="grid grid-cols-2 {{ $jatahAvailable ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-3 sm:gap-5 mb-6">
             <div class="stat-card group">
                 <div class="flex items-center justify-between mb-3">
@@ -105,6 +106,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu Persetujuan</p>
             </div>
         </div>
+        @endunless
 
         <div class="card">
             {{-- Header --}}
