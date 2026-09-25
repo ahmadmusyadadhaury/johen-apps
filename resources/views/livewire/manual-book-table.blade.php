@@ -5,7 +5,13 @@
     </div>
 @endpush
 
-<div x-data="{ tab: 'manual', previewBook: null }">
+@php
+$jsEsc = function ($s) {
+    return addslashes(str_replace(["\r", "\n"], ' ', (string) $s));
+};
+@endphp
+
+<div x-data="{ tab: 'manual', previewBook: null, openPdf(url, nama, deskripsi) { if (window.matchMedia('(max-width: 767px)').matches) { if (url) { window.open(url, '_blank'); } } else { this.previewBook = { nama: nama, deskripsi: deskripsi, pdfUrl: url }; } } }">
     {{-- Tab Navigation --}}
     <div class="mb-6">
         <div class="flex sm:inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
@@ -67,8 +73,8 @@
                 @endif
                 {{-- Overlay on hover --}}
                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                    <button @click="previewBook = { nama: '{{ $book->nama }}', deskripsi: '{{ $book->deskripsi ?? '' }}', pdfUrl: '{{ $book->file_pdf ? Storage::url($book->file_pdf) : '' }}' }"
-                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-semibold hover:bg-white shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    <button @click="openPdf('{{ $jsEsc($book->file_pdf ? Storage::url($book->file_pdf) : '') }}', '{{ $jsEsc($book->nama) }}', '{{ $jsEsc($book->deskripsi ?? '') }}')"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-semibold hover:bg-white shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Baca
                     </button>
