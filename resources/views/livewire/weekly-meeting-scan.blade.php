@@ -215,9 +215,12 @@
 </div>
 @endif
 
-@push('scripts')
+@script
 <script>
-document.addEventListener('livewire:init', () => {
+(function () {
+    if (window.__weeklyMeetingScanBound) return;
+    window.__weeklyMeetingScanBound = true;
+
     let stream = null;
     let scanning = false;
     let lastScanAt = 0;
@@ -229,6 +232,30 @@ document.addEventListener('livewire:init', () => {
     let geocodeInFlight = false;
     let pendingDispatch = false;
     let locationDenied = false;
+    let scannerLibraryPromise = null;
+
+    // Pustaka jsQR dimuat secara dinamis dari sini, bukan lewat stack blade,
+    // karena blok script milik Livewire hanya dieksekusi sebagai JavaScript,
+    // sehingga tag pemuat pustaka di dalamnya tidak akan pernah dijalankan.
+    function loadScannerLibrary() {
+        if (typeof window.jsQR !== 'undefined') return Promise.resolve();
+
+        if (!scannerLibraryPromise) {
+            scannerLibraryPromise = new Promise(function (resolve, reject) {
+                const tag = document.createElement('script');
+                tag.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+                tag.async = true;
+                tag.onload = function () { resolve(); };
+                tag.onerror = function () { reject(new Error('Gagal memuat pustaka jsQR.')); };
+                document.head.appendChild(tag);
+            });
+
+            // Biarkan percobaan berikutnya mencoba ulang kalau gagal (mis. offline sesaat).
+            scannerLibraryPromise.catch(function () { scannerLibraryPromise = null; });
+        }
+
+        return scannerLibraryPromise;
+    }
 
     // Lokasi kantor tetap: label ini selalu dipakai saat GPS koordinator
     // berada di dalam radius titik tersebut, menggantikan nama acak dari
@@ -487,7 +514,16 @@ document.addEventListener('livewire:init', () => {
                 showCameraError(err);
             });
         };
-        openCamera(true);
+
+        // Kamera baru dinyalakan setelah jsQR siap, supaya frame pertama yang
+        // diproses scanLoop tidak terlewat karena pustaka belum termuat.
+        loadScannerLibrary().then(function () {
+            if (token !== cameraRequestId) return;
+            openCamera(true);
+        }).catch(function () {
+            if (token !== cameraRequestId) return;
+            showCameraError(new Error('Pustaka jsQR gagal dimuat. Periksa koneksi internet Anda.'));
+        });
     }
 
     // Continuously grab frames from the live video and run jsQR on them.
@@ -505,14 +541,14 @@ document.addEventListener('livewire:init', () => {
             const width = video.videoWidth;
             const height = video.videoHeight;
 
-            if (width > 0 && height > 0 && typeof jsQR !== 'undefined') {
+            if (width > 0 && height > 0 && typeof window.jsQR !== 'undefined') {
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 ctx.drawImage(video, 0, 0, width, height);
                 const imageData = ctx.getImageData(0, 0, width, height);
-                const code = jsQR(imageData.data, width, height, { inversionAttempts: 'dontInvert' });
+                const code = window.jsQR(imageData.data, width, height, { inversionAttempts: 'dontInvert' });
 
                 // Send the detected value to the existing server-side validation.
                 // Pause briefly to avoid spamming the server while the user
@@ -578,9 +614,6 @@ document.addEventListener('livewire:init', () => {
     window.addEventListener('pagehide', stopScanner);
     window.addEventListener('beforeunload', stopScanner);
     Livewire.hook('component.destroyed', function () { stopScanner(); });
-});
+})();
 </script>
-
-<!-- Load jsQR library for QR code scanning -->
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-@endpush
+@endscript
