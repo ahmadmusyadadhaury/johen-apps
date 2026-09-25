@@ -894,7 +894,7 @@
 
     {{-- 2x2 Grid: Kontrak, Reimbursement, Cuti, Pembayaran --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt() || auth()->user()->isGmCeo())
+        @unless(auth()->user()->isKoordinator() || auth()->user()->isStaff() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isStaffIt())
         {{-- Daily Tracking yang perlu direview (manager) --}}
         @if(auth()->user()->isManager())
         <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
@@ -1032,7 +1032,7 @@
         @endif
         @endunless
 
-        @unless(auth()->user()->isGmCeo() || auth()->user()->isStaffHr())
+        @unless(auth()->user()->isStaffHr())
         {{-- Pengajuan Cuti & Izin --}}
         <div x-data="{ openCutiModal: false }" class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
             <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
