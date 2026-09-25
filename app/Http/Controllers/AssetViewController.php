@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Asset;
 use App\Models\AssetCategory;
+use App\Models\Division;
 use App\Services\AsetMesSyncService;
 use App\Services\AsetRukoSyncService;
 use App\Services\AsetTimSyncService;
@@ -46,6 +47,16 @@ class AssetViewController extends Controller
         $categories = AssetCategory::active()->get();
 
         $isMyAssets = $request->boolean('mine');
+
+        $user = auth()->user();
+        $division = null;
+        $divisionId = session('division_menu') ? (int) session('division_menu') : null;
+        if ($divisionId) {
+            $division = Division::find($divisionId);
+        }
+        $divisionAsset = $isMyAssets && $user->isReadOnlyWorkspace() && $division ? true : false;
+        $divisionAssetName = $division?->nama ?? null;
+
         // Nama pemilik aset dicocokkan dari PIC ke nama user maupun nama karyawan,
         // karena sumber data aset (API eksternal) memakai nama karyawan di kolom PIC.
         // Pencocokan dilakukan secara fuzzy di PHP karena data PIC dari API eksternal
@@ -54,8 +65,14 @@ class AssetViewController extends Controller
         $myAssetIds = collect();
 
         if ($isMyAssets) {
-            $user = auth()->user();
-            $myAssetNames = collect([$user->name, $user->employee?->nama])
+            // Di dalam workspace divisi (GM/CEO read-only), "Asset Saya" mengacu pada
+            // aset yang dipegang oleh karyawan divisi yang sedang dilihat (mis. divisi
+            // HRGA) — bukan aset pribadi pemilik akun (CEO/GM).
+            $myAssetNames = $divisionAsset
+                ? collect($division->employees()->pluck('employees.nama'))
+                : collect([$user->name, $user->employee?->nama]);
+
+            $myAssetNames = $myAssetNames
                 ->filter()
                 ->map(fn ($n) => trim($n))
                 ->filter(fn ($n) => $n !== '')
@@ -264,7 +281,7 @@ class AssetViewController extends Controller
             : $query->latest()->paginate(20)->withQueryString();
         $selectedCategory = $category;
 
-        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan', 'isSosialMedia', 'isAssetMes', 'isAsetTim', 'isPeralatanKantor', 'isMyAssets'));
+        return view('assets.index', compact('assets', 'categories', 'selectedCategory', 'stats', 'isSimCard', 'isKendaraan', 'isSosialMedia', 'isAssetMes', 'isAsetTim', 'isPeralatanKantor', 'isMyAssets', 'divisionAsset', 'divisionAssetName'));
     }
 
 public function detail(Asset $asset)

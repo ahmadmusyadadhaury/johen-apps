@@ -43,28 +43,32 @@
         </div>
 
         {{-- Menu Grid --}}
-        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 mb-6 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
+        <div class="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 sm:p-5 mb-6 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
                 <div>
-                    <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">{{ $menu['label'] }}</h3>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Menu yang tersedia untuk divisi ini</p>
+                    <h3 class="text-sm font-display font-bold text-gray-900 dark:text-gray-100">{{ $menu['label'] }}</h3>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Menu yang tersedia untuk divisi ini</p>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($menu['items'] as $item)
-                <a href="{{ route($item['route'], $item['params']) }}" class="group rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 p-5 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 hover:shadow-md transition-all duration-300">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-md group-hover:scale-110 transition-transform duration-300 mb-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">{!! \App\Support\DivisionMenu::icon($item['icon']) !!}</svg>
-                    </div>
-                    <p class="text-sm font-bold font-display text-gray-900 dark:text-gray-100">{{ $item['label'] }}</p>
-                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">{{ $item['desc'] }}</p>
-                    <div class="mt-3 flex items-center gap-1 text-[11px] font-medium text-primary-600 dark:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span>Buka Menu</span>
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </a>
-                @endforeach
-            </div>
+            @php $groupedMenu = collect($menu['items'])->groupBy(fn ($item) => $item['group'] ?? '__flat__'); @endphp
+            @foreach($groupedMenu as $group => $groupItems)
+                @if($group !== '__flat__')
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">{{ $group }}</p>
+                @endif
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 {{ $groupIsLast = ($loop->last) ? 'mb-0' : 'mb-3' }}">
+                    @foreach($groupItems as $item)
+                    <a href="{{ route($item['route'], $item['params']) }}" class="group flex items-center gap-2.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-3 py-2.5 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all duration-300">
+                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-sm group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">{!! \App\Support\DivisionMenu::icon($item['icon']) !!}</svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">{{ $item['label'] }}</p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate">{{ $item['desc'] }}</p>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+            @endforeach
         </div>
 
         {{-- Division Employees --}}

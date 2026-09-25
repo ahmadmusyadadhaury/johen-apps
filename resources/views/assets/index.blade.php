@@ -1,10 +1,10 @@
-<x-app-layout :title="$isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset')">
+<x-app-layout :title="$isMyAssets ? ($divisionAsset ? 'Asset Divisi ' . $divisionAssetName : 'Asset Saya') : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset')">
     @push('topbar-left')
         <div>
             <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
-                {{ $isMyAssets ? 'Asset Saya' : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset') }}
+                {{ $isMyAssets ? ($divisionAsset ? 'Asset Divisi ' . $divisionAssetName : 'Asset Saya') : ($selectedCategory ? ucfirst($selectedCategory) : 'Data Asset') }}
             </h1>
-            <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">{{ $isMyAssets ? 'Menampilkan aset dengan PIC atas nama Anda' : 'Kelola data asset perusahaan' }}</p>
+            <p class="hidden sm:block text-xs text-gray-500 dark:text-gray-400">{{ $isMyAssets ? ($divisionAsset ? 'Menampilkan aset yang dipegang karyawan ' . $divisionAssetName : 'Menampilkan aset dengan PIC atas nama Anda') : 'Kelola data asset perusahaan' }}</p>
         </div>
     @endpush
 

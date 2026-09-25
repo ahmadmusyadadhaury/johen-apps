@@ -109,11 +109,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kontrak-kerja/{contract}/evaluasi', KontrakEvaluasiWorkspace::class)->name('kontrak-kerja.evaluasi');
         Route::get('/freelance', FreelanceTable::class)->name('freelance');
         Route::get('/manual-book', ManualBookTable::class)->name('manual-book');
-        Route::get('/pengumuman', AnnouncementTable::class)->name('announcements')->middleware('role:' . implode(',', \App\Models\User::PENGUMUMAN_ADMIN_ROLES));
+        Route::get('/pengumuman', AnnouncementTable::class)->name('announcements')->middleware('role:' . implode(',', [...\App\Models\User::PENGUMUMAN_ADMIN_ROLES, \App\Models\User::ROLE_GM_CEO]));
         Route::get('/pengumuman-saya', PengumumanInbox::class)->name('pengumuman-saya')->middleware('role:' . implode(',', \App\Models\User::PENGUMUMAN_VIEWER_ROLES));
-        Route::get('/pengarsipan', PengarsipanTable::class)->name('pengarsipan')->middleware('role:super_admin');
-        Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin,staff_hr');
-        Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin,staff_hr');
+        Route::get('/pengarsipan', PengarsipanTable::class)->name('pengarsipan')->middleware('role:super_admin,gm_ceo');
+        Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin,staff_hr,gm_ceo');
+        Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin,staff_hr,gm_ceo');
         Route::post('/pengumuman/{announcement}/dibaca', [AnnouncementController::class, 'markRead'])->name('announcements.mark-read');
         Route::get('/buku-panduan', function () {
             return view('buku-panduan.index');

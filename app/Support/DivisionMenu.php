@@ -115,11 +115,23 @@ class DivisionMenu
         'HRGA' => [
             'label' => 'Divisi HRGA',
             'items' => [
-                ['label' => 'Presensi', 'route' => 'hris.absensi', 'icon' => 'presensi', 'desc' => 'Absensi dan kehadiran'],
-                ['label' => 'Cuti & Izin', 'route' => 'hris.cuti-izin', 'icon' => 'cuti', 'desc' => 'Pengajuan cuti dan izin'],
-                ['label' => 'Kontrak Kerja', 'route' => 'hris.kontrak-kerja', 'icon' => 'report', 'desc' => 'Data kontrak kerja karyawan'],
-                ['label' => 'Struktur Organisasi', 'route' => 'hris.struktur-organisasi', 'icon' => 'users', 'desc' => 'Bagan organisasi perusahaan'],
-                ['label' => 'Pelatihan', 'route' => 'hris.manual-book', 'icon' => 'manual', 'desc' => 'Panduan & video pelatihan aplikasi'],
+                ['label' => 'Karyawan', 'route' => 'hris.employees.index', 'icon' => 'users', 'desc' => 'Data master karyawan', 'group' => 'SDM'],
+                ['label' => 'Divisi', 'route' => 'hris.divisions.index', 'icon' => 'users', 'desc' => 'Data divisi perusahaan', 'group' => 'SDM'],
+                ['label' => 'Jabatan', 'route' => 'kelola-jabatan', 'icon' => 'report', 'desc' => 'Kelola struktur jabatan', 'group' => 'SDM'],
+                ['label' => 'Kontrak Kerja', 'route' => 'hris.kontrak-kerja', 'icon' => 'report', 'desc' => 'Data kontrak kerja karyawan', 'group' => 'SDM'],
+                ['label' => 'Freelance', 'route' => 'hris.freelance', 'icon' => 'users', 'desc' => 'Data karyawan freelance', 'group' => 'SDM'],
+                ['label' => 'Struktur Organisasi', 'route' => 'hris.struktur-organisasi', 'icon' => 'users', 'desc' => 'Bagan organisasi perusahaan', 'group' => 'SDM'],
+                ['label' => 'Informasi Saya', 'route' => 'hris.informasi-saya', 'icon' => 'default', 'desc' => 'Profil dan data pribadi', 'group' => 'SDM'],
+                ['label' => 'Asset Saya', 'route' => 'assets.index', 'params' => ['mine' => 1], 'query' => ['mine' => 1], 'icon' => 'default', 'desc' => 'Aset yang dimiliki', 'group' => 'SDM'],
+                ['label' => 'Presensi', 'route' => 'hris.absensi', 'icon' => 'presensi', 'desc' => 'Absensi dan kehadiran', 'group' => 'Operasional'],
+                ['label' => 'Cuti & Izin', 'route' => 'hris.cuti-izin', 'icon' => 'cuti', 'desc' => 'Pengajuan cuti dan izin', 'group' => 'Operasional'],
+                ['label' => 'Jobdesk', 'route' => 'hris.jobdesk', 'icon' => 'content', 'desc' => 'Jobdesk dan tanggung jawab', 'group' => 'Operasional'],
+                ['label' => 'Ticketing IT', 'route' => 'it.tickets.index', 'icon' => 'ticket', 'desc' => 'Kelola tiket bantuan IT', 'group' => 'Operasional'],
+                ['label' => 'Pelatihan', 'route' => 'hris.manual-book', 'icon' => 'manual', 'desc' => 'Panduan & video pelatihan aplikasi', 'group' => 'Operasional'],
+                ['label' => 'Pengumuman', 'route' => 'hris.announcements', 'icon' => 'default', 'desc' => 'Kelola pengumuman tayang', 'group' => 'Operasional'],
+                ['label' => 'Ucapan Ulang Tahun', 'route' => 'hris.birthday-wishes', 'icon' => 'default', 'desc' => 'Ucapan ulang tahun karyawan', 'group' => 'Operasional'],
+                ['label' => 'Pengarsipan', 'route' => 'hris.pengarsipan', 'icon' => 'default', 'desc' => 'Arsip berkas dan dokumen', 'group' => 'Operasional'],
+                ['label' => 'Slip Gaji', 'route' => 'history.index', 'icon' => 'report', 'desc' => 'Riwayat dan slip gaji', 'group' => 'Operasional'],
             ],
         ],
     ];
@@ -150,6 +162,7 @@ class DivisionMenu
                 'query' => $item['query'] ?? [],
                 'icon' => $item['icon'],
                 'desc' => $item['desc'] ?? '',
+                'group' => $item['group'] ?? null,
             ], $menu['items']),
         ];
     }
@@ -166,7 +179,9 @@ class DivisionMenu
         }
 
         foreach ($item['query'] as $key => $value) {
-            if ($request->query($key) !== $value) {
+            // Bandingkan sebagai string agar nilai dari query string URL (string)
+            // cocok dengan nilai di definisi menu (mis. int 1 vs "1" untuk ?mine=1).
+            if ((string) $request->query($key) !== (string) $value) {
                 return false;
             }
         }
