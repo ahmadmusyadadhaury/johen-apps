@@ -8,22 +8,22 @@
 <div wire:poll.5s>
     @if(auth()->user()->isKoordinator() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdminLike())
     {{-- Tab Navigation --}}
-    <div class="mb-6">
-        <div class="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
-            <button wire:click="$set('tab', 'saya')"
-                class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'saya' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+    <div class="mb-4 md:mb-6">
+        <div class="flex items-center gap-1 overflow-x-auto rounded-2xl bg-gray-100 p-1.5 dark:bg-gray-800 md:inline-flex md:w-auto md:rounded-xl md:p-1" role="tablist" aria-label="Pilih tampilan presensi">
+            <button type="button" role="tab" aria-selected="{{ $tab === 'saya' ? 'true' : 'false' }}" wire:click="$set('tab', 'saya')"
+                class="flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 md:min-h-0 md:flex-none md:px-4 md:text-sm md:font-medium {{ $tab === 'saya' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:ring-gray-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300' }}">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                 Presensi Saya
             </button>
-            <button wire:click="$set('tab', 'tim')"
-                class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'tim' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+            <button type="button" role="tab" aria-selected="{{ $tab === 'tim' ? 'true' : 'false' }}" wire:click="$set('tab', 'tim')"
+                class="flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 md:min-h-0 md:flex-none md:px-4 md:text-sm md:font-medium {{ $tab === 'tim' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:ring-gray-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300' }}">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                 {{ auth()->user()->isSuperAdminLike() ? 'Presensi Karyawan' : 'Presensi Tim' }}
             </button>
             @if(auth()->user()->isSuperAdminLike())
-            <button wire:click="$set('tab', 'sinkron')"
-                class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'sinkron' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+            <button type="button" role="tab" aria-selected="{{ $tab === 'sinkron' ? 'true' : 'false' }}" wire:click="$set('tab', 'sinkron')"
+                class="flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 md:min-h-0 md:flex-none md:px-4 md:text-sm md:font-medium {{ $tab === 'sinkron' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:ring-gray-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300' }}">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
                 Sinkron Mesin
             </button>
             @endif
@@ -46,97 +46,155 @@
         @endif
 
         {{-- Karyawan Stats --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6">
-            <div class="stat-card group">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 md:mb-6">
+            <div class="stat-card group p-4 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                     </div>
                     <span class="badge-info">Total</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalAbsensi }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Absensi Periode Ini</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $totalAbsensi }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Absensi Periode Ini</p>
             </div>
 
-            <div class="stat-card group">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="stat-card group p-4 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <span class="badge-success">Hadir</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $tepatWaktu }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tepat Waktu</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $tepatWaktu }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Tepat Waktu</p>
             </div>
 
-            <div class="stat-card group">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+            <div class="stat-card group p-4 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                     </div>
                     <span class="badge-warning">Telat</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $terlambat }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Terlambat</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $terlambat }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Terlambat</p>
             </div>
 
-            <div class="stat-card group">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
+            <div class="stat-card group p-4 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
                     </div>
                     <span class="badge-info">Total</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalHadir }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Hadir</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $totalHadir }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Hadir</p>
             </div>
 
         </div>
 
         <div class="card" wire:poll.60s="refreshPeriod">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-4 border-b border-gray-50 dark:border-gray-800 sm:gap-4 sm:px-6">
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex flex-wrap items-center gap-2">
                         Riwayat Absensi Saya
                         <span class="inline-flex items-center gap-1 rounded-full bg-primary-50 dark:bg-primary-900/40 px-2.5 py-0.5 text-[11px] font-semibold text-primary-600 dark:text-primary-300 ring-1 ring-inset ring-primary-200 dark:ring-primary-800">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             {{ $jumlahHariKerja }} Hari Kerja
                         </span>
                     </h2>
                     @if($periodeLabel)
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 inline-flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Periode: {{ $periodeLabel }}
                         </p>
                     @endif
                 </div>
-                <div class="flex items-center gap-3 shrink-0">
-                    <div class="relative">
-                        <select x-on:change="$wire.setBulan($event.target.value)" class="appearance-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <div class="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
+                    @if($attendanceHariIni)
+                        <span class="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Sudah Absen Hari Ini
+                        </span>
+                    @endif
+                    <div class="relative flex-1 sm:flex-none">
+                        <label for="presensi-filter-bulan" class="sr-only">Pilih bulan presensi</label>
+                        <select id="presensi-filter-bulan" x-on:change="$wire.setBulan($event.target.value)" class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-9 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:min-h-0 sm:rounded-lg sm:py-2 sm:font-medium">
                             @foreach($monthOptions as $opt)
                                 <option value="{{ $opt['value'] }}" {{ (string) $opt['value'] === (string) $bulan ? 'selected' : '' }}>{{ $opt['label'] }}</option>
                             @endforeach
                         </select>
-                        <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                        <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </div>
-                    <div class="relative">
-                        <select x-on:change="$wire.setTahun($event.target.value)" class="appearance-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[5rem]">
+                    <div class="relative flex-1 sm:flex-none">
+                        <label for="presensi-filter-tahun" class="sr-only">Pilih tahun presensi</label>
+                        <select id="presensi-filter-tahun" x-on:change="$wire.setTahun($event.target.value)" class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-9 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:min-h-0 sm:rounded-lg sm:py-2 sm:font-medium sm:min-w-[5rem]">
                             @foreach($yearOptions as $opt)
                                 <option value="{{ $opt['value'] }}" {{ (string) $opt['value'] === (string) $tahun ? 'selected' : '' }}>{{ $opt['label'] }}</option>
                             @endforeach
                         </select>
-                        <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                        <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </div>
-                    @if($attendanceHariIni)
-                        <span class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Sudah Absen Hari Ini
-                        </span>
-                    @endif
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="divide-y divide-gray-100 md:hidden dark:divide-gray-800">
+                @forelse($riwayat as $att)
+                    @php
+                        $tanggal = \Carbon\Carbon::parse($att->date);
+                        $dsMobile = $att->display_status;
+                        $isLibur = $dsMobile === 'libur';
+                    @endphp
+                    <article class="px-4 py-3.5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ $tanggal->format('d M Y') }}
+                                </p>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $tanggal->locale('id')->isoFormat('dddd') }}
+                                </p>
+                            </div>
+                            @include('partials.attendance-status-badge', ['status' => $dsMobile])
+                        </div>
+
+                        @if($isLibur)
+                            <p class="mt-2.5 text-xs text-gray-500 dark:text-gray-400">Libur mingguan, tidak ada jam kerja.</p>
+                        @else
+                            <dl class="mt-3 grid grid-cols-3 gap-2">
+                                <div class="rounded-xl bg-gray-50 px-2.5 py-2 text-center dark:bg-gray-800/70">
+                                    <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Masuk</dt>
+                                    <dd class="mt-0.5 font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $att->time_in ? \Carbon\Carbon::parse($att->time_in)->format('H:i') : '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-gray-50 px-2.5 py-2 text-center dark:bg-gray-800/70">
+                                    <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Keluar</dt>
+                                    <dd class="mt-0.5 font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $att->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-gray-50 px-2.5 py-2 text-center dark:bg-gray-800/70">
+                                    <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Durasi</dt>
+                                    <dd class="mt-0.5 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $att->duration ?? '-' }}</dd>
+                                </div>
+                            </dl>
+                            <button type="button"
+                                wire:click="openDetail({{ $employee->id }}, '{{ $tanggal->toDateString() }}')"
+                                class="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-800 dark:hover:bg-primary-900/30 dark:hover:text-primary-300">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Lihat detail absen
+                            </button>
+                        @endif
+                    </article>
+                @empty
+                    <div class="flex flex-col items-center justify-center px-4 py-12 text-center">
+                        <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900">
+                            <svg class="h-7 w-7 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+                        </div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada riwayat absensi</h3>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lakukan absensi untuk memulai</p>
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="hidden overflow-x-auto md:block">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="table-header">
@@ -162,9 +220,7 @@
                                     <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
                                     <td class="table-cell text-gray-600 dark:text-gray-400">-</td>
                                     <td class="table-cell">
-                                        <span class="badge-info">
-                                            Libur
-                                        </span>
+                                        @include('partials.attendance-status-badge', ['status' => $ds])
                                     </td>
                                     <td class="table-cell text-center text-gray-300 dark:text-gray-600">-</td>
                                 @else
@@ -172,28 +228,15 @@
                                     <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
                                     <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->duration ?? '-' }}</td>
                                     <td class="table-cell">
-                                        @if($ds === 'tepat waktu')
-                                            <span class="badge-success">Tepat Waktu</span>
-                                        @elseif($ds === 'terlambat')
-                                            <span class="badge-warning">Terlambat</span>
-                                        @elseif($ds === 'tidak hadir')
-                                            <span class="badge-danger">Tidak Hadir</span>
-                                        @elseif($ds === 'izin')
-                                            <span class="badge-info">Izin</span>
-                                        @elseif($ds === 'sakit')
-                                            <span class="badge-warning">Sakit</span>
-                                        @elseif($ds === 'cuti')
-                                            <span class="badge-info">Cuti</span>
-                                        @else
-                                            <span class="badge-secondary">{{ $ds }}</span>
-                                        @endif
+                                        @include('partials.attendance-status-badge', ['status' => $ds])
                                     </td>
                                     <td class="table-cell text-center">
                                         <button type="button"
                                             wire:click="openDetail({{ $employee->id }}, '{{ \Carbon\Carbon::parse($att->date)->toDateString() }}')"
                                             title="Lihat detail absen hari ini"
-                                            class="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:text-primary-400 dark:hover:bg-gray-800 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            aria-label="Lihat detail absen tanggal {{ \Carbon\Carbon::parse($att->date)->locale('id')->isoFormat('D MMMM Y') }}"
+                                            class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:text-primary-400 dark:hover:bg-gray-800 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         </button>
                                     </td>
                                 @endif
@@ -216,7 +259,7 @@
             </div>
 
             @if($riwayat->hasPages())
-                <div class="px-6 py-3 border-t border-gray-50 dark:border-gray-800">
+                <div class="border-t border-gray-50 px-4 py-3 dark:border-gray-800 sm:px-6">
                     {{ $riwayat->links('pagination.blue-active') }}
                 </div>
             @endif
@@ -224,50 +267,52 @@
 
     @else
         {{-- Admin/Direksi Stats --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6"
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 md:mb-6"
              x-data="{ showStats: false, statsType: 'tepat', dateLabel: @entangle('statsDateLabel'), list: @entangle('statsMembers') }">
-            <div class="stat-card group">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            <div class="stat-card group p-4 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                     </div>
                     <span class="badge-info">Total</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalKaryawan }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Karyawan</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $totalKaryawan }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Karyawan</p>
             </div>
 
-            <div @click="showStats = true; statsType = 'tepat'" class="stat-card group cursor-pointer">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <button type="button" @click="showStats = true; statsType = 'tepat'" aria-label="Lihat daftar karyawan tepat waktu"
+                class="stat-card group cursor-pointer p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-gray-900 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <span class="badge-success">Hadir</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $hadir }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tepat Waktu</p>
-            </div>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $hadir }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Tepat Waktu</p>
+            </button>
 
-            <div @click="showStats = true; statsType = 'terlambat'" class="stat-card group cursor-pointer">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+            <button type="button" @click="showStats = true; statsType = 'terlambat'" aria-label="Lihat daftar karyawan terlambat"
+                class="stat-card group cursor-pointer p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-gray-900 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                     </div>
                     <span class="badge-warning">Telat</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $terlambat }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Terlambat</p>
-            </div>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $terlambat }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Terlambat</p>
+            </button>
 
-            <div class="stat-card group">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
+            <div class="stat-card group p-4 md:p-5">
+                <div class="flex items-center justify-between mb-2 md:mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
                     </div>
                     <span class="badge-info">Total</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalHadir }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Hadir</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $totalHadir }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Hadir</p>
             </div>
 
             {{-- Modal: Detail Tepat Waktu / Terlambat --}}
@@ -278,21 +323,27 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 z-[999] flex items-center justify-center p-5 bg-gray-900/60 backdrop-blur-sm"
+                 class="fixed inset-0 z-[999] flex items-end justify-center bg-gray-900/60 backdrop-blur-sm sm:items-center sm:p-5"
+                 role="dialog" aria-modal="true" aria-labelledby="stats-modal-title"
+                 @keydown.escape.window="showStats = false"
                  @click="showStats = false">
                 <div @click.stop
-                     class="relative w-full max-w-lg rounded-3xl bg-white dark:bg-gray-900 ring-1 ring-black/5 dark:ring-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                    <div class="sticky top-0 z-10 px-5 py-4 pt-5 shrink-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 flex items-start justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold font-display text-gray-900 dark:text-gray-100" x-text="statsType === 'tepat' ? 'Karyawan Tepat Waktu' : 'Karyawan Terlambat'"></h3>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5" x-text="'Presensi · ' + dateLabel"></p>
+                     class="relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sm:rounded-3xl sm:max-h-[90vh] max-h-[85dvh]">
+                    <div class="sticky top-0 z-10 shrink-0 border-b border-gray-100 bg-white/90 px-5 py-4 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90">
+                        <div class="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-700 sm:hidden" aria-hidden="true"></div>
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 id="stats-modal-title" class="text-lg font-semibold font-display text-gray-900 dark:text-gray-100" x-text="statsType === 'tepat' ? 'Karyawan Tepat Waktu' : 'Karyawan Terlambat'"></h3>
+                                <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500" x-text="'Presensi · ' + dateLabel"></p>
+                            </div>
+                            <button type="button" @click="showStats = false" aria-label="Tutup daftar karyawan"
+                                class="-mr-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-gray-300">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
                         </div>
-                        <button @click="showStats = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
                     </div>
 
-                    <div class="px-5 py-3 shrink-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                    <div class="shrink-0 border-b border-gray-100 bg-white px-5 py-3 dark:border-gray-800 dark:bg-gray-900">
                         <p class="text-xs text-gray-400 dark:text-gray-500">
                             Total <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="list[statsType].length"></span> karyawan
                             <span x-show="statsType === 'terlambat'" class="text-amber-600 dark:text-amber-400">terlambat</span>
@@ -300,7 +351,7 @@
                         </p>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto px-5 py-4">
+                    <div class="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
                         <div class="space-y-3" x-show="list[statsType].length > 0">
                             <template x-for="(m, i) in list[statsType]" :key="m.nama + i">
                                 <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-100 dark:border-gray-800 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -333,8 +384,8 @@
                         </div>
                     </div>
 
-                    <div class="sticky bottom-0 z-10 px-5 py-3 shrink-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-                        <button @click="showStats = false" class="w-full rounded-xl bg-gray-100 dark:bg-gray-800 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <div class="sticky bottom-0 z-10 shrink-0 border-t border-gray-100 bg-white px-5 py-3 dark:border-gray-800 dark:bg-gray-900">
+                        <button type="button" @click="showStats = false" class="min-h-11 w-full rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
                             Tutup
                         </button>
                     </div>
@@ -345,28 +396,98 @@
         {{-- Card wrapper for table --}}
         <div class="card">
             {{-- Filter bar --}}
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
-                <div class="flex items-center gap-3 flex-1 flex-wrap">
-                    <div class="relative flex-1 max-w-xs">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-4 border-b border-gray-50 dark:border-gray-800 sm:gap-4 sm:px-6">
+                <div class="flex w-full flex-1 flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
+                    <div class="relative w-full min-w-0 flex-1 sm:max-w-xs">
+                        <label for="presensi-search" class="sr-only">Cari nama atau NIK karyawan</label>
+                        <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                         <input
-                            type="text"
+                            id="presensi-search"
+                            type="search"
                             wire:model.live.debounce.300ms="search"
                             placeholder="Cari nama atau NIK..."
-                            class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"
+                            class="w-full min-h-11 rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:text-xs"
                         >
                     </div>
 
-                    <input
-                        type="date"
-                        wire:model.live="date"
-                        class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200"
-                    >
+                    <div class="w-full sm:w-auto">
+                        <label for="presensi-date" class="sr-only">Pilih tanggal presensi</label>
+                        <input
+                            id="presensi-date"
+                            type="date"
+                            wire:model.live="date"
+                            class="w-full min-h-11 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:w-auto sm:text-xs"
+                        >
+                    </div>
                 </div>
             </div>
 
+            {{-- Mobile: kartu karyawan --}}
+            <div class="divide-y divide-gray-100 md:hidden dark:divide-gray-800">
+                @forelse($employees as $emp)
+                    @php
+                        $attMobile = $attendances->get($emp->id);
+                        $dsMobile = $attMobile?->display_status
+                            ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
+                        $isLiburMobile = $dsMobile === 'libur';
+                    @endphp
+                    <article class="px-4 py-3.5">
+                        <div class="flex items-start gap-3">
+                            @if($emp->foto_url)
+                                <img src="{{ $emp->foto_url }}" alt="" class="h-10 w-10 shrink-0 rounded-xl object-contain bg-gray-50 dark:bg-gray-800" loading="lazy">
+                            @else
+                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-sm font-semibold text-primary-600 dark:bg-primary-900/50 dark:text-primary-400" aria-hidden="true">
+                                    {{ strtoupper(substr($emp->nama, 0, 1)) }}
+                                </span>
+                            @endif
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $emp->nama }}</p>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                                    <span class="font-mono">{{ $emp->nik }}</span>
+                                    <span aria-hidden="true"> &middot; </span>{{ $emp->position ?? '-' }}
+                                </p>
+                            </div>
+                            @include('partials.attendance-status-badge', ['status' => $dsMobile])
+                        </div>
+
+                        @if($isLiburMobile)
+                            <p class="mt-2.5 text-xs text-gray-500 dark:text-gray-400">Libur mingguan, tidak ada jam kerja.</p>
+                        @else
+                            <dl class="mt-3 grid grid-cols-3 gap-2">
+                                <div class="rounded-xl bg-gray-50 px-2.5 py-2 text-center dark:bg-gray-800/70">
+                                    <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Masuk</dt>
+                                    <dd class="mt-0.5 font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $attMobile?->time_in ? \Carbon\Carbon::parse($attMobile->time_in)->format('H:i') : '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-gray-50 px-2.5 py-2 text-center dark:bg-gray-800/70">
+                                    <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Keluar</dt>
+                                    <dd class="mt-0.5 font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $attMobile?->time_out ? \Carbon\Carbon::parse($attMobile->time_out)->format('H:i') : '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-gray-50 px-2.5 py-2 text-center dark:bg-gray-800/70">
+                                    <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Durasi</dt>
+                                    <dd class="mt-0.5 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $attMobile?->duration ?? '-' }}</dd>
+                                </div>
+                            </dl>
+                            <button type="button"
+                                wire:click="openDetail({{ $emp->id }}, '{{ \Carbon\Carbon::parse($today)->toDateString() }}')"
+                                class="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-800 dark:hover:bg-primary-900/30 dark:hover:text-primary-300">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Lihat detail {{ strtok($emp->nama, ' ') }}
+                            </button>
+                        @endif
+                    </article>
+                @empty
+                    <div class="flex flex-col items-center justify-center px-4 py-12 text-center">
+                        <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900">
+                            <svg class="h-7 w-7 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+                        </div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data absensi</h3>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tidak ada catatan absensi untuk tanggal ini</p>
+                    </div>
+                @endforelse
+            </div>
+
             {{-- Table --}}
-            <div class="overflow-x-auto">
+            <div class="hidden overflow-x-auto md:block">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="table-header">
@@ -412,9 +533,7 @@
                                     <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
                                     <td class="table-cell text-gray-600 dark:text-gray-400">-</td>
                                     <td class="table-cell">
-                                        <span class="badge-info">
-                                            Libur
-                                        </span>
+                                        @include('partials.attendance-status-badge', ['status' => $ds])
                                     </td>
                                     <td class="table-cell text-center text-gray-300 dark:text-gray-600">-</td>
                                 @else
@@ -422,28 +541,15 @@
                                     <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att?->time_out ? \Carbon\Carbon::parse($att->time_out)->format('H:i') : '-' }}</td>
                                     <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att?->duration ?? '-' }}</td>
                                     <td class="table-cell">
-                                        @if($ds === 'tepat waktu')
-                                            <span class="badge-success">Tepat Waktu</span>
-                                        @elseif($ds === 'terlambat')
-                                            <span class="badge-warning">Terlambat</span>
-                                        @elseif($ds === 'tidak hadir')
-                                            <span class="badge-danger">Tidak Hadir</span>
-                                        @elseif($ds === 'izin')
-                                            <span class="badge-info">Izin</span>
-                                        @elseif($ds === 'sakit')
-                                            <span class="badge-warning">Sakit</span>
-                                        @elseif($ds === 'cuti')
-                                            <span class="badge-info">Cuti</span>
-                                        @else
-                                            <span class="badge-secondary">{{ $ds }}</span>
-                                        @endif
+                                        @include('partials.attendance-status-badge', ['status' => $ds])
                                     </td>
                                     <td class="table-cell text-center">
                                         <button type="button"
                                             wire:click="openDetail({{ $emp->id }}, '{{ \Carbon\Carbon::parse($today)->toDateString() }}')"
                                             title="Lihat detail absen hari ini"
-                                            class="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:text-primary-400 dark:hover:bg-gray-800 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            aria-label="Lihat detail absen {{ $emp->nama }}"
+                                            class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:text-primary-400 dark:hover:bg-gray-800 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         </button>
                                     </td>
                                 @endif
@@ -466,7 +572,7 @@
             </div>
 
             @if($employees->hasPages())
-                <div class="px-6 py-3 border-t border-gray-50 dark:border-gray-800">
+                <div class="border-t border-gray-50 px-4 py-3 dark:border-gray-800 sm:px-6">
                     {{ $employees->links('pagination.blue-active') }}
                 </div>
             @endif
@@ -479,16 +585,19 @@
     <div x-data="{ open: $wire.entangle('showJamKerjaModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/60 p-4 pt-10 backdrop-blur-sm"
+         role="dialog" aria-modal="true" aria-labelledby="jam-kerja-modal-title"
+         @keydown.escape.window="open = false"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Jam Kerja</h3>
+        <div @click.stop class="relative my-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800 sm:p-8">
+            <div class="mb-6 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 id="jam-kerja-modal-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Jam Kerja</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Atur jam kerja anggota tim</p>
                 </div>
-                <button wire:click="closeJamKerjaModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" wire:click="closeJamKerjaModal" aria-label="Tutup edit jam kerja"
+                    class="-mr-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700 dark:hover:text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
@@ -526,22 +635,28 @@
     <div x-data="{ open: $wire.entangle('showDetailModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm"
+         class="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-sm sm:items-center sm:p-4"
+         role="dialog" aria-modal="true" aria-labelledby="detail-absen-title"
+         @keydown.escape.window="open = false"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-black/5 dark:ring-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-5 py-4 flex items-start justify-between border-b border-gray-100 dark:border-gray-800">
-                <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Detail Absen</h3>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        {{ $detailNama }}{{ $detailDate ? ' · '.$detailDate : '' }}
-                    </p>
+        <div @click.stop class="relative flex max-h-[85dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sm:max-h-[90vh] sm:rounded-2xl">
+            <div class="shrink-0 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+                <div class="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-700 sm:hidden" aria-hidden="true"></div>
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <h3 id="detail-absen-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">Detail Absen</h3>
+                        <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                            {{ $detailNama }}{{ $detailDate ? ' · '.$detailDate : '' }}
+                        </p>
+                    </div>
+                    <button type="button" @click="open = false" aria-label="Tutup detail absen"
+                        class="-mr-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
-                <button @click="open = false" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
             </div>
 
-            <div class="px-5 py-4 flex-1 min-h-0 overflow-y-auto">
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
                 @forelse($detailPunches as $p)
                     <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-100 dark:border-gray-800 px-3 py-2.5 {{ $loop->first ? '' : 'mt-2' }}">
                         <div class="flex items-center gap-3 min-w-0">
@@ -571,8 +686,8 @@
                 @endforelse
             </div>
 
-            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
-                <button @click="open = false" class="w-full rounded-xl bg-gray-100 dark:bg-gray-800 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <div class="shrink-0 border-t border-gray-100 px-5 py-3 dark:border-gray-800">
+                <button type="button" @click="open = false" class="min-h-11 w-full rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
                     Tutup
                 </button>
             </div>
