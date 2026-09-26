@@ -80,8 +80,11 @@ html.dark {
     /* Some Android/iOS standalone windows report a zero safe-area inset even
        though their status bar overlays the app. Keep the top chrome clear. */
     @media (display-mode: standalone), (display-mode: fullscreen) {
-        .safe-t { padding-top: max(var(--safe-top), 16px); }
         .safe-inset-top { top: max(var(--safe-top), 16px); }
+        .pwa-safe-header {
+            height: calc(4rem + max(var(--safe-top), 24px));
+            padding-top: max(var(--safe-top), 24px);
+        }
     }
 }
 
