@@ -5,6 +5,7 @@
     ][$employee->tipe] ?? ucfirst((string) $employee->tipe);
     $mobilePosition = $employee->mainPosition()?->nama ?: ($employee->position ?: '—');
     $mobileInitial = strtoupper(substr($employee->nama ?: auth()->user()->name ?: '?', 0, 1));
+    $mobileDivision = $employee->divisionNames() ?: '—';
     $canEditPhoto = !$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id);
     $mobileDocuments = $employee->documents->map(fn ($document) => [
         'id' => $document->id,
@@ -253,20 +254,27 @@
                         @endif
                         <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
                             <span class="text-white/60">Divisi</span>
-                            <span class="truncate">IT</span>
+                            <span class="truncate">{{ $mobileDivision }}</span>
                         </span>
                     </div>
                 </div>
             </div>
             <div class="relative mt-3 space-y-2 border-t border-white/20 pt-3 text-xs text-white/70">
+                @if($employee->no_hp)
                 <div class="flex items-center gap-2">
                     <span class="font-medium">Telepon</span>
-                    <a href="tel:085156521726" class="font-semibold text-white hover:text-white/80">085156521726</a>
+                    <a href="tel:{{ $employee->no_hp }}" class="truncate font-semibold text-white hover:text-white/80">{{ $employee->no_hp }}</a>
                 </div>
+                @endif
+                @if($employee->email)
                 <div class="flex items-center gap-2">
                     <span class="font-medium">Email</span>
-                    <a href="mailto:m.ilyasalfadlih@gmail.com" class="truncate font-semibold text-white hover:text-white/80">m.ilyasalfadlih@gmail.com</a>
+                    <a href="mailto:{{ $employee->email }}" class="truncate font-semibold text-white hover:text-white/80">{{ $employee->email }}</a>
                 </div>
+                @endif
+                @unless($employee->no_hp || $employee->email)
+                <p class="font-medium text-white/60">Kontak belum dilengkapi.</p>
+                @endunless
             </div>
             @error('foto')
                 <p class="relative mt-2 text-xs font-medium text-red-200" role="alert">{{ $message }}</p>
