@@ -756,21 +756,21 @@ class User extends Authenticatable
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO]);
     }
 
     public function canUpdateData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_MANAGER, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_MANAGER]);
     }
 
     public function canDeleteData(): bool
     {
         if ($this->isReadOnlyWorkspace()) return false;
 
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_STAFF_HR]);
+        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO]);
     }
 
     public function canViewAll(): bool
