@@ -6,12 +6,21 @@ import { defineConfig, loadEnv } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * Aset statis PWA yang di-precache beserta revision dari isi file.
+ *
+ * Hanya logo + ikon. Sembilan splash iOS sengaja TIDAK di-precache:
+ * totalnya ~1,2 MB, sedangkan iOS mengambil startup image lewat OS (bukan
+ * service worker) sehingga precache tidak akan membantu cold start offline.
+ */
 const pwaPublicAssets = [
-    'offline.html',
     'logo.png',
-    'pwa-192x192.png',
-    'pwa-512x512.png',
-    'pwa-maskable-512x512.png',
+    'pwa/favicon-32.png',
+    'pwa/apple-touch-icon.png',
+    'pwa/icon-192.png',
+    'pwa/icon-512.png',
+    'pwa/icon-maskable-192.png',
+    'pwa/icon-maskable-512.png',
 ];
 
 function getPwaAssetRevision(asset) {
@@ -55,52 +64,50 @@ export default defineConfig(({ mode }) => {
             VitePWA({
                 registerType: 'autoUpdate',
                 injectRegister: false,
+                // Service worker HARUS di root, bukan di /build/: browser tidak
+                // mengizinkan sebuah SW mengklaim scope ke luar foldernya tanpa
+                // header Service-Worker-Allowed. SW di /build/ hanya menangkap
+                // /build/*, sehingga navigasi ke /dashboard tidak pernah kena
+                // dan fallback offline mati total.
+                // Workbox menulis sw.js langsung ke disk (bukan lewat emitFile
+                // rollup yang menolak '..'), jadi '..' di sini aman.
                 buildBase: '/build/',
-                includeManifestIcons: false,
-                manifest: {
-                    id: '/',
-                    name: 'Johen Application',
-                    short_name: 'Johen App',
-                    description: 'Sistem manajemen operasional PT. Johen Sukses Abadi.',
-                    lang: 'id',
-                    dir: 'ltr',
-                    start_url: '/',
-                    scope: '/',
-                    display: 'standalone',
-                    background_color: '#f8fafc',
-                    theme_color: '#0987F5',
-                    categories: ['business', 'productivity'],
-                    icons: [
-                        {
-                            src: '/pwa-192x192.png',
-                            sizes: '192x192',
-                            type: 'image/png',
-                            purpose: 'any',
-                        },
-                        {
-                            src: '/pwa-512x512.png',
-                            sizes: '512x512',
-                            type: 'image/png',
-                            purpose: 'any',
-                        },
-                        {
-                            src: '/pwa-maskable-512x512.png',
-                            sizes: '512x512',
-                            type: 'image/png',
-                            purpose: 'maskable',
-                        },
-                    ],
-                },
+                filename: '../sw.js',
+                scope: '/',
+                // Manifest dibuat manual di public/manifest.webmanifest, bukan
+                // oleh plugin. Alasannya: plugin menulis manifest ke dalam outDir
+                // (public/build) lalu mendaftarkannya ke precache sebagai URL
+                // relatif - yang salah begitu sw.js pindah ke root. Sebagai file
+                // sumber, manifest juga gampang direview di git.
+                manifest: false,
                 workbox: {
                     cleanupOutdatedCaches: true,
                     clientsClaim: true,
                     skipWaiting: true,
+                    // Halaman HTML/otorisasi tidak boleh dilayani dari cache.
                     navigateFallback: null,
                     globPatterns: ['**/*.{js,css}'],
-                    additionalManifestEntries: pwaPublicAssets.map((asset) => ({
-                        url: `/${asset}`,
-                        revision: getPwaAssetRevision(asset),
-                    })),
+                    additionalManifestEntries: [
+                        ...pwaPublicAssets.map((asset) => ({
+                            url: `/${asset}`,
+                            revision: getPwaAssetRevision(asset),
+                        })),
+                        // Route Blade, jadi tidak bisa di-hash saat build.
+                        // revision: null => URL disimpan apa adanya tanpa
+                        // ?__WB_REVISION__, sehingga caches.match('/offline')
+                        // di bawah bisa mencapainya.
+                        { url: '/offline', revision: null },
+                    ],
+                    // globPatterns memindai outDir (public/build) dan menulis
+                    // url relatif seperti 'assets/app-xxx.css'. Itu aman selama
+                    // service worker ikut tinggal di /build/, tapi sw.js kita di
+                    // root, sehingga url relatif akan resolve ke /assets/...
+                    // yang salah. Prefiks '/build/' ke semua entri glob.
+                    //
+                    // additionalManifestEntries di atas sudah absolut, dan
+                    // workbox menambahkannya SETELAH modifyURLPrefix, jadi
+                    // entri itu tidak ikut diberi prefiks ganda.
+                    modifyURLPrefix: { '': '/build/' },
                     runtimeCaching: [
                         {
                             urlPattern: ({ request }) => request.mode === 'navigate',
@@ -109,7 +116,12 @@ export default defineConfig(({ mode }) => {
                                 try {
                                     return await fetch(request);
                                 } catch {
-                                    const offlinePage = await caches.match('/offline.html');
+                                    // ignoreVary wajib: respons Laravel mengirim
+                                    // Vary, sedangkan cache precache menyimpan
+                                    // apa adanya hasil fetch saat instalasi.
+                                    const offlinePage = await caches.match('/offline', {
+                                        ignoreVary: true,
+                                    });
                                     return offlinePage ?? Response.error();
                                 }
                             },

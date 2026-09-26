@@ -67,7 +67,10 @@ Route::get('/', function () {
 Route::get('/offline', function () {
     return response()
         ->view('offline')
-        ->header('Cache-Control', 'no-store, must-revalidate')
+        // Halaman publik tanpa data user, jadi boleh di-cache. `max-age=0`
+        // menjaga Workbox tetap mengambil ulang setiap kali service worker
+        // diperbarui - `no-store` justru bisa membuat precache dilewati.
+        ->header('Cache-Control', 'public, max-age=0, must-revalidate')
         ->header('X-Robots-Tag', 'noindex');
 })->name('offline');
 

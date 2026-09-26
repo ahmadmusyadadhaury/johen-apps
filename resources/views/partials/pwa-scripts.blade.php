@@ -4,22 +4,29 @@
     Letakkan sebelum </body> supaya tidak menunda render konten.
 
     Catatan service worker:
-      - Halaman HTML TIDAK di-cache (lihat public/service-worker.js), jadi tidak
-        ada risiko data user bocor lewat cache.
+      - Didaftarkan dari partial ini karena vite-plugin-pwa disetel
+        injectRegister: false, supaya tag <script> tidak di-inject Vite dan
+        kita tetap pegang kendali penuh.
+      - HTML TIDAK pernah masuk precache: navigateFallback null + navigasi
+        selalu network-first. Tidak ada risiko data user bocor lewat cache.
       - updateViaCache 'none' memaksa browser memeriksa service worker baru
         setiap navigasi, penting supaya versi lama tidak nempel.
       - Saat service worker baru siap, halaman di-reload SEKALI. Penjaga
         sessionStorage mencegah reload loop kalau update datang berulang.
 --}}
 @php
-    $swPath = public_path('service-worker.js');
-    $swUrl = '/service-worker.js?v='.(is_file($swPath) ? filemtime($swPath) : '1');
+    $swPath = public_path('sw.js');
+
+    // Jangan daftar service worker saat `npm run dev` sedang jalan. SW akan
+    // mem-precache /build/assets/* dari build terakhir, sehingga CSS/JS yang
+    // sedang kamu kerjakan bisa tertahan versi basi.
+    $swVersion = is_file(public_path('hot')) || !is_file($swPath) ? null : filemtime($swPath);
 @endphp
 <script>
     (function () {
         'use strict';
 
-        var SW_URL = @json($swUrl);
+        var SW_URL = @json($swVersion ? '/sw.js?v=' . $swVersion : null);
 
         // ============================ SPLASH ============================
         (function splash() {
@@ -78,24 +85,30 @@
         // ======================= SERVICE WORKER =======================
         if (!('serviceWorker' in navigator)) return;
 
+        // Di `npm run dev` tidak ada build, jadi sw.js belum ada. Jangan
+        // daftarkan apa pun daripada memicu 404 yang membingungkan.
+        if (!SW_URL) return;
+
         window.addEventListener('load', function () {
-            navigator.serviceWorker.register(SW_URL, { updateViaCache: 'none' })
+            navigator.serviceWorker.register(SW_URL, { scope: '/', updateViaCache: 'none' })
                 .then(function (reg) {
                     reg.addEventListener('updatefound', function () {
                         var sw = reg.installing;
                         if (!sw) return;
 
                         sw.addEventListener('statechange', function () {
-                            // Hanya reload kalau ini/update worker pertama
-                            // yang benar-benar mengambil alih.
-                            if (sw.state !== 'installed' || !navigator.serviceWorker.controller) return;
+                            // Hanya reload kalau ini worker pertama yang benar-
+                            // benar mengambil alih halaman yang sedang terbuka.
+                            if (sw.state !== 'activated' || !navigator.serviceWorker.controller) return;
 
                             var KEY = 'johen_sw_reload';
                             var already = false;
                             try { already = sessionStorage.getItem(KEY) === '1'; } catch (e) { /* noop */ }
                             if (already) return;
 
-                            sw.postMessage({ type: 'SKIP_WAITING' });
+                            // skipWaiting + clientsClaim sudah aktif di Workbox,
+                            // jadi aset ber-hash baru langsung tersaji tanpa
+                            // perlu minta izin ke worker lama.
                             try { sessionStorage.setItem(KEY, '1'); } catch (e) { /* noop */ }
                             window.location.reload();
                         });
