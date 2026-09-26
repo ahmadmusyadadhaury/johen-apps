@@ -98,8 +98,8 @@
         position: relative;
         display: grid;
         place-items: center;
-        width: 80px;
-        height: 80px;
+        width: 68px;
+        height: 68px;
     }
 
     /* Logo statis - satu-satunya yang bergerak di splash ini progress bar. */
