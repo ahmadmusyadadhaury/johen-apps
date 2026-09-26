@@ -6,6 +6,7 @@
         'izin' => ['label' => 'Izin', 'class' => 'badge-info'],
         'sakit' => ['label' => 'Sakit', 'class' => 'badge-warning'],
         'cuti' => ['label' => 'Cuti', 'class' => 'badge-info'],
+        'jatah libur' => ['label' => 'Jatah Libur', 'class' => 'badge-info'],
         'libur' => ['label' => 'Libur', 'class' => 'badge-info'],
     ][$status] ?? ['label' => $status, 'class' => 'badge-secondary'];
 @endphp

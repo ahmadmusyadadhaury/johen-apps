@@ -19,7 +19,7 @@ class EmployeeController extends Controller
     public function index()
     {
         $stats = [
-            'total' => Employee::count(),
+            'total' => Employee::where('tipe', Employee::TIPE_KARYAWAN_AKTIF)->count(),
             'mantan' => Employee::where('tipe', 'mantan_karyawan')->count(),
         ];
 

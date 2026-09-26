@@ -54,6 +54,7 @@ class Attendance extends Model
             'sakit' => 'sakit',
             'alpha' => 'tidak hadir',
             'cuti' => 'cuti',
+            'jatah' => 'jatah libur',
             default => $this->status,
         };
     }

@@ -59,7 +59,11 @@ class LeaveRequest extends Model
             return;
         }
 
-        $status = $this->jenis === 'cuti_tahunan' ? 'cuti' : 'izin';
+        $status = match ($this->jenis) {
+            'cuti_tahunan' => 'cuti',
+            'jatah' => 'jatah',
+            default => 'izin',
+        };
 
         $existingDates = Attendance::where('employee_id', $this->employee_id)
             ->whereIn('date', $this->dateRange())
@@ -111,7 +115,11 @@ class LeaveRequest extends Model
             return;
         }
 
-        $status = $this->jenis === 'cuti_tahunan' ? 'cuti' : 'izin';
+        $status = match ($this->jenis) {
+            'cuti_tahunan' => 'cuti',
+            'jatah' => 'jatah',
+            default => 'izin',
+        };
 
         $stillCovered = LeaveRequest::where('employee_id', $this->employee_id)
             ->where('id', '!=', $this->id)
