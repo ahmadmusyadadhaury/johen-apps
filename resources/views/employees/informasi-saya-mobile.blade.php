@@ -507,7 +507,7 @@
             @endif
             <div class="space-y-3">
                 <div class="relative space-y-3 pl-10" x-show="contracts.length > 0">
-                    <span class="pointer-events-none absolute inset-y-1 left-4 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true"></span>
+                    <span class="pointer-events-none absolute inset-y-1 left-[15px] w-0.5 rounded-full bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
                     <template x-for="contract in contracts" :key="contract.id">
                         <article class="relative">
                             <span class="absolute -left-10 top-4 flex h-8 w-8 items-center justify-center rounded-full ring-4 ring-gray-50 dark:ring-gray-950" :class="contractIsDone(contract) ? 'bg-emerald-500 text-white' : 'bg-primary-600 text-white'" aria-hidden="true">
