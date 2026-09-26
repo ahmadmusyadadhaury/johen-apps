@@ -73,7 +73,7 @@
                 </div>
             </div>
 
-            <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:shrink-0">
+            <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto lg:w-auto lg:shrink-0">
                 <button type="button" wire:click="syncMachineUsers" wire:loading.attr="disabled" class="btn-secondary min-h-11 w-full justify-center text-xs sm:w-auto">
                     <svg wire:loading wire:target="syncMachineUsers" class="h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
                     <span wire:loading.remove wire:target="syncMachineUsers">Tarik Nama dari Mesin</span>
