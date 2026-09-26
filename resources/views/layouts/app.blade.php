@@ -154,13 +154,8 @@ if ($divisionViewUser) {
                     @endif
 
 
-@if(auth()->user()->isGmCeo())
-    @include('layouts.partials.sidebar-sdm')
-    @include('layouts.partials.sidebar-operasional')
-@else
-    @include('layouts.partials.sidebar-operasional')
-    @include('layouts.partials.sidebar-sdm')
-@endif
+@include('layouts.partials.sidebar-sdm')
+@include('layouts.partials.sidebar-operasional')
 
 
                     @if(auth()->user()->isKoordinatorCreative() || auth()->user()->isStaffCreative())

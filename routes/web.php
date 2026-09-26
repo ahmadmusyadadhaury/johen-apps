@@ -59,6 +59,18 @@ Route::get('/', function () {
     return auth()->check() ? redirect('/dashboard') : redirect('/login');
 });
 
+/**
+ * Fallback untuk service worker ketika navigasi gagal karena jaringan mati.
+ * Harus berada di luar middleware auth, dan TIDAK boleh di-cache oleh HTTP
+ * cache - yang melakukan caching adalah service worker.
+ */
+Route::get('/offline', function () {
+    return response()
+        ->view('offline')
+        ->header('Cache-Control', 'no-store, must-revalidate')
+        ->header('X-Robots-Tag', 'noindex');
+})->name('offline');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/ucapan-ultah', [DashboardController::class, 'storeBirthdayWish'])->name('dashboard.birthday-wish');
