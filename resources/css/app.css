@@ -77,10 +77,6 @@ html.dark {
     .safe-x { padding-left: var(--safe-left); padding-right: var(--safe-right); }
     .safe-inset-top { top: var(--safe-top); }
 
-    /* Keep the fixed mobile sidebar clear of notches when safe-area is zero. */
-    @media (max-width: 767px) {
-        .safe-inset-top { top: max(var(--safe-top), 16px); }
-    }
 }
 
 @layer components {
