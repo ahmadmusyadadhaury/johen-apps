@@ -13,25 +13,9 @@
     @keyframes qrCheckDraw { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
     @keyframes qrRing { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.45); } 70% { box-shadow: 0 0 0 22px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
     @keyframes qrPopIn { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    @keyframes ringPop { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.45); } 100% { box-shadow: 0 0 0 30px rgba(16,185,129,0); } }
-    @keyframes confettiBurst {
-        0% { transform: translate(-50%, -50%); opacity: 1; }
-        100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); opacity: 0; }
-    }
-    @keyframes modalCardIn { 0% { transform: scale(0.86) translateY(14px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
     .animate-scan-ring { animation: qrRing 1.9s ease-out infinite; }
     .animate-scan-check { animation: qrPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
     .animate-scan-check .check-path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: qrCheckDraw 0.55s ease-out 0.22s forwards; }
-    .m-success-ring { animation: ringPop 1s cubic-bezier(0.16,1,0.3,1) 0.3s both; }
-    .m-success-card { animation: modalCardIn 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.08s both; }
-    .scan-confetti {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        opacity: 0;
-        animation: confettiBurst 1.6s cubic-bezier(0.22,0.61,0.36,1) forwards;
-    }
 </style>
     @if(!$currentMeeting)
     {{-- No Active Meeting --}}
@@ -148,64 +132,6 @@
     @endif
 </div>
 
-{{-- Popup sukses absen: muncul setelah QR berhasil dipindai --}}
-@if($status === 'success' && $currentMeeting)
-<div x-cloak x-data="{ show: false }" x-init="setTimeout(() => show = true, 60)" x-show="show" class="fixed inset-0 z-[9998] flex items-center justify-center p-4">
-    <div
-        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        @click="show = false"
-    ></div>
-
-    <div class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 shadow-2xl overflow-hidden m-success-card" @click.stop>
-        <div class="relative p-8">
-            {{-- Lencana centang animasi + konfeti meledak dari pusatnya --}}
-            <div class="relative mx-auto mb-5 h-24 w-24">
-                <div class="pointer-events-none absolute -inset-8" aria-hidden="true">
-                    @php
-                        $succColors = ['#34d399', '#10b981', '#fbbf24', '#f472b6', '#38bdf8', '#a78bfa', '#fb7185', '#4ade80', '#f59e0b'];
-                    @endphp
-                    @for($i = 0; $i < 26; $i++)
-                        @php
-                            $angle = ($i / 26) * 360;
-                            $rad = 55 + ($i % 7) * 13;
-                            $dx = cos(deg2rad($angle)) * $rad;
-                            $dy = sin(deg2rad($angle)) * $rad + 45;
-                            $rot = 360 + ($i % 5) * 90;
-                            $delay = 0.1 + ($i % 7) * 0.045;
-                            $size = 6 + ($i % 4) * 2;
-                            $round = $i % 4 === 0;
-                        @endphp
-                        <span class="scan-confetti" style="--dx: {{ round($dx) }}px; --dy: {{ round($dy) }}px; --rot: {{ $rot }}deg; animation-delay: {{ $delay }}s; width: {{ $size }}px; height: {{ $round ? $size : round($size * 1.4) }}px; background: {{ $succColors[$i % count($succColors)] }}; border-radius: {{ $round ? '9999px' : '2px' }};"></span>
-                    @endfor
-                </div>
-                <div class="absolute inset-0 flex items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20 m-success-ring">
-                    <svg class="w-12 h-12 text-green-600 dark:text-green-400 animate-scan-check" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path class="check-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-                </div>
-            </div>
-
-            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-gray-100 text-center">Absensi Berhasil!</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">{{ $message }}</p>
-
-            @if($currentMeeting)
-            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $currentMeeting->title }}</h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $currentMeeting->meeting_date->format('d F Y') }} | {{ $currentMeeting->start_time?->format('H:i') ?? '-' }} - {{ $currentMeeting->end_time?->format('H:i') ?? '-' }}</p>
-            </div>
-            @endif
-
-            <div class="flex items-center justify-center pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
-                <button type="button" @click="show = false" class="btn-primary text-xs px-8">Selesai</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 
 @script
 <script>
@@ -287,13 +213,13 @@
     // Request device geolocation for the "Lokasi" column in the admin
     // attendance table. Prompt izin lokasi dimunculkan saat menu Weekly
     // Meeting (halaman scan) dibuka DAN setiap kali user scan QR walau lokasi
-    // belum aktif. Panggilan getCurrentPosition dilakukan langsung — itu cara
+    // belum aktif. Panggilan getCurrentPosition dilakukan langsung â€” itu cara
     // paling andal untuk memunculkan prompt browser.
     function requestLocation(showToast) {
         if (locationInFlight || cachedCoords || !navigator.geolocation) return;
 
         // Browser baru akan menampilkan prompt lagi jika status masih "belum
-        // diputuskan". Setelah diblokir permanen, prompt tidak akan muncul —
+        // diputuskan". Setelah diblokir permanen, prompt tidak akan muncul â€”
         // beri tahu user cara mengizinkannya lewat pengaturan situs.
         if (locationDenied) {
             notifyLocationBlocked(showToast);
@@ -360,12 +286,12 @@
                 const area = a.neighbourhood || a.hamlet || a.suburb || a.quarter || a.village || a.area || a.town || '';
 
                 const specific = [poi, road, area].filter(function (p) {
-                    // Buang bagian yang cuma angka (postcode) — bukan nama tempat.
+                    // Buang bagian yang cuma angka (postcode) â€” bukan nama tempat.
                     return p && !/^\d+$/.test(String(p).trim());
                 });
 
                 // Tampilkan nama hanya jika ada label spesifik (tempat/jalan/area).
-                // Kalau cuma kota/postcode — terlalu generik — pakai koordinat presisi.
+                // Kalau cuma kota/postcode â€” terlalu generik â€” pakai koordinat presisi.
                 cachedName = specific.length ? specific.slice(0, 2).join(', ') : precCoords;
             })
             .catch(function () { cachedName = ''; })
@@ -572,7 +498,7 @@
     }
 
     // The location permission prompt is shown right here, when this meeting
-    // page (menu Weekly Meeting) opens — and again at scan time until the
+    // page (menu Weekly Meeting) opens â€” and again at scan time until the
     // user enables location.
     // (When embedded as a tab inside the admin page, skip the automatic prompt;
     // location is requested on demand when the user actually scans.)

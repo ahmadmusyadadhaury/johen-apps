@@ -132,6 +132,15 @@ class WeeklyMeetingScan extends Component
         $this->message = 'Absen berhasil! Selamat datang, ' . $employee->nama;
         $this->alreadyAttended = true;
         $this->showScanner = false;
+
+        // Popup modal sukses global (semua role): layout app menyimak event
+        // 'notify' dengan type success lalu membuka Alpine store successModal.
+        $this->dispatch(
+            'notify',
+            type: 'success',
+            message: 'Absen berhasil! Selamat datang, ' . $employee->nama
+                . '. Tercatat pukul ' . $attendance->attended_at->format('H:i') . '.'
+        );
     }
 
     public function selectCamera(string $camera): void

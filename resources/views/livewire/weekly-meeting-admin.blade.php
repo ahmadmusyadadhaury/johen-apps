@@ -93,13 +93,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <x-input-label for="start_time" value="Jam Mulai" />
-                        <x-text-input id="start_time" wire:model="start_time" type="time" class="mt-1 block w-full" :disabled="! $selectedMeetingId" />
+                        <x-text-input id="start_time" wire:model="start_time" type="time" class="mt-1 block w-full" />
                         @error('start_time') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <x-input-label for="end_time" value="Jam Selesai" />
-                        <x-text-input id="end_time" wire:model="end_time" type="time" class="mt-1 block w-full" :disabled="! $selectedMeetingId" />
+                        <x-text-input id="end_time" wire:model="end_time" type="time" class="mt-1 block w-full" />
                         @error('end_time') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
