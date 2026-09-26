@@ -1,7 +1,6 @@
 @push('topbar-left')
-    <div>
+    <div class="block min-w-0">
         <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Pengumuman</h1>
-        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Informasi &amp; surat resmi dari manajemen perusahaan</p>
     </div>
 @endpush
 
@@ -29,9 +28,11 @@
     ];
 @endphp
 
-<div x-data="{ pdfUrl: null }">
+<div x-data="{ pdfUrl: null, filterOpen: false, draftJenisFilter: @js($jenisFilter), selectedItem: null }">
+    @include('livewire.partials.pengumuman-inbox-mobile')
+
     {{-- Stats Overview --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+    <div class="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         @foreach ($statCards as $sc)
             <div class="stat-card group text-left">
                 <div class="flex items-center justify-between mb-3">
@@ -47,7 +48,7 @@
     </div>
 
     {{-- Main Card --}}
-    <div class="card">
+    <div class="card hidden md:block">
         {{-- Toolbar --}}
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
