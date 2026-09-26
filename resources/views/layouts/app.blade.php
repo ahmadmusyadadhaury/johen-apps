@@ -78,6 +78,8 @@ $isStaffHost = auth()->user()->isStaffHostPubg()
     || auth()->user()->isStaffHostMonkeyPubg()
     || auth()->user()->isStaffHostFcMobile();
 $isStaffAdmin = auth()->user()->isStaffAdmin();
+$isStaffStock = auth()->user()->isStaffStock();
+$isStaffCreative = auth()->user()->isStaffCreative();
 
 $activeMenu = match (true) {
     request()->routeIs('it.tickets.*', 'it.project', 'it.maintenance', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isHeadOfStore2() => 'monitoring',
@@ -136,7 +138,7 @@ if ($divisionViewUser) {
                 @endphp
 
                 <nav x-data="{ openMenu: @js($activeMenu) }"
-                     @click.capture="if ((@js($isStaffHost) && $event.target.closest('[data-development-menu] a')) || (@js($isStaffAdmin) && $event.target.closest('[data-development-admin-menu] a'))) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
+                     @click.capture="if ((@js($isStaffHost) && $event.target.closest('[data-development-menu] a')) || (@js($isStaffAdmin) && $event.target.closest('[data-development-admin-menu] a')) || (@js($isStaffStock) && $event.target.closest('[data-development-stock-menu] a')) || (@js($isStaffCreative) && $event.target.closest('[data-development-creative-menu] a'))) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
                      class="flex-1 overflow-y-auto p-4 space-y-1">
                     @if($isDivisionView)
                         @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
@@ -166,7 +168,7 @@ if ($divisionViewUser) {
 
 
                     @if(auth()->user()->isKoordinatorCreative() || auth()->user()->isStaffCreative())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-creative-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Creative</p>
 
                         <a href="{{ route('hris.influencer') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.influencer') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -260,7 +262,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorStock() || auth()->user()->isStaffStock())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-stock-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Stock</p>
                         <a href="{{ route('hris.daily-tracking-stock') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.daily-tracking-stock') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
