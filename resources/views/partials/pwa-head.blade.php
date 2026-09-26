@@ -32,7 +32,7 @@
 {{-- iOS: mode standalone + sembunyikan address bar Safari --}}
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="{{ config('app.short_name', 'Johen Apps') }}">
 
 {{--
@@ -191,4 +191,3 @@
         .johen-splash-bar::after { animation: none; width: 100%; transform: none; }
     }
 </style>
-
