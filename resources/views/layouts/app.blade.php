@@ -69,6 +69,15 @@
                 </div>
 
                 @php
+$isStaffHost = auth()->user()->isStaffHostPubg()
+    || auth()->user()->isStaffHostFf()
+    || auth()->user()->isStaffHostMlbb()
+    || auth()->user()->isStaffHostEfootball()
+    || auth()->user()->isStaffHostValorant()
+    || auth()->user()->isStaffHostRoblox()
+    || auth()->user()->isStaffHostMonkeyPubg()
+    || auth()->user()->isStaffHostFcMobile();
+
 $activeMenu = match (true) {
     request()->routeIs('it.tickets.*', 'it.project', 'it.maintenance', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isHeadOfStore2() => 'monitoring',
     request()->routeIs('hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isManager() && auth()->user()->isHeadOfStore() => 'monitoring',
@@ -125,7 +134,9 @@ if ($divisionViewUser) {
 }
                 @endphp
 
-                <nav x-data="{ openMenu: @js($activeMenu) }" class="flex-1 overflow-y-auto p-4 space-y-1">
+                <nav x-data="{ openMenu: @js($activeMenu) }"
+                     @click.capture="if (@js($isStaffHost) && $event.target.closest('[data-development-menu] a')) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
+                     class="flex-1 overflow-y-auto p-4 space-y-1">
                     @if($isDivisionView)
                         @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
                     @else
@@ -333,7 +344,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(!auth()->user()->isKoordinatorFf() && !auth()->user()->isStaffHostFf() && (auth()->user()->isKoordinatorPubg() || auth()->user()->isStaffHostPubg()))
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Johen PUBG</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.daily-tracking') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking') }}" class="flex flex-1 items-center gap-3">
@@ -371,7 +382,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorFf() || auth()->user()->isStaffHostFf())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi FF</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.daily-tracking') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking') }}" class="flex flex-1 items-center gap-3">
@@ -407,7 +418,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorMlbb() || auth()->user()->isStaffHostMlbb())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi MLBB</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ (request()->routeIs('pubg.daily-tracking') && request()->input('divisi') === 'mlbb') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking', ['divisi' => 'mlbb']) }}" class="flex flex-1 items-center gap-3">
@@ -434,7 +445,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->hasDivisionPosition('Koordinator FC Mobile') || auth()->user()->isStaffHostFcMobile())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi FC Mobile</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ (request()->routeIs('pubg.daily-tracking') && request()->query('divisi') === 'FC Mobile') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking', ['divisi' => 'FC Mobile']) }}" class="flex flex-1 items-center gap-3">
@@ -468,7 +479,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorEfootball() || auth()->user()->isStaffHostEfootball())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi E-football</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.daily-tracking') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking') }}" class="flex flex-1 items-center gap-3">
@@ -504,7 +515,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorValorant() || auth()->user()->isStaffHostValorant())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Valorant</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ (request()->routeIs('pubg.daily-tracking') && request()->input('divisi') === 'valorant') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking', ['divisi' => 'valorant']) }}" class="flex flex-1 items-center gap-3">
@@ -542,7 +553,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorRoblox() || auth()->user()->isStaffHostRoblox())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Roblox</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.daily-tracking') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking') }}" class="flex flex-1 items-center gap-3">
@@ -580,7 +591,7 @@ if ($divisionViewUser) {
                     @endif
 
                     @if(auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffHostMonkeyPubg())
-                    <div class="mt-4">
+                    <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Monkey PUBG</p>
                         <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.daily-tracking') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <a href="{{ route('pubg.daily-tracking') }}" class="flex flex-1 items-center gap-3">
@@ -1017,7 +1028,6 @@ if ($divisionViewUser) {
         </script>
     </body>
 </html>
-
 
 
 
