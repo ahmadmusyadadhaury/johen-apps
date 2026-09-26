@@ -234,6 +234,11 @@ class CutiIzinTable extends Component
 
                 return;
             }
+            if (auth()->user()->isSuperAdmin() && ! $this->superAdminApprovalWindowOpen($lr)) {
+                $this->dispatch('notify', type: 'error', message: 'Super Admin baru dapat menyetujui mulai H+1 dari tanggal selesai pengajuan.');
+
+                return;
+            }
             if (! $lr->tanggal_selesai->isPast() && ! auth()->user()->isSuperAdmin()) {
                 $this->dispatch('notify', type: 'error', message: 'Persetujuan HR hanya dapat diberikan setelah masa cuti/izin selesai.');
 
@@ -332,6 +337,13 @@ class CutiIzinTable extends Component
 
                 return;
             }
+            if (auth()->user()->isSuperAdmin() && ! $this->superAdminApprovalWindowOpen($lr)) {
+                $this->showPinModal = false;
+                $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
+                $this->dispatch('notify', type: 'error', message: 'Super Admin baru dapat menyetujui mulai H+1 dari tanggal selesai pengajuan.');
+
+                return;
+            }
             if (! $lr->tanggal_selesai->isPast() && ! auth()->user()->isSuperAdmin()) {
                 $this->showPinModal = false;
                 $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
@@ -364,6 +376,11 @@ class CutiIzinTable extends Component
         $this->reset(['pin', 'catatan', 'pendingId', 'pendingLevel', 'pendingAction']);
 
         $this->dispatch('notify', type: 'success', message: $message);
+    }
+
+    private function superAdminApprovalWindowOpen(LeaveRequest $leaveRequest): bool
+    {
+        return $leaveRequest->tanggal_selesai->lt(today());
     }
 
     private function authorizeApproval(LeaveRequest $lr, string $level): void

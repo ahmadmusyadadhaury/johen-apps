@@ -48,6 +48,7 @@
                     $canApproveKoor = $isAtasan;
                     $canApproveAtasan2 = $isAtasan2 && (! $user->isManager() || $lr->persetujuan_koor === 'disetujui');
                     $canApproveHr = $lihatSemua && ! $user->isGmCeo() && ! $user->isKoordinatorIt() && ! $user->isKoordinatorAdmin() && ! $user->isKoordinatorStock() && ! $user->isKoordinatorPubg() && ! $user->isKoordinatorFf() && ! $user->isKoordinatorMlbb() && ! $user->isKoordinatorEfootball() && ! $user->isKoordinatorValorant() && $lr->persetujuan_atasan2 === 'disetujui' && ($lr->tanggal_selesai->isPast() || $user->isSuperAdmin());
+                    $canApproveHrNow = $canApproveHr && (! $user->isSuperAdmin() || $lr->tanggal_selesai->lt(today()));
                     $requiresPin = $user->requiresPinApproval();
                     $mobileStatus = in_array('ditolak', [$lr->persetujuan_koor, $lr->persetujuan_atasan2, $lr->persetujuan_hr], true)
                         ? 'Ditolak'
@@ -82,6 +83,7 @@
                             'canApproveKoor' => $canApproveKoor && $lr->persetujuan_koor === 'menunggu',
                             'canApproveAtasan2' => $canApproveAtasan2 && $lr->persetujuan_atasan2 === 'menunggu',
                             'canApproveHr' => $canApproveHr && $lr->persetujuan_hr === 'menunggu',
+                            'canApproveHrNow' => $canApproveHrNow && $lr->persetujuan_hr === 'menunggu',
                             'requiresPin' => $requiresPin,
                             'canDelete' => $user->isSuperAdmin(),
                         ]); detailOpen = true"
@@ -198,7 +200,7 @@
                 <template x-for="level in [{key:'canApproveKoor', value:'persetujuan_koor'}, {key:'canApproveAtasan2', value:'persetujuan_atasan2'}, {key:'canApproveHr', value:'persetujuan_hr'}]" :key="level.value">
                     <div x-show="selected[level.key]" class="col-span-2 grid grid-cols-2 gap-3">
                         <button type="button" @click="if (selected.requiresPin) { $wire.tolak(selected.id, level.value) } else { confirmAction = true; confirmTitle = 'Tolak Pengajuan'; confirmMessage = 'Apakah Anda yakin ingin menolak pengajuan ini?'; confirmHandler = () => $wire.tolak(selected.id, level.value) }" class="min-h-12 rounded-xl border border-red-200 bg-white px-3 text-sm font-bold text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-red-900 dark:bg-gray-900 dark:text-red-300">Tolak</button>
-                        <button type="button" @click="if (selected.requiresPin) { $wire.setujui(selected.id, level.value) } else { confirmAction = true; confirmTitle = 'Setujui Pengajuan'; confirmMessage = 'Apakah Anda yakin ingin menyetujui pengajuan ini?'; confirmHandler = () => $wire.setujui(selected.id, level.value) }" class="min-h-12 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">Setujui</button>
+                        <button x-show="level.value !== 'persetujuan_hr' || selected.canApproveHrNow" type="button" @click="if (selected.requiresPin) { $wire.setujui(selected.id, level.value) } else { confirmAction = true; confirmTitle = 'Setujui Pengajuan'; confirmMessage = 'Apakah Anda yakin ingin menyetujui pengajuan ini?'; confirmHandler = () => $wire.setujui(selected.id, level.value) }" class="min-h-12 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">Setujui</button>
                     </div>
                 </template>
                 <button x-show="selected.canDelete" type="button" @click="$wire.confirmDelete(selected.id)" class="col-span-2 min-h-12 rounded-xl border border-red-200 px-4 text-sm font-bold text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-red-900 dark:text-red-300">Hapus Pengajuan</button>

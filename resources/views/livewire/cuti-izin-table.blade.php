@@ -179,6 +179,7 @@
                                 $canApproveKoor = $isAtasan;
                                 $canApproveAtasan2 = $isAtasan2 && (!$user->isManager() || $lr->persetujuan_koor === 'disetujui');
                                 $canApproveHr = $lihatSemua && !$user->isGmCeo() && !$user->isKoordinatorIt() && !$user->isKoordinatorAdmin() && !$user->isKoordinatorStock() && !$user->isKoordinatorPubg() && !$user->isKoordinatorFf() && !$user->isKoordinatorMlbb() && !$user->isKoordinatorEfootball() && !$user->isKoordinatorValorant() && $lr->persetujuan_atasan2 === 'disetujui' && ($lr->tanggal_selesai->isPast() || $user->isSuperAdmin());
+                                $canApproveHrNow = $canApproveHr && (!$user->isSuperAdmin() || $lr->tanggal_selesai->lt(today()));
                                 $requiresPin = $user->requiresPinApproval();
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
@@ -279,16 +280,20 @@
                                             <span class="badge-warning">Menunggu</span>
                                             @if($canApproveHr)
                                                 @if($requiresPin)
+                                                @if($canApproveHrNow)
                                                 <button wire:click="setujui({{ $lr->id }}, 'persetujuan_hr')" class="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-md transition-colors" title="Setujui">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                 </button>
+                                                @endif
                                                 <button wire:click="tolak({{ $lr->id }}, 'persetujuan_hr')" class="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors" title="Tolak">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                                 </button>
                                                 @else
+                                                @if($canApproveHrNow)
                                                 <button @click="confirmAction = true; confirmTitle = 'Setujui Pengajuan'; confirmMessage = 'Apakah Anda yakin ingin menyetujui pengajuan ini?'; confirmHandler = () => $wire.setujui({{ $lr->id }}, 'persetujuan_hr')" class="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-md transition-colors" title="Setujui">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                 </button>
+                                                @endif
                                                 <button @click="confirmAction = true; confirmTitle = 'Tolak Pengajuan'; confirmMessage = 'Apakah Anda yakin ingin menolak pengajuan ini?'; confirmHandler = () => $wire.tolak({{ $lr->id }}, 'persetujuan_hr')" class="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors" title="Tolak">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                                 </button>

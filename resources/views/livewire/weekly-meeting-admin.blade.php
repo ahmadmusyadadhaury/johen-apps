@@ -123,16 +123,16 @@
 
     {{-- Attendance View --}}
     @if($mode === 'attendance' && $selectedMeetingId && (!$this->showTabs || $tab === 'qr'))
-    <div class="card flex flex-col" wire:poll.3s="refreshAttendanceData" style="height: calc(100vh - 175px);">
-        <div class="p-6 flex flex-col min-h-0">
-            <div class="mb-6">
+    <div class="card flex min-h-0 flex-col" wire:poll.3s="refreshAttendanceData" style="height: calc(100vh - 175px);">
+        <div class="flex-1 min-h-0 p-4 sm:p-6">
+            @php
+                $meeting = $this->selectedMeeting;
+                $qrCode = $meeting?->qr_code ?? '';
+            @endphp
+            <div class="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-rows-1 {{ $qrCode ? 'lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)]' : 'lg:grid-cols-1' }}">
                 {{-- QR Code Display --}}
-                @php
-                    $meeting = $this->selectedMeeting;
-                    $qrCode = $meeting?->qr_code ?? '';
-                @endphp
                 @if($qrCode)
-                <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600">
+                <section class="h-fit rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800 lg:order-2">
                     <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4 text-center">QR Code untuk Absen (Bagikan ke Peserta)</h4>
                     <div class="flex flex-col items-center gap-3">
                         <div class="relative">
@@ -146,12 +146,11 @@
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Peserta memindai QR ini menggunakan kamera HP di menu <strong>Operasional > Weekly Meeting</strong></p>
                     </div>
-                </div>
+                </section>
                 @endif
-            </div>
 
-            {{-- Attendance List --}}
-            <div id="attendance-table-scroll" class="flex-1 min-h-0 overflow-auto overscroll-contain">
+                {{-- Attendance List --}}
+                <div id="attendance-table-scroll" class="min-w-0 min-h-[18rem] overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-700 lg:order-1 lg:h-full lg:min-h-0">
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 z-10">
                         <tr class="table-header">
@@ -197,6 +196,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>
