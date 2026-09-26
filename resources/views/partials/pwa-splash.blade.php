@@ -18,8 +18,8 @@
                 src="{{ asset('logo.png') }}"
                 alt="Johen Sukses Abadi"
                 class="johen-splash-logo"
-                width="120"
-                height="120"
+                width="104"
+                height="104"
                 decoding="sync"
                 fetchpriority="high"
             >

@@ -117,8 +117,8 @@
         position: relative;
         display: grid;
         place-items: center;
-        width: 120px;
-        height: 120px;
+        width: 104px;
+        height: 104px;
     }
 
     /* Glow di belakang logo, meniru radial-gradient di sidebar. Statis. */
