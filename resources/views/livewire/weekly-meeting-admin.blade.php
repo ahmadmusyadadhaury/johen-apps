@@ -129,7 +129,7 @@
                 $meeting = $this->selectedMeeting;
                 $qrCode = $meeting?->qr_code ?? '';
             @endphp
-            <div class="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-rows-1 {{ $qrCode ? 'lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)]' : 'lg:grid-cols-1' }}">
+            <div class="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-rows-1 {{ $qrCode ? 'lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)]' : 'lg:grid-cols-1' }}">
                 {{-- QR Code Display --}}
                 @if($qrCode)
                 <section class="h-fit rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800 lg:order-2">
