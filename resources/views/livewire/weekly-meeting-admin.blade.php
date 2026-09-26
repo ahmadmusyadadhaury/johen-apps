@@ -128,7 +128,7 @@
             <div class="mb-6">
                 {{-- QR Code Display --}}
                 @php
-                    $meeting = $meetings->firstWhere('id', $selectedMeetingId);
+                    $meeting = $this->selectedMeeting;
                     $qrCode = $meeting?->qr_code ?? '';
                 @endphp
                 @if($qrCode)

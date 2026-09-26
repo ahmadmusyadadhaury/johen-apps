@@ -285,6 +285,15 @@ class WeeklyMeetingAdmin extends Component
         return $meeting->attendances()->with('employee')->orderBy('attended_at')->get();
     }
 
+    public function getSelectedMeetingProperty(): ?WeeklyMeeting
+    {
+        if (!$this->selectedMeetingId) {
+            return null;
+        }
+
+        return WeeklyMeeting::find($this->selectedMeetingId);
+    }
+
     public function getTotalEmployeesProperty(): int
     {
         return Employee::where('tipe', Employee::TIPE_KARYAWAN_AKTIF)->count();
@@ -298,11 +307,7 @@ class WeeklyMeetingAdmin extends Component
      */
     public function getQrLockedProperty(): bool
     {
-        if (!$this->selectedMeetingId) {
-            return false;
-        }
-
-        $meeting = WeeklyMeeting::find($this->selectedMeetingId);
+        $meeting = $this->selectedMeeting;
 
         if (!$meeting || !$meeting->start_time) {
             return false;
