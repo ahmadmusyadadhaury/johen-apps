@@ -1,18 +1,13 @@
 {{--
-    Aset PWA: web app manifest, ikon, theme-color, dan apple-touch-startup-image.
+    Aset PWA: web app manifest, ikon, dan theme-color.
 
     Manifest + service worker dihasilkan vite-plugin-pwa (lihat vite.config.js),
     bukan file statis di repo: keduanya output build seperti aset Vite lain.
     Karena itu dibungkus file_exists - saat `npm run dev` belum ada build,
     sehingga halaman ini sengaja tidak punya manifest dan tidak bisa di-install.
 
-    Android TIDAK memakai startup image. Chrome membuat splash sendiri dari
-    icon + background_color di manifest. Yang perlu file manual hanya iOS,
-    satu link per resolusi perangkat.
-
-    Ikon + 9 splash dibuat oleh `php artisan pwa:assets`. Kalau file gambarnya
-    hilang atau 404, blok ini tetap aman - browser hanya mengabaikan link
-    yang gagal.
+    Overlay splash aplikasi ditampilkan setelah dokumen mulai dimuat. iOS
+    startup-image sengaja tidak dipakai agar tidak muncul splash logo kedua.
 --}}
 
 {{-- Web app manifest. File statis di repo, bukan output build. --}}
@@ -34,21 +29,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="{{ config('app.short_name', 'Johen Apps') }}">
-
-{{--
-    apple-touch-startup-image - iOS hanya, satu per resolusi.
-    Logo berada di 42% tinggi layar, jauh dari notch/dynamic island, dan tetap
-    di dalam area yang tidak tertutup gesture bar di bawah.
---}}
-<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-640x1136.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-750x1334.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-828x1792.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-1125x2436.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-1170x2532.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-1179x2556.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-1242x2688.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-1284x2778.png') }}">
-<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="{{ asset('pwa/splash/splash-1290x2796.png') }}">
 
 {{--
     Putuskan apakah overlay splash perlu dirender, SEBELUM body digambar.
