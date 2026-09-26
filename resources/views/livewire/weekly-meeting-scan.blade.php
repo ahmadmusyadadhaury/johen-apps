@@ -133,7 +133,7 @@
                     <div class="aspect-square sm:aspect-video bg-gray-900 rounded-xl overflow-hidden relative">
                         <video id="scanner-video" class="w-full h-full object-cover" autoplay playsinline muted></video>
                         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div class="h-[70%] w-auto aspect-square border-2 border-primary-400 rounded-lg relative">
+                            <div class="h-[82%] w-auto aspect-square border-2 border-primary-400 rounded-lg relative">
                                 <div class="absolute -top-3 -left-3 w-6 h-6 border-t-2 border-l-2 border-primary-400"></div>
                                 <div class="absolute -top-3 -right-3 w-6 h-6 border-t-2 border-r-2 border-primary-400"></div>
                                 <div class="absolute -bottom-3 -left-3 w-6 h-6 border-b-2 border-l-2 border-primary-400"></div>
