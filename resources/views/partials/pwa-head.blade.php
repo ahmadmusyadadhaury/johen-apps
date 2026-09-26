@@ -69,10 +69,11 @@
         visibility: hidden;
         pointer-events: none;
         transition: opacity 0.45s ease, visibility 0.45s ease;
-        background:
-            radial-gradient(120% 60% at 50% 34%, rgba(9, 135, 245, 0.50) 0%, transparent 70%),
-            radial-gradient(110% 55% at 42% 78%, rgba(133, 78, 234, 0.34) 0%, transparent 70%),
-            #07080F;
+        background-color: #ffffff;
+    }
+
+    html.dark #johen-splash {
+        background-color: #07080F;
     }
 
     html[data-splash="on"] #johen-splash {
@@ -101,15 +102,6 @@
         height: 80px;
     }
 
-    /* Glow di belakang logo, meniru radial-gradient di sidebar. Statis. */
-    .johen-splash-glow {
-        position: absolute;
-        inset: -22%;
-        border-radius: 24px;
-        background: radial-gradient(circle, rgba(9, 135, 245, 0.55), rgba(124, 58, 237, 0.28) 45%, transparent 70%);
-        filter: blur(14px);
-    }
-
     /* Logo statis - satu-satunya yang bergerak di splash ini progress bar. */
     .johen-splash-logo {
         position: relative;
@@ -128,8 +120,12 @@
         font-size: 1.0625rem;
         font-weight: 800;
         letter-spacing: 0.22em;
-        color: #e2e8f0;
+        color: #0f172a;
         text-indent: 0.22em;
+    }
+
+    html.dark .johen-splash-title {
+        color: #e2e8f0;
     }
 
     .johen-splash-sub {
@@ -138,6 +134,10 @@
         font-weight: 500;
         letter-spacing: 0.1em;
         color: #64748b;
+    }
+
+    html.dark .johen-splash-sub {
+        color: #94a3b8;
     }
 
     .johen-splash-bar {

@@ -13,7 +13,6 @@
 <div id="johen-splash" role="status" aria-label="Memuat Johen Apps">
     <div class="johen-splash-stack">
         <div class="johen-splash-stage">
-            <div class="johen-splash-glow"></div>
             <img
                 src="{{ asset('logo.png') }}"
                 alt="Johen Sukses Abadi"
