@@ -10,7 +10,7 @@ class StaffHrAccess
 {
     private const BLOCKED_ROUTE_PREFIXES = [
         'meeting.', 'assets.', 'digital-registries.', 'electricity.', 'internet.',
-        'digital.', 'ipl.', 'reimbursement', 'hris.weekly-meeting.',
+        'digital.', 'ipl.', 'reimbursement',
         'api.meetings', 'api.assets', 'api.asset-categories', 'api.digital-assets',
         'api.payment-categories.', 'api.payments.', 'api.electricity.', 'api.internet.', 'api.ipl.',
     ];
@@ -40,6 +40,10 @@ class StaffHrAccess
                 abort(403, 'Anda tidak memiliki akses ke menu ini.');
             }
         }
+        if (str_starts_with($routeName, 'hris.weekly-meeting.')
+            && ! in_array($routeName, ['hris.weekly-meeting.scan', 'hris.weekly-meeting.attend'], true)) {
+            abort(403, 'Anda tidak memiliki akses ke menu ini.');
+        }
         $path = ltrim($request->path(), '/');
         foreach (self::BLOCKED_PATH_PREFIXES as $prefix) {
             if (str_starts_with($path, $prefix)) {
@@ -49,6 +53,10 @@ class StaffHrAccess
 
         if ($request->is('livewire/update')) {
             $this->denyLivewireWrites($request);
+        }
+
+        if (in_array($routeName, ['hris.weekly-meeting.scan', 'hris.weekly-meeting.attend'], true)) {
+            return $next($request);
         }
 
         if ($this->isReadOnlyPath($request) && ! in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'], true)) {
@@ -75,6 +83,9 @@ class StaffHrAccess
 
         foreach ((array) $request->input('components', []) as $component) {
             $path = ltrim((string) data_get($component, 'snapshot.memo.path', ''), '/');
+            if ($path === 'hris/weekly-meeting/scan') {
+                continue;
+            }
             $isReadOnlyArea = false;
             foreach (self::READ_ONLY_PATH_PREFIXES as $prefix) {
                 if (str_starts_with($path, $prefix)) {
