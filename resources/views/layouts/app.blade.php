@@ -27,7 +27,7 @@
         @include('partials.pwa-splash')
 
         {{-- safe-t/safe-b: keluar dari area notch & gesture bar saat PWA standalone --}}
-        <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden safe-t safe-b">
+        <div x-data="{ sidebarOpen: false }" class="flex h-screen min-h-0 overflow-hidden safe-t safe-b">
 
             <div
                 x-show="sidebarOpen"
@@ -777,8 +777,8 @@ if ($divisionViewUser) {
                 </form>
             </aside>
 
-            <div class="flex flex-1 flex-col overflow-hidden">
-                <header class="flex h-16 items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg px-4 lg:px-6 sticky top-0 z-30">
+            <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <header class="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white/80 px-4 backdrop-blur-lg dark:border-gray-800 dark:bg-gray-950/80 lg:px-6">
                     <div class="flex items-center gap-3 min-w-0">
                         <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden rounded-xl p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0" aria-label="Buka menu navigasi">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
@@ -860,7 +860,7 @@ if ($divisionViewUser) {
                     </div>
                 </header>
 
-                <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+                <main class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 lg:p-8">
                     <div class="w-full space-y-6 animate-fade-in">
                         {{ $slot }}
                     </div>

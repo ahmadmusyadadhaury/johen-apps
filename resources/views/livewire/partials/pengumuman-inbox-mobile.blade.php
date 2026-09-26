@@ -26,13 +26,19 @@
         </div>
 
         <button type="button" @click="filterOpen = true; draftJenisFilter = @js($jenisFilter)" aria-haspopup="dialog" aria-controls="mobile-announcement-filter"
-                class="flex min-h-12 w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-            <span class="inline-flex items-center gap-2.5">
-                <svg class="h-4 w-4 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10m-7 6h4"/></svg>
-                <span>{{ $activeJenisTab['label'] }}</span>
-                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs tabular-nums text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ $activeJenisTab['count'] }}</span>
+                class="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3.5 text-left shadow-sm transition hover:border-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:bg-gray-900">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10m-7 6h4"/></svg>
             </span>
-            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+            <span class="min-w-0 flex-1">
+                <span class="block text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Jenis dokumen</span>
+                <span class="mt-0.5 block truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $activeJenisTab['label'] }}</span>
+            </span>
+            <span class="shrink-0 text-right">
+                <span class="block text-sm font-bold tabular-nums text-gray-800 dark:text-gray-200">{{ number_format($activeJenisTab['count'], 0, ',', '.') }}</span>
+                <span class="block text-[11px] text-gray-500 dark:text-gray-400">dokumen</span>
+            </span>
+            <svg class="h-4 w-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
         </button>
     </div>
 
@@ -132,38 +138,42 @@
 </section>
 
 <div x-show="filterOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[55] flex items-end justify-center bg-gray-950/55 md:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-announcement-filter-title" @click.self="filterOpen = false" @keydown.escape.window="filterOpen = false">
-    <section id="mobile-announcement-filter" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-[1.75rem] border border-gray-100 bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:px-6">
+    <section id="mobile-announcement-filter" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-[1.75rem] border border-gray-100 bg-white px-5 pt-3 shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:px-6">
         <div class="mx-auto mb-5 h-1.5 w-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
         <div class="mb-5 flex items-center justify-between">
             <div>
                 <h2 id="mobile-announcement-filter-title" class="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">Filter Pengumuman</h2>
-                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Pilih jenis informasi yang ingin dilihat</p>
+                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Tampilkan kategori dokumen yang dibutuhkan</p>
             </div>
             <button type="button" @click="filterOpen = false" aria-label="Tutup filter" class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
         </div>
-        <div class="space-y-2">
+        <div role="group" aria-label="Kategori pengumuman" class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
             @foreach($tabs as $t)
-                <button type="button" @click="draftJenisFilter = @js($t['key'])" :aria-pressed="draftJenisFilter === @js($t['key'])" class="flex min-h-12 w-full items-center justify-between rounded-xl border border-gray-200 px-3.5 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700" :class="draftJenisFilter === @js($t['key']) ? 'border-primary-300 bg-primary-50/70 dark:border-primary-700 dark:bg-primary-900/20' : 'bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800'">
+                <button type="button" @click="draftJenisFilter = @js($t['key'])" :aria-pressed="draftJenisFilter === @js($t['key'])" class="relative flex min-h-14 w-full items-center justify-between gap-3 border-b border-gray-100 px-4 text-left transition last:border-b-0 focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 dark:border-gray-800" :class="draftJenisFilter === @js($t['key']) ? 'bg-primary-50/70 dark:bg-primary-900/20' : 'bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800'">
                     <span class="inline-flex items-center gap-3">
-                        <span class="flex h-5 w-5 items-center justify-center rounded-full border" :class="draftJenisFilter === @js($t['key']) ? 'border-primary-600 bg-primary-600 text-white dark:border-primary-400 dark:bg-primary-500' : 'border-gray-300 dark:border-gray-600'">
+                        <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border" :class="draftJenisFilter === @js($t['key']) ? 'border-primary-600 bg-primary-600 text-white dark:border-primary-400 dark:bg-primary-500' : 'border-gray-300 dark:border-gray-600'">
                             <svg x-show="draftJenisFilter === @js($t['key'])" x-cloak class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         </span>
                         <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $t['label'] }}</span>
                     </span>
-                    <span class="min-w-8 rounded-full bg-gray-100 px-2 py-1 text-center text-xs font-semibold tabular-nums text-gray-600 dark:bg-gray-800 dark:text-gray-300">{{ $t['count'] }}</span>
+                    <span class="min-w-9 rounded-lg px-2 py-1 text-center text-xs font-semibold tabular-nums" :class="draftJenisFilter === @js($t['key']) ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'">{{ number_format($t['count'], 0, ',', '.') }}</span>
                 </button>
             @endforeach
         </div>
-        <div class="mt-6 grid grid-cols-[auto_1fr] gap-3 border-t border-gray-100 pt-5 dark:border-gray-800">
-            <button type="button" @click="draftJenisFilter = 'semua'" class="min-h-12 rounded-xl border border-gray-200 px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">Reset</button>
-            <button type="button" @click="$wire.set('jenisFilter', draftJenisFilter); filterOpen = false" class="min-h-12 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">Terapkan</button>
+        <div class="sticky bottom-0 -mx-5 mt-5 grid grid-cols-[auto_1fr] gap-3 border-t border-gray-100 bg-white/95 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 sm:-mx-6 sm:px-6">
+            <button type="button" @click="draftJenisFilter = 'semua'" class="min-h-12 rounded-xl px-4 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800">Reset</button>
+            <button type="button" @click="$wire.set('jenisFilter', draftJenisFilter); filterOpen = false" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+                Terapkan filter
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </button>
         </div>
     </section>
 </div>
 
-<div x-show="selectedItem !== null" x-cloak x-transition.opacity class="fixed inset-0 z-[55] bg-gray-50 dark:bg-gray-950 md:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-announcement-detail-title" @keydown.escape.window="selectedItem = null">
+<template x-teleport="body">
+<div x-show="selectedItem !== null" x-cloak x-transition.opacity class="fixed inset-0 z-[80] bg-gray-50 dark:bg-gray-950 md:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-announcement-detail-title" @keydown.escape.window="selectedItem = null">
     <div class="flex h-full flex-col safe-t safe-b">
         <header class="flex min-h-14 shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
             <button type="button" @click="selectedItem = null" aria-label="Kembali ke daftar pengumuman" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-200 dark:hover:bg-gray-800">
@@ -232,3 +242,4 @@
         </main>
     </div>
 </div>
+</template>
