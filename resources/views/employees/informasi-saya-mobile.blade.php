@@ -47,6 +47,7 @@
         searchDocuments: '',
         documents: [],
         contracts: [],
+        openContractId: null,
         jabatanList: [],
         promosiList: [],
         payrollList: [],
@@ -86,6 +87,7 @@
         },
         closeDetail() {
             this.activeCategory = null;
+            this.openContractId = null;
             this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'auto' }));
         },
         get filteredDocuments() {
@@ -114,6 +116,12 @@
                 return new Date(contract.tanggal_berakhir + 'T23:59:59') < new Date();
             }
             return false;
+        },
+        contractIsOpen(id) {
+            return this.openContractId === id;
+        },
+        toggleContract(id) {
+            this.openContractId = this.openContractId === id ? null : id;
         },
         contractStatusLabel(contract) {
             if (this.contractIsDone(contract)) return 'Selesai';
@@ -498,31 +506,51 @@
                 </div>
             @endif
             <div class="space-y-3">
-                <template x-for="contract in contracts" :key="contract.id">
-                    <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0"><h3 class="text-sm font-bold text-gray-900 dark:text-gray-100" x-text="contract.jenis_kontrak"></h3><span x-show="contract.is_addendum" x-cloak class="mt-1 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">Addendum</span></div>
-                            <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" :class="contractIsDone(contract) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-primary-50 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300'" x-text="contractStatusLabel(contract)"></span>
-                        </div>
-                        <dl class="mt-4 space-y-3">
-                            <div class="grid grid-cols-2 gap-3"><div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Mulai</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatDate(contract.tanggal_mulai)"></dd></div><div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Berakhir</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatDate(contract.tanggal_berakhir)"></dd></div></div>
-                            <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Durasi</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="contractDuration(contract)"></dd></div>
-                            <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Posisi</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="contract.posisi"></dd></div>
-                            <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Atasan</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="contract.atasan"></dd></div>
-                            <div x-show="contract.keterangan" x-cloak><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Keterangan</dt><dd class="mt-1 text-xs leading-relaxed text-gray-700 dark:text-gray-300" x-text="contract.keterangan"></dd></div>
-                        </dl>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <a x-show="contract.file" x-cloak :href="contractPreviewUrl(contract)" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-50 px-3 py-2.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-primary-950/50 dark:text-primary-300 dark:hover:bg-primary-900/50 dark:focus-visible:ring-offset-gray-900" :aria-label="'Lihat surat kontrak ' + contract.jenis_kontrak">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-                                Lihat Surat
-                            </a>
-                            <a x-show="contract.file" x-cloak :href="contractDownloadUrl(contract)" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900" :aria-label="'Unduh surat kontrak ' + contract.jenis_kontrak">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-                                Unduh PDF
-                            </a>
-                        </div>
-                    </article>
-                </template>
+                <div class="relative space-y-3 pl-10" x-show="contracts.length > 0">
+                    <span class="pointer-events-none absolute inset-y-1 left-4 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true"></span>
+                    <template x-for="contract in contracts" :key="contract.id">
+                        <article class="relative">
+                            <span class="absolute -left-10 top-4 flex h-8 w-8 items-center justify-center rounded-full ring-4 ring-gray-50 dark:ring-gray-950" :class="contractIsDone(contract) ? 'bg-emerald-500 text-white' : 'bg-primary-600 text-white'" aria-hidden="true">
+                                <svg x-show="contractIsDone(contract)" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+                                <svg x-show="!contractIsDone(contract)" x-cloak class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <button type="button" @click="toggleContract(contract.id)" class="flex w-full items-center gap-2.5 rounded-2xl border border-gray-200 bg-white p-3.5 text-left shadow-sm transition-colors hover:border-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 active:scale-[0.99] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-800 dark:focus-visible:ring-offset-gray-950" :aria-expanded="contractIsOpen(contract.id) ? 'true' : 'false'">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <h3 class="truncate text-sm font-bold text-gray-900 dark:text-gray-100" x-text="contract.jenis_kontrak"></h3>
+                                        <span x-show="contract.is_addendum" x-cloak class="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-px text-[10px] font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">Addendum</span>
+                                    </div>
+                                    <p class="mt-1 flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                                        <span x-text="formatDate(contract.tanggal_mulai)"></span>
+                                        <span class="text-gray-300 dark:text-gray-600" aria-hidden="true">&rarr;</span>
+                                        <span x-text="formatDate(contract.tanggal_berakhir)"></span>
+                                    </p>
+                                </div>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" :class="contractIsDone(contract) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-primary-50 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300'" x-text="contractStatusLabel(contract)"></span>
+                                <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 dark:text-gray-500" :class="contractIsOpen(contract.id) && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="contractIsOpen(contract.id)" x-cloak class="mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                                <dl class="space-y-3">
+                                    <div class="grid grid-cols-2 gap-3"><div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Mulai</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatDate(contract.tanggal_mulai)"></dd></div><div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Berakhir</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatDate(contract.tanggal_berakhir)"></dd></div></div>
+                                    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Durasi</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="contractDuration(contract)"></dd></div>
+                                    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Posisi</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="contract.posisi"></dd></div>
+                                    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Atasan</dt><dd class="mt-1 text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="contract.atasan"></dd></div>
+                                    <div x-show="contract.keterangan" x-cloak><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Keterangan</dt><dd class="mt-1 text-xs leading-relaxed text-gray-700 dark:text-gray-300" x-text="contract.keterangan"></dd></div>
+                                </dl>
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <a x-show="contract.file" x-cloak :href="contractPreviewUrl(contract)" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-50 px-3 py-2.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-primary-950/50 dark:text-primary-300 dark:hover:bg-primary-900/50 dark:focus-visible:ring-offset-gray-900" :aria-label="'Lihat surat kontrak ' + contract.jenis_kontrak">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                                        Lihat Surat
+                                    </a>
+                                    <a x-show="contract.file" x-cloak :href="contractDownloadUrl(contract)" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900" :aria-label="'Unduh surat kontrak ' + contract.jenis_kontrak">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                                        Unduh PDF
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
                 <div x-show="contracts.length === 0" x-cloak class="rounded-2xl border border-gray-200 bg-white px-4 py-12 text-center dark:border-gray-800 dark:bg-gray-900">
                     <svg class="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
                     <h3 class="mt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Belum Ada Riwayat Kontrak</h3>
