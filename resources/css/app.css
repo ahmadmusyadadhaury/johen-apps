@@ -187,30 +187,53 @@ html.dark {
     }
 
     @media (max-width: 767px) {
-        .cuti-stats-item {
-            background: transparent;
-            border: 0;
-            border-radius: 0;
-            box-shadow: none;
-            padding: 0;
+        .cuti-stats-total {
+            grid-column: 1;
+            grid-row: 1;
         }
 
-        .cuti-stats-item:hover {
-            box-shadow: none;
+        .cuti-stats-pending {
+            grid-column: 2;
+            grid-row: 1;
         }
 
-        .cuti-stats-item::before {
-            display: none;
+        .cuti-stats-leave {
+            grid-column: 1 / -1;
+            grid-row: 2;
         }
 
-        .cuti-stats-item:not(:last-child) {
-            border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
+        .cuti-stats-entitlement {
+            grid-column: 1 / -1;
+            grid-row: 3;
         }
 
-        .dark .cuti-stats-item:not(:last-child) {
-            border-bottom-color: #1f2937;
+        .cuti-stats-compact {
+            padding: 1rem;
+        }
+
+        .cuti-stats-compact .flex.items-center.justify-between.mb-3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .cuti-stats-compact .flex.items-center.justify-between > div:first-child {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 0.625rem;
+        }
+
+        .cuti-stats-compact .flex.items-center.justify-between > div:first-child svg {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+
+        .cuti-stats-compact p.text-2xl {
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+        }
+
+        .cuti-stats-compact p.text-sm {
+            font-size: 0.75rem;
+            line-height: 1rem;
         }
     }
 

@@ -124,28 +124,36 @@
     </section>
 </section>
 
-<div x-show="filtersOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[60] flex items-end bg-gray-950/50 md:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title" @click.self="filtersOpen = false" @keydown.escape.window="filtersOpen = false">
-    <section class="w-full rounded-t-3xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-gray-900">
-        <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-        <div class="mb-5 flex items-center justify-between">
-            <div><h2 id="mobile-filter-title" class="text-base font-bold text-gray-900 dark:text-gray-100">Filter Pengajuan</h2><p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih jenis dan status pengajuan</p></div>
-            <button type="button" @click="filtersOpen = false" aria-label="Tutup filter" class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-gray-800"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg></button>
+<div x-show="filtersOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[60] flex items-end justify-center bg-gray-950/55 md:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title" @click.self="filtersOpen = false" @keydown.escape.window="filtersOpen = false">
+    <section x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-[1.75rem] border border-gray-100 bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:px-6">
+        <div class="mx-auto mb-5 h-1.5 w-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+        <div class="mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10m-7 6h4"/></svg>
+                </span>
+                <div>
+                    <h2 id="mobile-filter-title" class="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">Filter Pengajuan</h2>
+                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Atur jenis dan status pengajuan</p>
+                </div>
+            </div>
+            <button type="button" @click="filtersOpen = false" aria-label="Tutup filter" class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg></button>
         </div>
-        <div class="space-y-4">
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Jenis Pengajuan
-                <select wire:model.live="filterJenis" class="mt-2 min-h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+        <div class="space-y-5">
+            <label class="block text-sm font-semibold text-gray-800 dark:text-gray-200">Jenis Pengajuan
+                <select wire:model.live="filterJenis" class="mt-2 min-h-[3.25rem] w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base text-gray-900 transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:bg-gray-800 dark:focus:ring-primary-900/40">
                     <option value="">Semua Jenis</option><option value="cuti_tahunan">Cuti Tahunan</option><option value="izin">Izin</option><option value="jatah">Jatah Libur</option>
                 </select>
             </label>
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Status
-                <select wire:model.live="filterStatus" class="mt-2 min-h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+            <label class="block text-sm font-semibold text-gray-800 dark:text-gray-200">Status
+                <select wire:model.live="filterStatus" class="mt-2 min-h-[3.25rem] w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base text-gray-900 transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:bg-gray-800 dark:focus:ring-primary-900/40">
                     <option value="">Semua Status</option><option value="menunggu">Menunggu</option><option value="disetujui">Disetujui</option><option value="ditolak">Ditolak</option>
                 </select>
             </label>
         </div>
-        <div class="mt-6 grid grid-cols-2 gap-3">
-            <button type="button" @click="$wire.set('filterJenis', ''); $wire.set('filterStatus', '')" class="min-h-12 rounded-xl border border-gray-200 px-4 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:text-gray-200">Reset</button>
-            <button type="button" @click="filtersOpen = false" class="min-h-12 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Terapkan</button>
+        <div class="mt-7 grid grid-cols-[auto_1fr] gap-3 border-t border-gray-100 pt-5 dark:border-gray-800">
+            <button type="button" @click="$wire.set('filterJenis', ''); $wire.set('filterStatus', '')" class="min-h-12 rounded-2xl border border-gray-200 px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">Reset</button>
+            <button type="button" @click="filtersOpen = false" class="min-h-12 rounded-2xl bg-primary-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">Terapkan Filter</button>
         </div>
     </section>
 </div>
