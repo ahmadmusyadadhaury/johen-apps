@@ -71,7 +71,7 @@
     @else
     {{-- Scanner View --}}
     <div class="card">
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
             {{-- Meeting Info --}}
             <div class="mb-6 text-center">
                 <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100">Presensi Weekly Meeting</h4>
@@ -130,14 +130,14 @@
                 </div>
 
                 <div id="scanner-container" class="relative">
-                    <div class="aspect-square sm:aspect-video bg-gray-900 rounded-xl overflow-hidden relative">
+                    <div class="aspect-square lg:aspect-video bg-gray-900 rounded-xl overflow-hidden relative">
                         <video id="scanner-video" class="w-full h-full object-cover" autoplay playsinline muted></video>
                         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div class="h-[82%] w-auto aspect-square border-2 border-primary-400 rounded-lg relative">
-                                <div class="absolute -top-3 -left-3 w-6 h-6 border-t-2 border-l-2 border-primary-400"></div>
-                                <div class="absolute -top-3 -right-3 w-6 h-6 border-t-2 border-r-2 border-primary-400"></div>
-                                <div class="absolute -bottom-3 -left-3 w-6 h-6 border-b-2 border-l-2 border-primary-400"></div>
-                                <div class="absolute -bottom-3 -right-3 w-6 h-6 border-b-2 border-r-2 border-primary-400"></div>
+                            <div class="h-[90%] w-auto aspect-square border-2 border-primary-400 rounded-lg relative">
+                                <div class="absolute -top-2 -left-2 w-6 h-6 border-t-2 border-l-2 border-primary-400"></div>
+                                <div class="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-primary-400"></div>
+                                <div class="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-primary-400"></div>
+                                <div class="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-primary-400"></div>
                             </div>
                         </div>
                     </div>

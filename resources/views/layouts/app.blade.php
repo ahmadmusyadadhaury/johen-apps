@@ -2,22 +2,14 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="application-name" content="{{ config('app.name', 'Johen Sukses Abadi') }}">
-        <meta name="theme-color" content="#0987F5">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="default">
-        <meta name="apple-mobile-web-app-title" content="Johen App">
 
         <title>{{ config('app.name', 'Johen Sukses Abadi') }} @if($title ?? null) - {{ $title }} @endif</title>
 
-        @if (file_exists(public_path('build/manifest.webmanifest')))
-            <link rel="manifest" href="{{ asset('build/manifest.webmanifest') }}">
-        @endif
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('pwa-192x192.png') }}">
-        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('pwa-192x192.png') }}">
+        @include('partials.pwa-head')
+
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
         <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:500,600,700,800&display=swap" rel="stylesheet" />
@@ -32,7 +24,10 @@
         @livewireStyles
     </head>
     <body class="font-sans antialiased bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-        <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
+        @include('partials.pwa-splash')
+
+        {{-- safe-t/safe-b: keluar dari area notch & gesture bar saat PWA standalone --}}
+        <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden safe-t safe-b">
 
             <div
                 x-show="sidebarOpen"
@@ -47,7 +42,7 @@
             ></div>
 
             <aside
-                class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-gray-900 transition-transform duration-300 will-change-transform lg:static lg:translate-x-0"
+                class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-gray-900 transition-transform duration-300 will-change-transform lg:static lg:translate-x-0 safe-inset-top"
                 :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
             >
                 <div class="flex h-16 items-center gap-3 px-6 border-b border-gray-50 dark:border-gray-800">
@@ -939,6 +934,7 @@ if ($divisionViewUser) {
 
         @livewireScripts
         @stack('scripts')
+        @include('partials.pwa-scripts')
         <script>
             function idleTimeout() {
                 const TIMEOUT_MS = 15 * 60 * 1000;
