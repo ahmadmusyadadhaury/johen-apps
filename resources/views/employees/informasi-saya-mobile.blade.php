@@ -201,7 +201,7 @@
         class="hidden"
     ></div>
 
-    <section x-show="activeCategory === null" x-cloak aria-labelledby="mobile-informasi-title" class="space-y-5">
+    <section x-show="activeCategory === null" x-cloak aria-labelledby="mobile-informasi-title" class="-mt-3 space-y-5 md:-mt-0">
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 p-4 shadow-lg">
             <div class="pointer-events-none absolute right-0 top-0 h-64 w-64 opacity-10" aria-hidden="true">
                 <svg class="h-full w-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
@@ -353,10 +353,10 @@
         </div>
     </section>
 
-    <section x-show="activeCategory !== null" x-cloak aria-live="polite" class="space-y-4">
+    <section x-show="activeCategory !== null" x-cloak aria-live="polite" class="-mt-7 space-y-4 md:-mt-0">
         <header class="flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-800">
-            <button type="button" @click="closeDetail()" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-950" aria-label="Kembali ke Informasi Saya">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            <button type="button" @click="closeDetail()" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-950" aria-label="Kembali ke Informasi Saya">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             </button>
             <div class="min-w-0">
                 <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">Informasi Saya</p>
@@ -412,7 +412,7 @@
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Lokasi Kerja</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->lokasi_kerja ?? '-' }}</dd></div>
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Jenis Kerja</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->jenis_kerja ?? '-' }}@if($employee->jenis_kerja)<span class="mt-0.5 block text-xs font-normal text-gray-500 dark:text-gray-400">{{ \App\Models\Employee::JENIS_KERJA_OPTIONS[$employee->jenis_kerja] ?? '' }}</span>@endif</dd></div>
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Jam Kerja</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->jam_kerja ?? '-' }}</dd></div>
-                    <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Jobdesk</dt><dd class="whitespace-pre-line text-sm font-semibold leading-relaxed text-gray-900 dark:text-gray-100">{{ $employee->jobdesk ?? '-' }}</dd></div>
+                    <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Jobdesk</dt><dd class="whitespace-pre-line text-justify text-sm font-semibold leading-relaxed text-gray-900 dark:text-gray-100">{{ $employee->jobdesk ?? '-' }}</dd></div>
                 </dl>
             </div>
         </section>
@@ -431,7 +431,7 @@
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Kontak Darurat 1</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">@if($employee->no_kontak_darurat1 && $employee->hubungan_darurat1){{ $employee->no_kontak_darurat1 }} ({{ $employee->hubungan_darurat1 }})@elseif($employee->no_kontak_darurat1){{ $employee->no_kontak_darurat1 }}@else - @endif</dd></div>
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Kontak Darurat 2</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">@if($employee->no_kontak_darurat2 && $employee->hubungan_darurat2){{ $employee->no_kontak_darurat2 }} ({{ $employee->hubungan_darurat2 }})@elseif($employee->no_kontak_darurat2){{ $employee->no_kontak_darurat2 }}@else - @endif</dd></div>
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">BPJS Kesehatan</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->no_bpjs ?? '-' }}</dd></div>
-                    <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Status BPJS</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">@if($employee->status_bpjs === 'aktif')Aktif@elseif($employee->status_bpjs === 'tidak aktif')Tidak Aktif@else - @endif</dd></div>
+                    <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Status BPJS</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->status_bpjs === 'aktif' ? 'Aktif' : ($employee->status_bpjs === 'tidak aktif' ? 'Tidak Aktif' : '-') }}</dd></div>
                     <div class="space-y-1 px-4 py-3.5"><dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Informasi Lowongan</dt><dd class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $employee->informasi_lowongan ? ucfirst($employee->informasi_lowongan) : '-' }}</dd></div>
                 </dl>
             </div>
@@ -463,7 +463,7 @@
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 Lihat
                             </a>
-                            <a x-show="document.file" x-cloak :href="documentDownloadUrl(document)" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900" :aria-label="'Unduh dokumen ' + document.nama_dokumen">
+                            <a x-show="document.file" x-cloak :href="documentDownloadUrl(document)" class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900" :aria-label="'Unduh dokumen ' + document.nama_dokumen">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
                                 Unduh
                             </a>

@@ -21,8 +21,8 @@
 
 @push('topbar-left')
     <div class="flex items-center gap-3">
-        {{-- Tombol kembali disembunyikan di "Informasi Saya" karena halaman mobile
-             sudah punya tombol kembali sendiri di header tiap tab. --}}
+        {{-- Di "Informasi Saya" tidak ada tombol kembali: navigasi memakai hamburger
+             untuk membuka sidebar, dan tiap tab punya tombol kembali sendiri. --}}
         @unless($isOwnView)
         <a href="{{ route('hris.employees.index') }}"
            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all hover:-translate-x-0.5 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
