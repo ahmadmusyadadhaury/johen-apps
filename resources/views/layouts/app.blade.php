@@ -80,6 +80,7 @@ $isStaffHost = auth()->user()->isStaffHostPubg()
 $isStaffAdmin = auth()->user()->isStaffAdmin();
 $isStaffStock = auth()->user()->isStaffStock();
 $isStaffCreative = auth()->user()->isStaffCreative();
+$isCreativeMenuRestricted = $isStaffCreative || auth()->user()->isKoordinatorCreative();
 
 $activeMenu = match (true) {
     request()->routeIs('it.tickets.*', 'it.project', 'it.maintenance', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isHeadOfStore2() => 'monitoring',
@@ -138,7 +139,7 @@ if ($divisionViewUser) {
                 @endphp
 
                 <nav x-data="{ openMenu: @js($activeMenu) }"
-                     @click.capture="if ((@js($isStaffHost) && $event.target.closest('[data-development-menu] a')) || (@js($isStaffAdmin) && $event.target.closest('[data-development-admin-menu] a')) || (@js($isStaffStock) && $event.target.closest('[data-development-stock-menu] a')) || (@js($isStaffCreative) && $event.target.closest('[data-development-creative-menu] a'))) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
+                     @click.capture="if ((@js($isStaffHost) && $event.target.closest('[data-development-menu] a')) || (@js($isStaffAdmin) && $event.target.closest('[data-development-admin-menu] a')) || (@js($isStaffStock) && $event.target.closest('[data-development-stock-menu] a')) || (@js($isCreativeMenuRestricted) && $event.target.closest('[data-development-creative-menu] a'))) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
                      class="flex-1 overflow-y-auto p-4 space-y-1">
                     @if($isDivisionView)
                         @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
