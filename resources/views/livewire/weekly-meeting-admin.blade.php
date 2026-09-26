@@ -53,7 +53,7 @@
                 <option value="{{ $tahun }}">{{ $tahun }}</option>
             @endforeach
         </select>
-        @if($filterMonth !== '' || $filterYear !== '')
+        @if($filterMonth !== \Carbon\Carbon::now()->format('m') || $filterYear !== \Carbon\Carbon::now()->format('Y'))
         <button wire:click="clearFilters" class="btn-ghost text-xs">
             Reset Filter
         </button>
@@ -223,7 +223,7 @@
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                     @forelse($meetings as $index => $meeting)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $meetings->firstItem() + $index }}</td>
+                            <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $meeting->title }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $meeting->meeting_date->format('d F Y') }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">
@@ -283,12 +283,6 @@
                 </tbody>
             </table>
         </div>
-
-        @if($meetings->hasPages())
-            <div class="px-6 py-3 border-t border-gray-50 dark:border-gray-800">
-                {{ $meetings->links() }}
-            </div>
-        @endif
     </div>
     @endif
 

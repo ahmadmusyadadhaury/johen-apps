@@ -7,13 +7,10 @@ use App\Models\WeeklyMeetingAttendance;
 use App\Models\Employee;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Carbon\Carbon;
 
 class WeeklyMeetingAdmin extends Component
 {
-    use WithPagination;
-
     public string $mode = 'list'; // list, create, attendance
     public ?int $selectedMeetingId = null;
 
@@ -47,21 +44,10 @@ class WeeklyMeetingAdmin extends Component
     public string $filterMonth = '';
     public string $filterYear = '';
 
-    public function updatedFilterMonth(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterYear(): void
-    {
-        $this->resetPage();
-    }
-
     public function clearFilters(): void
     {
-        $this->filterMonth = '';
-        $this->filterYear = '';
-        $this->resetPage();
+        $this->filterMonth = Carbon::now()->format('m');
+        $this->filterYear = Carbon::now()->format('Y');
     }
 
     protected function rules(): array
@@ -81,6 +67,9 @@ class WeeklyMeetingAdmin extends Component
         $this->meeting_date = Carbon::today()->format('Y-m-d');
         $this->start_time = '13:00';
         $this->end_time = '15:00';
+
+        $this->filterMonth = Carbon::now()->format('m');
+        $this->filterYear = Carbon::now()->format('Y');
 
         $routeName = request()->route()->getName() ?? '';
 
@@ -283,7 +272,7 @@ class WeeklyMeetingAdmin extends Component
             ->when($this->filterYear !== '', fn ($q) => $q->whereYear('meeting_date', $this->filterYear))
             ->orderBy('meeting_date', 'asc')
             ->orderBy('created_at', 'asc')
-            ->paginate(10);
+            ->get();
     }
 
     public function getAttendanceProperty()
