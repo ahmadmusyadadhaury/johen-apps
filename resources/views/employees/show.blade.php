@@ -21,11 +21,15 @@
 
 @push('topbar-left')
     <div class="flex items-center gap-3">
-        <a href="{{ $isOwnView ? route('dashboard') : route('hris.employees.index') }}"
-           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all hover:-translate-x-0.5 {{ $isOwnView ? 'md:hidden' : '' }}"
-           aria-label="{{ $isOwnView ? 'Kembali ke dashboard' : $k('Kembali ke daftar karyawan') }}">
-            <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        {{-- Tombol kembali disembunyikan di "Informasi Saya" karena halaman mobile
+             sudah punya tombol kembali sendiri di header tiap tab. --}}
+        @unless($isOwnView)
+        <a href="{{ route('hris.employees.index') }}"
+           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all hover:-translate-x-0.5 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+           aria-label="{{ $k('Kembali ke daftar karyawan') }}">
+            <svg class="w-4 h-4 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
+        @endunless
         <div class="min-w-0">
             <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ $isOwnView ? 'Informasi Saya' : $k('Detail Karyawan') }}</h1>
             <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isOwnView ? 'Lihat data personal dan riwayat Anda di sini' : $k('Kelola data personal, dokumen, dan riwayat karyawan di sini') }}</p>
@@ -1353,12 +1357,19 @@ data-promotion-success="{{ session('promotion_success') }}"
                                                 <span x-text="p.status === 'sent' ? 'Terkirim' : (p.status === 'pending' ? 'Tertunda' : 'Gagal')"></span>
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3.5 text-center">
-                                            <a :href="`/payroll/detail/${p.id}/download`"
-                                               class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50 transition-all">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                                                Download PDF
-                                            </a>
+                                        <td class="px-4 py-3.5">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a :href="`/payroll/detail/${p.id}/view`" target="_blank" rel="noopener"
+                                                   class="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-all hover:bg-primary-100">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                    Lihat PDF
+                                                </a>
+                                                <a :href="`/payroll/detail/${p.id}/download`"
+                                                   class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-all hover:bg-gray-50">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                                                    Download PDF
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 </template>

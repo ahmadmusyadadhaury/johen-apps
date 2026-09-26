@@ -107,6 +107,20 @@ class PayrollController extends Controller
         );
     }
 
+    public function viewPdf(PayrollDetail $detail)
+    {
+        if (! $detail->pdf_path || ! Storage::disk('public')->exists($detail->pdf_path)) {
+            return redirect()->back()->with('error', 'File PDF tidak ditemukan.');
+        }
+
+        // `response()` memakai Content-Disposition: inline, jadi PDF dibuka di
+        // tab browser (viewer bawaan) alih-alih diunduh seperti `download()`.
+        return Storage::disk('public')->response(
+            $detail->pdf_path,
+            sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode)
+        );
+    }
+
     public function markRead(Request $request): JsonResponse
     {
         $employee = auth()->user()?->employee;

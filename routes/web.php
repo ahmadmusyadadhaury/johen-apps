@@ -180,6 +180,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/detail/{detail}/retry', [PayrollController::class, 'retryFailed'])->name('retry-failed');
         Route::get('/{import}', [PayrollController::class, 'show'])->name('show');
         Route::get('/detail/{detail}/download', [PayrollController::class, 'downloadPdf'])->name('download-pdf');
+        Route::get('/detail/{detail}/view', [PayrollController::class, 'viewPdf'])->name('view-pdf');
         Route::post('/mark-read', [PayrollController::class, 'markRead'])->name('mark-read');
 
         Route::get('/{import}/progress-json', [PayrollController::class, 'progressJson'])->name('progress-json');

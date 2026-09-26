@@ -3,10 +3,6 @@
         'karyawan_aktif' => $k('Karyawan Aktif'),
         'mantan_karyawan' => $k('Mantan Karyawan'),
     ][$employee->tipe] ?? ucfirst((string) $employee->tipe);
-    $statusClass = $employee->tipe === 'karyawan_aktif'
-        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
-        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300';
-    $statusDotClass = $employee->tipe === 'karyawan_aktif' ? 'bg-emerald-500' : 'bg-gray-400';
     $mobilePosition = $employee->mainPosition()?->nama ?: ($employee->position ?: '—');
     $mobileInitial = strtoupper(substr($employee->nama ?: auth()->user()->name ?: '?', 0, 1));
     $canEditPhoto = !$isOwnReadOnly && (auth()->user()->can('update-data') || auth()->user()->employee_id === $employee->id);
@@ -206,16 +202,20 @@
     ></div>
 
     <section x-show="activeCategory === null" x-cloak aria-labelledby="mobile-informasi-title" class="space-y-5">
-        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex items-center gap-3.5">
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 p-4 shadow-lg">
+            <div class="pointer-events-none absolute right-0 top-0 h-64 w-64 opacity-10" aria-hidden="true">
+                <svg class="h-full w-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="100" fill="white"/></svg>
+            </div>
+            <div class="pointer-events-none absolute -bottom-8 -left-8 h-40 w-40 rounded-full bg-white/5 blur-2xl" aria-hidden="true"></div>
+            <div class="relative flex items-center gap-3.5">
                 @if($canEditPhoto)
                     <form method="POST" action="{{ route('hris.employees.upload-photo', $employee) }}" enctype="multipart/form-data" id="mobile-photo-form-{{ $employee->id }}" class="relative shrink-0">
                         @csrf
-                        <label for="mobile-photo-input-{{ $employee->id }}" class="group relative block h-16 w-16 cursor-pointer overflow-hidden rounded-2xl bg-primary-600 focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-950">
+                        <label for="mobile-photo-input-{{ $employee->id }}" class="group relative block h-16 w-16 cursor-pointer overflow-hidden rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg ring-2 ring-white/20 focus-within:ring-2 focus-within:ring-white focus-within:ring-offset-2 focus-within:ring-offset-transparent">
                             @if($employee->foto_url)
                                 <img src="{{ $employee->foto_url }}" alt="{{ $employee->nama }}" class="h-full w-full object-cover">
                             @else
-                                <span class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-500 to-violet-600 text-xl font-bold text-white" aria-hidden="true">{{ $mobileInitial }}</span>
+                                <span class="flex h-full w-full items-center justify-center bg-white/20 text-xl font-bold text-white" aria-hidden="true">{{ $mobileInitial }}</span>
                             @endif
                             <span class="absolute inset-0 flex items-center justify-center bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100" aria-hidden="true">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.72a2 2 0 0 0 2-2 .996.996 0 0 1 1-.88h2.66M15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path d="M21 16v4"/><path d="M19 18h4"/></svg>
@@ -225,45 +225,43 @@
                         <input id="mobile-photo-input-{{ $employee->id }}" type="file" name="foto" accept="image/*" class="sr-only" onchange="this.form.submit()">
                     </form>
                 @else
-                    <div class="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-primary-600" aria-label="Foto profil {{ $employee->nama }}">
+                    <div class="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg ring-2 ring-white/20" aria-label="Foto profil {{ $employee->nama }}">
                         @if($employee->foto_url)
                             <img src="{{ $employee->foto_url }}" alt="{{ $employee->nama }}" class="h-full w-full object-cover">
                         @else
-                            <span class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-500 to-violet-600 text-xl font-bold text-white" aria-hidden="true">{{ $mobileInitial }}</span>
+                            <span class="flex h-full w-full items-center justify-center bg-white/20 text-xl font-bold text-white" aria-hidden="true">{{ $mobileInitial }}</span>
                         @endif
                     </div>
                 @endif
                 <div class="min-w-0 flex-1">
-                    <h2 id="mobile-informasi-title" class="truncate text-base font-bold text-gray-900 dark:text-gray-100">{{ $employee->nama }}</h2>
-                    <p class="mt-0.5 truncate text-sm text-gray-600 dark:text-gray-300">{{ $mobilePosition }}</p>
-                    <span class="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold {{ $statusClass }}" aria-label="Status karyawan: {{ $statusLabel }}">
-                        <span class="h-1.5 w-1.5 rounded-full {{ $statusDotClass }}" aria-hidden="true"></span>
-                        {{ $statusLabel }}
-                    </span>
+                    <h2 id="mobile-informasi-title" class="truncate text-base font-bold text-white">{{ $employee->nama }}</h2>
+                    <p class="mt-0.5 truncate text-sm text-white/80">{{ $mobilePosition }}</p>
+                    <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                        @if(!empty($employee->nik))
+                            <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
+                                <span class="text-white/60">NIP</span>
+                                <span class="truncate">{{ $employee->nik }}</span>
+                            </span>
+                        @endif
+                        <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
+                            <span class="text-white/60">Divisi</span>
+                            <span class="truncate">IT</span>
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div class="mt-3 space-y-2 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                @if(!empty($employee->nik))
-                    <div class="flex items-center gap-2">
-                        <span class="font-medium">NIP</span>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $employee->nik }}</span>
-                    </div>
-                @endif
-                <div class="flex items-center gap-2">
-                    <span class="font-medium">Divisi</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">IT</span>
-                </div>
+            <div class="relative mt-3 space-y-2 border-t border-white/20 pt-3 text-xs text-white/70">
                 <div class="flex items-center gap-2">
                     <span class="font-medium">Telepon</span>
-                    <a href="tel:085156521726" class="font-semibold text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-300">085156521726</a>
+                    <a href="tel:085156521726" class="font-semibold text-white hover:text-white/80">085156521726</a>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="font-medium">Email</span>
-                    <a href="mailto:m.ilyasalfadlih@gmail.com" class="truncate font-semibold text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-300">m.ilyasalfadlih@gmail.com</a>
+                    <a href="mailto:m.ilyasalfadlih@gmail.com" class="truncate font-semibold text-white hover:text-white/80">m.ilyasalfadlih@gmail.com</a>
                 </div>
             </div>
             @error('foto')
-                <p class="mt-2 text-xs font-medium text-red-600 dark:text-red-400" role="alert">{{ $message }}</p>
+                <p class="relative mt-2 text-xs font-medium text-red-200" role="alert">{{ $message }}</p>
             @enderror
         </div>
 
@@ -570,11 +568,16 @@
                         <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                             <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Periode</p><h3 class="mt-1 text-base font-bold text-gray-900 dark:text-gray-100" x-text="payroll.periode"></h3></div><span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold" :class="payroll.status === 'sent' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : (payroll.status === 'pending' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300')"><span class="h-1.5 w-1.5 rounded-full" :class="payroll.status === 'sent' ? 'bg-emerald-500' : (payroll.status === 'pending' ? 'bg-amber-500' : 'bg-red-500')"></span><span x-text="payroll.status === 'sent' ? 'Terkirim' : (payroll.status === 'pending' ? 'Tertunda' : 'Gagal')"></span></span></div>
                             <dl class="mt-4 grid grid-cols-2 gap-3"><div class="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/60"><dt class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Gaji Pokok</dt><dd class="mt-1 text-xs font-bold text-gray-900 dark:text-gray-100" x-text="formatMoney(payroll.gaji_pokok)"></dd></div><div class="rounded-xl bg-emerald-50/70 p-3 dark:bg-emerald-950/20"><dt class="text-[10px] font-semibold uppercase tracking-wide text-emerald-600/80 dark:text-emerald-300/80">Total Tunjangan</dt><dd class="mt-1 text-xs font-bold text-emerald-700 dark:text-emerald-300" x-text="formatMoney(allowanceTotal(payroll))"></dd></div><div class="rounded-xl bg-red-50/70 p-3 dark:bg-red-950/20"><dt class="text-[10px] font-semibold uppercase tracking-wide text-red-600/80 dark:text-red-300/80">Total Potongan</dt><dd class="mt-1 text-xs font-bold text-red-700 dark:text-red-300" x-text="formatMoney(deductionTotal(payroll))"></dd></div><div class="rounded-xl bg-primary-50 p-3 dark:bg-primary-950/30"><dt class="text-[10px] font-semibold uppercase tracking-wide text-primary-600/80 dark:text-primary-300/80">Gaji Bersih</dt><dd class="mt-1 text-xs font-bold text-primary-700 dark:text-primary-300" x-text="formatMoney(payroll.take_home_pay)"></dd></div></dl>
-                            <details class="mt-4 rounded-xl border border-gray-200 dark:border-gray-800"><summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-xs font-semibold text-gray-700 marker:hidden dark:text-gray-300">Rincian komponen<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><dl class="divide-y divide-gray-100 border-t border-gray-100 px-3 dark:divide-gray-800 dark:border-gray-800"><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Tambahan Upah</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.tambahan_upah)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Tambahan Upah Sold</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.tambahan_upah_sold)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Bonus</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.bonus)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">THR</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.thr)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Apresiasi</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.apresiasi)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Tunjangan Jabatan</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.tunjangan_jabatan)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Premi BPJS Kesehatan</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.premi_bpjs_kesehatan)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">THR Dibayarkan</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.thr_dibayarkan)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Potongan Pinjaman</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.potongan_pinjaman)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Potongan Absensi</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.potongan_absensi)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Potongan Absensi Ketidakhadiran</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.potongan_absensi_ketidakhadiran)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Potongan Absensi Keterlambatan</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.potongan_absensi_keterlambatan)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Potongan BPJS Kesehatan 4</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.potongan_bpjs_kesehatan_4)"></dd></div><div class="flex items-center justify-between gap-3 py-2.5"><dt class="text-xs text-gray-500 dark:text-gray-400">Potongan BPJS Kesehatan 1</dt><dd class="text-xs font-semibold text-gray-800 dark:text-gray-200" x-text="formatMoney(payroll.potongan_bpjs_kesehatan_1)"></dd></div></dl></details>
-                            <a :href="'/payroll/detail/' + payroll.id + '/download'" class="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900" :aria-label="'Unduh slip gaji periode ' + payroll.periode">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-                                Download PDF
-                            </a>
+                            <div class="mt-3 grid grid-cols-2 gap-2">
+                                <a :href="'/payroll/detail/' + payroll.id + '/view'" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-50 px-3 py-2.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-primary-950/50 dark:text-primary-300 dark:hover:bg-primary-900/50 dark:focus-visible:ring-offset-gray-900" :aria-label="'Lihat slip gaji periode ' + payroll.periode">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    Lihat PDF
+                                </a>
+                                <a :href="'/payroll/detail/' + payroll.id + '/download'" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900" :aria-label="'Unduh slip gaji periode ' + payroll.periode">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                                    Download PDF
+                                </a>
+                            </div>
                         </article>
                     </template>
                     <div x-show="payrollList.length === 0" x-cloak class="rounded-2xl border border-gray-200 bg-white px-4 py-12 text-center dark:border-gray-800 dark:bg-gray-900">
