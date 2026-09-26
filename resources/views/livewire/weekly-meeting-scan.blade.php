@@ -130,7 +130,7 @@
                 </div>
 
                 <div id="scanner-container" class="relative">
-                    <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden relative">
+                    <div id="scanner-frame" class="bg-gray-900 rounded-xl overflow-hidden relative" style="aspect-ratio: 3 / 4;">
                         <video id="scanner-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
                     </div>
                 </div>
@@ -461,6 +461,16 @@
         scanning = false;
     }
 
+    // Samakan rasio kotak preview dengan rasio asli frame kamera, supaya tidak
+    // ada area kosong (letterbox) dan tidak ada bagian gambar yang terpotong.
+    function syncScannerFrame() {
+        const video = document.getElementById('scanner-video');
+        const frame = document.getElementById('scanner-frame');
+        if (!video || !frame || !video.videoWidth || !video.videoHeight) return;
+
+        frame.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight;
+    }
+
     // Open the device camera and attach the live stream to the preview video.
     function startScanner(facingMode, token, retries) {
         retries = retries || 0;
@@ -490,6 +500,12 @@
                 }
                 stream = mediaStream;
                 video.srcObject = mediaStream;
+
+                // Rasio box preview mengikuti rasio asli kamera (portrait 3:4 /
+                // 9:16 di HP, 4:3 di webcam) begitu metadata stream tersedia.
+                syncScannerFrame();
+                video.addEventListener('loadedmetadata', syncScannerFrame);
+
                 scanning = true;
 
                 // Give the stream a moment to start producing frames, then loop.
