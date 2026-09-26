@@ -28,9 +28,10 @@ class GeneratePwaAssets extends Command
 
     /**
      * [nama file, ukuran, gaya]
-     * - plain    : background solid, logo sebesar $logoScale dari tinggi kanvas
-     * - glow     : background + glow radial, untuk icon utama
-     * - maskable : background full-bleed, logo dikecilkan agar aman di circular safe zone Android
+     * - plain      : background solid, logo sebesar $logoScale dari tinggi kanvas
+     * - glow       : background + glow radial, untuk icon utama
+     * - maskable   : background full-bleed, logo dikecilkan agar aman di circular safe zone Android
+     * - transparent : tanpa background sama sekali, hanya logo. Untuk favicon.
      */
     private const ICONS = [
         ['icon-192.png', 192, 'glow', 0.70],
@@ -38,7 +39,7 @@ class GeneratePwaAssets extends Command
         ['icon-maskable-192.png', 192, 'maskable', 0.62],
         ['icon-maskable-512.png', 512, 'maskable', 0.62],
         ['apple-touch-icon.png', 180, 'glow', 0.74],
-        ['favicon-32.png', 32, 'glow', 0.88],
+        ['favicon-32.png', 32, 'transparent', 0.88],
     ];
 
     /**
@@ -122,7 +123,7 @@ class GeneratePwaAssets extends Command
             if ($style === 'glow') {
                 $this->paintBase($canvas, $size, $size);
                 $this->paintGlow($canvas, (int) ($size / 2), (int) ($size * 0.44), (int) ($size * 0.62), 0.42);
-            } else {
+            } elseif ($style !== 'transparent') {
                 $this->paintBase($canvas, $size, $size);
             }
 
@@ -270,9 +271,15 @@ class GeneratePwaAssets extends Command
     private function makeCanvas(int $w, int $h): GdImage
     {
         $im = imagecreatetruecolor($w, $h);
-        imagealphablending($im, true);
+
+        // Alpha 7-bit di GD: 0 = opaque, 127 = transparan._fill harus dilakukan
+        // dengan blending dimatikan, kalau tidak fill-nya ter-composit dan hasilnya
+        // opaque hitam. Icon yang memakai background solid menimpa seluruh kanvas
+        // lewat paintBase(), jadi filler ini hanya berpengaruh pada style 'transparent'.
+        imagealphablending($im, false);
         imagesavealpha($im, true);
         imagefilledrectangle($im, 0, 0, $w - 1, $h - 1, imagecolorallocatealpha($im, 0, 0, 0, 127));
+        imagealphablending($im, true);
 
         return $im;
     }
@@ -288,11 +295,6 @@ class GeneratePwaAssets extends Command
         imagefilledrectangle($im, 0, 0, $w - 1, $h - 1, imagecolorallocate($im, $r, $g, $b));
     }
 
-    /**
-     * Glow radial lembut. Digambar pada layer kecil lalu di-resample ke ukuran
-     * penuh supaya cepat (splash 1284x2778 = 3,5 juta piksel, tidakfeasible
-     * digambar piksel-per-piksel).
-     */
     private function paintGlow(
         GdImage $im,
         int $cx,

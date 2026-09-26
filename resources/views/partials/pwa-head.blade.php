@@ -110,15 +110,15 @@
     .johen-splash-stack {
         display: grid;
         justify-items: center;
-        row-gap: 52px;
+        row-gap: 40px;
     }
 
     .johen-splash-stage {
         position: relative;
         display: grid;
         place-items: center;
-        width: 104px;
-        height: 104px;
+        width: 80px;
+        height: 80px;
     }
 
     /* Glow di belakang logo, meniru radial-gradient di sidebar. Statis. */
