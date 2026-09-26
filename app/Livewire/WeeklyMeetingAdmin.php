@@ -36,7 +36,7 @@ class WeeklyMeetingAdmin extends Component
     public string $title = 'Weekly Meeting';
     public string $meeting_date = '';
     public string $start_time = '13:00';
-    public string $end_time = '14:30';
+    public string $end_time = '15:00';
     public string $location = 'Ruangan Meeting Lantai 1';
     public string $description = '';
 
@@ -80,7 +80,7 @@ class WeeklyMeetingAdmin extends Component
     {
         $this->meeting_date = Carbon::today()->format('Y-m-d');
         $this->start_time = '13:00';
-        $this->end_time = '14:30';
+        $this->end_time = '15:00';
 
         $routeName = request()->route()->getName() ?? '';
 
@@ -244,7 +244,7 @@ class WeeklyMeetingAdmin extends Component
         $this->reset(['title', 'meeting_date', 'start_time', 'end_time', 'location', 'description', 'selectedMeetingId', 'showModal', 'showAttendanceModal']);
         $this->meeting_date = Carbon::today()->format('Y-m-d');
         $this->start_time = '13:00';
-        $this->end_time = '14:30';
+        $this->end_time = '15:00';
         $this->resetValidation();
     }
 
