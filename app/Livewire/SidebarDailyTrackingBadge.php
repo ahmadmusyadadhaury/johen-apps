@@ -96,6 +96,7 @@ class SidebarDailyTrackingBadge extends Component
             'isKoordinatorValorant' => User::ROLE_STAFF_HOST_VALORANT,
             'isKoordinatorRoblox' => User::ROLE_STAFF_HOST_ROBLOX,
             'isKoordinatorMonkeyPubg' => User::ROLE_STAFF_HOST_MONKEY_PUBG,
+            'isKoordinatorFcMobile' => User::ROLE_STAFF_HOST_FC_MOBILE,
         ];
 
         foreach ($roleMap as $method => $staffRole) {

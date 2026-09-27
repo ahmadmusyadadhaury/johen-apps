@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\BonusPubg;
+use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
@@ -28,6 +29,39 @@ class PubgDailyTrackingTable extends Component
         'valorant' => 'Valorant',
         'roblox' => 'Roblox',
         'monkey_pubg' => 'Monkey PUBG',
+    ];
+
+    private const DIVISI_DIVISION_NAME = [
+        'PUBG' => 'Johen PUBG',
+        'Free Fire' => 'Free Fire',
+        'MLBB' => 'Mobile Legend',
+        'FC Mobile' => 'FC Mobile',
+        'E-football' => 'E-Football',
+        'Valorant' => 'Valorant',
+        'Roblox' => 'Roblox',
+        'Monkey PUBG' => 'Monkey PUBG',
+    ];
+
+    private const DIVISI_ROOT_POSITION = [
+        'FC Mobile' => 'Koordinator FC Mobile',
+        'MLBB' => 'Koordinator MLBB',
+        'PUBG' => 'Koordinator Johen PUBG',
+        'Free Fire' => 'Koordinator Free Fire',
+        'E-football' => 'Koordinator E-football',
+        'Valorant' => 'Koordinator Valorant',
+        'Roblox' => 'Koordinator Roblox',
+        'Monkey PUBG' => 'Koordinator Monkey PUBG',
+    ];
+
+    private const DIVISI_HOST_POSITION = [
+        'PUBG' => ['Host Johen PUBG', 'Host PUBG'],
+        'Free Fire' => ['Host Free Fire', 'Host FF'],
+        'MLBB' => ['Host MLBB', 'Host Mobile Legend', 'Host Mobile Legends'],
+        'FC Mobile' => ['Host FC Mobile', 'Host FCMobile'],
+        'E-football' => ['Host E-football', 'Host E-Football', 'Host Efootball'],
+        'Valorant' => ['Host Valorant'],
+        'Roblox' => ['Host Roblox'],
+        'Monkey PUBG' => ['Host Monkey PUBG', 'Host MonkeyPUBG'],
     ];
 
     public bool $showCreateModal = false;
@@ -195,7 +229,7 @@ class PubgDailyTrackingTable extends Component
         $sold = str_replace(',', '.', $this->ach_sold);
 
         $user = auth()->user();
-        if ($this->isDivisiKoordinator()) return;
+        if ($this->isDivisiKoordinator() && !$this->isFillingAsSelf()) return;
 
         $status = 'pending';
 
@@ -382,23 +416,53 @@ class PubgDailyTrackingTable extends Component
         };
     }
 
+    private function getDivisionRecord(string $divisi): ?Division
+    {
+        $name = self::DIVISI_DIVISION_NAME[$divisi] ?? null;
+        if (!$name) return null;
+
+        return Division::whereRaw('LOWER(nama) = ?', [mb_strtolower($name)])->first();
+    }
+
     private function getDivisionRootPosition(): ?Position
     {
-        $map = [
-            'FC Mobile' => 'Koordinator FC Mobile',
-            'MLBB' => 'Koordinator MLBB',
-            'PUBG' => 'Koordinator Johen PUBG',
-            'Free Fire' => 'Koordinator Free Fire',
-            'E-football' => 'Koordinator E-football',
-            'Valorant' => 'Koordinator Valorant',
-            'Roblox' => 'Koordinator Roblox',
-            'Monkey PUBG' => 'Koordinator Monkey PUBG',
-        ];
-
         $divisi = $this->getDivisiName();
-        if (!isset($map[$divisi])) return null;
+        $rootName = self::DIVISI_ROOT_POSITION[$divisi] ?? null;
 
-        return Position::where('nama', $map[$divisi])->first();
+        if ($rootName) {
+            $root = Position::where('nama', $rootName)->first();
+            if ($root) return $root;
+        }
+
+        $division = $this->getDivisionRecord($divisi);
+        if (!$division) return null;
+
+        return Position::where('division_id', $division->id)
+            ->where(function ($q) {
+                $q->where('nama', 'like', 'Koordinator%')
+                  ->orWhere('nama', 'like', 'Coordinator%');
+            })
+            ->orderBy('id')
+            ->first();
+    }
+
+    private function getDivisionHostPositionIds(string $divisi): array
+    {
+        $division = $this->getDivisionRecord($divisi);
+
+        $ids = $division
+            ? Position::where('division_id', $division->id)->where('nama', 'like', 'Host%')->pluck('id')->all()
+            : [];
+
+        $root = $this->getDivisionRootPosition();
+        if ($root) {
+            $ids = array_merge($ids, Position::whereIn('id', $this->getAllDescendantIds($root))
+                ->where('nama', 'like', 'Host%')
+                ->pluck('id')
+                ->all());
+        }
+
+        return array_values(array_unique($ids));
     }
 
     private function getDivisionEmployeeIds(Position $root): array
@@ -424,34 +488,29 @@ class PubgDailyTrackingTable extends Component
 
     public function isDivisiStaffHost(): bool
     {
-        $divisi = $this->getDivisiName();
         $employee = auth()->user()->employee;
         if (!$employee) return false;
 
-        $hostPositionNames = match ($divisi) {
-            'MLBB' => ['Host MLBB'],
-            'Valorant' => ['Host Valorant'],
-            'PUBG' => ['Host Johen PUBG'],
-            'Free Fire' => ['Host Free Fire'],
-            'E-football' => ['Host E-football'],
-            'Roblox' => ['Host Roblox'],
-            'Monkey PUBG' => ['Host Monkey PUBG'],
-            'FC Mobile' => ['Host FC Mobile'],
-            default => [],
-        };
+        $divisi = $this->getDivisiName();
+        $hostPositionNames = self::DIVISI_HOST_POSITION[$divisi] ?? [];
 
-        if (empty($hostPositionNames)) return false;
-
-        return $employee->positions()->where(function ($q) use ($hostPositionNames) {
+        if ($hostPositionNames !== [] && $employee->positions()->where(function ($q) use ($hostPositionNames) {
             foreach ($hostPositionNames as $name) {
                 $q->orWhere('nama', 'like', $name . '%');
             }
-        })->exists();
+        })->exists()) {
+            return true;
+        }
+
+        $hostPositionIds = $this->getDivisionHostPositionIds($divisi);
+        if ($hostPositionIds === []) return false;
+
+        return $employee->positions()->whereIn('position_id', $hostPositionIds)->exists();
     }
 
     public function canFillData(): bool
     {
-        return $this->isDivisiStaffHost();
+        return $this->isFillingAsSelf();
     }
 
     public function isDirectStaffHost(): bool
@@ -470,9 +529,7 @@ class PubgDailyTrackingTable extends Component
 
     public function isFillingAsSelf(): bool
     {
-        if ($this->isDirectStaffHost()) return true;
-
-        return $this->isDivisiStaffHost() && !$this->isDivisiKoordinator();
+        return $this->isDirectStaffHost() || $this->isDivisiStaffHost();
     }
 
     private function isKoordinatorView(): bool
