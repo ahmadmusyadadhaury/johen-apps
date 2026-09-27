@@ -1,7 +1,19 @@
 @push('topbar-left')
     <div>
-        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Daily Tracking {{ $divisi }}</h1>
-        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Tracking harian pemain</p>
+        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ match($divisi) {
+            'PUBG' => 'Daily Tracking Johen PUBG',
+            'Free Fire' => 'Daily Tracking Free Fire',
+            'MLBB' => 'Daily Tracking Mobile Legends',
+            'FC Mobile' => 'Daily Tracking FC Mobile',
+            'E-football' => 'Daily Tracking E-Football',
+            'Monkey PUBG' => 'Daily Tracking Monkey PUBG',
+            'Valorant' => 'Daily Tracking Valorant',
+            'Roblox' => 'Daily Tracking Roblox',
+            default => 'Daily Tracking ' . $divisi,
+        } }}</h1>
+        @unless(in_array($divisi, ['PUBG', 'Free Fire', 'MLBB', 'FC Mobile', 'E-football', 'Monkey PUBG', 'Valorant', 'Roblox'], true))
+            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Tracking harian pemain</p>
+        @endunless
     </div>
 @endpush
 
