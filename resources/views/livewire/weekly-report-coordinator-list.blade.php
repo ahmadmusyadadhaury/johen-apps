@@ -35,8 +35,12 @@
                 $coordinatorName = $emp->positions->first(fn ($position) => (bool) $position->pivot?->is_main)?->nama ?? '';
             @endphp
             <a href="{{ route('hris.weekly-report.show', $emp->id) }}" class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                    {{ strtoupper(substr($emp->nama, 0, 2)) }}
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 text-sm font-semibold text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
+                    @if($emp->foto_url)
+                        <img src="{{ $emp->foto_url }}" alt="Foto {{ $emp->nama }}" class="h-full w-full object-cover">
+                    @else
+                        {{ strtoupper(substr($emp->nama, 0, 2)) }}
+                    @endif
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ $emp->nama }}</p>
@@ -69,8 +73,12 @@
                 $coordinatorName = $emp->positions->first(fn ($position) => (bool) $position->pivot?->is_main)?->nama ?? '';
             @endphp
             <a href="{{ route('hris.weekly-report.show', $emp->id) }}" class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                    {{ strtoupper(substr($emp->nama, 0, 2)) }}
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 text-sm font-semibold text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
+                    @if($emp->foto_url)
+                        <img src="{{ $emp->foto_url }}" alt="Foto {{ $emp->nama }}" class="h-full w-full object-cover">
+                    @else
+                        {{ strtoupper(substr($emp->nama, 0, 2)) }}
+                    @endif
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ $emp->nama }}</p>
@@ -103,8 +111,12 @@
                 $coordinatorName = $emp->positions->first(fn ($position) => (bool) $position->pivot?->is_main)?->nama ?? '';
             @endphp
             <a href="{{ route('hris.weekly-report.show', $emp->id) }}" class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                    {{ strtoupper(substr($emp->nama, 0, 2)) }}
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 text-sm font-semibold text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
+                    @if($emp->foto_url)
+                        <img src="{{ $emp->foto_url }}" alt="Foto {{ $emp->nama }}" class="h-full w-full object-cover">
+                    @else
+                        {{ strtoupper(substr($emp->nama, 0, 2)) }}
+                    @endif
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ $emp->nama }}</p>
