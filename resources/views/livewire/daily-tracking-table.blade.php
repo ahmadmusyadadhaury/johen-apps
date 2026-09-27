@@ -1,6 +1,6 @@
 <div x-data="{ showPendingReviewsModal: false, pendingReviewSearch: '' }">
     @if($pendingReviews->isNotEmpty())
-    <div role="status" class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-950 shadow-sm dark:border-orange-800/60 dark:bg-orange-950/30 dark:text-orange-100">
+    <div role="status" class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-gray-900 shadow-sm dark:border-orange-700 dark:bg-gray-800 dark:text-gray-100">
         <div class="flex items-start gap-3">
             <svg class="mt-0.5 h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86L1.82 18.14A1.5 1.5 0 003.11 20.4h16.98a1.5 1.5 0 001.29-2.26L12.91 3.86a1.5 1.5 0 00-2.62 0z"/></svg>
             <div class="min-w-0 flex-1">
