@@ -364,7 +364,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="pubg" />
                         </div>
                         @if(auth()->user()->isKoordinatorGame() && !auth()->user()->isKoordinatorValorant())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -412,7 +412,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="ff" />
                         </div>
 @if(auth()->user()->isKoordinatorGame())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -448,7 +448,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="mlbb" />
                         </div>
                         @if(auth()->user()->isKoordinatorGame() && !auth()->user()->isKoordinatorMonkeyPubg())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -475,7 +475,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="fc_mobile" />
                         </div>
                         @if(auth()->user()->role !== \App\Models\User::ROLE_STAFF_HOST_FC_MOBILE)
                         <a href="{{ route('pubg.running-rate', ['divisi' => 'FC Mobile']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ (request()->routeIs('pubg.running-rate') && request()->query('divisi') === 'FC Mobile') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -511,7 +511,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="efootball" />
                         </div>
 @if(auth()->user()->isKoordinatorGame())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -547,7 +547,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="valorant" />
                         </div>
                         @if(auth()->user()->isKoordinatorGame())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -585,7 +585,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="roblox" />
                         </div>
                         @if(auth()->user()->isKoordinatorGame())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -623,7 +623,7 @@ if ($divisionViewUser) {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                 Daily Tracking
                             </a>
-                            <livewire:sidebar-daily-tracking-badge />
+                            <livewire:sidebar-daily-tracking-badge divisi="monkey_pubg" />
                         </div>
                         @if(auth()->user()->isKoordinatorGame())
                         <a href="{{ route('pubg.running-rate') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.running-rate') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">

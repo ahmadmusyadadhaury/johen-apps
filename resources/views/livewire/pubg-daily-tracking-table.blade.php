@@ -21,6 +21,64 @@
 @endpush
 
 <div x-data="{ showFotoModal: false, fotoModalUrl: '', fotoModalLabel: '' }">
+    @if($pendingApprovalCount > 0)
+    <div x-data="{ showPendingApprovalModal: false }">
+        <div role="status" class="mb-5 rounded-xl border border-[#5a3b22] bg-[#2a211a] px-4 py-3 text-white shadow-sm">
+            <div class="flex items-start gap-3">
+                <svg class="mt-0.5 h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86L1.82 18.14A1.5 1.5 0 003.11 20.4h16.98a1.5 1.5 0 001.29-2.26L12.91 3.86a1.5 1.5 0 00-2.62 0z"/></svg>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <p class="text-sm font-semibold">{{ $pendingApprovalCount }} data {{ $dailyTrackingLabel }} menunggu persetujuan Anda</p>
+                        <button type="button" @click="showPendingApprovalModal = true" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-orange-400 transition-colors hover:bg-white/5 hover:text-orange-300">Lihat selengkapnya</button>
+                    </div>
+                    <ul class="mt-2 space-y-1 text-xs">
+                        @foreach($pendingApprovals->take(3) as $pending)
+                            <li class="leading-relaxed"><span class="font-semibold text-white">{{ $pending->nama ?: 'Host tidak diketahui' }}</span> <span class="text-orange-400">· {{ $pending->sesi ?: '-' }} · {{ $pending->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
+                        @endforeach
+                    </ul>
+                    @if($pendingApprovalCount > 3)
+                        <p class="mt-2 text-xs text-orange-400">+{{ $pendingApprovalCount - 3 }} data lainnya menunggu persetujuan.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div x-cloak x-show="showPendingApprovalModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4" @click.self="showPendingApprovalModal = false" @keydown.escape.window="showPendingApprovalModal = false">
+            <div x-show="showPendingApprovalModal" x-transition class="flex max-h-[82dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" style="height: min(82dvh, 720px)" role="dialog" aria-modal="true" aria-labelledby="pending-approval-title">
+                <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+                    <div>
+                        <h2 id="pending-approval-title" class="text-base font-bold text-gray-900 dark:text-gray-100">Data menunggu persetujuan</h2>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $pendingApprovalCount }} data {{ $dailyTrackingLabel }} dari host Anda belum disetujui.</p>
+                    </div>
+                    <button type="button" @click="showPendingApprovalModal = false" class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Tutup">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-4">
+                    @foreach($pendingApprovals as $pending)
+                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $pending->nama ?: 'Host tidak diketahui' }}</p>
+                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $pending->nik }} · {{ $pending->sesi ?: '-' }} · {{ $pending->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</p>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-1.5">
+                                <button type="button" wire:click="setujui({{ $pending->id }})" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700">
+                                    Setujui
+                                </button>
+                                <button type="button" wire:click="tolak({{ $pending->id }})" class="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+                                    Tolak
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="shrink-0 border-t border-gray-100 px-5 py-3 text-right dark:border-gray-800">
+                    <button type="button" @click="showPendingApprovalModal = false" class="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if($this->isDivisiStaffHost() || $this->isDivisiKoordinator())
     <div x-data="{ modal: null }" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div @click="modal = 'sold'" class="stat-card group cursor-pointer">

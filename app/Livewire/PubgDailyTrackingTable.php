@@ -3,10 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\BonusPubg;
-use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
+use App\Support\GameDivision;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -20,50 +20,6 @@ class PubgDailyTrackingTable extends Component
     public string $bulan = '';
     public string $tanggalFilter = '';
     public string $divisi = '';
-
-    private const DIVISI_PARAM_MAP = [
-        'fc_mobile' => 'FC Mobile',
-        'mlbb' => 'MLBB',
-        'pubg' => 'PUBG',
-        'ff' => 'Free Fire',
-        'efootball' => 'E-football',
-        'valorant' => 'Valorant',
-        'roblox' => 'Roblox',
-        'monkey_pubg' => 'Monkey PUBG',
-    ];
-
-    private const DIVISI_DIVISION_NAME = [
-        'PUBG' => 'Johen PUBG',
-        'Free Fire' => 'Free Fire',
-        'MLBB' => 'Mobile Legend',
-        'FC Mobile' => 'FC Mobile',
-        'E-football' => 'E-Football',
-        'Valorant' => 'Valorant',
-        'Roblox' => 'Roblox',
-        'Monkey PUBG' => 'Monkey PUBG',
-    ];
-
-    private const DIVISI_ROOT_POSITION = [
-        'FC Mobile' => 'Koordinator FC Mobile',
-        'MLBB' => 'Koordinator MLBB',
-        'PUBG' => 'Koordinator Johen PUBG',
-        'Free Fire' => 'Koordinator Free Fire',
-        'E-football' => 'Koordinator E-football',
-        'Valorant' => 'Koordinator Valorant',
-        'Roblox' => 'Koordinator Roblox',
-        'Monkey PUBG' => 'Koordinator Monkey PUBG',
-    ];
-
-    private const DIVISI_HOST_POSITION = [
-        'PUBG' => ['Host Johen PUBG', 'Host PUBG'],
-        'Free Fire' => ['Host Free Fire', 'Host FF'],
-        'MLBB' => ['Host MLBB', 'Host Mobile Legend', 'Host Mobile Legends'],
-        'FC Mobile' => ['Host FC Mobile', 'Host FCMobile'],
-        'E-football' => ['Host E-football', 'Host E-Football', 'Host Efootball'],
-        'Valorant' => ['Host Valorant'],
-        'Roblox' => ['Host Roblox'],
-        'Monkey PUBG' => ['Host Monkey PUBG', 'Host MonkeyPUBG'],
-    ];
 
     public bool $showCreateModal = false;
     public bool $showEditModal = false;
@@ -397,18 +353,14 @@ class PubgDailyTrackingTable extends Component
 
     private function normalizeDivisi(string $value): string
     {
-        if ($value === '') {
-            return '';
-        }
-
-        return self::DIVISI_PARAM_MAP[$value] ?? $value;
+        return GameDivision::canonical($value);
     }
 
     public function getDivisiName(): string
     {
         $divisi = $this->normalizeDivisi($this->divisi);
 
-        if ($divisi !== '' && in_array($divisi, self::DIVISI_PARAM_MAP, true)) {
+        if (GameDivision::isKnown($divisi)) {
             return $divisi;
         }
 
@@ -427,96 +379,24 @@ class PubgDailyTrackingTable extends Component
         };
     }
 
-    private function getDivisionRecord(string $divisi): ?Division
-    {
-        $name = self::DIVISI_DIVISION_NAME[$divisi] ?? null;
-        if (!$name) return null;
-
-        return Division::whereRaw('LOWER(nama) = ?', [mb_strtolower($name)])->first();
-    }
-
     private function getDivisionRootPosition(): ?Position
     {
-        $divisi = $this->getDivisiName();
-        $rootName = self::DIVISI_ROOT_POSITION[$divisi] ?? null;
-
-        if ($rootName) {
-            $root = Position::where('nama', $rootName)->first();
-            if ($root) return $root;
-        }
-
-        $division = $this->getDivisionRecord($divisi);
-        if (!$division) return null;
-
-        return Position::where('division_id', $division->id)
-            ->where(function ($q) {
-                $q->where('nama', 'like', 'Koordinator%')
-                  ->orWhere('nama', 'like', 'Coordinator%');
-            })
-            ->orderBy('id')
-            ->first();
+        return GameDivision::rootPosition($this->getDivisiName());
     }
 
-    private function getDivisionHostPositionIds(string $divisi): array
+    private function getDivisionEmployeeIds(): array
     {
-        $division = $this->getDivisionRecord($divisi);
-
-        $ids = $division
-            ? Position::where('division_id', $division->id)->where('nama', 'like', 'Host%')->pluck('id')->all()
-            : [];
-
-        $root = $this->getDivisionRootPosition();
-        if ($root) {
-            $ids = array_merge($ids, Position::whereIn('id', $this->getAllDescendantIds($root))
-                ->where('nama', 'like', 'Host%')
-                ->pluck('id')
-                ->all());
-        }
-
-        return array_values(array_unique($ids));
-    }
-
-    private function getDivisionEmployeeIds(Position $root): array
-    {
-        $positionIds = $this->getAllDescendantIds($root);
-        $positionIds[] = $root->id;
-
-        return Employee::whereHas('positions', function ($q) use ($positionIds) {
-            $q->whereIn('position_id', $positionIds);
-        })->pluck('id')->toArray();
+        return GameDivision::employeeIds($this->getDivisiName());
     }
 
     public function isDivisiKoordinator(): bool
     {
-        $root = $this->getDivisionRootPosition();
-        if (!$root) return false;
-
-        $employee = auth()->user()->employee;
-        if (!$employee) return false;
-
-        return $employee->positions()->where('position_id', $root->id)->exists();
+        return GameDivision::isKoordinator($this->getDivisiName(), auth()->user()?->employee);
     }
 
     public function isDivisiStaffHost(): bool
     {
-        $employee = auth()->user()->employee;
-        if (!$employee) return false;
-
-        $divisi = $this->getDivisiName();
-        $hostPositionNames = self::DIVISI_HOST_POSITION[$divisi] ?? [];
-
-        if ($hostPositionNames !== [] && $employee->positions()->where(function ($q) use ($hostPositionNames) {
-            foreach ($hostPositionNames as $name) {
-                $q->orWhere('nama', 'like', $name . '%');
-            }
-        })->exists()) {
-            return true;
-        }
-
-        $hostPositionIds = $this->getDivisionHostPositionIds($divisi);
-        if ($hostPositionIds === []) return false;
-
-        return $employee->positions()->whereIn('position_id', $hostPositionIds)->exists();
+        return GameDivision::isStaffHost($this->getDivisiName(), auth()->user()?->employee);
     }
 
     public function canFillData(): bool
@@ -554,7 +434,7 @@ class PubgDailyTrackingTable extends Component
         if (!$employee) return [];
 
         if ($this->isDivisiKoordinator()) {
-            return $this->getDivisionEmployeeIds($this->getDivisionRootPosition());
+            return $this->getDivisionEmployeeIds();
         }
 
         return [$employee->id];
@@ -597,7 +477,7 @@ class PubgDailyTrackingTable extends Component
         $divisionRoot = $this->divisi !== '' ? $this->getDivisionRootPosition() : null;
 
         $employees = Employee::when($divisionRoot, function ($q) use ($divisionRoot) {
-            $q->whereIn('id', $this->getDivisionEmployeeIds($divisionRoot));
+            $q->whereIn('id', $this->getDivisionEmployeeIds());
         })->when(!$divisionRoot && $userEmployee, function ($q) use ($userEmployee) {
             $q->where('id', $userEmployee->id);
         })->orderBy('nama')->get();
@@ -634,7 +514,10 @@ class PubgDailyTrackingTable extends Component
                 ->groupBy('nama')->orderByDesc('total')->get();
         }
 
-        return view('livewire.pubg-daily-tracking-table', compact('items', 'groupedItems', 'employees', 'totalSold', 'totalView', 'totalPeak', 'totalDurasi', 'soldBreakdown', 'viewBreakdown', 'peakBreakdown', 'durasiBreakdown', 'divisi'));
+        $pendingApprovals = GameDivision::pendingApprovals($divisi, $userEmployee);
+        $pendingApprovalCount = $pendingApprovals->count();
+
+        return view('livewire.pubg-daily-tracking-table', compact('items', 'groupedItems', 'employees', 'totalSold', 'totalView', 'totalPeak', 'totalDurasi', 'soldBreakdown', 'viewBreakdown', 'peakBreakdown', 'durasiBreakdown', 'divisi', 'pendingApprovals', 'pendingApprovalCount'));
     }
 
     private function getSubordinateEmployeeIds(): array

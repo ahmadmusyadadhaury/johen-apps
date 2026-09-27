@@ -6,6 +6,7 @@ use App\Models\BonusPubg;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
+use App\Support\GameDivision;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -23,6 +24,8 @@ class SidebarDailyTrackingBadge extends Component
         'Admin' => 'koordinator admin',
     ];
 
+    public ?string $divisi = null;
+
     public function render()
     {
         $user = auth()->user();
@@ -33,15 +36,7 @@ class SidebarDailyTrackingBadge extends Component
         }
 
         if ($user->isKoordinatorGame()) {
-            $employee = $user->employee;
-            if ($employee) {
-                $teamIds = $this->getKoordinatorTeamIds($employee, $user);
-                if (!empty($teamIds)) {
-                    $count = BonusPubg::whereIn('employee_id', $teamIds)
-                        ->where('status', 'pending')
-                        ->count();
-                }
-            }
+            $count = $this->getKoordinatorCount($user);
         } elseif ($user->isManager()) {
             $employee = $user->employee;
             if ($employee) {
@@ -67,6 +62,25 @@ class SidebarDailyTrackingBadge extends Component
     public function refresh(): void
     {
         //
+    }
+
+    private function getKoordinatorCount(User $user): int
+    {
+        $employee = $user->employee;
+        if (!$employee) return 0;
+
+        $divisi = GameDivision::canonical($this->divisi);
+
+        if ($divisi !== '') {
+            return GameDivision::pendingApprovalCount($divisi, $employee);
+        }
+
+        $ids = $this->getKoordinatorTeamIds($employee, $user);
+        if (empty($ids)) return 0;
+
+        return BonusPubg::whereIn('employee_id', $ids)
+            ->where('status', 'pending')
+            ->count();
     }
 
     private function getKoordinatorTeamIds(Employee $employee, User $user): array
