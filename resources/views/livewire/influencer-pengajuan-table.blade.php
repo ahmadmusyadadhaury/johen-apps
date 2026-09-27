@@ -24,10 +24,10 @@
         </div>
         <div class="stat-card group">
             <div class="flex items-center justify-between mb-3">
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 text-white shadow-lg shadow-sky-200">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <span class="badge-warning">HOS 1</span>
+                <span class="badge-warning">HSM 1</span>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['pending_hos1'] }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu Atasan 1</p>
