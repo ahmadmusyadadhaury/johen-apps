@@ -31,19 +31,11 @@
                         <p class="text-sm font-semibold">{{ $pendingApprovalCount }} data {{ $dailyTrackingLabel }} menunggu persetujuan Anda</p>
                         <button type="button" @click="showPendingApprovalModal = true" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-orange-400 transition-colors hover:bg-white/5 hover:text-orange-300">Lihat selengkapnya</button>
                     </div>
-                    <ul class="mt-2 space-y-1 text-xs">
-                        @foreach($pendingApprovals->take(3) as $pending)
-                            <li class="leading-relaxed"><span class="font-semibold text-white">{{ $pending->nama ?: 'Host tidak diketahui' }}</span> <span class="text-orange-400">· {{ $pending->sesi ?: '-' }} · {{ $pending->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
-                        @endforeach
-                    </ul>
-                    @if($pendingApprovalCount > 3)
-                        <p class="mt-2 text-xs text-orange-400">+{{ $pendingApprovalCount - 3 }} data lainnya menunggu persetujuan.</p>
-                    @endif
                 </div>
             </div>
         </div>
         <div x-cloak x-show="showPendingApprovalModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4" @click.self="showPendingApprovalModal = false" @keydown.escape.window="showPendingApprovalModal = false">
-            <div x-show="showPendingApprovalModal" x-transition class="flex max-h-[82dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" style="height: min(82dvh, 720px)" role="dialog" aria-modal="true" aria-labelledby="pending-approval-title">
+            <div x-show="showPendingApprovalModal" x-transition class="flex max-h-[82dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" role="dialog" aria-modal="true" aria-labelledby="pending-approval-title">
                 <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
                     <div>
                         <h2 id="pending-approval-title" class="text-base font-bold text-gray-900 dark:text-gray-100">Data menunggu persetujuan</h2>
