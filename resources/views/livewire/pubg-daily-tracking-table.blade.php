@@ -344,6 +344,16 @@
             </div>
             <form wire:submit="save" class="p-6 space-y-4">
                 <div class="grid grid-cols-3 gap-4">
+                    @if($this->isDirectStaffHost())
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Karyawan</label>
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->employee?->nik ?? '-' }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama</label>
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->employee?->nama ?? '-' }}</div>
+                    </div>
+                    @else
                     <div>
                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Karyawan *</label>
                         <select wire:model.live="nik" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -359,6 +369,7 @@
                         <input type="text" wire:model="nama" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100" readonly>
                         @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
+                    @endif
                     <div>
                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sesi *</label>
                         <select wire:model="sesi" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -442,6 +453,16 @@
             </div>
             <form wire:submit="update" class="p-6 space-y-4">
                 <div class="grid grid-cols-3 gap-4">
+                    @if($this->isDirectStaffHost())
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Karyawan</label>
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->employee?->nik ?? '-' }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama</label>
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->employee?->nama ?? '-' }}</div>
+                    </div>
+                    @else
                     <div>
                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Karyawan *</label>
                         <select wire:model.live="nik" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -457,6 +478,7 @@
                         <input type="text" wire:model="nama" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100" readonly>
                         @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
+                    @endif
                     <div>
                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sesi *</label>
                         <select wire:model="sesi" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">

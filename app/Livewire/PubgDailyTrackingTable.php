@@ -135,6 +135,12 @@ class PubgDailyTrackingTable extends Component
     {
         abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetForm();
+        if ($this->isDirectStaffHost()) {
+            $employee = auth()->user()->employee;
+            abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
+            $this->nik = $employee->nik;
+            $this->nama = $employee->nama;
+        }
         $this->showCreateModal = true;
     }
 
@@ -170,9 +176,17 @@ class PubgDailyTrackingTable extends Component
     public function save(): void
     {
         abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        if ($this->isDirectStaffHost()) {
+            $employee = auth()->user()->employee;
+            abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
+            $this->nik = $employee->nik;
+            $this->nama = $employee->nama;
+        }
         $this->validate();
 
-        $employee = Employee::where('nik', $this->nik)->first();
+        $employee = $this->isDirectStaffHost()
+            ? auth()->user()->employee
+            : Employee::where('nik', $this->nik)->first();
         if (!$employee) {
             $this->addError('nik', 'Karyawan dengan NIK tersebut tidak ditemukan.');
             return;
@@ -221,15 +235,23 @@ class PubgDailyTrackingTable extends Component
     public function update(): void
     {
         abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        if ($this->isDirectStaffHost()) {
+            $employee = auth()->user()->employee;
+            abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
+            $this->nik = $employee->nik;
+            $this->nama = $employee->nama;
+        }
         $this->validate();
         $sold = str_replace(',', '.', $this->ach_sold);
         $item = BonusPubg::findOrFail($this->editId);
         if (!$this->canModify($item)) return;
 
+        $employee = $this->isDirectStaffHost() ? auth()->user()->employee : null;
+
         $data = [
             'tanggal' => $this->tanggal,
-            'nik' => $this->nik,
-            'nama' => $this->nama,
+            'nik' => $employee?->nik ?? $this->nik,
+            'nama' => $employee?->nama ?? $this->nama,
             'sesi' => $this->sesi,
             'ach_sold' => $sold,
             'ach_view' => str_replace(',', '.', $this->ach_view),
@@ -424,6 +446,20 @@ class PubgDailyTrackingTable extends Component
     public function canFillData(): bool
     {
         return $this->isDivisiStaffHost();
+    }
+
+    public function isDirectStaffHost(): bool
+    {
+        return in_array(auth()->user()->role, [
+            User::ROLE_STAFF_HOST_PUBG,
+            User::ROLE_STAFF_HOST_FF,
+            User::ROLE_STAFF_HOST_MLBB,
+            User::ROLE_STAFF_HOST_EFOOTBALL,
+            User::ROLE_STAFF_HOST_VALORANT,
+            User::ROLE_STAFF_HOST_ROBLOX,
+            User::ROLE_STAFF_HOST_MONKEY_PUBG,
+            User::ROLE_STAFF_HOST_FC_MOBILE,
+        ], true);
     }
 
     private function isKoordinatorView(): bool
