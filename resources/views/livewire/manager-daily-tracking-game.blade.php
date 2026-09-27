@@ -40,7 +40,7 @@
 
         <div class="stat-card">
             <div class="flex items-center justify-between mb-3">
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-200">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/></svg>
                 </div>
                 <span class="badge-success">Total</span>
@@ -151,9 +151,15 @@
                                 @if($item->feedback_atasan)
                                     {{ $item->feedback_atasan }}
                                 @else
-                                    <button @click="feedbackId = {{ $item->id }}; showFeedbackModal = true" class="text-xs font-medium text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:underline whitespace-nowrap">
-                                        Beri Feedback
-                                    </button>
+                                    <div class="flex items-center gap-1 whitespace-nowrap">
+                                        <button type="button" @click="feedbackId = {{ $item->id }}; showFeedbackModal = true" class="inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-300 dark:hover:bg-primary-950/40" aria-label="Beri feedback untuk {{ $item->nama }}">
+                                            Feedback
+                                        </button>
+                                        <span aria-hidden="true" class="text-gray-400">|</span>
+                                        <button type="button" wire:click="markFeedbackOkay({{ $item->id }})" class="inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-950/40" aria-label="Tandai oke untuk {{ $item->nama }}">
+                                            Oke
+                                        </button>
+                                    </div>
                                 @endif
                             </td>
                         </tr>

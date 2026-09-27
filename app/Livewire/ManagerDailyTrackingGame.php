@@ -103,9 +103,40 @@ class ManagerDailyTrackingGame extends Component
     public function saveFeedback($id, $feedback): void
     {
         $user = auth()->user();
+        if (!$user || !$user->isManager() || !is_string($feedback) || trim($feedback) === '') return;
+
+        $this->updateReviewFeedback($id, trim($feedback));
+    }
+
+    public function markFeedbackOkay(int $id): void
+    {
+        $user = auth()->user();
         if (!$user || !$user->isManager()) return;
 
-        BonusPubg::where('id', $id)->update(['feedback_atasan' => $feedback]);
+        $this->updateReviewFeedback($id, 'Oke');
+    }
+
+    private function updateReviewFeedback(int $id, string $feedback): void
+    {
+        $user = auth()->user();
+        $employee = $user?->employee;
+        if (!$user || !$employee || !$user->isManager()) return;
+
+        $subordinateIds = $this->getSubordinateIds($employee);
+        if ($this->isHeadOfStore2($employee)) {
+            $subordinateIds = array_diff($subordinateIds, $this->getEfootballEmployeeIds());
+        }
+
+        if (empty($subordinateIds) || !in_array($this->divisi, $this->getManagerDivisionNames($employee), true)) return;
+
+        $updated = BonusPubg::whereKey($id)
+            ->whereIn('employee_id', $subordinateIds)
+            ->where('status', 'disetujui')
+            ->where('divisi', $this->divisi)
+            ->update(['feedback_atasan' => $feedback]);
+
+        if (!$updated) return;
+
         $this->dispatch('daily-tracking-updated');
         $this->showSuccess = true;
     }
