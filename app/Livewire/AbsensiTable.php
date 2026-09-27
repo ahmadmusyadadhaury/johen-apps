@@ -431,6 +431,11 @@ class AbsensiTable extends Component
 
         if ($this->tab === 'tim' && (($user->isAnyKoordinator() && ! $user->isKoordinator()) || $user->isKoordinatorFcMobile() || $user->isManager() || $user->isKoordinatorProject())) {
             $subordinateIds = $this->getSubordinateEmployeeIds();
+            if ($user->isKoordinatorEfootball() && $user->employee) {
+                $subordinateIds[] = $user->employee->id;
+                $subordinateIds = array_values(array_unique($subordinateIds));
+            }
+
             if (! empty($subordinateIds)) {
                 $employeeQuery->whereIn('id', $subordinateIds);
             } else {
