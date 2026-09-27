@@ -30,7 +30,7 @@ class SidebarMonitoringBadge extends Component
         $user = auth()->user();
         $total = 0;
 
-        if ($user && $user->isManager() && $user->isHeadOfStore() && $user->employee) {
+        if ($user && $user->isManager() && $user->employee) {
             $subordinateIds = $this->getManagerSubordinateIds($user->employee);
             if (!empty($subordinateIds)) {
                 $total += $this->countReportsAwaitingFeedback($subordinateIds);

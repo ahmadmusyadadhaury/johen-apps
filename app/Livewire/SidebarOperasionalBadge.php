@@ -36,9 +36,6 @@ class SidebarOperasionalBadge extends Component
         }
 
         $total += $this->countLeaveRequests($user);
-        $total += $this->countReportsAwaitingFeedback($user);
-        $total += $this->countDailyTrackingPending($user);
-
         if ($user->isGmCeo()) {
             $total = 0;
         }

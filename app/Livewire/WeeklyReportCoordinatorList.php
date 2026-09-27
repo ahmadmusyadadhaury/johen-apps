@@ -96,7 +96,16 @@ class WeeklyReportCoordinatorList extends Component
                 })->values();
 
                 foreach ($filtered as $coordinator) {
-                    match ($this->getHeadOfStoreGroup($coordinator)) {
+                    $group = $this->getHeadOfStoreGroup($coordinator);
+
+                    if ($user->isHeadOfStore1() && $group !== 'hos1') {
+                        continue;
+                    }
+                    if ($user->isHeadOfStore2() && $group !== 'hos2') {
+                        continue;
+                    }
+
+                    match ($group) {
                         'hos1' => $hos1Coordinators->push($coordinator),
                         'hos2' => $hos2Coordinators->push($coordinator),
                         default => $generalCoordinators->push($coordinator),

@@ -7,7 +7,7 @@
 @endpush
 @endif
 
-<div class="space-y-4 max-w-xl mx-auto">
+<div x-data x-on:weekly-meeting-scan-success.window="$store.successModal.show($event.detail.message)" class="space-y-4 max-w-xl mx-auto">
 <style>
     @keyframes qrPop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
     @keyframes qrCheckDraw { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
@@ -16,6 +16,12 @@
     .animate-scan-ring { animation: qrRing 1.9s ease-out infinite; }
     .animate-scan-check { animation: qrPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
     .animate-scan-check .check-path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: qrCheckDraw 0.55s ease-out 0.22s forwards; }
+    .qr-scan-guide { position: absolute; z-index: 10; top: 50%; left: 50%; width: min(76%, 20rem); aspect-ratio: 1; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,.78); border-radius: 1rem; box-shadow: 0 0 0 1px rgba(15,23,42,.28), 0 0 22px rgba(15,23,42,.3); pointer-events: none; }
+    .qr-scan-guide-corner { position: absolute; width: 1.5rem; height: 1.5rem; border-color: #34d399; border-style: solid; }
+    .qr-scan-guide-corner--tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: .9rem; }
+    .qr-scan-guide-corner--tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: .9rem; }
+    .qr-scan-guide-corner--bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: .9rem; }
+    .qr-scan-guide-corner--br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: .9rem; }
 </style>
     @if(!$currentMeeting)
     {{-- No Active Meeting --}}
@@ -110,12 +116,18 @@
             {{-- Camera Scanner --}}
             <div class="space-y-4">
                 <div class="text-center">
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Arahkan kamera ke QR Code yang dibagikan oleh Admin Master</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Posisikan seluruh QR di dalam kotak panduan.</p>
                 </div>
 
                 <div id="scanner-container" class="relative">
                     <div id="scanner-frame" class="bg-gray-900 rounded-xl overflow-hidden relative" style="aspect-ratio: 3 / 4;">
                         <video id="scanner-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
+                        <div class="qr-scan-guide" aria-hidden="true">
+                            <span class="qr-scan-guide-corner qr-scan-guide-corner--tl"></span>
+                            <span class="qr-scan-guide-corner qr-scan-guide-corner--tr"></span>
+                            <span class="qr-scan-guide-corner qr-scan-guide-corner--bl"></span>
+                            <span class="qr-scan-guide-corner qr-scan-guide-corner--br"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -150,6 +162,7 @@
     let geocodeInFlight = false;
     let pendingDispatch = false;
     let locationDenied = false;
+    let lastGuideNoticeAt = 0;
     let scannerLibraryPromise = null;
 
     // Pustaka jsQR dimuat secara dinamis dari sini, bukan lewat stack blade,
@@ -310,6 +323,37 @@
             }
         }
         return cachedCoords;
+    }
+
+    function isQrInsideGuide(location, sourceWidth, sourceHeight) {
+        const frame = document.getElementById('scanner-frame');
+        const guide = frame && frame.querySelector('.qr-scan-guide');
+        if (!frame || !guide || !location || !sourceWidth || !sourceHeight) return false;
+
+        const frameRect = frame.getBoundingClientRect();
+        const guideRect = guide.getBoundingClientRect();
+        if (!frameRect.width || !frameRect.height) return false;
+
+        const scaleX = sourceWidth / frameRect.width;
+        const scaleY = sourceHeight / frameRect.height;
+        const bounds = {
+            left: (guideRect.left - frameRect.left) * scaleX,
+            right: (guideRect.right - frameRect.left) * scaleX,
+            top: (guideRect.top - frameRect.top) * scaleY,
+            bottom: (guideRect.bottom - frameRect.top) * scaleY,
+        };
+        const corners = [
+            location.topLeftCorner,
+            location.topRightCorner,
+            location.bottomLeftCorner,
+            location.bottomRightCorner,
+        ];
+
+        return corners.every(function (point) {
+            return point
+                && point.x >= bounds.left && point.x <= bounds.right
+                && point.y >= bounds.top && point.y <= bounds.bottom;
+        });
     }
 
     // Pengguna hanya boleh absen (scan QR) setelah lokasi aktif. Ketika QR
@@ -488,8 +532,19 @@
                 // Pause briefly to avoid spamming the server while the user
                 // keeps the same QR in front of the camera.
                 if (code && code.data && now >= pausedUntil) {
-                    pausedUntil = now + 2500;
-                    dispatchScan(code.data);
+                    if (!isQrInsideGuide(code.location, width, height)) {
+                        pausedUntil = now + 1000;
+                        if (now - lastGuideNoticeAt >= 4000) {
+                            lastGuideNoticeAt = now;
+                            Livewire.dispatch('notify', {
+                                type: 'warning',
+                                message: 'QR belum berada di dalam bingkai. Atur posisi kamera hingga seluruh QR masuk ke kotak.'
+                            });
+                        }
+                    } else {
+                        pausedUntil = now + 2500;
+                        dispatchScan(code.data);
+                    }
                 }
             }
         }

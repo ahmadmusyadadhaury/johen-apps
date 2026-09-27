@@ -27,7 +27,7 @@
                                 Jabatan
                             </a>
                             @endif
-                            @unless(auth()->user()->isAnyKoordinator() || auth()->user()->isManager())
+                            @unless(auth()->user()->isAnyKoordinator())
                             <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 <a href="{{ route('hris.kontrak-kerja') }}" class="flex flex-1 items-center gap-3">Kontrak Kerja</a>
                                 <livewire:sidebar-kontrak-badge />

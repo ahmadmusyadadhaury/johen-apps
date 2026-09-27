@@ -133,11 +133,10 @@ class WeeklyMeetingScan extends Component
         $this->alreadyAttended = true;
         $this->showScanner = false;
 
-        // Popup modal sukses global (semua role): layout app menyimak event
-        // 'notify' dengan type success lalu membuka Alpine store successModal.
+        // Trigger modal sukses langsung dari komponen scan agar tidak bergantung
+        // pada listener notifikasi global di layout.
         $this->dispatch(
-            'notify',
-            type: 'success',
+            'weekly-meeting-scan-success',
             message: 'Absen berhasil! Selamat datang, ' . $employee->nama
                 . '. Tercatat pukul ' . $attendance->attended_at->format('H:i') . '.'
         );

@@ -36,22 +36,16 @@
                                 Pelatihan
                             </a>
                             @endif
-                            @if((auth()->user()->isKoordinator() || auth()->user()->isManager() || auth()->user()->isKoordinatorCreative()) && !auth()->user()->isHeadOfStore())
+                            @if((auth()->user()->isKoordinator() || auth()->user()->isKoordinatorCreative()) && !auth()->user()->isManager() && !auth()->user()->isHeadOfStore())
                             <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-report') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 <a href="{{ route('hris.weekly-report') }}" class="flex-1">Weekly Plan Report</a>
                                 <livewire:sidebar-feedback-badge type="weekly" />
                             </div>
                             @endif
-                            @if((auth()->user()->isKoordinator() || auth()->user()->isManager()) && !auth()->user()->isHeadOfStore())
+                            @if(auth()->user()->isKoordinator() && !auth()->user()->isManager() && !auth()->user()->isHeadOfStore())
                             <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.activity-competitor') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 <a href="{{ route('hris.activity-competitor') }}" class="flex-1">Activity Competitor</a>
                                 <livewire:sidebar-feedback-badge type="activity" />
-                            </div>
-                            @endif
-                            @if(auth()->user()->isManager() && !auth()->user()->isHeadOfStore())
-                            <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.daily-tracking', 'hris.daily-tracking.game') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                                <a href="{{ route('hris.daily-tracking') }}" class="flex-1">Daily Tracking</a>
-                                <livewire:sidebar-daily-tracking-badge />
                             </div>
                             @endif
                             @if(auth()->user()->isManager() && !auth()->user()->isHeadOfStore2())
@@ -82,7 +76,7 @@
                                 Slip Gaji
                             </a>
                             @endif
-                            @if((auth()->user()->isManager() || auth()->user()->isKoordinatorCreative() || (auth()->user()->isStaffCreative() && str_starts_with(auth()->user()->employee?->mainPosition()?->nama ?? '', 'Admin KOL')) || auth()->user()->isKoordinatorAdmin() || auth()->user()->isStaffAdmin()) && !auth()->user()->isHeadOfStore())
+                            @if((auth()->user()->isKoordinatorCreative() || (auth()->user()->isStaffCreative() && str_starts_with(auth()->user()->employee?->mainPosition()?->nama ?? '', 'Admin KOL')) || auth()->user()->isKoordinatorAdmin() || auth()->user()->isStaffAdmin()) && !auth()->user()->isHeadOfStore())
                             <a href="{{ route('hris.influencer-pengajuan') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.influencer-pengajuan') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Pengajuan Influencer
                             </a>

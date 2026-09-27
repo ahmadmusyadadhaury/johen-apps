@@ -85,7 +85,7 @@ $isCreativeMenuRestricted = $isStaffCreative || auth()->user()->isKoordinatorCre
 
 $activeMenu = match (true) {
     request()->routeIs('it.tickets.*', 'it.project', 'it.maintenance', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isHeadOfStore2() => 'monitoring',
-    request()->routeIs('hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isManager() && auth()->user()->isHeadOfStore() => 'monitoring',
+    request()->routeIs('hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan') && auth()->user()->isManager() => 'monitoring',
     request()->routeIs('hris.weekly-report', 'hris.weekly-report.show', 'hris.activity-competitor') && auth()->user()->isKoordinatorGame() => '',
     request()->routeIs('hris.weekly-report', 'hris.weekly-report.show', 'hris.activity-competitor') && auth()->user()->isKoordinatorAdmin() => '',
     request()->routeIs('hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor') && auth()->user()->isKoordinatorIt() => '',
@@ -94,7 +94,7 @@ $activeMenu = match (true) {
     request()->routeIs('hris.daily-tracking-stock', 'hris.rekap-stok', 'hris.stok-ketersediaan', 'hris.stok-target', 'hris.weekly-report', 'hris.weekly-report.show') && (auth()->user()->isKoordinatorStock() || auth()->user()->isStaffStock()) => '',
     request()->routeIs('hris.influencer', 'hris.kalender-event', 'hris.content-plan') => '',
     request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') && auth()->user()->isGmCeo() => 'sdm',
-    request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') && auth()->user()->isManager() => '',
+    request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') && auth()->user()->isManager() => 'sdm',
     request()->routeIs('hris.kontrak-kerja') && auth()->user()->isKoordinatorGame() => '',
     request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.pengumuman-saya', 'hris.pengarsipan', 'hris.birthday-wishes*', 'history.*') => 'operasional',
     request()->routeIs('hris.weekly-meeting*') => '',
@@ -154,17 +154,6 @@ if ($divisionViewUser) {
                         </x-slot>
                         Dashboard
                     </x-nav-link>
-
-                    @if(auth()->user()->isManager())
-                    <div class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
-                        <a href="{{ route('hris.kontrak-kerja') }}" class="flex flex-1 items-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
-                            Penilaian
-                        </a>
-                        <livewire:sidebar-kontrak-badge />
-                    </div>
-                    @endif
-
 
 @include('layouts.partials.sidebar-sdm')
 @include('layouts.partials.sidebar-operasional')
@@ -301,7 +290,7 @@ if ($divisionViewUser) {
                     </div>
                     @endif
 
-                    @if(auth()->user()->isManager() && auth()->user()->isHeadOfStore())
+                    @if(auth()->user()->isManager())
                     <div class="mt-4">
                         <button @click="openMenu = openMenu === 'monitoring' ? null : 'monitoring'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'monitoring' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
                             <span class="flex flex-1 min-w-0 items-center justify-start gap-3 text-left whitespace-nowrap">
@@ -1024,15 +1013,26 @@ if ($divisionViewUser) {
                 }
             }
 
-            document.addEventListener('livewire:init', () => {
-                Livewire.on('notify', ({ type, message }) => {
-                    if (type === 'success') {
-                        Alpine.store('successModal').show(message);
-                    } else {
-                        Alpine.store('toast').add(type, message);
-                    }
-                });
-            });
+            if (!window.__johenNotifyListenerRegistered) {
+                const registerNotifyListener = () => {
+                    if (!window.Livewire || typeof window.Livewire.on !== 'function') return false;
+
+                    window.Livewire.on('notify', ({ type, message }) => {
+                        if (type === 'success') {
+                            window.Alpine?.store('successModal')?.show(message);
+                        } else {
+                            window.Alpine?.store('toast')?.add(type, message);
+                        }
+                    });
+
+                    window.__johenNotifyListenerRegistered = true;
+                    return true;
+                };
+
+                if (!registerNotifyListener()) {
+                    document.addEventListener('livewire:init', registerNotifyListener, { once: true });
+                }
+            }
 
             @if (session('success'))
             (function(){function w(){if(typeof Alpine!=='undefined'&&Alpine.store('successModal')){Alpine.store('successModal').show('{{ addslashes(session('success')) }}');}else{setTimeout(w,50)}}w()})();
