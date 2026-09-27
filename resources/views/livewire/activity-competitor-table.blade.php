@@ -35,9 +35,13 @@
                 <div class="p-5 sm:p-6">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex items-center gap-4 min-w-0">
-                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 text-gray-600 dark:text-gray-300 font-bold text-sm">
-                                {{ strtoupper(substr($emp?->nama ?? '?', 0, 1)) }}
-                            </div>
+                            @if($emp?->foto_url)
+                                <img src="{{ $emp->foto_url }}" alt="Foto {{ $emp->nama }}" class="h-11 w-11 shrink-0 rounded-xl bg-gray-50 object-cover dark:bg-gray-800" loading="lazy">
+                            @else
+                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500" aria-label="Foto karyawan tidak tersedia">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                </div>
+                            @endif
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $emp?->nama ?? '-' }}</p>
                                 <div class="flex items-center gap-2 mt-0.5">
