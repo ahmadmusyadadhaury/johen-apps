@@ -6,19 +6,21 @@
             <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <p class="text-sm font-semibold">{{ $pendingReviews->count() }} data Daily Tracking menunggu review Anda</p>
-                    @if($pendingReviews->count() > 3)
+                    @if($pendingReviews->count() > 1)
                         <button type="button" @click="showPendingReviewsModal = true" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-orange-800 transition-colors hover:bg-orange-100 dark:text-orange-200 dark:hover:bg-orange-900/40">Lihat selengkapnya</button>
                     @endif
                 </div>
+                @if($pendingReviews->count() === 1)
                 <ul class="mt-2 space-y-1 text-xs">
-                    @foreach($pendingReviews->take($pendingReviews->count() > 3 ? 3 : $pendingReviews->count()) as $review)
+                    @foreach($pendingReviews as $review)
                         <li class="leading-relaxed"><span class="font-semibold">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</span> <span class="text-orange-800 dark:text-orange-300">· {{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
                     @endforeach
                 </ul>
+                @endif
             </div>
         </div>
     </div>
-    @if($pendingReviews->count() > 3)
+    @if($pendingReviews->count() > 1)
     <div x-cloak x-show="showPendingReviewsModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4" @click.self="showPendingReviewsModal = false; pendingReviewSearch = ''" @keydown.escape.window="showPendingReviewsModal = false; pendingReviewSearch = ''">
         <div x-show="showPendingReviewsModal" x-transition class="flex max-h-[82dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" style="height: min(82dvh, 720px)" role="dialog" aria-modal="true" aria-labelledby="pending-reviews-title">
             <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
