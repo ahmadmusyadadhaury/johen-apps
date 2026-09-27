@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Employee;
 use App\Models\Position;
+use App\Models\User;
 use Livewire\Component;
 
 class WeeklyReportCoordinatorList extends Component
@@ -50,10 +51,16 @@ class WeeklyReportCoordinatorList extends Component
 
     private function isCoordinatorEmployee(Employee $employee): bool
     {
-        return $employee->positions->contains(function (Position $position) {
+        $hasCoordinatorPosition = $employee->positions->contains(function (Position $position) {
             return (bool) $position->pivot?->is_main
                 && str_contains(strtolower($position->nama), 'koordinator');
         });
+
+        $hasCreativeCoordinatorRole = $employee->users->contains(
+            fn (User $user) => $user->isKoordinatorCreative()
+        );
+
+        return $hasCoordinatorPosition || $hasCreativeCoordinatorRole;
     }
 
     private function getHeadOfStoreGroup(Employee $employee): ?string
@@ -87,7 +94,7 @@ class WeeklyReportCoordinatorList extends Component
             $subordinateIds = $this->getSubordinateIds($employee);
 
             if (!empty($subordinateIds)) {
-                $allEmployees = Employee::with('positions')
+                $allEmployees = Employee::with(['positions', 'users'])
                     ->whereIn('id', $subordinateIds)
                     ->get();
 
