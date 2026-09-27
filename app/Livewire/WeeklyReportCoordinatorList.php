@@ -56,6 +56,25 @@ class WeeklyReportCoordinatorList extends Component
         });
     }
 
+    private function getHeadOfStoreGroup(Employee $employee): ?string
+    {
+        $position = $employee->positions->first(fn (Position $position) => (bool) $position->pivot?->is_main);
+
+        while ($position) {
+            $name = strtolower($position->nama);
+            if ($name === 'head of store 1') {
+                return 'hos1';
+            }
+            if ($name === 'head of store 2') {
+                return 'hos2';
+            }
+
+            $position = $position->parent_id ? Position::find($position->parent_id) : null;
+        }
+
+        return null;
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -76,12 +95,12 @@ class WeeklyReportCoordinatorList extends Component
                     return $this->isCoordinatorEmployee($employee);
                 })->values();
 
-                if ($user->isHeadOfStore1()) {
-                    $hos1Coordinators = $filtered;
-                } elseif ($user->isHeadOfStore2()) {
-                    $hos2Coordinators = $filtered;
-                } else {
-                    $generalCoordinators = $filtered;
+                foreach ($filtered as $coordinator) {
+                    match ($this->getHeadOfStoreGroup($coordinator)) {
+                        'hos1' => $hos1Coordinators->push($coordinator),
+                        'hos2' => $hos2Coordinators->push($coordinator),
+                        default => $generalCoordinators->push($coordinator),
+                    };
                 }
             }
         }

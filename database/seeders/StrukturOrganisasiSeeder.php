@@ -56,12 +56,12 @@ class StrukturOrganisasiSeeder extends Seeder
         $koorCreative = Position::create(['nama' => 'Koordinator Creative', 'parent_id' => $hos1->id, 'is_active' => true]);
         $koorAdmin    = Position::create(['nama' => 'Koordinator Admin', 'parent_id' => $hos1->id, 'is_active' => true]);
         $koorPubg     = Position::create(['nama' => 'Koordinator Johen PUBG', 'parent_id' => $hos1->id, 'is_active' => true]);
-        $koorFf       = Position::create(['nama' => 'Koordinator Free Fire', 'parent_id' => $hos1->id, 'is_active' => true]);
         $koorRoblox   = Position::create(['nama' => 'Koordinator Roblox', 'parent_id' => $hos1->id, 'is_active' => true]);
         $koorEfoot    = Position::create(['nama' => 'Koordinator E-football', 'parent_id' => $hos1->id, 'is_active' => true]);
 
         $koorIt       = Position::create(['nama' => 'Koordinator IT', 'parent_id' => $hos2->id, 'is_active' => true]);
         $koorMlbb     = Position::create(['nama' => 'Koordinator MLBB', 'parent_id' => $hos2->id, 'is_active' => true]);
+        $koorFf       = Position::create(['nama' => 'Koordinator Free Fire', 'parent_id' => $hos2->id, 'is_active' => true]);
         $koorValo     = Position::create(['nama' => 'Koordinator Valorant', 'parent_id' => $hos2->id, 'is_active' => true]);
         $koorMonkeyPubg = Position::create(['nama' => 'Koordinator Monkey PUBG', 'parent_id' => $hos2->id, 'is_active' => true]);
 
