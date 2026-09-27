@@ -80,6 +80,14 @@ class CutiIzinTable extends Component
 
     public function submitPengajuan(): void
     {
+        $user = auth()->user();
+
+        if ($user->isSuperAdmin() && $this->pengajuanJenis === 'jatah') {
+            $this->addError('pengajuanJenis', 'Jatah libur tidak tersedia untuk role Super Admin.');
+
+            return;
+        }
+
         $rules = [
             'pengajuanJenis' => ['required', 'in:cuti_tahunan,izin,jatah'],
             'pengajuanTanggalMulai' => ['required', 'date'],
@@ -94,8 +102,6 @@ class CutiIzinTable extends Component
         }
 
         $this->validate($rules);
-
-        $user = auth()->user();
 
         if (! $employee) {
             $this->dispatch('notify', type: 'error', message: 'Akun Anda tidak terhubung ke data karyawan.');
@@ -135,8 +141,7 @@ class CutiIzinTable extends Component
         }
 
         if ($this->pengajuanJenis === 'jatah') {
-            $user = auth()->user();
-            if ($user->isStaffIt() || $user->isKoordinatorIt()) {
+            if ($user->isSuperAdmin() || $user->isStaffIt() || $user->isKoordinatorIt()) {
                 $this->dispatch('notify', type: 'error', message: 'Jatah libur tidak tersedia untuk role Anda.');
 
                 return;
@@ -646,9 +651,10 @@ class CutiIzinTable extends Component
             $sisaBulan = 13 - (int) $accrual['cycle_start']->month;
         }
 
+        $jatahAvailable = ! $user->isSuperAdmin() && ! $user->isStaffIt() && ! $user->isKoordinatorIt();
         $jatahBulanIni = 4;
         $usedJatah = 0;
-        if ($userEmployee) {
+        if ($userEmployee && $jatahAvailable) {
             $usedJatah = LeaveRequest::where('employee_id', $userEmployee->id)
                 ->where('jenis', 'jatah')
                 ->where('tanggal_mulai', '>=', now()->startOfMonth()->toDateString())
@@ -657,8 +663,6 @@ class CutiIzinTable extends Component
                 ->sum(fn ($lr) => (int) filter_var($lr->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
         $sisaJatah = max(0, $jatahBulanIni - $usedJatah);
-
-        $jatahAvailable = ! $user->isStaffIt() && ! $user->isKoordinatorIt();
 
         $cutiEligible = $accrual['eligible'] ?? false;
         $cutiEligibleDate = $userEmployee?->cutiEligibleDate();
