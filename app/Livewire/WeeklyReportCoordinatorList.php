@@ -48,19 +48,12 @@ class WeeklyReportCoordinatorList extends Component
         return array_values($ids);
     }
 
-    private function isUnderCoordinatorPosition(Employee $employee): bool
+    private function isCoordinatorEmployee(Employee $employee): bool
     {
-        $positions = $employee->positions;
-        foreach ($positions as $position) {
-            $current = $position;
-            while ($current && $current->parent_id) {
-                $current = Position::find($current->parent_id);
-                if ($current && str_contains(strtolower($current->nama), 'koordinator')) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return $employee->positions->contains(function (Position $position) {
+            return (bool) $position->pivot?->is_main
+                && str_contains(strtolower($position->nama), 'koordinator');
+        });
     }
 
     public function render()
@@ -75,12 +68,12 @@ class WeeklyReportCoordinatorList extends Component
             $subordinateIds = $this->getSubordinateIds($employee);
 
             if (!empty($subordinateIds)) {
-                $allEmployees = Employee::with('users', 'positions')
+                $allEmployees = Employee::with('positions')
                     ->whereIn('id', $subordinateIds)
                     ->get();
 
-                $filtered = $allEmployees->filter(function ($e) {
-                    return $this->isUnderCoordinatorPosition($e);
+                $filtered = $allEmployees->filter(function (Employee $employee) {
+                    return $this->isCoordinatorEmployee($employee);
                 })->values();
 
                 if ($user->isHeadOfStore1()) {

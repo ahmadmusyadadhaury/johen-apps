@@ -94,6 +94,7 @@ $activeMenu = match (true) {
     request()->routeIs('hris.daily-tracking-stock', 'hris.rekap-stok', 'hris.stok-ketersediaan', 'hris.stok-target', 'hris.weekly-report', 'hris.weekly-report.show') && (auth()->user()->isKoordinatorStock() || auth()->user()->isStaffStock()) => '',
     request()->routeIs('hris.influencer', 'hris.kalender-event', 'hris.content-plan') => '',
     request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') && auth()->user()->isGmCeo() => 'sdm',
+    request()->routeIs('hris.kontrak-kerja', 'hris.kontrak-kerja.evaluasi') && auth()->user()->isManager() => '',
     request()->routeIs('hris.kontrak-kerja') && auth()->user()->isKoordinatorGame() => '',
     request()->routeIs('hris.absensi', 'hris.cuti-izin', 'hris.manual-book', 'hris.jobdesk', 'hris.weekly-report', 'hris.weekly-report.show', 'hris.daily-tracking', 'hris.daily-tracking.game', 'hris.activity-competitor', 'hris.influencer-pengajuan', 'hris.announcements', 'hris.pengumuman-saya', 'hris.pengarsipan', 'hris.birthday-wishes*', 'history.*') => 'operasional',
     request()->routeIs('hris.weekly-meeting*') => '',
