@@ -12,6 +12,17 @@ class ManagerDailyTrackingGame extends Component
 {
     use WithPagination;
 
+    private const DIVISION_POSITION_MAP = [
+        'PUBG' => 'koordinator johen pubg',
+        'Free Fire' => 'koordinator free fire',
+        'MLBB' => 'koordinator mlbb',
+        'E-football' => 'koordinator e-football',
+        'Valorant' => 'koordinator valorant',
+        'Roblox' => 'koordinator roblox',
+        'Monkey PUBG' => 'koordinator monkey pubg',
+        'FC Mobile' => 'koordinator fc mobile',
+    ];
+
     public string $divisi = '';
     public string $search = '';
     public string $tanggal = '';
@@ -78,6 +89,29 @@ class ManagerDailyTrackingGame extends Component
             $ids = array_merge($ids, $this->getDescendantIds($childId));
         }
         return $ids;
+    }
+
+    private function getManagerDivisionNames(Employee $employee): array
+    {
+        $position = $employee->mainPosition();
+        if (!$position) return [];
+
+        $names = Position::whereIn('id', $this->getDescendantIds($position->id))
+            ->pluck('nama')
+            ->map(fn ($name) => strtolower($name))
+            ->all();
+
+        $divisions = [];
+        foreach (self::DIVISION_POSITION_MAP as $division => $positionName) {
+            foreach ($names as $name) {
+                if (str_contains($name, $positionName)) {
+                    $divisions[] = $division;
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($divisions));
     }
 
     private function getEfootballEmployeeIds(): array
