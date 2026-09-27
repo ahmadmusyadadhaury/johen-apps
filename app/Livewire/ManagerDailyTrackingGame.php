@@ -23,7 +23,12 @@ class ManagerDailyTrackingGame extends Component
     public function mount(string $divisi = ''): void
     {
         $this->divisi = $divisi ?: (string) request()->query('divisi', '');
-        $this->tanggal = now()->toDateString();
+        $requestedDate = request()->query('tanggal');
+        $this->tanggal = is_string($requestedDate)
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedDate)
+            && checkdate((int) substr($requestedDate, 5, 2), (int) substr($requestedDate, 8, 2), (int) substr($requestedDate, 0, 4))
+                ? $requestedDate
+                : now()->toDateString();
     }
 
     public function updatingSearch(): void

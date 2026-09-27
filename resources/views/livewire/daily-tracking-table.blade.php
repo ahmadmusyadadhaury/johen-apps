@@ -1,18 +1,52 @@
-<div>
+<div x-data="{ showPendingReviewsModal: false }">
     @if($pendingReviews->isNotEmpty())
-    <div role="status" class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+    <div role="status" class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-950 shadow-sm dark:border-orange-800/60 dark:bg-orange-950/30 dark:text-orange-100">
         <div class="flex items-start gap-3">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86L1.82 18.14A1.5 1.5 0 003.11 20.4h16.98a1.5 1.5 0 001.29-2.26L12.91 3.86a1.5 1.5 0 00-2.62 0z"/></svg>
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86L1.82 18.14A1.5 1.5 0 003.11 20.4h16.98a1.5 1.5 0 001.29-2.26L12.91 3.86a1.5 1.5 0 00-2.62 0z"/></svg>
             <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold">{{ $pendingReviews->count() }} data Daily Tracking menunggu review Anda</p>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-sm font-semibold">{{ $pendingReviews->count() }} data Daily Tracking menunggu review Anda</p>
+                    @if($pendingReviews->count() > 3)
+                        <button type="button" @click="showPendingReviewsModal = true" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-orange-800 transition-colors hover:bg-orange-100 dark:text-orange-200 dark:hover:bg-orange-900/40">Lihat selengkapnya</button>
+                    @endif
+                </div>
                 <ul class="mt-2 space-y-1 text-xs">
-                    @foreach($pendingReviews as $review)
-                        <li class="leading-relaxed"><span class="font-semibold">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</span> <span class="text-amber-700 dark:text-amber-300">· {{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
+                    @foreach($pendingReviews->take($pendingReviews->count() > 3 ? 3 : $pendingReviews->count()) as $review)
+                        <li class="leading-relaxed"><span class="font-semibold">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</span> <span class="text-orange-800 dark:text-orange-300">· {{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
                     @endforeach
                 </ul>
             </div>
         </div>
     </div>
+    @if($pendingReviews->count() > 3)
+    <div x-cloak x-show="showPendingReviewsModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4" @click.self="showPendingReviewsModal = false" @keydown.escape.window="showPendingReviewsModal = false">
+        <div x-show="showPendingReviewsModal" x-transition class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" role="dialog" aria-modal="true" aria-labelledby="pending-reviews-title">
+            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+                <div>
+                    <h2 id="pending-reviews-title" class="text-base font-bold text-gray-900 dark:text-gray-100">Daily Tracking menunggu review</h2>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih Buka detail untuk melihat data pada game dan tanggal terkait.</p>
+                </div>
+                <button type="button" @click="showPendingReviewsModal = false" class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Tutup">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="max-h-[65vh] space-y-2 overflow-y-auto p-4">
+                @foreach($pendingReviews as $review)
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</p>
+                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</p>
+                        </div>
+                        <a href="{{ route('hris.daily-tracking.game', ['divisi' => $review->divisi, 'tanggal' => $review->tanggal?->format('Y-m-d')]) }}" class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-orange-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-orange-700">
+                            Buka detail
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M7 7h10v10"/></svg>
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
     @endif
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
