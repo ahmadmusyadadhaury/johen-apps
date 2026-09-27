@@ -135,7 +135,7 @@ class PubgDailyTrackingTable extends Component
     {
         abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetForm();
-        if ($this->isDirectStaffHost()) {
+        if ($this->isFillingAsSelf()) {
             $employee = auth()->user()->employee;
             abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
             $this->nik = $employee->nik;
@@ -176,7 +176,7 @@ class PubgDailyTrackingTable extends Component
     public function save(): void
     {
         abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
-        if ($this->isDirectStaffHost()) {
+        if ($this->isFillingAsSelf()) {
             $employee = auth()->user()->employee;
             abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
             $this->nik = $employee->nik;
@@ -184,7 +184,7 @@ class PubgDailyTrackingTable extends Component
         }
         $this->validate();
 
-        $employee = $this->isDirectStaffHost()
+        $employee = $this->isFillingAsSelf()
             ? auth()->user()->employee
             : Employee::where('nik', $this->nik)->first();
         if (!$employee) {
@@ -235,7 +235,7 @@ class PubgDailyTrackingTable extends Component
     public function update(): void
     {
         abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
-        if ($this->isDirectStaffHost()) {
+        if ($this->isFillingAsSelf()) {
             $employee = auth()->user()->employee;
             abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
             $this->nik = $employee->nik;
@@ -246,7 +246,7 @@ class PubgDailyTrackingTable extends Component
         $item = BonusPubg::findOrFail($this->editId);
         if (!$this->canModify($item)) return;
 
-        $employee = $this->isDirectStaffHost() ? auth()->user()->employee : null;
+        $employee = $this->isFillingAsSelf() ? auth()->user()->employee : null;
 
         $data = [
             'tanggal' => $this->tanggal,
@@ -466,6 +466,13 @@ class PubgDailyTrackingTable extends Component
             User::ROLE_STAFF_HOST_MONKEY_PUBG,
             User::ROLE_STAFF_HOST_FC_MOBILE,
         ], true);
+    }
+
+    public function isFillingAsSelf(): bool
+    {
+        if ($this->isDirectStaffHost()) return true;
+
+        return $this->isDivisiStaffHost() && !$this->isDivisiKoordinator();
     }
 
     private function isKoordinatorView(): bool

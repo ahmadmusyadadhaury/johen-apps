@@ -347,7 +347,7 @@
             </div>
             <form wire:submit="save" class="p-6 space-y-4">
                 <div class="grid grid-cols-3 gap-4">
-                    @if($this->isDirectStaffHost())
+                    @if($this->isFillingAsSelf())
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Host</label>
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->employee?->nik ?? '-' }} — {{ auth()->user()->employee?->nama ?? '-' }}</div>
@@ -452,7 +452,7 @@
             </div>
             <form wire:submit="update" class="p-6 space-y-4">
                 <div class="grid grid-cols-3 gap-4">
-                    @if($this->isDirectStaffHost())
+                    @if($this->isFillingAsSelf())
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Host</label>
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->employee?->nik ?? '-' }} — {{ auth()->user()->employee?->nama ?? '-' }}</div>
