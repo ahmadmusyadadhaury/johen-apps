@@ -16,9 +16,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{{ $dailyTrackingTitle }}</h1>
-        @unless(in_array($divisi, ['PUBG', 'Free Fire', 'MLBB', 'FC Mobile', 'E-football', 'Monkey PUBG', 'Valorant', 'Roblox'], true))
-            <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Tracking harian pemain</p>
-        @endunless
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Tracking harian pemain {{ $dailyTrackingLabel }}</p>
     </div>
 @endpush
 
@@ -42,7 +40,7 @@
 
         <div @click="modal = 'view'" class="stat-card group cursor-pointer">
             <div class="flex items-center justify-between mb-3">
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-200 group-hover:scale-110 transition-transform duration-300">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shadow-sm group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/></svg>
                 </div>
                 <span class="badge-success">Total</span>
