@@ -222,7 +222,9 @@
                             <span class="badge {{ $item->status === 'pending' ? 'badge-warning' : ($item->status === 'disetujui' ? 'badge-success' : ($item->status === 'ditolak' ? 'badge-danger' : 'badge-info')) }} shrink-0">{{ $statusLabel }}</span>
                         </div>
                         <div class="mt-3 flex flex-wrap gap-2 text-sm">
-                            <span class="rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $item->tanggal->format('d/m/Y') }}</span>
+                            @unless($this->isDivisiKoordinator())
+                                <span class="rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $item->tanggal->format('d/m/Y') }}</span>
+                            @endunless
                             <span class="rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $item->sesi ?? 'Sesi -' }}</span>
                         </div>
                         <dl class="mt-4 grid grid-cols-2 gap-2">
@@ -268,7 +270,9 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="table-header">
-                        <th class="px-6 py-3 text-center border-r border-gray-200 dark:border-gray-600">Tanggal</th>
+                        @unless($this->isDivisiKoordinator())
+                            <th class="px-6 py-3 text-center border-r border-gray-200 dark:border-gray-600">Tanggal</th>
+                        @endunless
                         <th class="px-6 py-3">NIK</th>
                         <th class="px-6 py-3">Nama</th>
                         <th class="px-6 py-3">Divisi</th>
@@ -289,9 +293,11 @@
                     @forelse($groupedItems as $date => $dateItems)
                         @foreach($dateItems as $i => $item)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            @if($loop->first)
-                            <td class="table-cell text-gray-700 dark:text-gray-300 font-medium text-center border-r border-gray-200 dark:border-gray-600" rowspan="{{ $dateItems->count() }}">{{ $item->tanggal->format('d/m/Y') }}</td>
-                            @endif
+                            @unless($this->isDivisiKoordinator())
+                                @if($loop->first)
+                                <td class="table-cell text-gray-700 dark:text-gray-300 font-medium text-center border-r border-gray-200 dark:border-gray-600" rowspan="{{ $dateItems->count() }}">{{ $item->tanggal->format('d/m/Y') }}</td>
+                                @endif
+                            @endunless
                             <td class="table-cell font-mono text-xs text-gray-600 dark:text-gray-400">{{ $item->nik }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->divisi }}</td>
@@ -381,7 +387,7 @@
                         @endforeach
                     @empty
                         <tr>
-                            <td colspan="15" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="{{ $this->isDivisiKoordinator() ? 14 : 15 }}" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     <p class="font-medium">Belum ada data</p>
