@@ -184,7 +184,7 @@ class MachineUserSyncTable extends Component
 
     public function openDeleteModal(string $machineUserId): void
     {
-        abort_unless(auth()->user()->isSuperAdminLike(), 403);
+        abort_unless(auth()->user()->canManageAttendanceMachine(), 403);
 
         $this->deleteMachineUserId = $machineUserId;
         $this->deleteMachineName = MachineUser::where('machine_user_id', $machineUserId)->value('name') ?? $machineUserId;
@@ -200,7 +200,7 @@ class MachineUserSyncTable extends Component
 
     public function confirmDelete(): void
     {
-        abort_unless(auth()->user()->isSuperAdminLike(), 403);
+        abort_unless(auth()->user()->canManageAttendanceMachine(), 403);
 
         $machineUserId = $this->deleteMachineUserId;
         if (! $machineUserId) {
@@ -293,7 +293,7 @@ class MachineUserSyncTable extends Component
 
     public function render()
     {
-        abort_unless(auth()->user()->isSuperAdminLike(), 403);
+        abort_unless(auth()->user()->canManageAttendanceMachine(), 403);
 
         $employeeMap = DB::table('employees')
             ->selectRaw('device_user_id as machine_user_id, id as employee_id')

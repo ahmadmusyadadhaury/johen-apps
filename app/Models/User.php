@@ -130,6 +130,11 @@ class User extends Authenticatable
         return $this->isSuperAdmin() || $this->isStaffHr() || $this->isAdminMaster();
     }
 
+    public function canManageAttendanceMachine(): bool
+    {
+        return $this->isSuperAdmin() || $this->isGmCeo();
+    }
+
     public function isStaffHr(): bool
     {
         return $this->role === self::ROLE_STAFF_HR;

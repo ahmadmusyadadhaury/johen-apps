@@ -60,9 +60,7 @@ class AbsensiTable extends Component
 
         $this->refreshPeriod();
 
-        if ($this->tab === 'sinkron' && ! auth()->user()?->isSuperAdminLike()) {
-            $this->tab = 'tim';
-        }
+        $this->normalizeTabForUser();
     }
 
     public function updatedTab(): void
@@ -172,10 +170,10 @@ class AbsensiTable extends Component
         $employee = Employee::find($employeeId);
 
         if (! $employee || $employee->id !== $user->employee?->id) {
-            $allowed = ($user->isAnyKoordinator() || $user->isHeadOfStore())
+            $allowed = ($this->canViewTeamTab($user))
                 && in_array($employeeId, $this->getSubordinateEmployeeIds());
 
-            if (! $allowed && ! $user->isSuperAdminLike()) {
+            if (! $allowed && ! $user->canManageAttendanceMachine()) {
                 abort(403);
             }
         }
@@ -278,8 +276,9 @@ class AbsensiTable extends Component
     {
         $user = auth()->user();
         $today = $this->date ?: now()->toDateString();
+        $this->normalizeTabForUser();
 
-        if ($user->isSuperAdminLike() && $this->tab === 'sinkron') {
+        if ($user->canManageAttendanceMachine() && $this->tab === 'sinkron') {
             return view('livewire.absensi-table', [
                 'sinkronView' => true,
                 'tab' => $this->tab,
@@ -287,19 +286,7 @@ class AbsensiTable extends Component
             ]);
         }
 
-        $ownView = $user->isStaff()
-            || $user->isStaffIt()
-            || $user->isStaffCreative()
-            || ($user->isStaffHostPubg() && ! $user->isAnyKoordinator())
-            || ($user->isStaffHostFf() && ! $user->isAnyKoordinator())
-            || $user->isStaffHostMlbb()
-            || $user->isStaffHostEfootball()
-            || $user->isStaffHostValorant()
-            || $user->isStaffAdmin()
-            || ($user->isSuperAdminLike() && $this->tab === 'saya')
-            || ($user->isKoordinator() && $this->tab === 'saya')
-            || (($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) && $this->tab === 'saya')
-            || ($user->isHeadOfStore() && $this->tab === 'saya');
+        $ownView = $this->tab === 'saya';
 
         if ($ownView) {
             $employee = $user->employee;
@@ -442,16 +429,7 @@ class AbsensiTable extends Component
             }
         }
 
-        if (($user->isKoordinatorIt() || $user->isKoordinatorCreative() || $user->isKoordinatorAdmin() || $user->isKoordinatorStock() || $user->isKoordinatorPubg() || $user->isKoordinatorFf() || $user->isKoordinatorMlbb() || $user->isKoordinatorEfootball() || $user->isKoordinatorValorant() || $user->isKoordinatorRoblox() || $user->isKoordinatorMonkeyPubg()) && $this->tab === 'tim') {
-            $subordinateIds = $this->getSubordinateEmployeeIds();
-            if (! empty($subordinateIds)) {
-                $employeeQuery->whereIn('id', $subordinateIds);
-            } else {
-                $employeeQuery->whereRaw('1 = 0');
-            }
-        }
-
-        if ($user->isHeadOfStore() && $this->tab === 'tim') {
+        if ($this->tab === 'tim' && (($user->isAnyKoordinator() && ! $user->isKoordinator()) || $user->isManager() || $user->isKoordinatorProject())) {
             $subordinateIds = $this->getSubordinateEmployeeIds();
             if (! empty($subordinateIds)) {
                 $employeeQuery->whereIn('id', $subordinateIds);
@@ -545,6 +523,25 @@ class AbsensiTable extends Component
             $q->whereIn('position_id', $descendantIds)
                 ->where('is_main', true);
         })->pluck('id')->toArray();
+    }
+
+    private function canViewTeamTab($user): bool
+    {
+        return $user->isAnyKoordinator() || $user->isKoordinatorProject() || $user->isManager();
+    }
+
+    private function normalizeTabForUser(): void
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return;
+        }
+
+        if ($this->tab === 'sinkron' && ! $user->canManageAttendanceMachine()) {
+            $this->tab = 'saya';
+        } elseif ($this->tab === 'tim' && ! $this->canViewTeamTab($user)) {
+            $this->tab = 'saya';
+        }
     }
 
     private function getAllDescendantIds(Position $position): array
