@@ -386,6 +386,16 @@ if ($divisionViewUser) {
                     </div>
                     @endif
 
+                    @if(auth()->user()->isKoordinatorFf())
+                    <div class="mt-4" data-development-menu>
+                        <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Johen PUBG</p>
+                        <a href="{{ route('pubg.daily-tracking', ['divisi' => 'pubg']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('pubg.daily-tracking') && request()->query('divisi') === 'pubg' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            Daily Tracking
+                        </a>
+                    </div>
+                    @endif
+
                     @if(auth()->user()->isKoordinatorFf() || auth()->user()->isStaffHostFf())
                     <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi FF</p>

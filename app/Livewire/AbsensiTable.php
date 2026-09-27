@@ -429,7 +429,7 @@ class AbsensiTable extends Component
             }
         }
 
-        if ($this->tab === 'tim' && (($user->isAnyKoordinator() && ! $user->isKoordinator()) || $user->isManager() || $user->isKoordinatorProject())) {
+        if ($this->tab === 'tim' && (($user->isAnyKoordinator() && ! $user->isKoordinator()) || $user->isKoordinatorFcMobile() || $user->isManager() || $user->isKoordinatorProject())) {
             $subordinateIds = $this->getSubordinateEmployeeIds();
             if (! empty($subordinateIds)) {
                 $employeeQuery->whereIn('id', $subordinateIds);
@@ -519,15 +519,21 @@ class AbsensiTable extends Component
             return [];
         }
 
-        return Employee::whereHas('positions', function ($q) use ($descendantIds) {
-            $q->whereIn('position_id', $descendantIds)
-                ->where('is_main', true);
+        $includeSecondaryGameHostAssignments = auth()->user()?->isKoordinatorPubg()
+            || auth()->user()?->isKoordinatorMlbb();
+
+        return Employee::whereHas('positions', function ($q) use ($descendantIds, $includeSecondaryGameHostAssignments) {
+            $q->whereIn('position_id', $descendantIds);
+
+            if (! $includeSecondaryGameHostAssignments) {
+                $q->where('is_main', true);
+            }
         })->pluck('id')->toArray();
     }
 
     private function canViewTeamTab($user): bool
     {
-        return $user->isAnyKoordinator() || $user->isKoordinatorProject() || $user->isManager();
+        return $user->isAnyKoordinator() || $user->isKoordinatorFcMobile() || $user->isKoordinatorProject() || $user->isManager();
     }
 
     private function normalizeTabForUser(): void

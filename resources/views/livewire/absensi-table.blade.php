@@ -6,7 +6,7 @@
 @endpush
 
 <div wire:poll.5s>
-    @if(auth()->user()->canManageAttendanceMachine() || auth()->user()->isAnyKoordinator() || auth()->user()->isKoordinatorProject() || auth()->user()->isManager())
+    @if(auth()->user()->canManageAttendanceMachine() || auth()->user()->isAnyKoordinator() || auth()->user()->isKoordinatorFcMobile() || auth()->user()->isKoordinatorProject() || auth()->user()->isManager())
     {{-- Tab Navigation --}}
     <div class="mb-6">
         <div class="flex sm:inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1" role="tablist" aria-label="Pilih tampilan presensi">
