@@ -72,10 +72,6 @@
         background-color: #ffffff;
     }
 
-    html.dark #johen-splash {
-        background-color: #07080F;
-    }
-
     html[data-splash="on"] #johen-splash {
         opacity: 1;
         visibility: visible;
@@ -124,20 +120,12 @@
         text-indent: 0.22em;
     }
 
-    html.dark .johen-splash-title {
-        color: #e2e8f0;
-    }
-
     .johen-splash-sub {
         margin-top: 5px;
         font-size: 0.6875rem;
         font-weight: 500;
         letter-spacing: 0.1em;
         color: #64748b;
-    }
-
-    html.dark .johen-splash-sub {
-        color: #94a3b8;
     }
 
     .johen-splash-bar {

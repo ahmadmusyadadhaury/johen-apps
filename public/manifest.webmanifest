@@ -8,7 +8,7 @@
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#07080F",
+    "background_color": "#FFFFFF",
     "theme_color": "#0987F5",
     "categories": ["business", "productivity"],
     "icons": [

@@ -24,7 +24,7 @@ class GeneratePwaAssets extends Command
     /** Warna brand, disamakan dengan tailwind.config.js */
     private const BRAND_BLUE = [9, 135, 245];    // primary-500  #0987F5
     private const BRAND_VIOLET = [133, 78, 234];  // violet-500   #854DEA
-    private const BASE_DARK = [7, 8, 15];         // #07080F, sama dengan guest.blade.php
+    private const BASE_LIGHT = [255, 255, 255];  // #FFFFFF, background polos ikon & splash
 
     /**
      * [nama file, ukuran, gaya]
@@ -96,6 +96,9 @@ class GeneratePwaAssets extends Command
 
         $this->line("  Setelah trim : {$logoW}x{$logoH} (rasio ".round($logoW / $logoH, 3).')');
 
+        $logoDark = $this->darkenForLightBase($logo);
+        $this->line('  Penyesuaian  : logo digelapkan agar kontras di base putih');
+
         if ($logoW < 512 || $logoH < 512) {
             $this->components->warn(
                 "Logo kecil ({$logoW}x{$logoH}). Ikon 512px & splash akan terlihat kurang tajam."
@@ -128,7 +131,7 @@ class GeneratePwaAssets extends Command
             }
 
             $targetH = (int) round($size * $logoScale);
-            $this->drawLogo($canvas, $logo, (int) ($size / 2), (int) ($size / 2), $targetH);
+            $this->drawLogo($canvas, $style === 'transparent' ? $logo : $logoDark, (int) ($size / 2), (int) ($size / 2), $targetH);
 
             $this->writePng($canvas, $outDir.DIRECTORY_SEPARATOR.$name);
             imagedestroy($canvas);
@@ -145,12 +148,14 @@ class GeneratePwaAssets extends Command
             $this->paintGlow($canvas, (int) ($w * 0.42), (int) ($h * 0.78), (int) ($w * 1.05), 0.34, self::BRAND_VIOLET);
 
             $targetH = (int) round(min($h * self::SPLASH_LOGO_SCALE, $w * 0.52));
-            $this->drawLogo($canvas, $logo, (int) ($w / 2), (int) ($h * 0.42), $targetH);
+            $this->drawLogo($canvas, $logoDark, (int) ($w / 2), (int) ($h * 0.42), $targetH);
 
             $this->writePng($canvas, $splashDir.DIRECTORY_SEPARATOR."splash-{$w}x{$h}.png");
             imagedestroy($canvas);
             $bar->advance();
         }
+
+        imagedestroy($logoDark);
 
         $bar->finish();
         $this->newLine(2);
@@ -285,14 +290,58 @@ class GeneratePwaAssets extends Command
     }
 
     /**
-     * Background gelap polos sebagai warna dasar splash & icon.
-     * Penting: manifest background_color dan tema harus memakai nilai yang sama,
+     * Background putih polos sebagai warna dasar splash & icon.
+     * Penting: manifest background_color harus memakai nilai yang sama,
      * supaya transisi dari native splash ke overlay HTML tidak kedip.
      */
     private function paintBase(GdImage $im, int $w, int $h): void
     {
-        [$r, $g, $b] = self::BASE_DARK;
+        [$r, $g, $b] = self::BASE_LIGHT;
         imagefilledrectangle($im, 0, 0, $w - 1, $h - 1, imagecolorallocate($im, $r, $g, $b));
+    }
+
+    /**
+     * Logo sumber dibuat untuk background gelap: inti putih dengan aksen
+     * biru/violet. Di atas base putih bagian putihnya hilang, jadi lightness
+     * dibalik: hue tetap, warnanya jadi gelap supaya logo tetap terbaca.
+     * Alpha tidak disentuh, hanya channel warna.
+     *
+     * Salinan, bukan in-place: logo asli tetap terang untuk favicon transparan
+     * yang background-nya mengikuti warna browser, bukan putih.
+     */
+    private function darkenForLightBase(GdImage $im): GdImage
+    {
+        $w = imagesx($im);
+        $h = imagesy($im);
+
+        $out = imagecreatetruecolor($w, $h);
+        imagealphablending($out, false);
+        imagesavealpha($out, true);
+        imagecopy($out, $im, 0, 0, 0, 0, $w, $h);
+
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $argb = imagecolorat($out, $x, $y);
+                $a = ($argb >> 24) & 0x7F;
+
+                $r = ($argb >> 16) & 0xFF;
+                $g = ($argb >> 8) & 0xFF;
+                $b = $argb & 0xFF;
+
+                $luma = (0.2126 * $r + 0.7152 * $g + 0.0722 * $b) / 255;
+                $factor = (1 - $luma) * 0.92;
+
+                $nr = (int) round($r * $factor);
+                $ng = (int) round($g * $factor);
+                $nb = (int) round($b * $factor);
+
+                imagesetpixel($out, $x, $y, ($a << 24) | ($nr << 16) | ($ng << 8) | $nb);
+            }
+        }
+
+        imagealphablending($out, true);
+
+        return $out;
     }
 
     private function paintGlow(
