@@ -69,14 +69,22 @@
                 </div>
 
                 @php
-$isStaffHost = auth()->user()->isStaffHostPubg()
+$isEnabledCoordinatorDivisionMenu = auth()->user()->isKoordinatorPubg()
+    || auth()->user()->isKoordinatorFf()
+    || auth()->user()->isKoordinatorValorant()
+    || auth()->user()->isKoordinatorMonkeyPubg()
+    || auth()->user()->isKoordinatorRoblox()
+    || auth()->user()->isKoordinatorEfootball()
+    || (auth()->user()->isKoordinator() && auth()->user()->isFcMobileCoordinator())
+    || auth()->user()->isKoordinatorMlbb();
+$isStaffHost = !$isEnabledCoordinatorDivisionMenu && (auth()->user()->isStaffHostPubg()
     || auth()->user()->isStaffHostFf()
     || auth()->user()->isStaffHostMlbb()
     || auth()->user()->isStaffHostEfootball()
     || auth()->user()->isStaffHostValorant()
     || auth()->user()->isStaffHostRoblox()
     || auth()->user()->isStaffHostMonkeyPubg()
-    || auth()->user()->isStaffHostFcMobile();
+    || auth()->user()->isStaffHostFcMobile());
 $isStaffAdmin = auth()->user()->isStaffAdmin();
 $isAdminMenuRestricted = $isStaffAdmin || auth()->user()->isKoordinatorAdmin();
 $isStaffStock = auth()->user()->isStaffStock();

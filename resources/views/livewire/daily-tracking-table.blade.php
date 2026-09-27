@@ -1,19 +1,19 @@
 <div x-data="{ showPendingReviewsModal: false, pendingReviewSearch: '' }">
     @if($pendingReviews->isNotEmpty())
-    <div role="status" class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-gray-900 shadow-sm dark:border-orange-700 dark:bg-gray-800 dark:text-gray-100">
+    <div role="status" class="mb-5 rounded-xl border border-[#3f3326] bg-[#1c1d24] px-4 py-3 text-white shadow-sm">
         <div class="flex items-start gap-3">
             <svg class="mt-0.5 h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86L1.82 18.14A1.5 1.5 0 003.11 20.4h16.98a1.5 1.5 0 001.29-2.26L12.91 3.86a1.5 1.5 0 00-2.62 0z"/></svg>
             <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <p class="text-sm font-semibold">{{ $pendingReviews->count() }} data Daily Tracking menunggu review Anda</p>
                     @if($pendingReviews->count() > 1)
-                        <button type="button" @click="showPendingReviewsModal = true" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-orange-800 transition-colors hover:bg-orange-100 dark:text-orange-200 dark:hover:bg-orange-900/40">Lihat selengkapnya</button>
+                        <button type="button" @click="showPendingReviewsModal = true" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-orange-400 transition-colors hover:bg-white/5 hover:text-orange-300">Lihat selengkapnya</button>
                     @endif
                 </div>
                 @if($pendingReviews->count() === 1)
                 <ul class="mt-2 space-y-1 text-xs">
                     @foreach($pendingReviews as $review)
-                        <li class="leading-relaxed"><span class="font-semibold">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</span> <span class="text-orange-800 dark:text-orange-300">· {{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
+                        <li class="leading-relaxed"><span class="font-semibold text-white">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</span> <span class="text-orange-400">· {{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
                     @endforeach
                 </ul>
                 @endif
