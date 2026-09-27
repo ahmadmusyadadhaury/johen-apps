@@ -520,6 +520,11 @@ class User extends Authenticatable
         return $this->hasDivisionPosition('Koordinator FC Mobile');
     }
 
+    public function isFcMobileCoordinator(): bool
+    {
+        return $this->employee?->mainPosition()?->nama === 'Koordinator FC Mobile';
+    }
+
     public function hasDivisionPosition(string $rootPositionName): bool
     {
         $employee = $this->employee;

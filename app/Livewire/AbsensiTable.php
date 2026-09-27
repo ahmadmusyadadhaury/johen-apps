@@ -429,7 +429,7 @@ class AbsensiTable extends Component
             }
         }
 
-        if ($this->tab === 'tim' && (($user->isAnyKoordinator() && ! $user->isKoordinator()) || $user->isKoordinatorFcMobile() || $user->isManager() || $user->isKoordinatorProject())) {
+        if ($this->tab === 'tim' && (($user->isAnyKoordinator() && ! $user->isKoordinator()) || $user->isFcMobileCoordinator() || $user->isManager() || $user->isKoordinatorProject())) {
             $subordinateIds = $this->getSubordinateEmployeeIds();
             if ($user->isKoordinatorEfootball() && $user->employee) {
                 $subordinateIds[] = $user->employee->id;
@@ -538,7 +538,12 @@ class AbsensiTable extends Component
 
     private function canViewTeamTab($user): bool
     {
-        return $user->isAnyKoordinator() || $user->isKoordinatorFcMobile() || $user->isKoordinatorProject() || $user->isManager();
+        return $user->isSuperAdmin()
+            || $user->isGmCeo()
+            || $user->isAnyKoordinator()
+            || $user->isFcMobileCoordinator()
+            || $user->isKoordinatorProject()
+            || $user->isManager();
     }
 
     private function normalizeTabForUser(): void
