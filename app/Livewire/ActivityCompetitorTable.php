@@ -12,6 +12,13 @@ class ActivityCompetitorTable extends Component
 {
     use WithPagination;
 
+    public ?int $employeeId = null;
+
+    public function mount(?int $employeeId = null): void
+    {
+        $this->employeeId = $employeeId;
+    }
+
     public bool $showModal = false;
     public bool $showFeedbackModal = false;
     public bool $showDetail = false;
@@ -225,7 +232,9 @@ class ActivityCompetitorTable extends Component
 
             if ($user->isManager() || $user->isKoordinatorCreative() || $user->isKoordinatorIt() || $user->isKoordinatorAdmin() || $user->isKoordinatorPubg() || $user->isKoordinatorFf()) {
                 $subordinateIds = $this->getSubordinateIds($employee);
-                $visibleIds = array_merge($visibleIds, $subordinateIds);
+                $visibleIds = $user->isManager() && $this->employeeId
+                    ? (in_array($this->employeeId, $subordinateIds, true) ? [$this->employeeId] : [])
+                    : array_merge($visibleIds, $subordinateIds);
             }
 
             $query->whereIn('employee_id', $visibleIds);
@@ -245,6 +254,7 @@ class ActivityCompetitorTable extends Component
         return view('livewire.activity-competitor-table', [
             'items' => $items,
             'canGiveFeedbackMap' => $canGiveFeedbackMap,
+            'employeeId' => $this->employeeId,
         ]);
     }
 }

@@ -7,6 +7,6 @@
 
 <x-app-layout title="Activity Competitor">
 
-@livewire('activity-competitor-table')
+@livewire('activity-competitor-table', ['employeeId' => $employeeId ?? null])
 
 </x-app-layout>

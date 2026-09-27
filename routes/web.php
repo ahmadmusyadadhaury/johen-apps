@@ -149,6 +149,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/stok-ketersediaan', StokKetersediaanTable::class)->name('stok-ketersediaan')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock,staff_hr');
         Route::get('/stok-target', StokTargetTable::class)->name('stok-target')->middleware('role:super_admin,gm_ceo,koordinator_stock,staff_stock,staff_hr');
         Route::get('/activity-competitor', [ActivityCompetitorController::class, 'index'])->name('activity-competitor');
+        Route::get('/activity-competitor/{employee}', [ActivityCompetitorController::class, 'show'])->name('activity-competitor.show');
         Route::get('/content-plan', ContentPlanTable::class)->name('content-plan');
 
         // Weekly Meeting routes

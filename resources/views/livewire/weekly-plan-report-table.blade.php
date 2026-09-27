@@ -7,7 +7,7 @@
 
     @if($employeeId)
     <div class="mb-4">
-        <a href="{{ route('hris.weekly-report') }}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <a href="{{ route('hris.weekly-report') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             Kembali ke Daftar Koordinator
         </a>
@@ -15,9 +15,6 @@
     @endif
 
     <div class="flex items-center justify-between mb-6">
-        <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Kelola rencana kerja mingguan</p>
-        </div>
         <div class="flex items-center gap-3">
             @if($availableWeeks->isNotEmpty())
             <div class="relative">
