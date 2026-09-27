@@ -167,14 +167,14 @@
 
     <div class="card">
         {{-- Header --}}
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-4 sm:px-6 border-b border-gray-50 dark:border-gray-800">
             <div>
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $dailyTrackingTitle }}</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data daily tracking divisi {{ $dailyTrackingLabel }}</p>
             </div>
             @php $isDivisiKoord = $this->isDivisiKoordinator(); @endphp
             @if($this->canFillData())
-            <button wire:click="openCreateModal" class="btn-primary text-xs py-2 shrink-0">
+            <button wire:click="openCreateModal" class="btn-primary min-h-11 w-full justify-center text-sm sm:w-auto sm:text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Data
             </button>
@@ -182,12 +182,14 @@
         </div>
 
         {{-- Filter --}}
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
-            <div class="relative flex-1 min-w-[200px] max-w-xs">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 px-4 py-4 sm:px-6 border-b border-gray-50 dark:border-gray-800">
+            <div class="relative w-full flex-1 sm:min-w-[200px] sm:max-w-xs">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari NIK atau Nama..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                <label for="daily-tracking-search" class="sr-only">Cari berdasarkan NIK atau nama</label>
+                <input id="daily-tracking-search" type="search" wire:model.live.debounce.300ms="search" placeholder="Cari NIK atau nama..." class="min-h-11 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-10 pr-3 py-2.5 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
             </div>
-            <select wire:model.live="bulan" class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-8 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+            <label for="daily-tracking-month" class="sr-only">Filter berdasarkan bulan</label>
+            <select id="daily-tracking-month" wire:model.live="bulan" class="min-h-11 w-full sm:w-auto rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-8 py-2.5 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                 <option value="">Semua Bulan</option>
                 @foreach(range(1, 12) as $m)
                     @php $val = now()->format('Y') . '-' . str_pad($m, 2, '0', STR_PAD_LEFT); @endphp
@@ -197,7 +199,67 @@
         </div>
 
         {{-- Table --}}
-        <div class="overflow-x-auto">
+        <div class="space-y-3 p-3 md:hidden" aria-label="Daftar daily tracking">
+            @forelse($groupedItems as $date => $dateItems)
+                @foreach($dateItems as $item)
+                    @php
+                        $statusLabel = match($item->status) { 'pending' => 'Menunggu', 'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak', default => $item->status };
+                        $isKoord = $isDivisiKoord;
+                        $isStaff = $this->canFillData();
+                        $canEdit = $isKoord || ($isStaff && $item->status === 'pending');
+                    @endphp
+                    <article wire:key="daily-tracking-mobile-{{ $item->id }}" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="break-words text-base font-bold leading-snug text-gray-900 dark:text-gray-100">{{ $item->nama }}</h3>
+                                <p class="mt-1 font-mono text-sm text-gray-600 dark:text-gray-300">NIK {{ $item->nik }}</p>
+                            </div>
+                            <span class="badge {{ $item->status === 'pending' ? 'badge-warning' : ($item->status === 'disetujui' ? 'badge-success' : ($item->status === 'ditolak' ? 'badge-danger' : 'badge-info')) }} shrink-0">{{ $statusLabel }}</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-2 text-sm">
+                            <span class="rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $item->tanggal->format('d/m/Y') }}</span>
+                            <span class="rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $item->sesi ?? 'Sesi -' }}</span>
+                        </div>
+                        <dl class="mt-4 grid grid-cols-2 gap-2">
+                            @foreach([['Sold', number_format($item->ach_sold, 0)], ['View', number_format($item->ach_view, 0)], ['Peak view', number_format($item->peak_view, 0)], ['Durasi live', $item->durasi ? number_format($item->durasi, 0) . ' jam' : '-']] as [$label, $value])
+                                <div class="rounded-xl bg-gray-50 px-3 py-2 dark:bg-gray-800/70"><dt class="text-xs text-gray-600 dark:text-gray-300">{{ $label }}</dt><dd class="mt-0.5 text-base font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ $value }}</dd></div>
+                            @endforeach
+                        </dl>
+                        @if($item->catatan)
+                            <div class="mt-3"><p class="text-xs font-semibold text-gray-600 dark:text-gray-300">Catatan</p><p class="mt-1 break-words text-sm leading-relaxed text-gray-800 dark:text-gray-200">{{ $item->catatan }}</p></div>
+                        @endif
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @if($item->foto_bukti_stats)
+                                <button type="button" @click="fotoModalUrl = '/storage/{{ $item->foto_bukti_stats }}'; fotoModalLabel = 'Bukti Stats'; showFotoModal = true" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary-200 px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-950/40" aria-label="Lihat bukti stats {{ $item->nama }}">Bukti stats</button>
+                            @endif
+                            @if($item->foto_bukti_live)
+                                <button type="button" @click="fotoModalUrl = '/storage/{{ $item->foto_bukti_live }}'; fotoModalLabel = 'Bukti Live'; showFotoModal = true" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40" aria-label="Lihat bukti live {{ $item->nama }}">Bukti live</button>
+                            @endif
+                            @unless($item->foto_bukti_stats || $item->foto_bukti_live)<span class="self-center text-sm text-gray-500 dark:text-gray-400">Belum ada bukti</span>@endunless
+                        </div>
+                        <div class="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+                            <p class="text-xs font-semibold text-amber-800 dark:text-amber-300">Feedback atasan</p>
+                            <p class="mt-1 break-words text-sm leading-relaxed text-amber-900 dark:text-amber-200">{{ $item->feedback_atasan ?: 'Belum ada feedback' }}</p>
+                        </div>
+                        @if($isKoord && $item->status === 'pending')
+                            <div class="mt-3 grid grid-cols-2 gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                                <button type="button" wire:click="setujui({{ $item->id }})" class="min-h-11 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">Setujui</button>
+                                <button type="button" wire:click="tolak({{ $item->id }})" class="min-h-11 rounded-xl border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40">Tolak</button>
+                            </div>
+                        @elseif($canEdit)
+                            <div class="mt-3 grid grid-cols-2 gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                                <button type="button" wire:click="openEditModal({{ $item->id }})" class="min-h-11 rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800">Edit</button>
+                                <button type="button" wire:click="confirmDelete({{ $item->id }})" class="min-h-11 rounded-xl border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40">Hapus</button>
+                            </div>
+                        @endif
+                    </article>
+                @endforeach
+            @empty
+                <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">Belum ada data daily tracking.</div>
+            @endforelse
+        </div>
+
+        <div class="hidden overflow-x-auto md:block">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="table-header">
