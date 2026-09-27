@@ -1,12 +1,10 @@
 <div x-data="{ showFotoModal: false, fotoModalUrl: '', fotoModalLabel: '', showFeedbackModal: false, feedbackId: null }">
     <div class="flex items-center justify-between gap-4 mb-6">
         <div>
-            <a href="{{ route('hris.daily-tracking') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+            <a href="{{ route('hris.daily-tracking') }}" class="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
                 Semua Game
             </a>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mt-1">Daily Tracking {{ $divisi }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data daily tracking divisi {{ $divisi }}</p>
         </div>
         <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ match($divisi) {
             'PUBG' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
