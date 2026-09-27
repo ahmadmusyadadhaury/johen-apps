@@ -74,7 +74,9 @@
                 <div class="flex items-center gap-4 min-w-0">
                     <div class="relative h-14 w-14 shrink-0">
                         @if($game['photo'])
-                            <img src="{{ $game['photo'] }}" alt="{{ $game['divisi'] }}" class="h-14 w-14 rounded-2xl object-cover shadow-lg border border-gray-200 dark:border-gray-600 group-hover:scale-105 transition-transform duration-300">
+                            <div class="h-14 w-14 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 shadow-lg">
+                                <img src="{{ $game['photo'] }}" alt="{{ $game['divisi'] }}" class="h-full w-full object-cover">
+                            </div>
                         @else
                             <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br {{ $iconBg }} text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
                                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
