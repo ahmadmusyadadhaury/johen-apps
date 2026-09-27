@@ -1,4 +1,20 @@
 <div>
+    @if($pendingReviews->isNotEmpty())
+    <div role="status" class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+        <div class="flex items-start gap-3">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86L1.82 18.14A1.5 1.5 0 003.11 20.4h16.98a1.5 1.5 0 001.29-2.26L12.91 3.86a1.5 1.5 0 00-2.62 0z"/></svg>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold">{{ $pendingReviews->count() }} data Daily Tracking menunggu review Anda</p>
+                <ul class="mt-2 space-y-1 text-xs">
+                    @foreach($pendingReviews as $review)
+                        <li class="leading-relaxed"><span class="font-semibold">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</span> <span class="text-amber-700 dark:text-amber-300">· {{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</span></li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div class="stat-card">
             <div class="flex items-center justify-between mb-3">

@@ -185,6 +185,7 @@ class DailyTrackingTable extends Component
             'totalView' => 0,
             'totalPeak' => 0,
             'totalDurasi' => 0,
+            'pendingReviews' => collect(),
         ];
 
         if (!$employee || !$user->isManager()) {
@@ -229,6 +230,16 @@ class DailyTrackingTable extends Component
             ];
         });
 
+        $pendingReviews = (clone $baseQuery)
+            ->whereNotNull('bonus_pubgs.approved_by')
+            ->where(function ($query) {
+                $query->whereNull('bonus_pubgs.feedback_atasan')
+                    ->orWhere('bonus_pubgs.feedback_atasan', '');
+            })
+            ->with('employee:id,nama')
+            ->orderBy('bonus_pubgs.tanggal')
+            ->get(['bonus_pubgs.id', 'bonus_pubgs.employee_id', 'bonus_pubgs.divisi', 'bonus_pubgs.tanggal']);
+
         $totalSold = $games->sum('totalSold');
         $totalView = $games->sum('totalView');
         $totalPeak = $games->sum('totalPeak');
@@ -240,6 +251,7 @@ class DailyTrackingTable extends Component
             'totalView' => $totalView,
             'totalPeak' => $totalPeak,
             'totalDurasi' => $totalDurasi,
+            'pendingReviews' => $pendingReviews,
         ]);
     }
 }
