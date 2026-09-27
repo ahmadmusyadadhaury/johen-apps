@@ -1,3 +1,7 @@
+@php
+    $dailyTrackingLabel = strtolower(trim($divisi)) === 'pubg' ? 'Johen PUBG' : $divisi;
+@endphp
+
 <div x-data="{ showFotoModal: false, fotoModalUrl: '', fotoModalLabel: '', showFeedbackModal: false, feedbackId: null }">
     <div class="flex items-center justify-between gap-4 mb-6">
         <div>
@@ -7,7 +11,7 @@
             </a>
         </div>
         <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ match($divisi) {
-            'PUBG' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+            'PUBG', 'pubg' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
             'Free Fire' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
             'MLBB' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
             'E-football' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -18,7 +22,7 @@
             default => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
         } }}">
             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-            {{ $divisi }}
+            {{ $dailyTrackingLabel }}
         </span>
     </div>
 
@@ -71,8 +75,8 @@
     <div class="card">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800">
             <div>
-                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Data Daily Tracking {{ $divisi }}</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data daily tracking divisi {{ $divisi }}</p>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Daily Tracking {{ $dailyTrackingLabel }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Data daily tracking divisi {{ $dailyTrackingLabel }}</p>
             </div>
         </div>
 
