@@ -6,10 +6,17 @@ use App\Models\ActivityCompetitor;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ActivityCompetitorCoordinatorList extends Component
 {
+    #[On('report-feedback-updated')]
+    public function refresh(): void
+    {
+        //
+    }
+
     private function descendantPositionIds(int $positionId): array
     {
         $ids = [$positionId];
@@ -77,8 +84,19 @@ class ActivityCompetitorCoordinatorList extends Component
             }
         }
 
+        $coordinatorIds = collect($groups)->flatten()->pluck('id');
+
         $counts = ActivityCompetitor::selectRaw('employee_id, COUNT(*) as total')
-            ->whereIn('employee_id', collect($groups)->flatten()->pluck('id'))
+            ->whereIn('employee_id', $coordinatorIds)
+            ->groupBy('employee_id')
+            ->pluck('total', 'employee_id');
+
+        $pendingCounts = ActivityCompetitor::selectRaw('employee_id, COUNT(*) as total')
+            ->whereIn('employee_id', $coordinatorIds)
+            ->where(function ($query) {
+                $query->whereNull('feedback_atasan')
+                    ->orWhere('feedback_atasan', '');
+            })
             ->groupBy('employee_id')
             ->pluck('total', 'employee_id');
 
@@ -87,6 +105,7 @@ class ActivityCompetitorCoordinatorList extends Component
             'hos2Coordinators' => $groups['hos2'],
             'generalCoordinators' => $groups['general'],
             'activityCounts' => $counts,
+            'pendingCounts' => $pendingCounts,
         ]);
     }
 }

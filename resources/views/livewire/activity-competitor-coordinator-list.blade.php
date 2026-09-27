@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.30s>
     <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">Pilih koordinator untuk melihat Activity Competitor</p>
 
     @php($allEmpty = $hos1Coordinators->isEmpty() && $hos2Coordinators->isEmpty() && $generalCoordinators->isEmpty())
@@ -17,6 +17,7 @@
                     <div class="divide-y divide-gray-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900">
                         @foreach($coordinators as $coordinator)
                             @php($positionName = $coordinator->positions->first(fn ($position) => (bool) $position->pivot?->is_main)?->nama ?? '')
+                            @php($pendingCount = (int) ($pendingCounts[$coordinator->id] ?? 0))
                             <a href="{{ route('hris.activity-competitor.show', $coordinator->id) }}" class="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
                                     @if($coordinator->foto_url)
@@ -29,6 +30,12 @@
                                     <p class="truncate text-sm font-semibold text-gray-900 transition-colors group-hover:text-primary-600 dark:text-gray-100 dark:group-hover:text-primary-400">{{ $coordinator->nama }}</p>
                                     <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $positionName }}</p>
                                 </div>
+                                @if($pendingCount > 0)
+                                    <span class="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-red-500 px-2 text-[10px] font-bold tabular-nums leading-none text-white shadow-sm" title="{{ $pendingCount }} data belum diberi feedback">
+                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        {{ $pendingCount }}
+                                    </span>
+                                @endif
                                 <span class="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">{{ $activityCounts[$coordinator->id] ?? 0 }} Data</span>
                                 <svg class="h-5 w-5 shrink-0 text-gray-400 transition-colors group-hover:text-primary-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                             </a>

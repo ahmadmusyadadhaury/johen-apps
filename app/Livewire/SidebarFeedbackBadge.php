@@ -53,11 +53,24 @@ class SidebarFeedbackBadge extends Component
 
         if (empty($descendantIds)) return [];
 
-        return Employee::whereIn('id', function ($q) use ($descendantIds) {
+        $ids = Employee::whereIn('id', function ($q) use ($descendantIds) {
             $q->select('employee_id')
               ->from('employee_position')
               ->whereIn('position_id', $descendantIds);
         })->pluck('id')->toArray();
+
+        if (str_contains(strtolower($position->nama), 'head of store 2')) {
+            $efootball = Position::where('nama', 'Koordinator E-football')->first();
+            if ($efootball) {
+                $efootballPositionIds = $this->getDescendantPositionIds($efootball->id);
+                $efootballIds = Employee::whereHas('positions', function ($q) use ($efootballPositionIds) {
+                    $q->whereIn('position_id', $efootballPositionIds);
+                })->pluck('id')->toArray();
+                $ids = array_diff($ids, $efootballIds);
+            }
+        }
+
+        return array_values($ids);
     }
 
     private function getDescendantPositionIds(int $positionId): array

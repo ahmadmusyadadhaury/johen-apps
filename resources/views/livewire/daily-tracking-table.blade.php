@@ -1,4 +1,4 @@
-<div x-data="{ showPendingReviewsModal: false }">
+<div x-data="{ showPendingReviewsModal: false, pendingReviewSearch: '' }">
     @if($pendingReviews->isNotEmpty())
     <div role="status" class="mb-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-950 shadow-sm dark:border-orange-800/60 dark:bg-orange-950/30 dark:text-orange-100">
         <div class="flex items-start gap-3">
@@ -19,20 +19,27 @@
         </div>
     </div>
     @if($pendingReviews->count() > 3)
-    <div x-cloak x-show="showPendingReviewsModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4" @click.self="showPendingReviewsModal = false" @keydown.escape.window="showPendingReviewsModal = false">
-        <div x-show="showPendingReviewsModal" x-transition class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" role="dialog" aria-modal="true" aria-labelledby="pending-reviews-title">
+    <div x-cloak x-show="showPendingReviewsModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4" @click.self="showPendingReviewsModal = false; pendingReviewSearch = ''" @keydown.escape.window="showPendingReviewsModal = false; pendingReviewSearch = ''">
+        <div x-show="showPendingReviewsModal" x-transition class="flex max-h-[82dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900" style="height: min(82dvh, 720px)" role="dialog" aria-modal="true" aria-labelledby="pending-reviews-title">
             <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
                 <div>
                     <h2 id="pending-reviews-title" class="text-base font-bold text-gray-900 dark:text-gray-100">Daily Tracking menunggu review</h2>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih Buka detail untuk melihat data pada game dan tanggal terkait.</p>
                 </div>
-                <button type="button" @click="showPendingReviewsModal = false" class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Tutup">
+                <button type="button" @click="showPendingReviewsModal = false; pendingReviewSearch = ''" class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Tutup">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="max-h-[65vh] space-y-2 overflow-y-auto p-4">
+            <div class="shrink-0 border-b border-gray-100 p-4 dark:border-gray-800">
+                <label for="pending-review-search" class="sr-only">Cari host, game, atau tanggal</label>
+                <div class="relative">
+                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.6-5.15a6.75 6.75 0 1 1-13.5 0 6.75 6.75 0 0 1 13.5 0Z"/></svg>
+                    <input id="pending-review-search" x-model="pendingReviewSearch" type="search" placeholder="Cari host, game, atau tanggal..." class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-orange-900/40">
+                </div>
+            </div>
+            <div class="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-4">
                 @foreach($pendingReviews as $review)
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
+                    <div data-review-row x-show="!pendingReviewSearch || $el.textContent.toLowerCase().includes(pendingReviewSearch.toLowerCase())" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $review->employee?->nama ?? 'Host tidak diketahui' }}</p>
                             <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $review->divisi }} · {{ $review->tanggal?->isoFormat('D MMM YYYY') ?? '-' }}</p>
@@ -43,6 +50,9 @@
                         </a>
                     </div>
                 @endforeach
+            </div>
+            <div class="shrink-0 border-t border-gray-100 px-5 py-3 text-right dark:border-gray-800">
+                <button type="button" @click="showPendingReviewsModal = false; pendingReviewSearch = ''" class="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">Tutup</button>
             </div>
         </div>
     </div>
