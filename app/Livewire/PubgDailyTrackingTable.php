@@ -55,7 +55,7 @@ class PubgDailyTrackingTable extends Component
 
     public function mount(): void
     {
-        $this->divisi = request()->query('divisi', '');
+        $this->divisi = $this->normalizeDivisi(request()->query('divisi', ''));
     }
 
     protected function rules(): array
@@ -350,15 +350,21 @@ class PubgDailyTrackingTable extends Component
         $this->dispatch('notify', type: 'success', message: 'Data ditolak.');
     }
 
+    private function normalizeDivisi(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        return self::DIVISI_PARAM_MAP[$value] ?? $value;
+    }
+
     public function getDivisiName(): string
     {
-        if ($this->divisi !== '') {
-            if (isset(self::DIVISI_PARAM_MAP[$this->divisi])) {
-                return self::DIVISI_PARAM_MAP[$this->divisi];
-            }
-            if (in_array($this->divisi, self::DIVISI_PARAM_MAP, true)) {
-                return $this->divisi;
-            }
+        $divisi = $this->normalizeDivisi($this->divisi);
+
+        if ($divisi !== '' && in_array($divisi, self::DIVISI_PARAM_MAP, true)) {
+            return $divisi;
         }
 
         $user = auth()->user();
