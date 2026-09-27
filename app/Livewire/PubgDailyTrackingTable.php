@@ -18,6 +18,7 @@ class PubgDailyTrackingTable extends Component
 
     public string $search = '';
     public string $bulan = '';
+    public string $tanggalFilter = '';
     public string $divisi = '';
 
     private const DIVISI_PARAM_MAP = [
@@ -90,6 +91,11 @@ class PubgDailyTrackingTable extends Component
     public function mount(): void
     {
         $this->divisi = $this->normalizeDivisi(request()->query('divisi', ''));
+        if ($this->isDivisiKoordinator()) {
+            $this->tanggalFilter = now()->toDateString();
+        } elseif ($this->isDivisiStaffHost()) {
+            $this->bulan = now()->format('Y-m');
+        }
     }
 
     protected function rules(): array
@@ -161,6 +167,11 @@ class PubgDailyTrackingTable extends Component
     }
 
     public function updatingBulan(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTanggalFilter(): void
     {
         $this->resetPage();
     }
@@ -569,7 +580,10 @@ class PubgDailyTrackingTable extends Component
                   ->orWhere('nik', 'like', "%{$this->search}%");
             });
         })
-        ->when($this->bulan, function ($query) {
+        ->when($this->isDivisiKoordinator() && $this->tanggalFilter, function ($query) {
+            $query->whereDate('tanggal', $this->tanggalFilter);
+        })
+        ->when(!$this->isDivisiKoordinator() && $this->bulan, function ($query) {
             $query->whereYear('tanggal', substr($this->bulan, 0, 4))
                   ->whereMonth('tanggal', substr($this->bulan, 5, 2));
         })

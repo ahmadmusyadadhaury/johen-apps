@@ -188,14 +188,19 @@
                 <label for="daily-tracking-search" class="sr-only">Cari berdasarkan NIK atau nama</label>
                 <input id="daily-tracking-search" type="search" wire:model.live.debounce.300ms="search" placeholder="Cari NIK atau nama..." class="min-h-11 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-10 pr-3 py-2.5 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
             </div>
-            <label for="daily-tracking-month" class="sr-only">Filter berdasarkan bulan</label>
-            <select id="daily-tracking-month" wire:model.live="bulan" class="min-h-11 w-full sm:w-auto rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-8 py-2.5 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                <option value="">Semua Bulan</option>
-                @foreach(range(1, 12) as $m)
-                    @php $val = now()->format('Y') . '-' . str_pad($m, 2, '0', STR_PAD_LEFT); @endphp
-                    <option value="{{ $val }}">{{ \Carbon\Carbon::create()->month($m)->isoFormat('MMMM') }}</option>
-                @endforeach
-            </select>
+            @if($this->isDivisiKoordinator())
+                <label for="daily-tracking-date-filter" class="sr-only">Pilih tanggal daily tracking</label>
+                <input id="daily-tracking-date-filter" type="date" wire:model.live="tanggalFilter" class="min-h-11 w-full sm:w-auto rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+            @else
+                <label for="daily-tracking-month" class="sr-only">Filter berdasarkan bulan</label>
+                <select id="daily-tracking-month" wire:model.live="bulan" class="min-h-11 w-full sm:w-auto rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-3 pr-8 py-2.5 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <option value="">Semua Bulan</option>
+                    @foreach(range(1, 12) as $m)
+                        @php $val = now()->format('Y') . '-' . str_pad($m, 2, '0', STR_PAD_LEFT); @endphp
+                        <option value="{{ $val }}">{{ \Carbon\Carbon::create()->month($m)->isoFormat('MMMM') }}</option>
+                    @endforeach
+                </select>
+            @endif
         </div>
 
         {{-- Table --}}
