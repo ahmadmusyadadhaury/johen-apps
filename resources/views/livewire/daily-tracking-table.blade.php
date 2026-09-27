@@ -74,8 +74,10 @@
                 <div class="flex items-center gap-4 min-w-0">
                     <div class="relative h-14 w-14 shrink-0">
                         @if($game['photo'])
-                            <div class="h-14 w-14 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 shadow-lg">
+                            <div class="flex h-14 w-14 items-center justify-center">
+                                <div class="h-11 w-11 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 shadow-lg">
                                 <img src="{{ $game['photo'] }}" alt="{{ $game['divisi'] }}" class="h-full w-full object-cover">
+                                </div>
                             </div>
                         @else
                             <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br {{ $iconBg }} text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
