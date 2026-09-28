@@ -1012,16 +1012,31 @@ if ($divisionViewUser) {
 
                 const toast = document.createElement('div');
                 toast.setAttribute('role', 'status');
-                toast.className = 'relative flex w-full items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-800 shadow-xl dark:border-blue-800 dark:bg-blue-950/90 dark:text-blue-300';
-                toast.textContent = 'Menu divisi ini sedang dalam pengembangan.';
+                toast.className = 'relative flex w-full items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-blue-800 shadow-lg dark:border-blue-800 dark:bg-blue-950/90 dark:text-blue-300';
+
+                const message = document.createElement('span');
+                message.className = 'min-w-0 flex-1 text-xs font-medium leading-5';
+                message.textContent = 'Menu divisi ini sedang dalam pengembangan.';
+                toast.appendChild(message);
+
+                const close = document.createElement('button');
+                close.type = 'button';
+                close.setAttribute('aria-label', 'Tutup notifikasi');
+                close.className = 'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-blue-700/70 transition hover:bg-blue-100 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300/70 dark:hover:bg-blue-900/60 dark:hover:text-blue-100';
+                close.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>';
+                toast.appendChild(close);
                 host.appendChild(toast);
 
-                window.setTimeout(() => {
+                let dismissTimer = window.setTimeout(() => {
                     toast.style.transition = 'opacity 200ms ease, transform 200ms ease';
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(1rem)';
                     window.setTimeout(() => toast.remove(), 220);
                 }, 4000);
+                close.addEventListener('click', () => {
+                    window.clearTimeout(dismissTimer);
+                    toast.remove();
+                });
             }, true);
 
             if (!window.__johenNotifyListenerRegistered) {
