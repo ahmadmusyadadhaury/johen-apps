@@ -6,6 +6,8 @@ use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -160,7 +162,26 @@ class UserTable extends Component
             return;
         }
 
-        $user->delete();
+        DB::transaction(function () use ($user): void {
+            // Putuskan relasi akun-karyawan agar akun pengganti bisa ditautkan.
+            Employee::where('user_id', $user->id)->update(['user_id' => null]);
+
+            // Arsipkan akun agar foreign key riwayat transaksi tetap valid,
+            // sekaligus hapus identitas login dan token aksesnya.
+            $identifier = Str::uuid()->toString();
+            $user->forceFill([
+                'name' => 'Akun dihapus',
+                'username' => 'deleted_' . $user->id . '_' . $identifier,
+                'email' => 'deleted+' . $user->id . '+' . $identifier . '@invalid.local',
+                'password' => Hash::make(Str::random(64)),
+                'pin_hash' => null,
+                'employee_id' => null,
+            ])->save();
+
+            $user->tokens()->delete();
+            $user->delete();
+        });
+
         $this->dispatch('notify', type: 'success', message: 'Akun berhasil dihapus.');
         $this->cancelDelete();
     }
