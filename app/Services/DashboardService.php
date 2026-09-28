@@ -176,7 +176,7 @@ class DashboardService
         ];
     }
 
-    public function getMeetingStats(): array
+    public function getMeetingStats(ExternalMeetingService $externalMeetingService): array
     {
         $divisionNames = Division::whereNotNull('nama')->get('nama')->pluck('nama');
 
@@ -203,6 +203,32 @@ class DashboardService
             ->where('team', '<>', '')
             ->where('team', '<>', '-')
             ->get(['team', 'date']);
+
+        // Dashboard totals should reflect the same upstream schedule as the
+        // meeting calendar, even when the production sync has not caught up.
+        $signature = static function ($meeting): string {
+            $date = $meeting->date;
+            $date = $date instanceof Carbon ? $date->format('Y-m-d') : (string) ($date ?? 'recurring');
+            $time = (string) ($meeting->start_time ?? '');
+            if (preg_match('/(\d{1,2}):(\d{2})/', $time, $matches)) {
+                $time = sprintf('%02d:%02d', (int) $matches[1], (int) $matches[2]);
+            }
+
+            return strtolower((string) $meeting->title) . '|' . $date . '|' . $time;
+        };
+
+        $knownMeetings = Meeting::query()->get(['title', 'date', 'start_time'])
+            ->mapWithKeys(fn ($meeting) => [$signature($meeting) => true]);
+
+        foreach ($externalMeetingService->fetch() as $externalMeeting) {
+            $key = $signature($externalMeeting);
+            if ($knownMeetings->has($key)) {
+                continue;
+            }
+
+            $knownMeetings->put($key, true);
+            $meetings->push($externalMeeting);
+        }
 
         $months = $meetings
             ->groupBy(fn ($m) => $m->date?->format('Y-m') ?? 'Tanpa Bulan')

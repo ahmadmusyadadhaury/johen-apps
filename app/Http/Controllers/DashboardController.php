@@ -7,6 +7,7 @@ use App\Models\BirthdayWish;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Services\DashboardService;
+use App\Services\ExternalMeetingService;
 use App\Support\DivisionMenu;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class DashboardController extends Controller
         private DashboardService $dashboardService,
     ) {}
 
-    public function index(Request $request)
+    public function index(Request $request, ExternalMeetingService $externalMeetingService)
     {
         session()->forget('division_menu');
 
@@ -90,7 +91,7 @@ class DashboardController extends Controller
         $pendingLeaveCount = $this->dashboardService->getPendingLeaveCount(user: $user);
         $expiringContracts = $this->dashboardService->getExpiringContracts();
         $expiringContractCount = count($expiringContracts);
-        $meetingStats = $this->dashboardService->getMeetingStats();
+        $meetingStats = $this->dashboardService->getMeetingStats($externalMeetingService);
         $upcomingPayments = $this->dashboardService->getUpcomingPayments();
 
         $managerReviewStats = $user->isManager()
