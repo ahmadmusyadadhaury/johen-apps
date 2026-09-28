@@ -85,6 +85,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/informasi-saya', [EmployeeController::class, 'informasiSaya'])->name('informasi-saya');
         Route::get('/employees/creative', [EmployeeController::class, 'creative'])->name('employees.creative');
         Route::get('/influencer', function () {
+            if (auth()->user()->isKoordinatorCreative()) {
+                return redirect()->route('dashboard')->with('error', 'Menu divisi ini sedang dalam pengembangan.');
+            }
+
             return view('influencer.index');
         })->name('influencer');
         Route::get('/influencer/pengajuan', function () {

@@ -127,7 +127,7 @@ if ($divisionViewUser) {
                 @endphp
 
                 <nav x-data="{ openMenu: @js($activeMenu) }"
-                     @click.capture="const hiddenDivisionLink = $event.target.closest('[data-development-menu] a:not([href*=&quot;weekly-meeting&quot;])'); if (hiddenDivisionLink) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
+                     @click.capture="if ($event.target.closest('[data-development-menu] a:not([href*=&quot;weekly-meeting&quot;])')) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
                      class="flex-1 overflow-y-auto p-4 space-y-1">
                     @if($isDivisionView)
                         @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
@@ -856,7 +856,7 @@ if ($divisionViewUser) {
         </div>
 
         {{-- Floating Toast Container (top-right) --}}
-        <div x-data class="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none" style="max-height: calc(100vh - 2rem); overflow-y: auto;">
+        <div x-data role="status" aria-live="polite" class="fixed z-[9999] flex flex-col gap-3 pointer-events-none w-[min(420px,calc(100vw-2rem))]" style="top: calc(env(safe-area-inset-top, 0px) + 1rem); right: calc(env(safe-area-inset-right, 0px) + 1rem); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 2rem); overflow-y: auto;">
             <div class="pointer-events-auto space-y-3">
                 @include('components.toast')
             </div>

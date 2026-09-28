@@ -12,7 +12,7 @@
         x-transition:leave-start="opacity-100 translate-x-0 scale-100"
         x-transition:leave-end="opacity-0 translate-x-4 scale-95"
         @click="remove"
-        class="relative flex items-start gap-3 p-4 rounded-2xl shadow-xl border cursor-pointer overflow-hidden min-w-[320px] max-w-[420px]"
+        class="relative flex w-full min-w-0 items-start gap-3 p-4 rounded-2xl shadow-xl border cursor-pointer overflow-hidden max-w-full"
         :class="{
             'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800': item.type === 'success',
             'bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800': item.type === 'error',
