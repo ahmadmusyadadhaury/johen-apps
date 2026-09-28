@@ -129,8 +129,19 @@ return [
     | storage. By default, no PHP classes will be unserialized from your
     | cache to prevent gadget chain attacks if your APP_KEY is leaked.
     |
+    | This application intentionally caches objects (API payload snapshots),
+    | so the classes it stores are listed explicitly below.
+    |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        \Illuminate\Support\Collection::class,
+        \Illuminate\Support\Carbon::class,
+        \Carbon\Carbon::class,
+        \DateTime::class,
+        \DateTimeImmutable::class,
+        \DateTimeZone::class,
+        \stdClass::class,
+    ],
 
 ];
