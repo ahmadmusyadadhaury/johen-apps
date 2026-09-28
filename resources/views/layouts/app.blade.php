@@ -127,7 +127,6 @@ if ($divisionViewUser) {
                 @endphp
 
                 <nav x-data="{ openMenu: @js($activeMenu) }"
-                     @click.capture="if ($event.target.closest('[data-development-menu] a:not([href*=&quot;weekly-meeting&quot;])')) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
                      class="flex-1 overflow-y-auto p-4 space-y-1">
                     @if($isDivisionView)
                         @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
@@ -857,7 +856,7 @@ if ($divisionViewUser) {
 
         {{-- Floating Toast Container (top-right) --}}
         <div x-data role="status" aria-live="polite" class="fixed z-[9999] flex flex-col gap-3 pointer-events-none w-[min(420px,calc(100vw-2rem))]" style="top: calc(env(safe-area-inset-top, 0px) + 1rem); right: calc(env(safe-area-inset-right, 0px) + 1rem); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 2rem); overflow-y: auto;">
-            <div class="pointer-events-auto space-y-3">
+            <div id="division-menu-toast-fallback" class="pointer-events-auto space-y-3">
                 @include('components.toast')
             </div>
         </div>
@@ -999,6 +998,31 @@ if ($divisionViewUser) {
                     }
                 }
             }
+
+            // Pakai event listener native agar toast menu tetap berfungsi di
+            // PWA meski ekspresi Alpine atau store belum terinisialisasi.
+            document.addEventListener('click', function (event) {
+                const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+                const hiddenDivisionLink = target?.closest('[data-development-menu] a:not([href*="weekly-meeting"])');
+                if (!hiddenDivisionLink) return;
+
+                event.preventDefault();
+                const host = document.getElementById('division-menu-toast-fallback');
+                if (!host) return;
+
+                const toast = document.createElement('div');
+                toast.setAttribute('role', 'status');
+                toast.className = 'relative flex w-full items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-800 shadow-xl dark:border-blue-800 dark:bg-blue-950/90 dark:text-blue-300';
+                toast.textContent = 'Menu divisi ini sedang dalam pengembangan.';
+                host.appendChild(toast);
+
+                window.setTimeout(() => {
+                    toast.style.transition = 'opacity 200ms ease, transform 200ms ease';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(1rem)';
+                    window.setTimeout(() => toast.remove(), 220);
+                }, 4000);
+            }, true);
 
             if (!window.__johenNotifyListenerRegistered) {
                 const registerNotifyListener = () => {
