@@ -20,7 +20,7 @@
                 <span class="badge-success text-[10px]">Terpetakan</span>
             </div>
             <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ number_format($mappedIds, 0, ',', '.') }}</p>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">User Terpetakan Karyawan</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">User Terpetakan Pegawai</p>
         </div>
 
         <div class="stat-card group p-4 md:p-5">
@@ -80,7 +80,7 @@
                     <span wire:loading wire:target="syncMachineUsers">Menarik...</span>
                 </button>
 
-                <button type="button" wire:click="backfill" wire:confirm="Proses semua punch yang belum terpetakan ke absensi? Proses ini bisa memakan waktu beberapa detik." wire:loading.attr="disabled" class="btn-primary min-h-11 w-full justify-center text-xs sm:w-auto">
+                <button type="button" wire:click="backfill" wire:confirm="Proses semua punch yang belum terpetakan ke presensi? Proses ini bisa memakan waktu beberapa detik." wire:loading.attr="disabled" class="btn-primary min-h-11 w-full justify-center text-xs sm:w-auto">
                     <svg wire:loading wire:target="backfill" class="h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
                     <span wire:loading.remove wire:target="backfill">Proses Backfill</span>
                     <span wire:loading wire:target="backfill">Memproses...</span>
@@ -171,7 +171,7 @@
                         <th class="px-6 py-3 text-center">Jumlah Tap</th>
                         <th class="px-6 py-3">Tap Pertama</th>
                         <th class="px-6 py-3">Tap Terakhir</th>
-                        <th class="px-6 py-3">Mapping Karyawan</th>
+                        <th class="px-6 py-3">Mapping Pegawai</th>
                         <th class="px-6 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -271,7 +271,7 @@
                     <h3 id="sinkron-map-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Petakan User ID
                         @if($mapMachineUserId)<span class="font-mono text-primary-600 dark:text-primary-400">{{ $mapMachineUserId }}</span>@endif
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Cari karyawan berdasarkan NIK atau nama</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Cari pegawai berdasarkan NIP atau nama</p>
                 </div>
                 <button type="button" wire:click="closeMapModal" aria-label="Tutup pemetaan user ID"
                     class="-mr-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700 dark:hover:text-gray-300">
@@ -281,24 +281,24 @@
 
             <form wire:submit.prevent="saveMapping" class="space-y-4">
                 <div>
-                    <x-input-label for="map-search" value="Cari Karyawan" />
+                    <x-input-label for="map-search" value="Cari Pegawai" />
                     <div class="relative mt-1">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                        <input id="map-search" type="text" wire:model.live.debounce.200ms="mapSearch" placeholder="Ketik NIK atau nama..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" />
+                        <input id="map-search" type="text" wire:model.live.debounce.200ms="mapSearch" placeholder="Ketik NIP atau nama..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" />
                     </div>
                 </div>
 
                 <div>
-                    <x-input-label for="map-employee" value="Karyawan" />
+                    <x-input-label for="map-employee" value="Pegawai" />
                     <select id="map-employee" wire:model="selectedEmployeeId" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
-                        <option value="">-- Pilih karyawan --</option>
+                        <option value="">-- Pilih pegawai --</option>
                         @foreach($mapEmployees as $emp)
                             <option value="{{ $emp->id }}">{{ $emp->nama }} ({{ $emp->nik }})</option>
                         @endforeach
                     </select>
                     @error('selectedEmployeeId') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     @if($mapSearch && $mapEmployees->isEmpty())
-                        <p class="text-xs text-amber-600 mt-1">Tidak ada karyawan yang cocok dengan pencarian.</p>
+                        <p class="text-xs text-amber-600 mt-1">Tidak ada pegawai yang cocok dengan pencarian.</p>
                     @endif
                 </div>
 
@@ -354,7 +354,7 @@
 
             <p class="text-sm text-gray-600 dark:text-gray-300">
                 Mapping User ID <span class="font-mono font-semibold text-primary-600 dark:text-primary-400">{{ $unmapMachineUserId }}</span>
-                akan dilepas dari <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $unmapEmployeeName }}</span>. Punch mesin tetap tersimpan dan tidak akan terhubung ke karyawan lagi.
+                akan dilepas dari <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $unmapEmployeeName }}</span>. Punch mesin tetap tersimpan dan tidak akan terhubung ke pegawai lagi.
             </p>
 
             <div class="mt-6 flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-end dark:border-gray-700">

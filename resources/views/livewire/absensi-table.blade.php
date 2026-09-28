@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Presensi</h1>
-        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Rekap kehadiran karyawan harian</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Rekap kehadiran pegawai harian</p>
     </div>
 @endpush
 
@@ -9,22 +9,25 @@
     @if(auth()->user()->canManageAttendanceMachine() || auth()->user()->isAnyKoordinator() || auth()->user()->isFcMobileCoordinator() || auth()->user()->isKoordinatorProject() || auth()->user()->isManager())
     {{-- Tab Navigation --}}
     <div class="mb-6">
-        <div class="flex sm:inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1" role="tablist" aria-label="Pilih tampilan presensi">
+        <div class="flex w-full sm:w-auto sm:inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1" role="tablist" aria-label="Pilih tampilan presensi">
             <button type="button" role="tab" aria-selected="{{ $tab === 'saya' ? 'true' : 'false' }}" wire:click="$set('tab', 'saya')"
-                class="flex-1 sm:flex-none flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 {{ $tab === 'saya' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                Presensi Saya
+                class="min-w-0 flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap rounded-lg px-1.5 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 {{ $tab === 'saya' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                <span class="sm:hidden">Saya</span>
+                <span class="hidden sm:inline">Presensi Saya</span>
             </button>
             <button type="button" role="tab" aria-selected="{{ $tab === 'tim' ? 'true' : 'false' }}" wire:click="$set('tab', 'tim')"
-                class="flex-1 sm:flex-none flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 {{ $tab === 'tim' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
-                {{ auth()->user()->canManageAttendanceMachine() ? 'Presensi Karyawan' : 'Presensi Tim' }}
+                class="min-w-0 flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap rounded-lg px-1.5 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 {{ $tab === 'tim' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                <span class="sm:hidden">{{ auth()->user()->canManageAttendanceMachine() ? 'Pegawai' : 'Tim' }}</span>
+                <span class="hidden sm:inline">{{ auth()->user()->canManageAttendanceMachine() ? 'Presensi Pegawai' : 'Presensi Tim' }}</span>
             </button>
             @if(auth()->user()->canManageAttendanceMachine())
             <button type="button" role="tab" aria-selected="{{ $tab === 'sinkron' ? 'true' : 'false' }}" wire:click="$set('tab', 'sinkron')"
-                class="flex-1 sm:flex-none flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 {{ $tab === 'sinkron' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
-                Sinkron Mesin
+                class="min-w-0 flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap rounded-lg px-1.5 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-100 dark:focus-visible:ring-offset-gray-800 {{ $tab === 'sinkron' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                <span class="sm:hidden">Sinkron</span>
+                <span class="hidden sm:inline">Sinkron Mesin</span>
             </button>
             @endif
         </div>
@@ -45,7 +48,7 @@
             </div>
         @endif
 
-        {{-- Karyawan Stats --}}
+        {{-- Pegawai Stats --}}
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 md:mb-6">
             <div class="stat-card group p-4 md:p-5">
                 <div class="flex items-center justify-between mb-2 md:mb-3">
@@ -55,7 +58,7 @@
                     <span class="badge-info">Total</span>
                 </div>
                 <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $totalAbsensi }}</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Absensi Periode Ini</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Presensi Periode Ini</p>
             </div>
 
             <div class="stat-card group p-4 md:p-5">
@@ -97,7 +100,7 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-4 border-b border-gray-50 dark:border-gray-800 sm:gap-4 sm:px-6">
                 <div>
                     <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex flex-wrap items-center gap-2">
-                        Riwayat Absensi Saya
+                        Riwayat Presensi Saya
                         <span class="inline-flex items-center gap-1 rounded-full bg-primary-50 dark:bg-primary-900/40 px-2.5 py-0.5 text-[11px] font-semibold text-primary-600 dark:text-primary-300 ring-1 ring-inset ring-primary-200 dark:ring-primary-800">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             {{ $jumlahHariKerja }} Hari Kerja
@@ -188,8 +191,8 @@
                         <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900">
                             <svg class="h-7 w-7 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
                         </div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada riwayat absensi</h3>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lakukan absensi untuk memulai</p>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada riwayat presensi</h3>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lakukan presensi untuk memulai</p>
                     </div>
                 @endforelse
             </div>
@@ -248,8 +251,8 @@
                                         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                             <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
                                         </div>
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada riwayat absensi</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lakukan absensi untuk memulai</p>
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada riwayat presensi</h3>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lakukan presensi untuk memulai</p>
                                     </div>
                                 </td>
                             </tr>
@@ -277,10 +280,10 @@
                     <span class="badge-info">Total</span>
                 </div>
                 <p class="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">{{ $totalKaryawan }}</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Karyawan</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Total Pegawai</p>
             </div>
 
-            <button type="button" @click="showStats = true; statsType = 'tepat'" aria-label="Lihat daftar karyawan tepat waktu"
+            <button type="button" @click="showStats = true; statsType = 'tepat'" aria-label="Lihat daftar pegawai tepat waktu"
                 class="stat-card group cursor-pointer p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-gray-900 md:p-5">
                 <div class="flex items-center justify-between mb-2 md:mb-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
@@ -292,7 +295,7 @@
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 md:text-sm">Tepat Waktu</p>
             </button>
 
-            <button type="button" @click="showStats = true; statsType = 'terlambat'" aria-label="Lihat daftar karyawan terlambat"
+            <button type="button" @click="showStats = true; statsType = 'terlambat'" aria-label="Lihat daftar pegawai terlambat"
                 class="stat-card group cursor-pointer p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-gray-900 md:p-5">
                 <div class="flex items-center justify-between mb-2 md:mb-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
@@ -333,10 +336,10 @@
                         <div class="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-700 sm:hidden" aria-hidden="true"></div>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
-                                <h3 id="stats-modal-title" class="text-lg font-semibold font-display text-gray-900 dark:text-gray-100" x-text="statsType === 'tepat' ? 'Karyawan Tepat Waktu' : 'Karyawan Terlambat'"></h3>
+                                <h3 id="stats-modal-title" class="text-lg font-semibold font-display text-gray-900 dark:text-gray-100" x-text="statsType === 'tepat' ? 'Pegawai Tepat Waktu' : 'Pegawai Terlambat'"></h3>
                                 <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500" x-text="'Presensi · ' + dateLabel"></p>
                             </div>
-                            <button type="button" @click="showStats = false" aria-label="Tutup daftar karyawan"
+                            <button type="button" @click="showStats = false" aria-label="Tutup daftar pegawai"
                                 class="-mr-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-gray-300">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
@@ -345,7 +348,7 @@
 
                     <div class="shrink-0 border-b border-gray-100 bg-white px-5 py-3 dark:border-gray-800 dark:bg-gray-900">
                         <p class="text-xs text-gray-400 dark:text-gray-500">
-                            Total <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="list[statsType].length"></span> karyawan
+                            Total <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="list[statsType].length"></span> pegawai
                             <span x-show="statsType === 'terlambat'" class="text-amber-600 dark:text-amber-400">terlambat</span>
                             <span x-show="statsType === 'tepat'" class="text-emerald-600 dark:text-emerald-400">tepat waktu</span>
                         </p>
@@ -380,7 +383,7 @@
                             </template>
                         </div>
                         <div x-show="list[statsType].length === 0" class="text-center py-8">
-                            <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada karyawan pada tanggal ini.</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada pegawai pada tanggal ini.</p>
                         </div>
                     </div>
 
@@ -399,13 +402,13 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-4 border-b border-gray-50 dark:border-gray-800 sm:gap-4 sm:px-6">
                 <div class="flex w-full flex-1 flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
                     <div class="relative w-full min-w-0 flex-1 sm:max-w-xs">
-                        <label for="presensi-search" class="sr-only">Cari nama atau NIK karyawan</label>
+                        <label for="presensi-search" class="sr-only">Cari nama atau NIP pegawai</label>
                         <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                         <input
                             id="presensi-search"
                             type="search"
                             wire:model.live.debounce.300ms="search"
-                            placeholder="Cari nama atau NIK..."
+                            placeholder="Cari nama atau NIP..."
                             class="w-full min-h-11 rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:text-xs"
                         >
                     </div>
@@ -422,7 +425,7 @@
                 </div>
             </div>
 
-            {{-- Mobile: kartu karyawan --}}
+            {{-- Mobile: kartu pegawai --}}
             <div class="divide-y divide-gray-100 md:hidden dark:divide-gray-800">
                 @forelse($employees as $emp)
                     @php
@@ -480,8 +483,8 @@
                         <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900">
                             <svg class="h-7 w-7 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
                         </div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data absensi</h3>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tidak ada catatan absensi untuk tanggal ini</p>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data presensi</h3>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tidak ada catatan presensi untuk tanggal ini</p>
                     </div>
                 @endforelse
             </div>
@@ -491,8 +494,8 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="table-header">
-                            <th class="px-6 py-3 w-12">NIK</th>
-                            <th class="px-6 py-3">Nama Karyawan</th>
+                            <th class="px-6 py-3 w-12">NIP</th>
+                            <th class="px-6 py-3">Nama Pegawai</th>
                             <th class="px-6 py-3">Jabatan</th>
                             <th class="px-6 py-3">Jam Masuk</th>
                             <th class="px-6 py-3">Jam Keluar</th>
@@ -522,7 +525,7 @@
                                 </td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $emp->position ?? '-' }}</td>
                                 @php
-                                    // Tanpa record absensi: karyawan Office pada hari
+                                    // Tanpa record presensi: pegawai Office pada hari
                                     // Minggu adalah libur mingguannya (jenis kerja sebagai
                                     // acuan), bukan tidak hadir.
                                     $ds = $att?->display_status
@@ -561,8 +564,8 @@
                                         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                             <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
                                         </div>
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data absensi</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tidak ada catatan absensi untuk tanggal ini</p>
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Belum ada data presensi</h3>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tidak ada catatan presensi untuk tanggal ini</p>
                                     </div>
                                 </td>
                             </tr>

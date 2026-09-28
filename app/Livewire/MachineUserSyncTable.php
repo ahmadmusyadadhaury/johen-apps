@@ -83,21 +83,21 @@ class MachineUserSyncTable extends Component
     public function saveMapping(): void
     {
         if (! $this->mapMachineUserId || ! $this->selectedEmployeeId) {
-            $this->addError('selectedEmployeeId', 'Pilih karyawan terlebih dahulu.');
+            $this->addError('selectedEmployeeId', 'Pilih pegawai terlebih dahulu.');
 
             return;
         }
 
         $existing = Employee::findByMachineUserId($this->mapMachineUserId);
         if ($existing && $existing->id !== $this->selectedEmployeeId) {
-            $this->addError('selectedEmployeeId', 'User ID mesin ini sudah terpetakan ke karyawan lain.');
+            $this->addError('selectedEmployeeId', 'User ID mesin ini sudah terpetakan ke pegawai lain.');
 
             return;
         }
 
         $employee = Employee::find($this->selectedEmployeeId);
         if (! $employee) {
-            $this->addError('selectedEmployeeId', 'Karyawan tidak ditemukan.');
+            $this->addError('selectedEmployeeId', 'Pegawai tidak ditemukan.');
 
             return;
         }
