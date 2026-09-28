@@ -8,11 +8,47 @@ use Symfony\Component\HttpFoundation\Response;
 
 class StaffHrAccess
 {
+    /**
+     * Route yang TIDAK boleh dibuka Staff HR. Menu SDM Staff HR hanya
+     * Struktur Organisasi, Informasi Saya, dan Asset Saya; menu Operasional
+     * hanya Presensi, Cuti dan Izin, Jobdesk saya, Pelatihan, dan Pengumuman.
+     * Daftar route di sini dibuat sesuai batas tersebut agar URL yang
+     * disembunyikan di sidebar tetap 403 kalau diakses langsung.
+     */
     private const BLOCKED_ROUTE_PREFIXES = [
+        // SDM yang tertutup untuk Staff HR
+        'hris.employees.', 'hris.divisions.', 'hris.kontrak-kerja', 'hris.freelance',
+        'kelola-jabatan',
+        // Workspace divisi hanya untuk super admin / GM
+        'dashboard.division',
+        // Operasional yang tertutup untuk Staff HR
+        'it.tickets.', 'hris.birthday-wishes',
+        // Menu milik super admin / GM
         'meeting.', 'assets.', 'digital-registries.', 'electricity.', 'internet.',
         'digital.', 'ipl.', 'reimbursement',
+        // Endpoint API
         'api.meetings', 'api.assets', 'api.asset-categories', 'api.digital-assets',
         'api.payment-categories.', 'api.payments.', 'api.electricity.', 'api.internet.', 'api.ipl.',
+    ];
+
+    /**
+     * Route yang tetap boleh dibuka Staff HR walaupun ada di dalam
+     * area yang umumnya read-only: halaman scan Weekly Meeting dan
+     * penandaan pengumuman sudah dibaca (tindakan milik akun sendiri,
+     * bukan pengelolaan data SDM).
+     */
+    private const ALLOWED_ROUTE_NAMES = [
+        'hris.weekly-meeting.scan',
+        'hris.weekly-meeting.attend',
+        'hris.announcements.mark-read',
+    ];
+
+    /**
+     * "Asset Saya" tetap boleh dibuka, tapi hanya dalam mode milik sendiri
+     * (?mine=1). Daftar/kategori asset milik seluruh perusahaan tetap 403.
+     */
+    private const MINE_ONLY_ROUTE_NAMES = [
+        'assets.index',
     ];
 
     private const BLOCKED_PATH_PREFIXES = [
@@ -35,15 +71,25 @@ class StaffHrAccess
         }
 
         $routeName = $request->route()?->getName() ?? '';
+
+        if (in_array($routeName, self::ALLOWED_ROUTE_NAMES, true)) {
+            return $next($request);
+        }
+
+        if ($this->isMineOnlyRoute($routeName, $request)) {
+            return $next($request);
+        }
+
         foreach (self::BLOCKED_ROUTE_PREFIXES as $prefix) {
             if (str_starts_with($routeName, $prefix)) {
                 abort(403, 'Anda tidak memiliki akses ke menu ini.');
             }
         }
-        if (str_starts_with($routeName, 'hris.weekly-meeting.')
-            && ! in_array($routeName, ['hris.weekly-meeting.scan', 'hris.weekly-meeting.attend'], true)) {
+
+        if (str_starts_with($routeName, 'hris.weekly-meeting.')) {
             abort(403, 'Anda tidak memiliki akses ke menu ini.');
         }
+
         $path = ltrim($request->path(), '/');
         foreach (self::BLOCKED_PATH_PREFIXES as $prefix) {
             if (str_starts_with($path, $prefix)) {
@@ -55,15 +101,17 @@ class StaffHrAccess
             $this->denyLivewireWrites($request);
         }
 
-        if (in_array($routeName, ['hris.weekly-meeting.scan', 'hris.weekly-meeting.attend'], true)) {
-            return $next($request);
-        }
-
         if ($this->isReadOnlyPath($request) && ! in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'], true)) {
             abort(403, 'Staff HR hanya memiliki akses baca pada menu ini.');
         }
 
         return $next($request);
+    }
+
+    private function isMineOnlyRoute(string $routeName, Request $request): bool
+    {
+        return in_array($routeName, self::MINE_ONLY_ROUTE_NAMES, true)
+            && $request->boolean('mine');
     }
 
     private function isReadOnlyPath(Request $request): bool

@@ -1,4 +1,10 @@
-                    @can('view-all')
+                    {{--
+                        Staff HR memakai menu SDM versi terbatas (Struktur Organisasi,
+                        Informasi Saya, Asset Saya), meski secara data masih punya
+                        hak akses view-all. Super admin & role lain yang punya
+                        view-all tetap melihat menu SDM lengkap.
+                    --}}
+                    @if(auth()->user()->canViewAll() && !auth()->user()->isStaffHr())
                     <div class="mt-4">
                         <button @click="openMenu = openMenu === 'sdm' ? null : 'sdm'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'sdm' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
                             <span class="flex items-center gap-3">
@@ -84,4 +90,4 @@
                             </a>
                         </div>
                     </div>
-                    @endcan
+                    @endif

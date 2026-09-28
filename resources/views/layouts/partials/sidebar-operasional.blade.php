@@ -26,7 +26,7 @@
                             <a href="{{ route('hris.jobdesk') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.jobdesk') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Jobdesk saya
                             </a>
-                            @if(!auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() && !auth()->user()->isHeadOfStore())
+                            @if(!auth()->user()->isKoordinatorIt() && !auth()->user()->isStaffIt() && !auth()->user()->isHeadOfStore() && !auth()->user()->isStaffHr())
                             <a href="{{ route('it.tickets.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('it.tickets.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Ticketing IT
                             </a>
@@ -57,10 +57,12 @@
                             <a href="{{ route('hris.announcements') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.announcements', 'hris.pengumuman-saya') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Pengumuman
                             </a>
+                            @unless(auth()->user()->isStaffHr())
                             <a href="{{ route('hris.birthday-wishes') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.birthday-wishes*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Ucapan Ulang Tahun
                                 <livewire:sidebar-birthday-badge />
                             </a>
+                            @endunless
                             @elseif(auth()->user()->canViewPengumuman())
                             <a href="{{ route('hris.pengumuman-saya') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.pengumuman-saya', 'hris.announcements') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Pengumuman
