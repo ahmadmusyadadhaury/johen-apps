@@ -109,7 +109,8 @@
             return day + ' ' + months[month - 1] + ' ' + year;
         },
         formatMoney(value) {
-            return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
+            const amount = Math.trunc(Number(value) || 0);
+            return 'Rp ***' + String(Math.abs(amount)).slice(-3);
         },
         contractIsDone(contract) {
             if (String(contract?.status || '').toLowerCase() === 'selesai') return true;

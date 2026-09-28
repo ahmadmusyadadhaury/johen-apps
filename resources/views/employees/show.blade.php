@@ -150,6 +150,14 @@ data-promotion-success="{{ session('promotion_success') }}"
         markReadUrl: '',
         payrollMarked: false,
         tabs: {{ $tabsJson }},
+        formatPayrollMoney(value) {
+            const amount = Math.trunc(Number(value) || 0);
+            @if($isOwnView)
+                return 'Rp ***' + String(Math.abs(amount)).slice(-3);
+            @else
+                return 'Rp ' + amount.toLocaleString('id-ID');
+            @endif
+        },
         init() {
             const data = document.getElementById('page-data');
             if (data) {
@@ -1345,10 +1353,10 @@ data-promotion-success="{{ session('promotion_success') }}"
                                     <tr class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                                         <td class="px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400" x-text="i + 1"></td>
                                         <td class="px-4 py-3.5 text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="p.periode"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-gray-900 dark:text-gray-100" x-text="'Rp ' + Number(p.gaji_pokok).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-emerald-600" x-text="'Rp ' + Number(p.tambahan_upah + p.tambahan_upah_sold + p.bonus + p.thr + p.apresiasi + p.tunjangan_jabatan + p.premi_bpjs_kesehatan).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-red-600" x-text="'Rp ' + Number(p.thr_dibayarkan + p.potongan_pinjaman + p.potongan_absensi + p.potongan_absensi_ketidakhadiran + p.potongan_absensi_keterlambatan + p.potongan_bpjs_kesehatan_4 + p.potongan_bpjs_kesehatan_1).toLocaleString('id-ID')"></td>
-                                        <td class="px-4 py-3.5 text-sm text-right font-bold text-gray-900 dark:text-gray-100" x-text="'Rp ' + Number(p.take_home_pay).toLocaleString('id-ID')"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-gray-900 dark:text-gray-100" x-text="formatPayrollMoney(p.gaji_pokok)"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-emerald-600" x-text="formatPayrollMoney(p.tambahan_upah + p.tambahan_upah_sold + p.bonus + p.thr + p.apresiasi + p.tunjangan_jabatan + p.premi_bpjs_kesehatan)"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-medium text-red-600" x-text="formatPayrollMoney(p.thr_dibayarkan + p.potongan_pinjaman + p.potongan_absensi + p.potongan_absensi_ketidakhadiran + p.potongan_absensi_keterlambatan + p.potongan_bpjs_kesehatan_4 + p.potongan_bpjs_kesehatan_1)"></td>
+                                        <td class="px-4 py-3.5 text-sm text-right font-bold text-gray-900 dark:text-gray-100" x-text="formatPayrollMoney(p.take_home_pay)"></td>
                                         <td class="px-4 py-3.5 text-center">
                                             <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
                                                   :class="p.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : (p.status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700')">
