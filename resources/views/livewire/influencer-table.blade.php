@@ -1,4 +1,4 @@
-<div>
+<div data-influencer-motion>
     @php
         $canEditInfluencers = !auth()->user()->isReadOnlyWorkspace();
         $canCreateInfluencers = $canEditInfluencers && !auth()->user()->isKoordinatorCreative();
@@ -6,7 +6,7 @@
     @endphp
 
     @if(session('message'))
-    <div class="mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+    <div class="influencer-feedback-enter mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
         {{ session('message') }}
     </div>
     @endif
@@ -25,7 +25,7 @@
     @endif
 
     @if(!$showRequestTabs || $activeTab === 'monitoring')
-    <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer">
+    <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer" class="influencer-feedback-enter">
 
     @if($upcomingPayments->count() > 0)
     <div class="mb-5 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-5 py-4">
@@ -341,7 +341,8 @@
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" wire:click="close" class="btn-secondary text-xs">Batal</button>
-                    <button type="submit" class="btn-primary text-xs">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn-primary text-xs disabled:opacity-60">
+                        <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
                         {{ $editId ? 'Perbarui' : 'Simpan' }}
                     </button>
@@ -352,8 +353,8 @@
 
     {{-- Payment Modal --}}
     @if($showPaymentModal)
-    <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4">
-        <div role="dialog" aria-modal="true" aria-labelledby="influencer-payment-title" class="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-8">
+    <div class="influencer-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="influencer-payment-title" class="influencer-modal-panel relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 id="influencer-payment-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pembayaran Influencer</h3>
@@ -388,14 +389,15 @@
                             @endif
                             <td class="px-4 py-3 text-center">
                                 @if($p->status === 'lunas')
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Lunas</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Lunas</span>
                                 @else
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
                                 @if($p->status === 'pending')
-                                <button wire:click="markAsPaid({{ $p->id }})" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
+                                <button wire:click="markAsPaid({{ $p->id }})" wire:loading.attr="disabled" wire:target="markAsPaid({{ $p->id }})" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors disabled:opacity-60">
+                                    <svg wire:loading wire:target="markAsPaid({{ $p->id }})" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                     Lunas
                                 </button>
@@ -423,8 +425,8 @@
     @endif
 
     @if($showDeleteConfirmation)
-    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation" wire:keydown.escape="cancelDelete">
-        <section role="alertdialog" aria-modal="true" aria-labelledby="delete-influencer-title" aria-describedby="delete-influencer-description" class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl dark:bg-gray-800 sm:p-6">
+    <div class="influencer-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation" wire:keydown.escape="cancelDelete">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="delete-influencer-title" aria-describedby="delete-influencer-description" class="influencer-modal-panel w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl dark:bg-gray-800 sm:p-6">
             <div class="flex items-start gap-3">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" aria-hidden="true">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86 1.82 18.5A1.7 1.7 0 003.3 21h17.4a1.7 1.7 0 001.48-2.5L13.71 3.86a1.98 1.98 0 00-3.42 0z"/></svg>
@@ -436,14 +438,17 @@
             </div>
             <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" wire:click="cancelDelete" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">Batal</button>
-                <button type="button" wire:click="deleteConfirmed" wire:loading.attr="disabled" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60">Ya, hapus</button>
+                <button type="button" wire:click="deleteConfirmed" wire:loading.attr="disabled" wire:target="deleteConfirmed" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60">
+                    <svg wire:loading wire:target="deleteConfirmed" class="mr-1.5 h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Ya, hapus
+                </button>
             </div>
         </section>
     </div>
     @endif
     </section>
     @else
-    <section id="influencer-submission-panel" role="tabpanel" aria-label="Pengajuan Influencer">
+    <section id="influencer-submission-panel" role="tabpanel" aria-label="Pengajuan Influencer" class="influencer-feedback-enter">
         @livewire('influencer-pengajuan-table', [], key('influencer-submission-tab'))
     </section>
     @endif

@@ -7,6 +7,7 @@ use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use App\Models\Position;
 use App\Models\User;
+use App\Support\InfluencerPengajuanRouting;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,6 +18,8 @@ class InfluencerPengajuanTable extends Component
     public bool $showModal = false;
     public bool $showSuccessModal = false;
     public string $successMessage = '';
+    public bool $showDeleteConfirmation = false;
+    public ?int $deletePengajuanId = null;
     public ?int $editId = null;
 
     public string $no_kontrak = '';
@@ -75,6 +78,7 @@ class InfluencerPengajuanTable extends Component
             'pengaju_id' => auth()->id(),
             'assigned_hos_position_id' => $assignedHos->id,
         ]);
+        $this->dispatch('influencer-pengajuan-updated');
 
         $this->successMessage = 'Pengajuan influencer berhasil dikirim dan menunggu persetujuan '.$assignedHos->nama.'.';
         $this->showSuccessModal = true;
@@ -85,6 +89,45 @@ class InfluencerPengajuanTable extends Component
     {
         $this->showSuccessModal = false;
         $this->successMessage = '';
+    }
+
+    public function confirmDelete(int $id): void
+    {
+        $pengajuan = InfluencerPengajuan::findOrFail($id);
+        abort_unless(
+            auth()->user()->isKoordinatorCreative()
+            && (int) $pengajuan->pengaju_id === (int) auth()->id()
+            && $pengajuan->status === 'pending_hos1',
+            403
+        );
+
+        $this->deletePengajuanId = $pengajuan->id;
+        $this->showDeleteConfirmation = true;
+    }
+
+    public function deletePengajuan(): void
+    {
+        abort_unless(auth()->user()->isKoordinatorCreative() && $this->deletePengajuanId, 403);
+
+        $pengajuan = InfluencerPengajuan::findOrFail($this->deletePengajuanId);
+        abort_unless(
+            (int) $pengajuan->pengaju_id === (int) auth()->id()
+            && $pengajuan->status === 'pending_hos1',
+            403
+        );
+
+        $pengajuan->delete();
+        $this->showDeleteConfirmation = false;
+        $this->deletePengajuanId = null;
+        $this->resetPage();
+        $this->dispatch('influencer-pengajuan-updated');
+        session()->flash('message', 'Pengajuan influencer berhasil dihapus.');
+    }
+
+    public function cancelDeletePengajuan(): void
+    {
+        $this->showDeleteConfirmation = false;
+        $this->deletePengajuanId = null;
     }
 
     public function approve(int $id): void
@@ -101,6 +144,7 @@ class InfluencerPengajuanTable extends Component
                 'approved_hos1_by' => $user->id,
                 'approved_hos1_at' => now(),
             ]);
+            $this->dispatch('influencer-pengajuan-updated');
             session()->flash('message', 'Pengajuan disetujui, menunggu persetujuan General Manager.');
         } elseif ($isGm && $pengajuan->status === 'pending_gm') {
             $pengajuan->update([
@@ -156,6 +200,7 @@ class InfluencerPengajuanTable extends Component
             'rejected_at' => now(),
             'alasan_penolakan' => $this->alasanTolak,
         ]);
+        $this->dispatch('influencer-pengajuan-updated');
 
         session()->flash('message', 'Pengajuan ditolak.');
         $this->batalTolak();
@@ -183,18 +228,7 @@ class InfluencerPengajuanTable extends Component
 
     private function headOfStoreForUser(User $user): ?Position
     {
-        $position = $user->employee?->mainPosition();
-        $visited = [];
-
-        while ($position && !isset($visited[$position->id])) {
-            $visited[$position->id] = true;
-            if (preg_match('/^Head of Store\\s+[12]$/i', trim($position->nama))) {
-                return $position;
-            }
-            $position = $position->parent;
-        }
-
-        return null;
+        return InfluencerPengajuanRouting::headOfStorePositionForUser($user);
     }
 
     private function isAssignedHeadOfStore(User $user, InfluencerPengajuan $pengajuan): bool
@@ -204,10 +238,8 @@ class InfluencerPengajuanTable extends Component
         }
 
         $employeePosition = $user->employee?->mainPosition();
-        $assignedPositionId = $pengajuan->assigned_hos_position_id
-            ?: $this->headOfStoreForUser($pengajuan->pengaju)?->id;
-
-        return $employeePosition && $assignedPositionId && $employeePosition->id === (int) $assignedPositionId;
+        return $employeePosition
+            && InfluencerPengajuanRouting::isAssignedToHeadOfStore($pengajuan, $employeePosition);
     }
 
     public function canApprove(InfluencerPengajuan $pengajuan): bool
@@ -252,19 +284,21 @@ class InfluencerPengajuanTable extends Component
         if ($user->isSuperAdminLike()) {
             // lihat semua
         } elseif ($isHos) {
+            $headOfStorePosition = $user->employee?->mainPosition();
             $legacyAssignedIds = InfluencerPengajuan::query()
                 ->where('status', 'pending_hos1')
                 ->whereNull('assigned_hos_position_id')
                 ->with('pengaju.employee')
                 ->get()
-                ->filter(fn (InfluencerPengajuan $item) => $this->isAssignedHeadOfStore($user, $item))
+                ->filter(fn (InfluencerPengajuan $item) => $headOfStorePosition
+                    && InfluencerPengajuanRouting::isAssignedToHeadOfStore($item, $headOfStorePosition))
                 ->pluck('id');
 
-            $query->where(function ($q) use ($legacyAssignedIds) {
-                $q->where(function ($pending) {
+            $query->where(function ($q) use ($legacyAssignedIds, $headOfStorePosition) {
+                $q->where(function ($pending) use ($headOfStorePosition) {
                     $pending->where('status', 'pending_hos1')
-                        ->where(function ($assigned) {
-                            $assigned->where('assigned_hos_position_id', auth()->user()->employee?->mainPosition()?->id);
+                        ->where(function ($assigned) use ($headOfStorePosition) {
+                            $assigned->where('assigned_hos_position_id', $headOfStorePosition?->id);
                         });
                 })
                   ->orWhereIn('id', $legacyAssignedIds)

@@ -1,12 +1,12 @@
-<div>
+<div data-influencer-motion>
     @if(session('message'))
-    <div class="mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+    <div class="influencer-feedback-enter mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
         {{ session('message') }}
     </div>
     @endif
 
     @if(session('error'))
-    <div class="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+    <div class="influencer-feedback-enter mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
         {{ session('error') }}
     </div>
     @endif
@@ -94,27 +94,35 @@
                             <td class="table-cell text-left text-gray-600 dark:text-gray-400">@if($item->biaya)Rp {{ number_format($item->biaya, 0, ',', '.') }}@else<span class="text-gray-400">-</span>@endif</td>
                             <td class="table-cell">
                                 @if($item->approved_hos1_by)
-                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverHos1->name ?? $item->approverHos1->username }}</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverHos1->name ?? $item->approverHos1->username }}</span>
                                 @elseif($item->status === 'rejected' && !$item->approved_hos1_by)
-                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
                                 @endif
                             </td>
                             <td class="table-cell">
                                 @if($item->approved_gm_by)
-                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverGm->name ?? $item->approverGm->username }}</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverGm->name ?? $item->approverGm->username }}</span>
                                 @elseif($item->status === 'rejected' && $item->approved_hos1_by)
-                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
                                 @endif
                             </td>
                             <td class="table-cell">
-                                @if($this->canApprove($item))
+                                @if($this->canApprove($item) || (auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id() && $item->status === 'pending_hos1'))
                                 <div class="flex flex-wrap gap-2">
-                                    <button type="button" wire:click="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Setujui</button>
-                                    <button type="button" wire:click="openTolak({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Tolak</button>
+                                    @if($this->canApprove($item))
+                                    <button type="button" wire:click="approve({{ $item->id }})" wire:loading.attr="disabled" wire:target="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60">
+                                        <svg wire:loading wire:target="approve({{ $item->id }})" class="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        Setujui
+                                    </button>
+                                    <button type="button" wire:click="openTolak({{ $item->id }})" wire:loading.attr="disabled" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Tolak</button>
+                                    @endif
+                                    @if(auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id() && $item->status === 'pending_hos1')
+                                    <button type="button" wire:click="confirmDelete({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Hapus</button>
+                                    @endif
                                 </div>
                                 @else
                                 <span class="text-xs text-gray-400">-</span>
@@ -145,8 +153,9 @@
 
     {{-- Form Modal --}}
     @if($showModal)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
-        <div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+    @teleport('body')
+    <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10000] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-3 sm:items-center sm:p-5">
+        <div class="influencer-modal-panel isolate relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_24px_80px_-20px_rgba(15,23,42,0.55)] dark:border-gray-700 dark:bg-gray-900 sm:max-h-[calc(100dvh-2.5rem)] sm:p-7">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Ajukan Influencer</h3>
@@ -164,7 +173,7 @@
                     @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label value="Mulai Kontrak *" />
                         <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
@@ -193,7 +202,8 @@
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" wire:click="close" class="btn-secondary text-xs">Batal</button>
-                    <button type="submit" class="btn-primary text-xs">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn-primary text-xs disabled:opacity-60">
+                        <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
                         Ajukan
                     </button>
@@ -201,11 +211,13 @@
             </form>
         </div>
     </div>
+    @endteleport
     @endif
 
     @if($showSuccessModal)
-    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation">
-        <section role="alertdialog" aria-modal="true" aria-labelledby="influencer-submission-success-title" aria-describedby="influencer-submission-success-description" class="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-gray-800">
+    @teleport('body')
+    <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10001] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="influencer-submission-success-title" aria-describedby="influencer-submission-success-description" class="influencer-modal-panel w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-gray-800">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" aria-hidden="true">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.75 4.5 4.5L19 7.5"/></svg>
             </div>
@@ -214,11 +226,13 @@
             <button type="button" wire:click="closeSuccessModal" class="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 sm:w-auto">Mengerti</button>
         </section>
     </div>
+    @endteleport
     @endif
 
     @if($tolakId)
-    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation">
-        <section role="dialog" aria-modal="true" aria-labelledby="reject-influencer-title" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+    @teleport('body')
+    <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10001] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation">
+        <section role="dialog" aria-modal="true" aria-labelledby="reject-influencer-title" class="influencer-modal-panel w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <h3 id="reject-influencer-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tolak Pengajuan Influencer</h3>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tuliskan alasan penolakan agar pengaju memahami keputusan ini.</p>
             <label for="alasan-tolak-influencer" class="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">Alasan penolakan</label>
@@ -226,9 +240,31 @@
             @error('alasanTolak') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             <div class="mt-5 flex justify-end gap-3">
                 <button type="button" wire:click="batalTolak" class="btn-secondary min-h-10 text-xs">Batal</button>
-                <button type="button" wire:click="reject({{ $tolakId }})" class="inline-flex min-h-10 items-center rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Konfirmasi Tolak</button>
+                <button type="button" wire:click="reject({{ $tolakId }})" wire:loading.attr="disabled" wire:target="reject" class="inline-flex min-h-10 items-center rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-60">
+                    <svg wire:loading wire:target="reject" class="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Konfirmasi Tolak
+                </button>
             </div>
         </section>
     </div>
+    @endteleport
+    @endif
+
+    @if($showDeleteConfirmation)
+    @teleport('body')
+    <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10001] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation" wire:keydown.escape="cancelDeletePengajuan">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="delete-influencer-submission-title" aria-describedby="delete-influencer-submission-description" class="influencer-modal-panel w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+            <h3 id="delete-influencer-submission-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Hapus pengajuan influencer?</h3>
+            <p id="delete-influencer-submission-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">Pengajuan yang masih menunggu persetujuan Head of Store akan dihapus dan tidak dapat dipulihkan.</p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" wire:click="cancelDeletePengajuan" class="btn-secondary min-h-10 text-xs">Batal</button>
+                <button type="button" wire:click="deletePengajuan" wire:loading.attr="disabled" wire:target="deletePengajuan" class="inline-flex min-h-10 items-center rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-60">
+                    <svg wire:loading wire:target="deletePengajuan" class="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Ya, hapus
+                </button>
+            </div>
+        </section>
+    </div>
+    @endteleport
     @endif
 </div>
