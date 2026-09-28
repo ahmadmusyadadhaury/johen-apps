@@ -11,7 +11,7 @@
     </div>
     @endif
 
-    <div class="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4" aria-label="Ringkasan pengajuan influencer">
         <div class="stat-card group">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200">
