@@ -55,7 +55,7 @@
                 @if($group !== '__flat__')
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">{{ $group }}</p>
                 @endif
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 {{ $groupIsLast = ($loop->last) ? 'mb-0' : 'mb-3' }}">
+                <div class="grid gap-2 {{ $groupIsLast = ($loop->last) ? 'mb-0' : 'mb-3' }}" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));">
                     @foreach($groupItems as $item)
                     <a href="{{ route($item['route'], $item['params']) }}" class="group flex items-center gap-2.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-3 py-2.5 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all duration-300">
                         <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-sm group-hover:scale-110 transition-transform duration-300">

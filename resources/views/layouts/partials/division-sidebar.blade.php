@@ -24,7 +24,7 @@ $groupIcons = [
 <div class="mb-3">
     <a href="{{ route('dashboard') }}" class="group flex items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-violet-600 hover:from-primary-700 hover:to-violet-700 shadow-sm transition-all duration-200">
         <svg class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18"/></svg>
-        <span>Kembali ke Dashboard Anda</span>
+        <span>Kembali ke Dashboard</span>
     </a>
 </div>
 
