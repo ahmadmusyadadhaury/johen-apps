@@ -15,14 +15,14 @@
 
     $avatars = [
         'pengumuman' => ['bg' => 'bg-gradient-to-br from-primary-500 to-violet-500 text-white shadow-md shadow-primary-200/60', 'icon' => 'M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38a.467.467 0 01-.502-.011 5.095 5.095 0 01-1.357-3.637m3.394-5.026a9.44 9.44 0 000 4.52M3.554 9.48l-.397.73a.72.72 0 000 .59l.397.73m7.446-5.71v-.75c0-.663.284-1.275.73-1.74 0 0 1.813-1.87 3.042-2.27.291-.094.603.06.603.366v4.133m6.659 8.677l.397-.73a.72.72 0 000-.59l-.397-.73M18.304 8.88l1.26-1.08c.33-.283.363-.795.063-1.137m-8.865 3.827a6.03 6.03 0 00-.706.74m.706-.74c.62-.24 1.29-.37 1.99-.37h1.5a4.5 4.5 0 010 9h-.75c-.705 0-1.403.03-2.09.09'],
-        'surat_edaran' => ['bg' => 'bg-gradient-to-br from-sky-500 to-blue-500 text-white shadow-md shadow-sky-200/60', 'icon' => 'M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5'],
+        'surat_edaran' => ['bg' => 'bg-gradient-to-br from-sky-500 to-blue-500 text-white', 'icon' => 'M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5'],
         'surat_keputusan' => ['bg' => 'bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-md shadow-violet-200/60', 'icon' => 'M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z'],
         'pemberitahuan' => ['bg' => 'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200/60', 'icon' => 'M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0'],
     ];
 
     $statCards = [
         ['key' => 'pengumuman', 'label' => 'Pengumuman', 'value' => $statPengumuman, 'gradient' => 'from-primary-500 to-violet-500', 'shadow' => 'shadow-primary-200', 'badge' => 'badge-primary', 'path' => $avatars['pengumuman']['icon']],
-        ['key' => 'surat_edaran', 'label' => 'Surat Edaran', 'value' => $statEdaran, 'gradient' => 'from-sky-500 to-blue-500', 'shadow' => 'shadow-sky-200', 'badge' => 'badge-info', 'path' => $avatars['surat_edaran']['icon']],
+        ['key' => 'surat_edaran', 'label' => 'Surat Edaran', 'value' => $statEdaran, 'gradient' => 'from-sky-500 to-blue-500', 'shadow' => '', 'badge' => 'badge-info', 'path' => $avatars['surat_edaran']['icon']],
         ['key' => 'surat_keputusan', 'label' => 'Surat Keputusan', 'value' => $statKeputusan, 'gradient' => 'from-violet-500 to-purple-500', 'shadow' => 'shadow-violet-200', 'badge' => 'badge-success', 'path' => $avatars['surat_keputusan']['icon']],
         ['key' => 'pemberitahuan', 'label' => 'Pemberitahuan', 'value' => $statPemberitahuan, 'gradient' => 'from-amber-500 to-orange-500', 'shadow' => 'shadow-amber-200', 'badge' => 'badge-warning', 'path' => $avatars['pemberitahuan']['icon']],
     ];
