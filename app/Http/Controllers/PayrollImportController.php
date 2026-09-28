@@ -50,7 +50,13 @@ class PayrollImportController extends Controller
 
     public function destroy(PayrollImport $import): RedirectResponse
     {
-        Gate::authorize('delete-data');
+        abort_unless(
+            request()->user()->isSuperAdmin()
+                || request()->user()->isAdminMaster()
+                || request()->user()->isGmCeo(),
+            403
+        );
+
         foreach ($import->payrollDetails as $detail) {
             if ($detail->pdf_path && Storage::disk('public')->exists($detail->pdf_path)) {
                 Storage::disk('public')->delete($detail->pdf_path);

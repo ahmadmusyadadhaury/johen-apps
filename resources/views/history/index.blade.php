@@ -91,7 +91,7 @@
                                             <button @click="open = !open" @click.outside="open = false" class="rounded-lg p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
                                             </button>
-                                            @can('delete-data')
+                                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster() || auth()->user()->isGmCeo())
                                             <div x-show="open" x-cloak
                                                  x-transition:enter="transition ease-out duration-200"
                                                  x-transition:enter-start="opacity-0 scale-95"
@@ -109,7 +109,7 @@
                                                     </button>
                                                 </form>
                                             </div>
-                                            @endcan
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
