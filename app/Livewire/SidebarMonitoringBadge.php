@@ -32,15 +32,14 @@ class SidebarMonitoringBadge extends Component
         $total = 0;
 
         if ($user && $user->isManager() && $user->employee) {
-            $managerPosition = $user->employee->mainPosition();
             $subordinateIds = $this->getManagerSubordinateIds($user->employee);
             if (!empty($subordinateIds)) {
                 $total += $this->countReportsAwaitingFeedback($subordinateIds);
                 $total += $this->countDailyTrackingPending($subordinateIds, $user);
             }
 
-            if ($user->isHeadOfStore() && $managerPosition) {
-                $total += InfluencerPengajuanRouting::pendingCountForHeadOfStore($managerPosition);
+            if ($user->isHeadOfStore()) {
+                $total += InfluencerPengajuanRouting::pendingCountForHeadOfStore($user);
             }
         }
 

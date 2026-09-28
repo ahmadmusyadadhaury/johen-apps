@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\Influencer;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
-use App\Models\Position;
 use App\Models\User;
 use App\Support\InfluencerPengajuanRouting;
 use Livewire\Component;
@@ -64,8 +63,9 @@ class InfluencerPengajuanTable extends Component
         abort_unless(auth()->user()->isKoordinatorCreative(), 403);
         $this->validate();
 
-        $assignedHos = $this->headOfStoreForUser(auth()->user());
-        abort_unless($assignedHos, 422, 'Posisi Head of Store koordinator ini belum tercantum di struktur organisasi.');
+        $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForUser(auth()->user());
+        $assignedHosName = InfluencerPengajuanRouting::headOfStoreNameForUser(auth()->user());
+        abort_unless($assignedHosName, 422, 'Head of Store koordinator ini belum dapat ditentukan dari struktur organisasi.');
 
         InfluencerPengajuan::create([
             'no_kontrak' => '',
@@ -76,11 +76,11 @@ class InfluencerPengajuanTable extends Component
             'biaya' => $this->biaya ?: null,
             'status' => 'pending_hos1',
             'pengaju_id' => auth()->id(),
-            'assigned_hos_position_id' => $assignedHos->id,
+            'assigned_hos_position_id' => $assignedHos?->id,
         ]);
         $this->dispatch('influencer-pengajuan-updated');
 
-        $this->successMessage = 'Pengajuan influencer berhasil dikirim dan menunggu persetujuan '.$assignedHos->nama.'.';
+        $this->successMessage = 'Pengajuan influencer berhasil dikirim dan menunggu persetujuan '.$assignedHosName.'.';
         $this->showSuccessModal = true;
         $this->close();
     }
@@ -96,8 +96,7 @@ class InfluencerPengajuanTable extends Component
         $pengajuan = InfluencerPengajuan::findOrFail($id);
         abort_unless(
             auth()->user()->isKoordinatorCreative()
-            && (int) $pengajuan->pengaju_id === (int) auth()->id()
-            && $pengajuan->status === 'pending_hos1',
+            && (int) $pengajuan->pengaju_id === (int) auth()->id(),
             403
         );
 
@@ -111,8 +110,7 @@ class InfluencerPengajuanTable extends Component
 
         $pengajuan = InfluencerPengajuan::findOrFail($this->deletePengajuanId);
         abort_unless(
-            (int) $pengajuan->pengaju_id === (int) auth()->id()
-            && $pengajuan->status === 'pending_hos1',
+            (int) $pengajuan->pengaju_id === (int) auth()->id(),
             403
         );
 
@@ -226,20 +224,13 @@ class InfluencerPengajuanTable extends Component
         $this->resetErrorBag();
     }
 
-    private function headOfStoreForUser(User $user): ?Position
-    {
-        return InfluencerPengajuanRouting::headOfStorePositionForUser($user);
-    }
-
     private function isAssignedHeadOfStore(User $user, InfluencerPengajuan $pengajuan): bool
     {
         if (!$user->isHeadOfStore()) {
             return false;
         }
 
-        $employeePosition = $user->employee?->mainPosition();
-        return $employeePosition
-            && InfluencerPengajuanRouting::isAssignedToHeadOfStore($pengajuan, $employeePosition);
+        return InfluencerPengajuanRouting::isAssignedToHeadOfStore($pengajuan, $user);
     }
 
     public function canApprove(InfluencerPengajuan $pengajuan): bool
@@ -284,24 +275,15 @@ class InfluencerPengajuanTable extends Component
         if ($user->isSuperAdminLike()) {
             // lihat semua
         } elseif ($isHos) {
-            $headOfStorePosition = $user->employee?->mainPosition();
-            $legacyAssignedIds = InfluencerPengajuan::query()
+            $assignedPendingIds = InfluencerPengajuan::query()
                 ->where('status', 'pending_hos1')
-                ->whereNull('assigned_hos_position_id')
                 ->with('pengaju.employee')
                 ->get()
-                ->filter(fn (InfluencerPengajuan $item) => $headOfStorePosition
-                    && InfluencerPengajuanRouting::isAssignedToHeadOfStore($item, $headOfStorePosition))
+                ->filter(fn (InfluencerPengajuan $item) => InfluencerPengajuanRouting::isAssignedToHeadOfStore($item, $user))
                 ->pluck('id');
 
-            $query->where(function ($q) use ($legacyAssignedIds, $headOfStorePosition) {
-                $q->where(function ($pending) use ($headOfStorePosition) {
-                    $pending->where('status', 'pending_hos1')
-                        ->where(function ($assigned) use ($headOfStorePosition) {
-                            $assigned->where('assigned_hos_position_id', $headOfStorePosition?->id);
-                        });
-                })
-                  ->orWhereIn('id', $legacyAssignedIds)
+            $query->where(function ($q) use ($assignedPendingIds) {
+                $q->whereIn('id', $assignedPendingIds)
                   ->orWhere('approved_hos1_by', auth()->id());
             });
         } elseif ($isGm) {

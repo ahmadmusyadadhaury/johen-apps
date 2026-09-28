@@ -111,7 +111,7 @@
                                 @endif
                             </td>
                             <td class="table-cell">
-                                @if($this->canApprove($item) || (auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id() && $item->status === 'pending_hos1'))
+                                @if($this->canApprove($item) || (auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id()))
                                 <div class="flex flex-wrap gap-2">
                                     @if($this->canApprove($item))
                                     <button type="button" wire:click="approve({{ $item->id }})" wire:loading.attr="disabled" wire:target="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60">
@@ -120,7 +120,7 @@
                                     </button>
                                     <button type="button" wire:click="openTolak({{ $item->id }})" wire:loading.attr="disabled" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Tolak</button>
                                     @endif
-                                    @if(auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id() && $item->status === 'pending_hos1')
+                                    @if(auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id())
                                     <button type="button" wire:click="confirmDelete({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Hapus</button>
                                     @endif
                                 </div>
@@ -255,7 +255,7 @@
     <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10001] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation" wire:keydown.escape="cancelDeletePengajuan">
         <section role="alertdialog" aria-modal="true" aria-labelledby="delete-influencer-submission-title" aria-describedby="delete-influencer-submission-description" class="influencer-modal-panel w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <h3 id="delete-influencer-submission-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Hapus pengajuan influencer?</h3>
-            <p id="delete-influencer-submission-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">Pengajuan yang masih menunggu persetujuan Head of Store akan dihapus dan tidak dapat dipulihkan.</p>
+            <p id="delete-influencer-submission-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">Riwayat pengajuan akan dihapus. Jika sudah disetujui, data influencer di menu monitoring tetap tersedia.</p>
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" wire:click="cancelDeletePengajuan" class="btn-secondary min-h-10 text-xs">Batal</button>
                 <button type="button" wire:click="deletePengajuan" wire:loading.attr="disabled" wire:target="deletePengajuan" class="inline-flex min-h-10 items-center rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-60">

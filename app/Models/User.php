@@ -573,18 +573,16 @@ class User extends Authenticatable
     {
         $employee = $this->employee;
         if (!$employee) return false;
-        $position = $employee->mainPosition();
-        if (!$position) return false;
-        return str_contains(strtolower($position->nama), 'head of store');
+        $positionName = $employee->mainPosition()?->nama ?? $employee->position;
+        return str_contains(strtolower((string) $positionName), 'head of store');
     }
 
     public function isHeadOfStore2(): bool
     {
         $employee = $this->employee;
         if (!$employee) return false;
-        $position = $employee->mainPosition();
-        if (!$position) return false;
-        return strtolower($position->nama) === 'head of store 2';
+        $positionName = $employee->mainPosition()?->nama ?? $employee->position;
+        return strtolower((string) $positionName) === 'head of store 2';
     }
 
     public function isHeadOfStore1(): bool

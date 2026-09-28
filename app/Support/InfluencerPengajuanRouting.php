@@ -10,7 +10,17 @@ class InfluencerPengajuanRouting
 {
     public static function headOfStorePositionForUser(?User $user): ?Position
     {
-        $position = $user?->employee?->mainPosition();
+        $employee = $user?->employee;
+        $position = $employee?->mainPosition();
+        if (!$position && $employee) {
+            $legacyPositionName = trim((string) $employee->position);
+            $position = Position::query()->where('nama', $legacyPositionName)->first();
+            if (!$position) {
+                $normalizedPositionName = preg_replace('/^(?:ASKOR|ASST\\.?\\s*COORDINATOR)\\s+/i', '', $legacyPositionName);
+                $position = Position::query()->where('nama', $normalizedPositionName)->first();
+            }
+        }
+        $position ??= $employee?->positions()->first();
         $visited = [];
 
         while ($position && !isset($visited[$position->id])) {
@@ -24,30 +34,52 @@ class InfluencerPengajuanRouting
         return null;
     }
 
-    public static function isAssignedToHeadOfStore(InfluencerPengajuan $pengajuan, Position $position): bool
+    public static function headOfStoreNameForUser(?User $user): ?string
     {
-        if ($pengajuan->assigned_hos_position_id) {
-            return (int) $pengajuan->assigned_hos_position_id === (int) $position->id;
+        $position = self::headOfStorePositionForUser($user);
+        if ($position) {
+            return $position->nama;
         }
 
-        return self::headOfStorePositionForUser($pengajuan->pengaju)?->id === $position->id;
+        $legacyName = trim((string) $user?->employee?->position);
+        if (preg_match('/^Head of Store\s+[12]$/i', $legacyName)) {
+            return $legacyName;
+        }
+
+        if ($user?->isKoordinatorCreative() && !self::organizationHasHeadOfStorePositions()) {
+            return 'Head of Store 1';
+        }
+
+        return null;
     }
 
-    public static function pendingCountForHeadOfStore(Position $position): int
+    public static function isAssignedToHeadOfStore(InfluencerPengajuan $pengajuan, User $headOfStore): bool
     {
-        $assignedCount = InfluencerPengajuan::query()
-            ->where('status', 'pending_hos1')
-            ->where('assigned_hos_position_id', $position->id)
-            ->count();
+        $headPosition = $headOfStore->employee?->mainPosition() ?? $headOfStore->employee?->positions()->first();
+        if ($pengajuan->assigned_hos_position_id && $headPosition) {
+            return (int) $pengajuan->assigned_hos_position_id === (int) $headPosition->id;
+        }
 
-        $legacyCount = InfluencerPengajuan::query()
+        $assignedName = $pengajuan->assignedHosPosition?->nama
+            ?? self::headOfStoreNameForUser($pengajuan->pengaju);
+        $headOfStoreName = self::headOfStoreNameForUser($headOfStore);
+
+        return $assignedName && $headOfStoreName
+            && strcasecmp(trim($assignedName), trim($headOfStoreName)) === 0;
+    }
+
+    public static function pendingCountForHeadOfStore(User $headOfStore): int
+    {
+        return InfluencerPengajuan::query()
             ->where('status', 'pending_hos1')
-            ->whereNull('assigned_hos_position_id')
             ->with('pengaju.employee')
             ->get()
-            ->filter(fn (InfluencerPengajuan $pengajuan) => self::isAssignedToHeadOfStore($pengajuan, $position))
+            ->filter(fn (InfluencerPengajuan $pengajuan) => self::isAssignedToHeadOfStore($pengajuan, $headOfStore))
             ->count();
+    }
 
-        return $assignedCount + $legacyCount;
+    public static function organizationHasHeadOfStorePositions(): bool
+    {
+        return Position::query()->where('nama', 'like', 'Head of Store%')->exists();
     }
 }
