@@ -1332,6 +1332,11 @@ data-promotion-success="{{ session('promotion_success') }}"
             {{-- Panel: Riwayat Payroll --}}
             @if($canSeePayroll)
             <div x-show="activeTab === 'payroll'" x-cloak class="p-7">
+                @if($isOwnView)
+                <p class="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+                    Password PDF adalah NIP + 2 digit terakhir Nomor KTP.
+                </p>
+                @endif
                 {{-- Table --}}
                 <div x-show="payrollList.length > 0">
                     <div class="rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">

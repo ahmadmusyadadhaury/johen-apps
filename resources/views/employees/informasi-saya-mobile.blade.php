@@ -600,6 +600,9 @@
 
         @if($canSeePayroll)
             <section x-show="activeCategory === 'payroll'" x-cloak class="space-y-4" aria-labelledby="mobile-informasi-title">
+                <p class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+                    Password PDF adalah NIP + 2 digit terakhir Nomor KTP.
+                </p>
                 <div class="space-y-3">
                     <template x-for="payroll in payrollList" :key="payroll.id">
                         <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
