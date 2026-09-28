@@ -60,7 +60,7 @@
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Pengajuan Influencer</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daftar pengajuan influencer baru</p>
             </div>
-            @if(auth()->user()->isKoordinatorCreative() || auth()->user()->isSuperAdminLike())
+            @if(auth()->user()->isKoordinatorCreative())
             <button wire:click="openNew" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Ajukan Influencer
@@ -80,6 +80,7 @@
                         <th class="px-6 py-3">Biaya</th>
                         <th class="px-6 py-3">Persetujuan Atasan 1</th>
                         <th class="px-6 py-3">Persetujuan Atasan 2</th>
+                        <th class="px-6 py-3">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -90,31 +91,39 @@
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak->isoFormat('D MMM YYYY') }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak->isoFormat('D MMM YYYY') }}</td>
-                            <td class="table-cell text-right text-gray-600 dark:text-gray-400">@if($item->biaya)Rp {{ number_format($item->biaya, 0, ',', '.') }}@else<span class="text-gray-400">-</span>@endif</td>
+                            <td class="table-cell text-left text-gray-600 dark:text-gray-400">@if($item->biaya)Rp {{ number_format($item->biaya, 0, ',', '.') }}@else<span class="text-gray-400">-</span>@endif</td>
                             <td class="table-cell">
                                 @if($item->approved_hos1_by)
-                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $item->approverHos1->name ?? $item->approverHos1->username }}</span>
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverHos1->name ?? $item->approverHos1->username }}</span>
                                 @elseif($item->status === 'rejected' && !$item->approved_hos1_by)
-                                <span class="text-xs text-red-600 dark:text-red-400">Ditolak</span>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="text-xs text-gray-400 dark:text-gray-500">-</span>
+                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
                                 @endif
                             </td>
                             <td class="table-cell">
                                 @if($item->approved_gm_by)
-                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $item->approverGm->name ?? $item->approverGm->username }}</span>
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverGm->name ?? $item->approverGm->username }}</span>
                                 @elseif($item->status === 'rejected' && $item->approved_hos1_by)
-                                <span class="text-xs text-red-600 dark:text-red-400">Ditolak</span>
-                                @elseif($item->status === 'approved' && !$item->approved_gm_by)
-                                <span class="text-xs text-gray-400 dark:text-gray-500">-</span>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="text-xs text-gray-400 dark:text-gray-500">-</span>
+                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
+                                @endif
+                            </td>
+                            <td class="table-cell">
+                                @if($this->canApprove($item))
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" wire:click="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Setujui</button>
+                                    <button type="button" wire:click="openTolak({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Tolak</button>
+                                </div>
+                                @else
+                                <span class="text-xs text-gray-400">-</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                     <p class="font-medium">Belum ada pengajuan</p>
@@ -191,6 +200,35 @@
                 </div>
             </form>
         </div>
+    </div>
+    @endif
+
+    @if($showSuccessModal)
+    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="influencer-submission-success-title" aria-describedby="influencer-submission-success-description" class="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-gray-800">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" aria-hidden="true">
+                <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.75 4.5 4.5L19 7.5"/></svg>
+            </div>
+            <h3 id="influencer-submission-success-title" class="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Pengajuan berhasil dikirim</h3>
+            <p id="influencer-submission-success-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">{{ $successMessage }}</p>
+            <button type="button" wire:click="closeSuccessModal" class="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 sm:w-auto">Mengerti</button>
+        </section>
+    </div>
+    @endif
+
+    @if($tolakId)
+    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation">
+        <section role="dialog" aria-modal="true" aria-labelledby="reject-influencer-title" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+            <h3 id="reject-influencer-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tolak Pengajuan Influencer</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tuliskan alasan penolakan agar pengaju memahami keputusan ini.</p>
+            <label for="alasan-tolak-influencer" class="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">Alasan penolakan</label>
+            <textarea id="alasan-tolak-influencer" wire:model="alasanTolak" rows="4" class="mt-1 block w-full rounded-xl border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" required></textarea>
+            @error('alasanTolak') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            <div class="mt-5 flex justify-end gap-3">
+                <button type="button" wire:click="batalTolak" class="btn-secondary min-h-10 text-xs">Batal</button>
+                <button type="button" wire:click="reject({{ $tolakId }})" class="inline-flex min-h-10 items-center rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Konfirmasi Tolak</button>
+            </div>
+        </section>
     </div>
     @endif
 </div>

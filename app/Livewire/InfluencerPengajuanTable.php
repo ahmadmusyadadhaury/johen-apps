@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Influencer;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
+use App\Models\Position;
 use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -14,6 +15,8 @@ class InfluencerPengajuanTable extends Component
     use WithPagination;
 
     public bool $showModal = false;
+    public bool $showSuccessModal = false;
+    public string $successMessage = '';
     public ?int $editId = null;
 
     public string $no_kontrak = '';
@@ -55,7 +58,11 @@ class InfluencerPengajuanTable extends Component
 
     public function save(): void
     {
+        abort_unless(auth()->user()->isKoordinatorCreative(), 403);
         $this->validate();
+
+        $assignedHos = $this->headOfStoreForUser(auth()->user());
+        abort_unless($assignedHos, 422, 'Posisi Head of Store koordinator ini belum tercantum di struktur organisasi.');
 
         InfluencerPengajuan::create([
             'no_kontrak' => '',
@@ -66,10 +73,18 @@ class InfluencerPengajuanTable extends Component
             'biaya' => $this->biaya ?: null,
             'status' => 'pending_hos1',
             'pengaju_id' => auth()->id(),
+            'assigned_hos_position_id' => $assignedHos->id,
         ]);
 
-        session()->flash('message', 'Pengajuan influencer berhasil dikirim, menunggu persetujuan Head of Store 1.');
+        $this->successMessage = 'Pengajuan influencer berhasil dikirim dan menunggu persetujuan '.$assignedHos->nama.'.';
+        $this->showSuccessModal = true;
         $this->close();
+    }
+
+    public function closeSuccessModal(): void
+    {
+        $this->showSuccessModal = false;
+        $this->successMessage = '';
     }
 
     public function approve(int $id): void
@@ -77,10 +92,10 @@ class InfluencerPengajuanTable extends Component
         $pengajuan = InfluencerPengajuan::findOrFail($id);
         $user = auth()->user();
 
-        $isHos1 = $this->isHeadOfStore1($user);
+        $isAssignedHos = $this->isAssignedHeadOfStore($user, $pengajuan);
         $isGm = $user->isGmCeo();
 
-        if ($isHos1 && $pengajuan->status === 'pending_hos1') {
+        if ($isAssignedHos && $pengajuan->status === 'pending_hos1') {
             $pengajuan->update([
                 'status' => 'pending_gm',
                 'approved_hos1_by' => $user->id,
@@ -124,12 +139,16 @@ class InfluencerPengajuanTable extends Component
 
     public function reject(int $id): void
     {
+        $pengajuan = InfluencerPengajuan::findOrFail($id);
+        $user = auth()->user();
+        abort_unless(
+            ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
+            || ($pengajuan->status === 'pending_gm' && $user->isGmCeo()),
+            403
+        );
         $this->validate([
             'alasanTolak' => 'required|string|min:5',
         ]);
-
-        $pengajuan = InfluencerPengajuan::findOrFail($id);
-        $user = auth()->user();
 
         $pengajuan->update([
             'status' => 'rejected',
@@ -162,13 +181,41 @@ class InfluencerPengajuanTable extends Component
         $this->resetErrorBag();
     }
 
-    public function isHeadOfStore1(User $user): bool
+    private function headOfStoreForUser(User $user): ?Position
     {
-        $employee = $user->employee;
-        if (!$employee) return false;
-        $position = $employee->mainPosition();
-        if (!$position) return false;
-        return $position->nama === 'Head of Store 1';
+        $position = $user->employee?->mainPosition();
+        $visited = [];
+
+        while ($position && !isset($visited[$position->id])) {
+            $visited[$position->id] = true;
+            if (preg_match('/^Head of Store\\s+[12]$/i', trim($position->nama))) {
+                return $position;
+            }
+            $position = $position->parent;
+        }
+
+        return null;
+    }
+
+    private function isAssignedHeadOfStore(User $user, InfluencerPengajuan $pengajuan): bool
+    {
+        if (!$user->isHeadOfStore()) {
+            return false;
+        }
+
+        $employeePosition = $user->employee?->mainPosition();
+        $assignedPositionId = $pengajuan->assigned_hos_position_id
+            ?: $this->headOfStoreForUser($pengajuan->pengaju)?->id;
+
+        return $employeePosition && $assignedPositionId && $employeePosition->id === (int) $assignedPositionId;
+    }
+
+    public function canApprove(InfluencerPengajuan $pengajuan): bool
+    {
+        $user = auth()->user();
+
+        return ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
+            || ($pengajuan->status === 'pending_gm' && $user->isGmCeo());
     }
 
     private function generatePayments(Influencer $influencer): void
@@ -197,16 +244,30 @@ class InfluencerPengajuanTable extends Component
     public function render()
     {
         $user = auth()->user();
-        $isHos1 = $this->isHeadOfStore1($user);
+        $isHos = $user->isHeadOfStore();
         $isGm = $user->isGmCeo();
 
         $query = InfluencerPengajuan::with('pengaju', 'approverHos1', 'approverGm', 'rejector');
 
         if ($user->isSuperAdminLike()) {
             // lihat semua
-        } elseif ($isHos1) {
-            $query->where(function ($q) {
-                $q->where('status', 'pending_hos1')
+        } elseif ($isHos) {
+            $legacyAssignedIds = InfluencerPengajuan::query()
+                ->where('status', 'pending_hos1')
+                ->whereNull('assigned_hos_position_id')
+                ->with('pengaju.employee')
+                ->get()
+                ->filter(fn (InfluencerPengajuan $item) => $this->isAssignedHeadOfStore($user, $item))
+                ->pluck('id');
+
+            $query->where(function ($q) use ($legacyAssignedIds) {
+                $q->where(function ($pending) {
+                    $pending->where('status', 'pending_hos1')
+                        ->where(function ($assigned) {
+                            $assigned->where('assigned_hos_position_id', auth()->user()->employee?->mainPosition()?->id);
+                        });
+                })
+                  ->orWhereIn('id', $legacyAssignedIds)
                   ->orWhere('approved_hos1_by', auth()->id());
             });
         } elseif ($isGm) {

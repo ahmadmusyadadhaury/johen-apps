@@ -7,33 +7,33 @@
 
 <div>
 
-    <div class="flex items-center justify-end mb-6 gap-2">
-        <div class="flex items-center gap-2">
-            <button wire:click="prevMonth" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+    <div class="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+        <div class="flex items-center justify-between gap-2 sm:justify-start">
+            <button wire:click="prevMonth" aria-label="Bulan sebelumnya" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-gray-800">
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </button>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 min-w-[140px] text-center">{{ $monthName }}</h2>
-            <button wire:click="nextMonth" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <h2 aria-live="polite" class="min-w-0 flex-1 text-center text-sm font-semibold text-gray-900 dark:text-gray-100 sm:min-w-[140px] sm:flex-none sm:text-base">{{ $monthName }}</h2>
+            <button wire:click="nextMonth" aria-label="Bulan berikutnya" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-gray-800">
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </button>
-            <button wire:click="goToday" class="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Hari Ini</button>
+            <button wire:click="goToday" class="min-h-11 rounded-xl border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Hari Ini</button>
         </div>
 @unless(auth()->user()->isReadOnlyWorkspace())
-        <button wire:click="openNew" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-blue-700 transition-colors">
+        <button wire:click="openNew" class="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Tambah Event
         </button>
         @endunless
     </div>
 
-    <div class="card p-6">
+    <div class="card p-2 sm:p-5">
         @php
             $dayLabels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
         @endphp
 
-        <div class="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+        <div role="grid" aria-label="Kalender event bulan {{ $monthName }}" class="grid grid-cols-7 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
             @foreach($dayLabels as $label)
-                <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 text-center border-b border-gray-200 dark:border-gray-700">{{ $label }}</div>
+                <div role="columnheader" class="border-b border-gray-200 bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 sm:px-3 sm:text-xs"><span class="sm:hidden" aria-hidden="true">{{ mb_substr($label, 0, 1) }}</span><span class="hidden sm:inline">{{ $label }}</span><span class="sr-only sm:hidden">{{ ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][$loop->index] }}</span></div>
             @endforeach
 
             @foreach($days as $date)
@@ -44,16 +44,16 @@
                     $isSelected = $dateKey === $selectedDate;
                     $dayEvents = $events[$dateKey] ?? collect();
                 @endphp
-                <div wire:click="selectDate('{{ $dateKey }}')" class="min-h-[100px] px-2 py-1.5 border-b border-r border-gray-100 dark:border-gray-800 cursor-pointer {{ $isCurrentMonth ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-950' }} {{ $isToday ? 'ring-2 ring-blue-500 ring-inset' : '' }} {{ $isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : '' }} hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <p class="text-xs font-medium mb-1 flex items-center justify-between">
+                <button type="button" role="gridcell" wire:click="selectDate('{{ $dateKey }}')" aria-label="{{ $date->translatedFormat('l, d F Y') }}{{ $dayEvents->count() ? ', '.$dayEvents->count().' event' : ', tidak ada event' }}" aria-pressed="{{ $isSelected ? 'true' : 'false' }}" class="min-h-[58px] w-full border-b border-r border-gray-100 px-1.5 py-1 text-left align-top focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:border-gray-800 sm:min-h-[108px] sm:px-2 sm:py-1.5 {{ $isCurrentMonth ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-950' }} {{ $isToday ? 'ring-2 ring-blue-500 ring-inset' : '' }} {{ $isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : '' }} hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <span class="mb-1 flex items-center justify-between text-[11px] font-medium sm:text-xs">
                         <span class="{{ $isToday ? 'text-blue-600' : ($isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600') }}">{{ $date->day }}</span>
                         @if($dayEvents->count() > 0)
-                        <span class="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full font-medium">{{ $dayEvents->count() }}</span>
+                        <span class="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ $dayEvents->count() }}</span>
                         @endif
-                    </p>
-                    <div class="space-y-0.5">
+                    </span>
+                    <div class="hidden space-y-0.5 sm:block">
                         @foreach($dayEvents->take(3) as $event)
-                            <div class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 truncate font-medium cursor-pointer" wire:click.stop="openEdit({{ $event->id }})">
+                            <div class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 truncate font-medium">
                                 @if($event->waktu_mulai) {{ $event->waktu_mulai }}@if($event->waktu_selesai)-{{ $event->waktu_selesai }}@endif @endif {{ $event->kegiatan }}
                             </div>
                         @endforeach
@@ -61,7 +61,8 @@
                             <p class="text-[10px] text-gray-400 pl-1">+{{ $dayEvents->count() - 3 }} lainnya</p>
                         @endif
                     </div>
-                </div>
+                    @if($dayEvents->count() > 0)<span aria-hidden="true" class="mt-1 flex justify-center gap-0.5 sm:hidden">@foreach($dayEvents->take(3) as $event)<span class="h-1 w-1 rounded-full bg-blue-600"></span>@endforeach</span>@endif
+                </button>
             @endforeach
         </div>
 
@@ -71,17 +72,17 @@
     <div x-data="{ open: false }"
          x-init="$watch('$wire.showDetailModal', value => open = value)"
          x-show="open" x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         role="presentation" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-2 backdrop-blur-sm sm:p-4"
          @click="closeDetailModal">
-        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop role="dialog" aria-modal="true" aria-labelledby="event-day-title" class="relative my-auto w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:my-10 sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 id="event-day-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {{ $selectedDate ? \Carbon\Carbon::parse($selectedDate)->translatedFormat('l, d F Y') : '' }}
                     </h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Daftar event</p>
                 </div>
-                <button wire:click="closeDetailModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <button wire:click="closeDetailModal" aria-label="Tutup daftar event" class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-gray-700 dark:hover:text-gray-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -92,7 +93,7 @@
                     <div class="flex-shrink-0 w-1 h-10 rounded-full bg-blue-500"></div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $event->kegiatan }}
-                            @if($event->waktu_mulai) <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">· {{ $event->waktu_mulai }}@if($event->waktu_selesai)-{{ $event->waktu_selesai }}@endif</span> @endif
+                            @if($event->waktu_mulai) <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">Â· {{ $event->waktu_mulai }}@if($event->waktu_selesai)-{{ $event->waktu_selesai }}@endif</span> @endif
                         </p>
                         @if($event->keterangan)
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $event->keterangan }}</p>
@@ -133,12 +134,12 @@
     <div x-data="{ open: false }"
          x-init="$watch('$wire.showForm', value => open = value)"
          x-show="open" x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         role="presentation" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-2 backdrop-blur-sm sm:p-4"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl my-10">
+        <div @click.stop role="dialog" aria-modal="true" aria-labelledby="event-form-title" class="relative my-auto w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:my-10 sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Event</h3>
+                    <h3 id="event-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Event</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                         {{ $selectedDate ? \Carbon\Carbon::parse($selectedDate)->translatedFormat('l, d F Y') : '' }}
                     </p>

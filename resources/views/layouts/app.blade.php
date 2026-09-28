@@ -148,7 +148,7 @@ if ($divisionViewUser) {
                 @endphp
 
                 <nav x-data="{ openMenu: @js($activeMenu) }"
-                     @click.capture="if (@js($isDivisionMenuDisabled) && $event.target.closest('[data-development-menu] a')) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
+                     @click.capture="if (@js($isDivisionMenuDisabled) && $event.target.closest('[data-development-menu] a') && !$event.target.closest('[data-development-menu] a[data-development-available]')) { $event.preventDefault(); $store.toast.info('Menu divisi ini sedang dalam pengembangan.') }"
                      class="flex-1 overflow-y-auto p-4 space-y-1">
                     @if($isDivisionView)
                         @include('layouts.partials.division-sidebar', ['menu' => $activeDivisionMenu])
@@ -170,7 +170,7 @@ if ($divisionViewUser) {
                     <div class="mt-4" data-development-menu>
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Creative</p>
 
-                        <a href="{{ route('hris.influencer') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.influencer') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                        <a href="{{ route('hris.influencer') }}" @if(auth()->user()->isKoordinatorCreative()) data-development-available @endif class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.influencer') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                             Influencer
                         </a>

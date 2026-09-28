@@ -1,9 +1,31 @@
 <div>
+    @php
+        $canEditInfluencers = !auth()->user()->isReadOnlyWorkspace();
+        $canCreateInfluencers = $canEditInfluencers && !auth()->user()->isKoordinatorCreative();
+        $canManageInfluencerPayments = $canEditInfluencers && (auth()->user()->canSeeBiaya() || auth()->user()->isKoordinatorCreative());
+    @endphp
+
     @if(session('message'))
     <div class="mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
         {{ session('message') }}
     </div>
     @endif
+
+    @if($showRequestTabs)
+    <div class="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800 sm:inline-flex" role="tablist" aria-label="Menu influencer">
+        <button type="button" role="tab" aria-controls="influencer-monitoring-panel" aria-selected="{{ $activeTab === 'monitoring' ? 'true' : 'false' }}" wire:click="switchTab('monitoring')"
+                class="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-sm {{ $activeTab === 'monitoring' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+            Monitoring Influencer
+        </button>
+        <button type="button" role="tab" aria-controls="influencer-submission-panel" aria-selected="{{ $activeTab === 'pengajuan' ? 'true' : 'false' }}" wire:click="switchTab('pengajuan')"
+                class="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-sm {{ $activeTab === 'pengajuan' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+            Pengajuan Influencer
+        </button>
+    </div>
+    @endif
+
+    @if(!$showRequestTabs || $activeTab === 'monitoring')
+    <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer">
 
     @if($upcomingPayments->count() > 0)
     <div class="mb-5 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-5 py-4">
@@ -23,7 +45,7 @@
     </div>
     @endif
 
-    <div class="mb-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4" aria-label="Ringkasan kontrak influencer">
         <div class="stat-card">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200">
@@ -72,12 +94,7 @@
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Data Influencer</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daftar influencer creative</p>
             </div>
-            @if(auth()->user()->isKoordinatorCreative())
-            <a href="{{ route('hris.influencer-pengajuan') }}" class="btn-primary text-xs py-2 shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Ajukan Data
-            </a>
-            @else
+            @if($canCreateInfluencers)
             <button wire:click="openNew" class="btn-primary text-xs py-2 shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Tambah Data
@@ -85,7 +102,63 @@
             @endif
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="space-y-3 p-3 sm:hidden" role="list" aria-label="Daftar influencer">
+            @forelse($items as $item)
+                @php
+                    $daysRemaining = now()->startOfDay()->diffInDays($item->habis_kontrak, false);
+                    $totalPayments = $item->payments->count();
+                    $paidPayments = $item->payments->where('status', 'lunas')->count();
+                    $paymentPercent = $totalPayments > 0 ? round($paidPayments / $totalPayments * 100) : 0;
+                    $overduePayments = $item->payments->where('status', 'pending')->where('tanggal_jatuh_tempo', '<', now())->count();
+                @endphp
+                <article role="listitem" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h3 class="break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $item->nama }}</h3>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">No. Kontrak: {{ $item->no_kontrak ?: '-' }}</p>
+                        </div>
+                        @if($daysRemaining <= 0)
+                            <span class="shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-[11px] font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Habis</span>
+                        @elseif($daysRemaining <= 7)
+                            <span class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Segera habis</span>
+                        @else
+                            <span class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Aktif</span>
+                        @endif
+                    </div>
+
+                    <dl class="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 border-t border-gray-100 pt-3 text-xs dark:border-gray-800">
+                        <div><dt class="text-gray-500 dark:text-gray-400">Mulai kontrak</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->mulai_kontrak->isoFormat('D MMM YYYY') }}</dd></div>
+                        <div><dt class="text-gray-500 dark:text-gray-400">Habis kontrak</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->habis_kontrak->isoFormat('D MMM YYYY') }}</dd></div>
+                        @if(auth()->user()->canSeeBiaya())
+                        <div><dt class="text-gray-500 dark:text-gray-400">Biaya</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</dd></div>
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">Pembayaran</dt>
+                            <dd class="mt-1 flex items-center gap-2">
+                                <span class="font-medium {{ $overduePayments > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-gray-200' }}">{{ $paidPayments }}/{{ $totalPayments }} lunas{{ $overduePayments > 0 ? ', '.$overduePayments.' terlambat' : '' }}</span>
+                                <span class="sr-only">{{ $paymentPercent }} persen</span>
+                            </dd>
+                            <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700" role="progressbar" aria-label="Pembayaran lunas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $paymentPercent }}"><div class="h-full rounded-full {{ $paymentPercent === 100 ? 'bg-emerald-500' : 'bg-amber-500' }}" style="width: {{ $paymentPercent }}%"></div></div>
+                        </div>
+                        @endif
+                        <div class="col-span-2 min-w-0"><dt class="text-gray-500 dark:text-gray-400">Link media sosial</dt><dd class="mt-1">@if($item->link_sosmed)<a href="{{ $item->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 max-w-full items-center gap-1 break-all font-medium text-primary-600 underline decoration-primary-300 underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-400" aria-label="Buka media sosial {{ $item->nama }} di tab baru">{{ $item->link_sosmed }}</a>@else<span class="text-gray-500 dark:text-gray-400">Belum ada</span>@endif</dd></div>
+                    </dl>
+
+                    @if($canEditInfluencers)
+                    <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
+                        <button type="button" wire:click="openEdit({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-primary-200 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-900/20">Edit</button>
+                        <button type="button" wire:click="delete({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20">Hapus</button>
+                        @if($canManageInfluencerPayments)
+                        <button type="button" wire:click="openPaymentModal({{ $item->id }})" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">Kelola pembayaran</button>
+                        @endif
+                    </div>
+                    @endif
+                </article>
+            @empty
+                <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">Belum ada data influencer.</div>
+            @endforelse
+        </div>
+
+        <div class="hidden overflow-x-auto sm:block">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="table-header">
@@ -155,17 +228,17 @@
                             </td>
                             <td class="table-cell text-center">
                                 <div class="flex items-center justify-center gap-1">
-                                    @if(!auth()->user()->isReadOnlyWorkspace())
+                                    @if($canEditInfluencers)
                                     <button wire:click="openEdit({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
                                         Edit
                                     </button>
-                                    <button wire:click="delete({{ $item->id }})" wire:confirm="Hapus data influencer ini?" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                                    <button wire:click="delete({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                                         Hapus
                                     </button>
                                     @endif
-                                    @if(auth()->user()->canSeeBiaya() && !auth()->user()->isReadOnlyWorkspace())
+                                    @if($canManageInfluencerPayments)
                                     <button wire:click="openPaymentModal({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125V9M7.5 12h9M12 15h-1.5m0 0H9m1.5 0V9m-6 3h6m-6 3h6m-3-6h.008v.008H12V12z"/></svg>
                                         Bayar
@@ -197,7 +270,7 @@
     </div>
 
     {{-- Modal --}}
-    <div wire:ignore.self class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+    <div wire:ignore.self class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4"
          x-data="{ open: false }"
          x-init="$watch('$wire.showModal', value => open = value)"
          x-show="open" x-cloak
@@ -215,10 +288,10 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+             @click.stop role="dialog" aria-modal="true" aria-labelledby="influencer-form-title" class="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Influencer</h3>
+                    <h3 id="influencer-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Influencer</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui' : 'Isi' }} data influencer</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -239,7 +312,7 @@
                     @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label value="Mulai Kontrak *" />
                         <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
@@ -279,13 +352,13 @@
 
     {{-- Payment Modal --}}
     @if($showPaymentModal)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
-        <div class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+    <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="influencer-payment-title" class="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pembayaran Influencer</h3>
+                    <h3 id="influencer-payment-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pembayaran Influencer</h3>
                     @php $inf = $paymentInfluencerId ? \App\Models\Influencer::find($paymentInfluencerId) : null; @endphp
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $inf?->nama }} · Rp {{ $inf ? number_format($inf->biaya, 0, ',', '.') : 0 }}/bulan</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $inf?->nama }}@if(auth()->user()->canSeeBiaya()) · Rp {{ $inf ? number_format($inf->biaya, 0, ',', '.') : 0 }}/bulan @endif</p>
                 </div>
                 <button wire:click="closePaymentModal" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -298,7 +371,9 @@
                         <tr class="bg-gray-50 dark:bg-gray-800">
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">Bulan Ke</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">Jatuh Tempo</th>
+                            @if(auth()->user()->canSeeBiaya())
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">Jumlah</th>
+                            @endif
                             <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400">Status</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400">Aksi</th>
                         </tr>
@@ -308,7 +383,9 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             <td class="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">{{ $p->bulan_ke }}</td>
                             <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $p->tanggal_jatuh_tempo->isoFormat('D MMMM YYYY') }}</td>
+                            @if(auth()->user()->canSeeBiaya())
                             <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100 font-medium">Rp {{ number_format($p->jumlah, 0, ',', '.') }}</td>
+                            @endif
                             <td class="px-4 py-3 text-center">
                                 @if($p->status === 'lunas')
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Lunas</span>
@@ -329,7 +406,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="{{ auth()->user()->canSeeBiaya() ? 5 : 4 }}" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-8 h-8 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125V9M7.5 12h9M12 15h-1.5m0 0H9m1.5 0V9m-6 3h6m-6 3h6m-3-6h.008v.008H12V12z"/></svg>
                                     <p class="font-medium">Belum ada data pembayaran</p>
@@ -343,5 +420,31 @@
             </div>
         </div>
     </div>
+    @endif
+
+    @if($showDeleteConfirmation)
+    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation" wire:keydown.escape="cancelDelete">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="delete-influencer-title" aria-describedby="delete-influencer-description" class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl dark:bg-gray-800 sm:p-6">
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" aria-hidden="true">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3h.008v.008H12v-.008zM10.29 3.86 1.82 18.5A1.7 1.7 0 003.3 21h17.4a1.7 1.7 0 001.48-2.5L13.71 3.86a1.98 1.98 0 00-3.42 0z"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <h3 id="delete-influencer-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">Hapus data influencer?</h3>
+                    <p id="delete-influencer-description" class="mt-1 break-words text-sm leading-6 text-gray-600 dark:text-gray-300">Data <span class="font-semibold">{{ $deleteInfluencerName }}</span> dan riwayat pembayarannya akan dihapus. Tindakan ini tidak dapat dibatalkan.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="button" wire:click="cancelDelete" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">Batal</button>
+                <button type="button" wire:click="deleteConfirmed" wire:loading.attr="disabled" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60">Ya, hapus</button>
+            </div>
+        </section>
+    </div>
+    @endif
+    </section>
+    @else
+    <section id="influencer-submission-panel" role="tabpanel" aria-label="Pengajuan Influencer">
+        @livewire('influencer-pengajuan-table', [], key('influencer-submission-tab'))
+    </section>
     @endif
 </div>

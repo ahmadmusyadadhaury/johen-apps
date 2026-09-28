@@ -88,6 +88,10 @@ Route::middleware(['auth'])->group(function () {
             return view('influencer.index');
         })->name('influencer');
         Route::get('/influencer/pengajuan', function () {
+            if (auth()->user()->isKoordinatorCreative()) {
+                return redirect()->route('hris.influencer', ['tab' => 'pengajuan']);
+            }
+
             return view('influencer.pengajuan');
         })->name('influencer-pengajuan');
         Route::get('/kalender-event', KalenderEventTable::class)->name('kalender-event');

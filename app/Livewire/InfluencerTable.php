@@ -16,6 +16,9 @@ class InfluencerTable extends Component
 
     public bool $showPaymentModal = false;
     public ?int $paymentInfluencerId = null;
+    public bool $showDeleteConfirmation = false;
+    public ?int $deleteInfluencerId = null;
+    public string $deleteInfluencerName = '';
 
     public string $no_kontrak = '';
     public string $nama = '';
@@ -23,6 +26,42 @@ class InfluencerTable extends Component
     public string $habis_kontrak = '';
     public string $link_sosmed = '';
     public string $biaya = '';
+
+    public string $activeTab = 'monitoring';
+
+    public function mount(): void
+    {
+        if (auth()->user()->isGmCeo() && $this->isCreativeWorkspace()) {
+            $this->activeTab = 'pengajuan';
+        } elseif (auth()->user()->isKoordinatorCreative() && request()->query('tab') === 'pengajuan') {
+            $this->activeTab = 'pengajuan';
+        }
+    }
+
+    public function switchTab(string $tab): void
+    {
+        abort_unless($this->canSeeSubmissionTab(), 403);
+        abort_unless(in_array($tab, ['monitoring', 'pengajuan'], true), 404);
+
+        $this->activeTab = $tab;
+    }
+
+    private function isCreativeWorkspace(): bool
+    {
+        if (!auth()->user()->isGmCeo() || !session()->has('division_menu')) {
+            return false;
+        }
+
+        return \App\Models\Division::query()
+            ->whereKey(session('division_menu'))
+            ->whereRaw('LOWER(nama) = ?', ['creative'])
+            ->exists();
+    }
+
+    private function canSeeSubmissionTab(): bool
+    {
+        return auth()->user()->isKoordinatorCreative() || $this->isCreativeWorkspace();
+    }
 
     protected function rules(): array
     {
@@ -49,14 +88,14 @@ class InfluencerTable extends Component
 
     public function openNew(): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->authorizeCreate();
         $this->resetInput();
         $this->showModal = true;
     }
 
     public function openEdit(int $id): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->authorizeEdit();
         $item = Influencer::findOrFail($id);
         $this->editId = $item->id;
         $this->no_kontrak = $item->no_kontrak;
@@ -70,7 +109,7 @@ class InfluencerTable extends Component
 
     public function save(): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->editId ? $this->authorizeEdit() : $this->authorizeCreate();
         $this->validate();
 
         if ($this->editId) {
@@ -102,14 +141,35 @@ class InfluencerTable extends Component
 
     public function delete(int $id): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
-        Influencer::findOrFail($id)->delete();
+        $this->authorizeEdit();
+        $influencer = Influencer::findOrFail($id);
+        $this->deleteInfluencerId = $influencer->id;
+        $this->deleteInfluencerName = $influencer->nama;
+        $this->showDeleteConfirmation = true;
+    }
+
+    public function deleteConfirmed(): void
+    {
+        $this->authorizeEdit();
+        abort_unless($this->deleteInfluencerId, 404);
+        $influencer = Influencer::findOrFail($this->deleteInfluencerId);
+        $influencer->delete();
+        $this->showDeleteConfirmation = false;
+        $this->deleteInfluencerId = null;
+        $this->deleteInfluencerName = '';
         session()->flash('message', 'Data influencer berhasil dihapus.');
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->showDeleteConfirmation = false;
+        $this->deleteInfluencerId = null;
+        $this->deleteInfluencerName = '';
     }
 
     public function openPaymentModal(int $id): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->authorizePaymentManagement();
         $this->paymentInfluencerId = $id;
         $influencer = Influencer::find($id);
         if ($influencer && $influencer->payments()->count() === 0) {
@@ -126,7 +186,7 @@ class InfluencerTable extends Component
 
     public function markAsPaid(int $paymentId): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        $this->authorizePaymentManagement();
         $payment = InfluencerPembayaran::findOrFail($paymentId);
         $payment->update([
             'status' => 'lunas',
@@ -176,8 +236,31 @@ class InfluencerTable extends Component
         $this->resetErrorBag();
     }
 
+    private function authorizeEdit(): void
+    {
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
+    }
+
+    private function authorizeCreate(): void
+    {
+        $user = auth()->user();
+
+        abort_unless(! $user->isReadOnlyWorkspace() && ! $user->isKoordinatorCreative(), 403);
+    }
+
+    private function authorizePaymentManagement(): void
+    {
+        $user = auth()->user();
+
+        abort_unless(
+            ! $user->isReadOnlyWorkspace() && ($user->canSeeBiaya() || $user->isKoordinatorCreative()),
+            403,
+        );
+    }
+
     public function render()
     {
+        $showRequestTabs = $this->canSeeSubmissionTab();
         $items = Influencer::with('payments')->latest()->paginate(10);
 
         $now = now()->startOfDay();
@@ -200,7 +283,7 @@ class InfluencerTable extends Component
 
         return view('livewire.influencer-table', compact(
             'items', 'aktifCount', 'segeraHabisCount', 'tidakAktifCount',
-            'upcomingPayments', 'paymentRecords',
+            'upcomingPayments', 'paymentRecords', 'showRequestTabs',
         ));
     }
 }

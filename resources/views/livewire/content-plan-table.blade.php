@@ -22,11 +22,11 @@
 
     <div class="card mb-4">
         <div class="border-b border-gray-50 dark:border-gray-800">
-            <nav class="flex gap-1 px-4 sm:px-6" aria-label="Tabs">
+            <nav class="flex gap-1 overflow-x-auto px-4 sm:px-6" aria-label="Tab posisi content plan" role="tablist">
                 @foreach($tabs as $tab)
                     @if($isKoordinator || $userPosition === $tab)
-                    <button wire:click="switchTab('{{ $tab }}')"
-                            class="px-4 py-3 text-xs font-medium transition-all duration-200 border-b-2 -mb-px {{ $activeTab === $tab ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600' }}">
+                    <button type="button" role="tab" aria-selected="{{ $activeTab === $tab ? 'true' : 'false' }}" wire:click="switchTab('{{ $tab }}')"
+                            class="min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 sm:px-4 {{ $activeTab === $tab ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600' }}">
                         {{ $tab }}
                     </button>
                     @endif
@@ -47,7 +47,66 @@
             @endif
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="space-y-3 p-3 sm:hidden" role="list" aria-label="Daftar content plan {{ $activeTab }}">
+            @forelse($items as $item)
+                @php
+                    if ($isCC) {
+                        $cardTitle = $item->topic ?: $item->take ?: 'Content Creator';
+                        $cardFields = ['Take' => $item->take, 'Post' => $item->post, 'Hari' => $item->days, 'Waktu' => $item->waktu, 'Akun' => $item->akun, 'PIC utama' => $item->pic_utama, 'Creator' => $item->creator, 'Goals content' => $item->goals_content, 'Content pillar' => $item->content_pillar, 'Jenis konten' => $item->type_of_content, 'Reference' => $item->reference_content, 'Storyline' => $item->storyline, 'Caption' => $item->caption, 'Revisi' => $item->revisi];
+                    } elseif ($activeTab === 'Desain Grafis') {
+                        $cardTitle = $item->judul ?: $item->create ?: 'Desain grafis';
+                        $cardFields = ['Create' => $item->create, 'Post' => $item->post, 'Hari' => $item->days, 'Waktu' => $item->waktu, 'Divisi' => $item->divisi, 'Akun' => $item->akun, 'PIC' => $item->pic, 'Topik' => $item->topic, 'Jenis konten' => $item->type_of_content, 'Caption' => $item->caption, 'Deskripsi' => $item->deskripsi, 'Deadline' => $item->deadline?->isoFormat('D MMM YYYY'), 'Link' => $item->link];
+                    } else {
+                        $cardTitle = $item->judul ?: $item->topic ?: $item->take ?: 'Video animator';
+                        $cardFields = ['Take' => $item->take, 'Voice over' => $item->vo, 'Post' => $item->post, 'Hari' => $item->days, 'Waktu' => $item->waktu, 'Akun' => $item->akun, 'PIC' => $item->pic, 'Topik' => $item->topic, 'Script' => $item->script, 'Caption' => $item->caption, 'Revisi' => $item->revisi, 'Deadline' => $item->deadline?->isoFormat('D MMM YYYY'), 'Link' => $item->link];
+                    }
+                @endphp
+                <article role="listitem" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h3 class="break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $cardTitle }}</h3>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $activeTab }} · {{ $item->status ? ucfirst($item->status) : 'Tanpa status' }}</p>
+                        </div>
+                        @if($item->acc_to_posting)
+                            <span class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Siap posting</span>
+                        @endif
+                    </div>
+
+                    <details class="group mt-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+                        <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-300">
+                            <span>Lihat detail rencana</span>
+                            <svg aria-hidden="true" class="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <dl class="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 text-xs min-[380px]:grid-cols-2">
+                            @foreach($cardFields as $fieldLabel => $fieldValue)
+                                @if(filled($fieldValue))
+                                <div class="min-w-0 {{ in_array($fieldLabel, ['Reference', 'Storyline', 'Caption', 'Deskripsi', 'Script', 'Link']) ? 'min-[380px]:col-span-2' : '' }}">
+                                    <dt class="font-medium text-gray-500 dark:text-gray-400">{{ $fieldLabel }}</dt>
+                                    <dd class="mt-1 break-words text-gray-800 dark:text-gray-200">{{ $fieldValue }}</dd>
+                                </div>
+                                @endif
+                            @endforeach
+                            @if($isCC || $activeTab === 'Video Animator')
+                            <div><dt class="font-medium text-gray-500 dark:text-gray-400">Persetujuan posting</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $item->acc_to_posting ? 'Disetujui' : 'Belum disetujui' }}</dd></div>
+                            @endif
+                        </dl>
+                    </details>
+
+                    @if($isKoordinator)
+                    <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
+                        <button type="button" wire:click="openReport({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-900/20">Lihat report</button>
+                        <button type="button" wire:click="openEdit({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-primary-200 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-primary-900 dark:text-primary-300 dark:hover:bg-primary-900/20">Edit</button>
+                        <button type="button" wire:click="delete({{ $item->id }})" wire:confirm="Hapus content plan ini?" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20">Hapus</button>
+                    </div>
+                    @endif
+                </article>
+            @empty
+                <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">Belum ada content plan untuk {{ $activeTab }}.</div>
+            @endforelse
+        </div>
+
+        <div class="hidden sm:block">
+        <div class="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500" tabindex="0" role="region" aria-label="Tabel content plan {{ $activeTab }}">
             @if($isCC)
             <table class="w-full text-xs">
                 <thead>
@@ -337,6 +396,7 @@
             </table>
             @endif
         </div>
+        </div>
 
         @if($items->hasPages())
         <div class="px-4 sm:px-6 py-4 border-t border-gray-50 dark:border-gray-800">
@@ -346,7 +406,7 @@
     </div>
 
     {{-- Modal --}}
-    <div wire:ignore.self class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+    <div wire:ignore.self class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/60 p-2 pt-4 backdrop-blur-sm sm:p-4 sm:pt-10"
          x-data="{ open: false }"
          x-init="$watch('$wire.showModal', value => open = value)"
          x-show="open" x-cloak
@@ -364,13 +424,13 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+             @click.stop role="dialog" aria-modal="true" aria-labelledby="content-plan-form-title" class="relative my-4 w-full max-w-4xl rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:my-10 sm:p-8">
 
             @if($isCC)
             {{-- Content Creator Form --}}
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Content Plan</h3>
+                    <h3 id="content-plan-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Content Plan</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui' : 'Isi' }} content plan Content Creator</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -381,7 +441,7 @@
             <form wire:submit.prevent="save" class="space-y-4">
                 <input type="hidden" wire:model="posisi">
 
-                <div class="grid grid-cols-5 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-5">
                     <div>
                         <x-input-label value="Take" />
                         <x-text-input type="text" wire:model="take" class="mt-1 block w-full" placeholder="Take" />
@@ -409,7 +469,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="Status *" />
                         <select wire:model="status" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -445,7 +505,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="Content Pillar" />
                         <select wire:model="content_pillar" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -501,7 +561,7 @@
                     @error('caption') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="Revisi" />
                         <x-text-input type="text" wire:model="revisi" class="mt-1 block w-full" placeholder="Revisi" />
@@ -537,7 +597,7 @@
             {{-- Desain Grafis Form --}}
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Content Plan</h3>
+                    <h3 id="content-plan-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Content Plan</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui' : 'Isi' }} content plan {{ $activeTab }}</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -548,7 +608,7 @@
             <form wire:submit.prevent="save" class="space-y-4">
                 <input type="hidden" wire:model="posisi">
 
-                <div class="grid grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
                     <div>
                         <x-input-label value="Create" />
                         <x-text-input type="text" wire:model="create" class="mt-1 block w-full" placeholder="Create" />
@@ -571,7 +631,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="Divisi" />
                         <select wire:model="divisi" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -606,7 +666,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="PIC" />
                         <select wire:model="pic" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -634,7 +694,7 @@
                     @error('caption') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label value="Link" />
                         <x-text-input type="url" wire:model="link" class="mt-1 block w-full" placeholder="https://..." />
@@ -659,7 +719,7 @@
             {{-- Video Animator Form --}}
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Content Plan</h3>
+                    <h3 id="content-plan-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Content Plan</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui' : 'Isi' }} content plan {{ $activeTab }}</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -670,7 +730,7 @@
             <form wire:submit.prevent="save" class="space-y-4">
                 <input type="hidden" wire:model="posisi">
 
-                <div class="grid grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
                     <div>
                         <x-input-label value="Take" />
                         <x-text-input type="text" wire:model="take" class="mt-1 block w-full" placeholder="Tanggal" />
@@ -701,7 +761,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="Waktu" />
                         <x-text-input type="text" wire:model="waktu" class="mt-1 block w-full" placeholder="Waktu" />
@@ -726,7 +786,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                         <x-input-label value="PIC" />
                         <select wire:model="pic" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
@@ -777,7 +837,7 @@
     </div>
 
     {{-- Report Modal --}}
-    <div wire:ignore.self class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+    <div wire:ignore.self class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/60 p-2 pt-4 backdrop-blur-sm sm:p-4 sm:pt-10"
          x-data="{ open: false }"
          x-init="$watch('$wire.showReportModal', value => open = value)"
          x-show="open" x-cloak
@@ -795,10 +855,10 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop class="relative w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-2xl my-10">
+             @click.stop role="dialog" aria-modal="true" aria-labelledby="content-plan-report-title" class="relative my-4 w-full max-w-5xl rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:my-10 sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Reporting Content</h3>
+                    <h3 id="content-plan-report-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Reporting Content</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Data performa konten per minggu</p>
                 </div>
                 <button wire:click="closeReport" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -889,7 +949,7 @@
                     <button type="button" wire:click="$set('showReportForm', false)" class="text-[10px] text-gray-400 hover:text-gray-600">Batal</button>
                 </div>
 
-                <div class="grid grid-cols-7 gap-2">
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
                     <div>
                         <x-input-label value="Week" />
                         <x-text-input type="number" wire:model="reportWeek" class="mt-1 block w-full" min="1" max="52" />
