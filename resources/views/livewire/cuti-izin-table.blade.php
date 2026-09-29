@@ -4,7 +4,7 @@
     </div>
 @endpush
 
-<div x-data="{ confirmAction: false, confirmTitle: '', confirmMessage: '', confirmHandler: null, filtersOpen: false, detailOpen: false, selected: null }">
+<div x-data="{ confirmAction: false, confirmTitle: '', confirmMessage: '', confirmHandler: null, filtersOpen: false, detailOpen: false, selected: null }" @medical-certificate-uploaded.window="if (selected) selected.certificateUrl = $event.detail.url">
 
     @if(!auth()->user()->isGmCeo() && (auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isKoordinatorFcMobile() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin()))
     {{-- Tab Navigation --}}
@@ -166,6 +166,7 @@
                             <th class="px-6 py-3">Persetujuan Atasan 1</th>
                             <th class="px-6 py-3">Persetujuan Atasan 2</th>
                             <th class="px-6 py-3">Persetujuan HR</th>
+                            <th class="px-6 py-3">Surat Dokter</th>
                             @unless($hideAksi)
                             <th class="px-6 py-3">Aksi</th>
                             @endunless
@@ -181,6 +182,8 @@
                                 $canApproveHr = $lihatSemua && !$user->isGmCeo() && !$user->isKoordinatorIt() && !$user->isKoordinatorAdmin() && !$user->isKoordinatorStock() && !$user->isKoordinatorPubg() && !$user->isKoordinatorFf() && !$user->isKoordinatorMlbb() && !$user->isKoordinatorEfootball() && !$user->isKoordinatorValorant() && $lr->persetujuan_atasan2 === 'disetujui' && ($lr->tanggal_selesai->isPast() || $user->isSuperAdmin());
                                 $canApproveHrNow = $canApproveHr && (!$user->isSuperAdmin() || $lr->tanggal_selesai->lt(today()));
                                 $requiresPin = $user->requiresPinApproval();
+                                $isOwner = $userEmployee && $userEmployee->id === $lr->employee_id;
+                                $canViewMedicalCertificate = $isOwner || $isAtasan || $isAtasan2 || $isHr || $user->isStaffHr();
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-900 transition-colors">
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $leaveRequests->firstItem() + $loop->index }}</td>
@@ -204,6 +207,7 @@
                                         <span class="badge badge-warning">Jatah Libur</span>
                                     @else
                                         <span class="badge badge-info">Izin</span>
+                                        @if($lr->perihal)<span class="ml-1 text-xs text-gray-500 dark:text-gray-400">{{ $lr->perihal }}</span>@endif
                                     @endif
                                 </td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400 whitespace-nowrap">
@@ -303,6 +307,25 @@
                                     @endif
                                 </td>
                                 <td class="table-cell">
+                                    @if($lr->jenis === 'izin' && $lr->perihal === 'Sakit')
+                                      @if($lr->persetujuan_hr === 'disetujui')
+                                        @if($lr->surat_dokter_path && $canViewMedicalCertificate)
+                                            <a href="{{ route('hris.cuti-izin.surat-dokter', $lr) }}" target="_blank" rel="noopener" class="text-sm font-semibold text-primary-600 hover:underline dark:text-primary-400">Lihat foto</a>
+                                        @elseif($isOwner)
+                                            <div class="min-w-48 space-y-2">
+                                                <input type="file" wire:model="suratDokterUpload" accept="image/jpeg,image/png,image/webp" class="block w-full text-xs text-gray-600 file:mr-2 file:rounded-lg file:border-0 file:bg-primary-50 file:px-2 file:py-1.5 file:text-xs file:font-semibold file:text-primary-700 dark:text-gray-300 dark:file:bg-primary-900/30 dark:file:text-primary-300">
+                                                <button type="button" wire:click="uploadSuratDokter({{ $lr->id }})" wire:loading.attr="disabled" wire:target="suratDokterUpload,uploadSuratDokter" class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Unggah foto</button>
+                                                @error('suratDokterUpload') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                                            </div>
+                                        @else
+                                            <span class="text-xs text-gray-400">Belum diunggah</span>
+                                        @endif
+                                      @else
+                                        <span class="text-xs text-gray-400">Menunggu persetujuan HR</span>
+                                      @endif
+                                    @endif
+                                </td>
+                                <td class="table-cell">
                                     @unless($hideAksi)
                                     @if($user->isSuperAdmin())
                                     <button wire:click="confirmDelete({{ $lr->id }})"
@@ -316,7 +339,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="px-6 py-16 text-center">
+                                <td colspan="12" class="px-6 py-16 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                             <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
@@ -387,7 +410,7 @@
                         @if($cutiEligible && $sisaCuti > 0)
                         <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
                                :class="'cuti_tahunan' === $wire.pengajuanJenis ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
-                            <input type="radio" wire:model="pengajuanJenis" value="cuti_tahunan" class="sr-only">
+                            <input type="radio" wire:model.live="pengajuanJenis" value="cuti_tahunan" class="sr-only">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"/></svg>
                             <span>Cuti Tahunan</span>
                         </label>
@@ -410,7 +433,7 @@
                         @endif
                         <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
                                :class="'izin' === $wire.pengajuanJenis ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
-                            <input type="radio" wire:model="pengajuanJenis" value="izin" class="sr-only">
+                            <input type="radio" wire:model.live="pengajuanJenis" value="izin" class="sr-only">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <span>Izin</span>
                         </label>
@@ -418,7 +441,7 @@
                         @if($sisaJatah > 0)
                         <label class="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 text-center text-sm font-medium transition-all"
                                :class="'jatah' === $wire.pengajuanJenis ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'">
-                            <input type="radio" wire:model="pengajuanJenis" value="jatah" class="sr-only">
+                            <input type="radio" wire:model.live="pengajuanJenis" value="jatah" class="sr-only">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
                             <span>Jatah Libur</span>
                             <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">1 bulan 4x &bull; sisa {{ $sisaJatah }}</span>
@@ -434,6 +457,19 @@
                     </div>
                     @error('pengajuanJenis') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
+
+                @if($pengajuanJenis === 'izin')
+                <div>
+                    <x-input-label for="pengajuan-perihal" value="Perihal *" />
+                    <select id="pengajuan-perihal" wire:model="pengajuanPerihal" required class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                        <option value="">Pilih perihal izin</option>
+                        <option value="Sakit">Sakit</option>
+                        <option value="Urusan Keluarga">Urusan Keluarga</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                    @error('pengajuanPerihal') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                @endif
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>

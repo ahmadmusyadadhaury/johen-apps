@@ -7,36 +7,32 @@
     <link rel="icon" href="/pwa/favicon-32.png" sizes="32x32">
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { height: 100%; }
+        html, body { width: 100%; min-height: 100%; margin: 0; }
         body {
-            margin: 0;
-            display: grid;
-            place-items: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
             padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
             background: #07080F;
             color: #e2e8f0;
             font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
             -webkit-font-smoothing: antialiased;
         }
-        .wrap { text-align: center; max-width: 26rem; }
+        .wrap { width: 100%; max-width: 26rem; text-align: center; }
         .logo {
+            display: block;
             width: 88px; height: 88px;
             margin: 0 auto 28px;
             object-fit: contain;
-            animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(-9px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .logo { animation: none; }
         }
         h1 { font-size: 1.25rem; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.01em; }
         p { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin: 0 0 26px; }
         .status {
-            display: inline-flex; align-items: center; gap: 8px;
-            margin-bottom: 24px; padding: 6px 14px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: fit-content;
+            margin: 0 auto 24px; padding: 6px 14px;
             border: 1px solid rgba(148, 163, 184, 0.22);
             border-radius: 999px;
             background: rgba(148, 163, 184, 0.08);
@@ -64,7 +60,7 @@
 </head>
 <body>
     <div class="wrap">
-        <img src="/pwa/icon-512.png" alt="" class="logo" width="88" height="88">
+        <img src="/logo.png" alt="" class="logo" width="88" height="88">
 
         <div class="status">
             <span class="dot" id="dot"></span>

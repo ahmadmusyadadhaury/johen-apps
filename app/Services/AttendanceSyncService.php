@@ -91,10 +91,21 @@ class AttendanceSyncService
     {
         $records = Attendance::where('employee_id', $employee->id)
             ->where('status', 'hadir')
-            ->whereNotNull('time_in')
             ->get();
 
         return $records->contains(function (Attendance $a) use ($employee) {
+            // Rekap checkout-only sebelum pukul 09:00 pada shift non-malam
+            // hampir selalu merupakan scan datang terlalu awal yang salah
+            // diklasifikasikan oleh batas kedatangan awal.
+            if ($a->time_in === null && $a->time_out !== null) {
+                return $a->time_out < '09:00:00'
+                    && ! $this->isOvernightCheckoutShift($employee, $a->date);
+            }
+
+            if ($a->time_in === null) {
+                return false;
+            }
+
             $isMalamPosition = str_contains((string) $employee->position, '(Malam)');
 
             if ($a->time_out === null) {
@@ -423,6 +434,14 @@ class AttendanceSyncService
         $shift = $employee->shiftOn($sessionDate->toDateString());
         $isMalam = str_contains((string) $employee->position, '(Malam)');
         $isSubuh = str_contains((string) $employee->position, '(Subuh)');
+
+        // Untuk shift siang, scan pagi sebelum pukul 09:00 tetap dianggap
+        // absen datang meski jaraknya lebih dari dua jam dari jadwal shift.
+        // Tanpa batas ini, scan 08:02 untuk shift 13:00 masuk ke time_out.
+        if ($minutes < 9 * 60 && ! $this->isOvernightCheckoutShift($employee, $sessionDate)) {
+            return true;
+        }
+
         $start = Employee::shiftStartFrom($shift['jam_kerja'], $shift['jam_masuk'], $isMalam);
         $end = Employee::shiftEndFrom($shift['jam_kerja']);
 

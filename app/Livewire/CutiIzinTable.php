@@ -7,11 +7,16 @@ use App\Models\LeaveRequest;
 use App\Models\Position;
 use Carbon\Carbon;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Storage;
 
 class CutiIzinTable extends Component
 {
     use WithPagination;
+    use WithFileUploads;
+
+    public $suratDokterUpload = null;
 
     public string $tab = 'saya';
 
@@ -27,11 +32,43 @@ class CutiIzinTable extends Component
 
     public string $pengajuanJenis = 'cuti_tahunan';
 
+    public string $pengajuanPerihal = '';
+
     public string $pengajuanTanggalMulai = '';
 
     public string $pengajuanTanggalSelesai = '';
 
     public string $pengajuanKeterangan = '';
+
+    public function uploadSuratDokter(int $id): void
+    {
+        $lr = LeaveRequest::findOrFail($id);
+        $userEmployee = auth()->user()->employee;
+
+        abort_unless($userEmployee && $userEmployee->id === $lr->employee_id, 403);
+        abort_unless($lr->jenis === 'izin' && $lr->perihal === 'Sakit' && $lr->persetujuan_hr === 'disetujui', 403);
+
+        $this->validate([
+            'suratDokterUpload' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'suratDokterUpload.required' => 'Pilih foto surat keterangan dokter terlebih dahulu.',
+            'suratDokterUpload.image' => 'File harus berupa gambar.',
+            'suratDokterUpload.mimes' => 'Format foto harus JPG, PNG, atau WEBP.',
+            'suratDokterUpload.max' => 'Ukuran foto maksimal 5 MB.',
+        ]);
+
+        $oldPath = $lr->surat_dokter_path;
+        $path = $this->suratDokterUpload->store('leave-medical-certificates', 'local');
+        $lr->update(['surat_dokter_path' => $path]);
+
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
+
+        $this->suratDokterUpload = null;
+        $this->dispatch('medical-certificate-uploaded', url: route('hris.cuti-izin.surat-dokter', $lr));
+        $this->dispatch('notify', type: 'success', message: 'Foto surat keterangan dokter berhasil diunggah.');
+    }
 
     public bool $showPinModal = false;
 
@@ -64,6 +101,7 @@ class CutiIzinTable extends Component
     {
         $this->showPengajuanModal = true;
         $this->pengajuanJenis = auth()->user()->employee?->isCutiEligible() ? 'cuti_tahunan' : 'izin';
+        $this->pengajuanPerihal = '';
         $this->pengajuanTanggalMulai = '';
         $this->pengajuanTanggalSelesai = '';
         $this->pengajuanKeterangan = '';
@@ -76,6 +114,13 @@ class CutiIzinTable extends Component
     {
         $this->showPengajuanModal = false;
         $this->resetErrorBag();
+    }
+
+    public function updatedPengajuanJenis(string $jenis): void
+    {
+        if ($jenis !== 'izin') {
+            $this->pengajuanPerihal = '';
+        }
     }
 
     public function submitPengajuan(): void
@@ -94,6 +139,10 @@ class CutiIzinTable extends Component
             'pengajuanTanggalSelesai' => ['required', 'date', 'after_or_equal:pengajuanTanggalMulai'],
             'pengajuanKeterangan' => ['required', 'string', 'max:1000'],
         ];
+
+        if ($this->pengajuanJenis === 'izin') {
+            $rules['pengajuanPerihal'] = ['required', 'in:Sakit,Urusan Keluarga,Lainnya'];
+        }
 
         $employee = auth()->user()->employee;
 
@@ -208,6 +257,7 @@ class CutiIzinTable extends Component
             'atasan_id' => $atasan?->id,
             'atasan2_id' => $atasan2?->id,
             'jenis' => $this->pengajuanJenis,
+            'perihal' => $this->pengajuanJenis === 'izin' ? $this->pengajuanPerihal : null,
             'tanggal_mulai' => $this->pengajuanTanggalMulai,
             'tanggal_selesai' => $this->pengajuanTanggalSelesai,
             'durasi' => $durasi.' hari',
@@ -433,6 +483,9 @@ class CutiIzinTable extends Component
 
         $lr = LeaveRequest::findOrFail($this->deleteId);
         $lr->unsyncAttendance();
+        if ($lr->surat_dokter_path) {
+            Storage::disk('local')->delete($lr->surat_dokter_path);
+        }
         $lr->delete();
 
         $this->showDeleteConfirmModal = false;

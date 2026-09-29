@@ -12,6 +12,7 @@ use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\ElectricityController;
 use App\Http\Controllers\EmailLogController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\LeaveMedicalCertificateController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\InternetController;
@@ -81,6 +82,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/divisi/{division}', [DashboardController::class, 'division'])->name('dashboard.division');
 
     Route::prefix('hris')->name('hris.')->group(function () {
+        Route::get('/cuti-izin/{leaveRequest}/surat-dokter', [LeaveMedicalCertificateController::class, 'show'])->name('cuti-izin.surat-dokter');
         Route::resource('employees', EmployeeController::class);
         Route::get('/informasi-saya', [EmployeeController::class, 'informasiSaya'])->name('informasi-saya');
         Route::get('/employees/creative', [EmployeeController::class, 'creative'])->name('employees.creative');

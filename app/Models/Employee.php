@@ -23,6 +23,16 @@ class Employee extends Model
 
     public const SHIFT_ADMIN_MALAM = 'Shift Admin Malam (19.00-06.00)';
 
+    public const SHIFT_PAGI_KOORDINATOR_HOST = 'Shift Pagi Koordinator Host (08.00-18.00)';
+
+    public const SHIFT_SIANG_KOORDINATOR_HOST = 'Shift Siang Koordinator Host (14.00-24.00)';
+
+    public const SHIFT_SIANG_KOORDINATOR_ADMIN = 'Shift Koordinator Admin (12.00-24.00)';
+
+    public const SHIFT_SIANG_KOORDINATOR_ADMIN_PREVIOUS = 'Shift Koordinator Admin';
+
+    public const SHIFT_SIANG_KOORDINATOR_ADMIN_LEGACY = 'Shift Siang Koordinator Admin (12.00-24.00)';
+
     public const NON_SHIFT = 'Non Shift (08.00-17.00)';
 
     public const JENIS_KERJA_OPERASIONAL = 'Operasional';
@@ -96,7 +106,30 @@ class Employee extends Model
         self::SHIFT_SUBUH => '01:00',
         self::SHIFT_ADMIN_PAGI => '07:00',
         self::SHIFT_ADMIN_MALAM => '19:00',
+        self::SHIFT_PAGI_KOORDINATOR_HOST => '08:00',
+        self::SHIFT_SIANG_KOORDINATOR_HOST => '14:00',
+        self::SHIFT_SIANG_KOORDINATOR_ADMIN => '12:00',
+        self::SHIFT_SIANG_KOORDINATOR_ADMIN_PREVIOUS => '12:00',
+        self::SHIFT_SIANG_KOORDINATOR_ADMIN_LEGACY => '12:00',
         self::NON_SHIFT => '08:00',
+    ];
+
+    /** Opsi shift dikelompokkan untuk dropdown data pegawai. */
+    public const SHIFT_OPTION_GROUPS = [
+        'Host' => [
+            self::SHIFT_PAGI_KOORDINATOR_HOST,
+            self::SHIFT_SIANG_KOORDINATOR_HOST,
+            self::SHIFT_PAGI,
+            self::SHIFT_SIANG,
+            self::SHIFT_MALAM,
+            self::SHIFT_SUBUH,
+        ],
+        'Admin' => [
+            self::SHIFT_ADMIN_PAGI,
+            self::SHIFT_ADMIN_MALAM,
+            self::SHIFT_SIANG_KOORDINATOR_ADMIN,
+        ],
+        'Non Shift' => [self::NON_SHIFT],
     ];
 
     protected ?Collection $shiftHistoryCache = null;

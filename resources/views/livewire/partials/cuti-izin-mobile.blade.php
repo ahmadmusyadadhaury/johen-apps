@@ -56,7 +56,7 @@
                     $mobileStatusClasses = $mobileStatus === 'Disetujui'
                         ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
                         : ($mobileStatus === 'Ditolak' ? 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200' : 'bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200');
-                    $mobileJenis = $lr->jenis === 'cuti_tahunan' ? 'Cuti Tahunan' : ($lr->jenis === 'jatah' ? 'Jatah Libur' : 'Izin');
+                    $mobileJenis = $lr->jenis === 'cuti_tahunan' ? 'Cuti Tahunan' : ($lr->jenis === 'jatah' ? 'Jatah Libur' : 'Izin'.($lr->perihal ? ' · '.$lr->perihal : ''));
                     $mobileEmployeeName = $lr->employee?->nama ?? '-';
                     $mobilePosition = $lr->selectedPosition?->nama ?? $lr->employee?->position ?? '-';
                 @endphp
@@ -80,6 +80,10 @@
                             'atasan2Status' => $lr->atasan2_id ? ucfirst($lr->persetujuan_atasan2) : 'Tidak diperlukan',
                             'hrStatus' => ucfirst($lr->persetujuan_hr),
                             'approvalNote' => $lr->catatan_persetujuan ?: '-',
+                            'certificateUrl' => $lr->surat_dokter_path ? route('hris.cuti-izin.surat-dokter', $lr) : null,
+                            'canViewCertificate' => ($userEmployee && $userEmployee->id === $lr->employee_id) || $isAtasan || $isAtasan2 || $isHr || $user->isStaffHr(),
+                            'canUploadCertificate' => $userEmployee && $userEmployee->id === $lr->employee_id && $lr->jenis === 'izin' && $lr->perihal === 'Sakit' && $lr->persetujuan_hr === 'disetujui',
+                            'isSakitApprovedByHr' => $lr->jenis === 'izin' && $lr->perihal === 'Sakit' && $lr->persetujuan_hr === 'disetujui',
                             'canApproveKoor' => $canApproveKoor && $lr->persetujuan_koor === 'menunggu',
                             'canApproveAtasan2' => $canApproveAtasan2 && $lr->persetujuan_atasan2 === 'menunggu',
                             'canApproveHr' => $canApproveHr && $lr->persetujuan_hr === 'menunggu',
@@ -195,6 +199,16 @@
                     <div class="flex items-center justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Persetujuan HR</dt><dd class="font-semibold text-gray-900 dark:text-gray-100" x-text="selected.hrStatus"></dd></div>
                     <div><dt class="text-gray-500 dark:text-gray-400">Catatan Persetujuan</dt><dd class="mt-1 whitespace-pre-line font-medium text-gray-900 dark:text-gray-100" x-text="selected.approvalNote"></dd></div>
                 </dl>
+            </section>
+            <section x-show="selected.isSakitApprovedByHr" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <h3 class="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">Surat Keterangan Dokter</h3>
+                <a x-show="selected.certificateUrl && selected.canViewCertificate" :href="selected.certificateUrl" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center rounded-xl bg-primary-50 px-4 text-sm font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">Lihat foto surat</a>
+                <div x-show="!selected.certificateUrl && selected.canUploadCertificate" class="space-y-3">
+                    <input type="file" wire:model="suratDokterUpload" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary-700 dark:text-gray-300 dark:file:bg-primary-900/30 dark:file:text-primary-300">
+                    <button type="button" @click="$wire.uploadSuratDokter(selected.id)" class="min-h-11 w-full rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white">Unggah foto surat</button>
+                    @error('suratDokterUpload') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <p x-show="!selected.certificateUrl && !selected.canUploadCertificate" class="text-sm text-gray-500 dark:text-gray-400">Foto surat belum diunggah.</p>
             </section>
             <section x-show="selected.canApproveKoor || selected.canApproveAtasan2 || selected.canApproveHr || selected.canDelete" class="grid grid-cols-2 gap-3 pb-4">
                 <template x-for="level in [{key:'canApproveKoor', value:'persetujuan_koor'}, {key:'canApproveAtasan2', value:'persetujuan_atasan2'}, {key:'canApproveHr', value:'persetujuan_hr'}]" :key="level.value">

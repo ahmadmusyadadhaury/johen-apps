@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0987F5">
-    <meta name="color-scheme" content="light dark">
+        <meta name="color-scheme" content="dark">
     <title>Sedang Luring &mdash; Johen Application</title>
     <link rel="icon" type="image/png" href="/pwa-192x192.png">
     <style>
@@ -21,9 +21,11 @@
 
         body {
             min-height: 100vh;
+            min-height: 100dvh;
             margin: 0;
-            display: grid;
-            place-items: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 1.5rem;
             background:
                 radial-gradient(circle at 15% 15%, rgba(9, 135, 245, 0.2), transparent 34rem),
@@ -43,10 +45,11 @@
         }
 
         img {
+            display: block;
             width: 6rem;
             height: 6rem;
+            margin: 0 auto 1.5rem;
             object-fit: contain;
-            margin-bottom: 1.5rem;
         }
 
         h1 {
@@ -84,8 +87,10 @@
         }
 
         #status {
+            display: block;
+            width: fit-content;
             min-height: 1.5rem;
-            margin-top: 1rem;
+            margin: 1rem auto 0;
             color: #036bd1;
             font-size: 0.875rem;
         }
@@ -118,19 +123,19 @@
 </head>
 <body>
     <main>
-        <img src="/pwa-192x192.png" alt="Johen Sukses Abadi">
-        <h1>Sedang Luring</h1>
-        <p>Periksa koneksi internet Anda. Data payroll, absensi, dan pembaruan aplikasi membutuhkan koneksi aktif.</p>
-        <button type="button" onclick="window.location.reload()">Coba Lagi</button>
-        <div id="status" role="status" aria-live="polite"></div>
+        <img src="/logo.png" alt="">
+        <div id="status" role="status" aria-live="polite">Koneksi terputus</div>
+        <h1>Tidak ada koneksi</h1>
+        <p>Halaman ini butuh koneksi ke server. Data yang belum pernah dimuat tidak bisa ditampilkan.</p>
+        <button type="button" onclick="window.location.reload()">Coba lagi</button>
     </main>
     <script>
         const status = document.getElementById('status');
 
         function updateConnectionStatus() {
             status.textContent = navigator.onLine
-                ? 'Koneksi kembali tersedia. Muat ulang halaman.'
-                : 'Koneksi internet belum tersedia.';
+                ? 'Jaringan kembali aktif'
+                : 'Koneksi terputus';
         }
 
         window.addEventListener('online', updateConnectionStatus);

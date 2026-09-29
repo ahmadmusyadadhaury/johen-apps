@@ -93,10 +93,9 @@ export default defineConfig(({ mode }) => {
                             revision: getPwaAssetRevision(asset),
                         })),
                         // Route Blade, jadi tidak bisa di-hash saat build.
-                        // revision: null => URL disimpan apa adanya tanpa
-                        // ?__WB_REVISION__, sehingga caches.match('/offline')
-                        // di bawah bisa mencapainya.
-                        { url: '/offline', revision: null },
+                        // Query versi memaksa service worker mengambil ulang
+                        // HTML fallback setelah desain halaman offline berubah.
+                        { url: '/offline?v=2', revision: null },
                     ],
                     // globPatterns memindai outDir (public/build) dan menulis
                     // url relatif seperti 'assets/app-xxx.css'. Itu aman selama
@@ -119,7 +118,7 @@ export default defineConfig(({ mode }) => {
                                     // ignoreVary wajib: respons Laravel mengirim
                                     // Vary, sedangkan cache precache menyimpan
                                     // apa adanya hasil fetch saat instalasi.
-                                    const offlinePage = await caches.match('/offline', {
+                                    const offlinePage = await caches.match('/offline?v=2', {
                                         ignoreVary: true,
                                     });
                                     return offlinePage ?? Response.error();

@@ -538,8 +538,12 @@
                             <x-input-label for="create-jam_kerja" value="Jam Kerja" />
                             <select id="create-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border @error('jam_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jam kerja</option>
-                                @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
-                                    <option value="{{ $label }}">{{ $label }}</option>
+                                @foreach(\App\Models\Employee::SHIFT_OPTION_GROUPS as $group => $shifts)
+                                    <optgroup label="{{ $group }}">
+                                        @foreach($shifts as $label)
+                                            <option value="{{ $label }}">{{ $label }}</option>
+                                        @endforeach
+                                    </optgroup>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('jam_kerja')" class="mt-2" />
@@ -1019,10 +1023,14 @@
                             <x-input-label for="edit-jam_kerja" value="Jam Kerja" />
                             <select id="edit-jam_kerja" wire:model.live="jam_kerja" class="mt-1 block w-full rounded-xl border @error('jam_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih jam kerja</option>
-                                @foreach(\App\Models\Employee::SHIFT_OPTIONS as $label => $mulai)
-                                    <option value="{{ $label }}">{{ $label }}</option>
+                                @foreach(\App\Models\Employee::SHIFT_OPTION_GROUPS as $group => $shifts)
+                                    <optgroup label="{{ $group }}">
+                                        @foreach($shifts as $label)
+                                            <option value="{{ $label }}">{{ $label }}</option>
+                                        @endforeach
+                                    </optgroup>
                                 @endforeach
-                                @if($jam_kerja !== '' && ! array_key_exists($jam_kerja, \App\Models\Employee::SHIFT_OPTIONS))
+                                @if($jam_kerja !== '' && (! array_key_exists($jam_kerja, \App\Models\Employee::SHIFT_OPTIONS) || in_array($jam_kerja, [\App\Models\Employee::SHIFT_SIANG_KOORDINATOR_ADMIN_PREVIOUS, \App\Models\Employee::SHIFT_SIANG_KOORDINATOR_ADMIN_LEGACY], true)))
                                     <option value="{{ $jam_kerja }}">{{ $jam_kerja }} (nilai lama)</option>
                                 @endif
                             </select>
@@ -1430,5 +1438,3 @@
         });
     </script>
 </div>
-
-
