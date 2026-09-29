@@ -658,13 +658,13 @@
     </template>
 
     <template x-teleport="body">
-        <div x-show="medicalPhotoOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label="Foto surat keterangan dokter" @click.self="medicalPhotoOpen = false" @keydown.escape.window="medicalPhotoOpen = false">
-            <div class="flex w-fit max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-white/30 bg-gray-900 shadow-2xl shadow-black/60" @click.stop>
-                <div class="flex min-h-14 items-center justify-between gap-4 border-b border-white/20 bg-gray-800 px-4 py-2.5 sm:px-5">
-                    <h2 class="text-sm font-semibold text-white sm:text-base">Foto Surat Keterangan Dokter</h2>
-                    <button type="button" @click="medicalPhotoOpen = false" aria-label="Tutup foto" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-2xl leading-none text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">&times;</button>
+        <div x-show="medicalPhotoOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label="Foto surat keterangan dokter" @click.self="medicalPhotoOpen = false" @keydown.escape.window="medicalPhotoOpen = false">
+            <div class="flex w-fit max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/50 dark:border-gray-700 dark:bg-gray-900" @click.stop>
+                <div class="flex min-h-14 items-center justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800 sm:px-5">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 sm:text-base">Foto Surat Keterangan Dokter</h2>
+                    <button type="button" @click="medicalPhotoOpen = false" aria-label="Tutup foto" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-2xl leading-none text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">&times;</button>
                 </div>
-                <div class="flex max-h-[calc(95dvh-3.5rem)] items-center justify-center bg-gray-950 p-2 sm:p-4">
+                <div class="flex max-h-[calc(95dvh-3.5rem)] items-center justify-center bg-gray-100 p-2 dark:bg-gray-950 sm:p-4">
                     <img :src="medicalPhotoUrl" alt="Foto surat keterangan dokter" class="h-auto w-auto max-h-[calc(95dvh-6rem)] max-w-[90vw] object-contain sm:max-w-[88vw]" @click.stop>
                 </div>
             </div>
