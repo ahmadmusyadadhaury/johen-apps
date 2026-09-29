@@ -658,7 +658,7 @@
     </template>
 
     <template x-teleport="body">
-        <div x-show="medicalPhotoOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label="Foto surat keterangan dokter" @click.self="medicalPhotoOpen = false" @keydown.escape.window="medicalPhotoOpen = false">
+        <div x-show="medicalPhotoOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label="Foto surat keterangan dokter" @click.self="medicalPhotoOpen = false" @keydown.escape.window="medicalPhotoOpen = false">
             <div class="flex w-fit max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/50 dark:border-gray-700 dark:bg-gray-900" @click.stop>
                 <div class="flex min-h-14 items-center justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800 sm:px-5">
                     <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 sm:text-base">Foto Surat Keterangan Dokter</h2>
