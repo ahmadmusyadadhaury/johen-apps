@@ -243,67 +243,53 @@ class EmployeeTable extends Component
     {
         return [
             'nik' => ['required', 'string', 'max:30'],
-            'nik_ktp' => ['required', 'string', 'max:50', 'regex:/^[0-9]+$/'],
+            'nik_ktp' => ['nullable', 'string', 'max:50', 'regex:/^[0-9]+$/'],
             'nama' => 'required|string|max:255',
-            'tempat_lahir' => 'required|string|max:100',
-            'tanggal_lahir' => 'required|date',
-            'jenis_kelamin' => 'required|in:L,P',
-            'ukuran_baju' => 'required|in:S,M,L,XL,XXL',
-            'agama' => 'required|string|max:50',
-            'pendidikan_terakhir' => 'required|string|max:100',
+            'tempat_lahir' => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'ukuran_baju' => 'nullable|in:S,M,L,XL,XXL',
+            'agama' => 'nullable|string|max:50',
+            'pendidikan_terakhir' => 'nullable|string|max:100',
             'asal_sekolah' => 'nullable|string|max:255',
-            'informasi_lowongan' => 'required|string|max:100',
-            'alamat' => 'required|string',
-            'provinsi' => 'required|string|max:150',
-            'kota' => 'required|string|max:150',
-            'kecamatan' => 'required|string|max:150',
-            'kelurahan' => 'required|string|max:150',
+            'informasi_lowongan' => 'nullable|string|max:100',
+            'alamat' => 'nullable|string',
+            'provinsi' => 'nullable|string|max:150',
+            'kota' => 'nullable|string|max:150',
+            'kecamatan' => 'nullable|string|max:150',
+            'kelurahan' => 'nullable|string|max:150',
             'rt_rw' => 'nullable|string|max:20',
-            'kode_pos' => 'required|string|max:10',
-            'tipe' => 'required|in:karyawan_aktif,mantan_karyawan',
-            'status_pernikahan' => 'required|in:sudah menikah,belum menikah',
+            'kode_pos' => 'nullable|string|max:10',
+            'tipe' => 'nullable|in:karyawan_aktif,mantan_karyawan',
+            'status_pernikahan' => 'nullable|in:sudah menikah,belum menikah',
             'position' => 'nullable|string|max:255',
-            'position_ids' => 'required|array|min:1',
+            'position_ids' => 'nullable|array',
             'position_ids.*' => 'exists:positions,id',
-            'main_position_id' => 'required|string',
-            'division_ids' => 'required|array|min:1',
+            'main_position_id' => 'nullable|string',
+            'division_ids' => 'nullable|array',
             'division_ids.*' => 'exists:divisions,id',
-            'atasan' => ['required', 'string', Rule::in(array_merge(Employee::atasanOptions(), ['Other']))],
+            'atasan' => ['nullable', 'string', Rule::in(array_merge(Employee::atasanOptions(), ['Other']))],
             'atasan2' => ['nullable', 'string', Rule::in(array_merge(Employee::atasanOptions(), ['Other']))],
-            'tanggal_masuk' => 'required|date',
-            'jenis_karyawan' => 'required|string|max:30',
-            'lokasi_kerja' => 'required|in:Summarecon,Baleendah',
-            'jenis_kerja' => 'required|in:Office,Operasional',
-            'jam_kerja' => 'required|string|max:255',
+            'tanggal_masuk' => 'nullable|date',
+            'jenis_karyawan' => 'nullable|string|max:30',
+            'lokasi_kerja' => 'nullable|in:Summarecon,Baleendah',
+            'jenis_kerja' => 'nullable|in:Office,Operasional',
+            'jam_kerja' => 'nullable|string|max:255',
             'jam_masuk' => 'nullable|date_format:H:i',
             'jam_kerja_effective' => 'nullable|date|after_or_equal:2000-01-01',
-            'jobdesk' => 'required|string',
-            'no_hp' => 'required|string|max:30',
-            'email' => 'required|email|max:255',
-            'no_kontak_darurat1' => 'required|string|max:30',
-            'hubungan_darurat1' => 'required|string|max:50',
-            'no_kontak_darurat2' => 'required|string|max:30',
-            'hubungan_darurat2' => 'required|string|max:50',
-            'no_bpjs' => 'required|string|max:30',
-            'status_bpjs' => ['required', 'in:aktif,tidak aktif,Other'],
+            'jobdesk' => 'nullable|string',
+            'no_hp' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'no_kontak_darurat1' => 'nullable|string|max:30',
+            'hubungan_darurat1' => 'nullable|string|max:50',
+            'no_kontak_darurat2' => 'nullable|string|max:30',
+            'hubungan_darurat2' => 'nullable|string|max:50',
+            'no_bpjs' => 'nullable|string|max:30',
+            'status_bpjs' => ['nullable', 'in:aktif,tidak aktif,Other'],
             'tanggal_resign' => 'nullable|date',
             'catatan' => 'nullable|string',
             'device_user_id' => 'nullable|string|max:50',
         ];
-    }
-
-    protected function stepRules(int $step): array
-    {
-        $all = $this->rules();
-
-        $fields = match ($step) {
-            1 => ['nik_ktp', 'nama', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'tipe', 'status_pernikahan', 'ukuran_baju', 'agama', 'pendidikan_terakhir', 'asal_sekolah', 'provinsi', 'kota', 'kecamatan', 'kelurahan', 'rt_rw', 'kode_pos', 'alamat'],
-            2 => ['nik', 'position_ids', 'main_position_id', 'division_ids', 'atasan', 'atasan2', 'tanggal_masuk', 'jenis_karyawan', 'lokasi_kerja', 'jenis_kerja', 'jam_kerja', 'jam_masuk', 'tanggal_resign', 'jobdesk'],
-            3 => ['no_hp', 'email', 'informasi_lowongan', 'device_user_id', 'catatan', 'no_kontak_darurat1', 'hubungan_darurat1', 'no_kontak_darurat2', 'hubungan_darurat2', 'no_bpjs', 'status_bpjs'],
-            default => array_keys($all),
-        };
-
-        return array_intersect_key($all, array_flip($fields));
     }
 
     protected function messages(): array
@@ -469,8 +455,8 @@ class EmployeeTable extends Component
 
     public function nextStep(): void
     {
-        $this->validate($this->stepRules($this->step));
-        $this->step++;
+        $this->resetValidation();
+        $this->step = min(3, $this->step + 1);
     }
 
     public function prevStep(): void
