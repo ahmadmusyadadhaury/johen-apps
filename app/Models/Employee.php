@@ -86,6 +86,28 @@ class Employee extends Model
     ];
 
     /**
+     * Pilihan atasan mencakup koordinator yang terdaftar pada struktur jabatan,
+     * termasuk jabatan ASKOR yang tidak memakai awalan "Koordinator".
+     */
+    public static function atasanOptions(): array
+    {
+        $koordinatorTerdaftar = Position::query()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->where('nama', 'like', 'Koordinator%')
+                    ->orWhere('nama', 'like', 'ASKOR%')
+                    ->orWhere('nama', 'like', 'Asst. Coordinator%');
+            })
+            ->with('employees:id,nama')
+            ->get()
+            ->flatMap(fn (Position $position) => $position->employees->pluck('nama'))
+            ->filter()
+            ->all();
+
+        return array_values(array_unique(array_merge(self::ATASAN_OPTIONS, $koordinatorTerdaftar)));
+    }
+
+    /**
      * Opsi jenis kerja: label => keterangan pola hari kerja mingguan.
      * Menjadi acuan hari libur: Operasional masuk Senin-Minggu sesuai jam
      * kerja (tanpa libur mingguan), Office libur setiap hari Minggu.

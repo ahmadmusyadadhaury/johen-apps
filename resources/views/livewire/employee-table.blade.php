@@ -482,7 +482,7 @@
                             <x-input-label for="create-atasan" value="Atasan 1" />
                             <select id="create-atasan" wire:model="atasan" class="mt-1 block w-full rounded-xl border @error('atasan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih atasan --</option>
-                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                @foreach(\App\Models\Employee::atasanOptions() as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
                                 <option value="Other">Other</option>
@@ -493,7 +493,7 @@
                             <x-input-label for="create-atasan2" value="Atasan 2" />
                             <select id="create-atasan2" wire:model="atasan2" class="mt-1 block w-full rounded-xl border @error('atasan2') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih atasan 2 --</option>
-                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                @foreach(\App\Models\Employee::atasanOptions() as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
                                 <option value="Other">Other</option>
@@ -967,7 +967,7 @@
                             <x-input-label for="edit-atasan" value="Atasan 1" />
                             <select id="edit-atasan" wire:model="atasan" class="mt-1 block w-full rounded-xl border @error('atasan') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih atasan --</option>
-                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                @foreach(\App\Models\Employee::atasanOptions() as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
                                 <option value="Other">Other</option>
@@ -978,7 +978,7 @@
                             <x-input-label for="edit-atasan2" value="Atasan 2" />
                             <select id="edit-atasan2" wire:model="atasan2" class="mt-1 block w-full rounded-xl border @error('atasan2') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">-- Pilih atasan 2 --</option>
-                                @foreach(\App\Models\Employee::ATASAN_OPTIONS as $namaAtasan)
+                                @foreach(\App\Models\Employee::atasanOptions() as $namaAtasan)
                                     <option value="{{ $namaAtasan }}">{{ $namaAtasan }}</option>
                                 @endforeach
                                 <option value="Other">Other</option>
@@ -1438,3 +1438,4 @@
         });
     </script>
 </div>
+
