@@ -226,7 +226,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Jadwal Kerja</h3>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Jam kerja, lokasi & supervisor Anda</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Jam kerja, lokasi & atasan Anda</p>
                 </div>
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
@@ -255,9 +255,15 @@
                     <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Supervisor</p>
-                        <p class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ $employee->atasan ?? '-' }}</p>
+                    <div class="grid min-w-0 flex-1 grid-cols-2 gap-3">
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Atasan 1</p>
+                            <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $employee->atasan ?: '-' }}</p>
+                        </div>
+                        <div class="min-w-0 border-l border-gray-100 dark:border-gray-700 pl-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Atasan 2</p>
+                            <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $employee->atasan2 ?: '-' }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
