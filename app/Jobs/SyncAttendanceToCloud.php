@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class SyncAttendanceToCloud implements ShouldQueue
 {
@@ -20,8 +21,23 @@ class SyncAttendanceToCloud implements ShouldQueue
 
     public function handle(): void
     {
-        Cache::lock('attendance:push:job', 60)->block(3, function () {
-            Artisan::call('attendance:push');
-        });
+        $lock = Cache::lock('attendance:push:job', 60);
+
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $exitCode = Artisan::call('attendance:push');
+
+            if ($exitCode !== 0) {
+                Log::warning('SyncAttendanceToCloud: attendance:push mengembalikan exit code non-zero.', [
+                    'exit_code' => $exitCode,
+                    'output' => str(Artisan::output())->limit(500)->value(),
+                ]);
+            }
+        } finally {
+            optional($lock)->release();
+        }
     }
 }

@@ -200,7 +200,9 @@ class AttendanceListen extends Command
      */
     private function requestCloudSync(): void
     {
-        if (! config('services.attendance_cloud.enabled')) {
+        $cloud = config('services.attendance_cloud');
+
+        if (empty($cloud['enabled']) || empty($cloud['url']) || empty($cloud['token'])) {
             return;
         }
 

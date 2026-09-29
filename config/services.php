@@ -46,6 +46,7 @@ return [
         'url' => env('ATTENDANCE_PUSH_URL'),
         'token' => env('ATTENDANCE_PUSH_API_TOKEN'),
         'enabled' => env('ATTENDANCE_PUSH_ENABLED', false),
+        'verify_ssl' => env('ATTENDANCE_PUSH_VERIFY_SSL', true),
     ],
 
     'meeting' => [
