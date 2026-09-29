@@ -94,12 +94,19 @@ class AttendanceSyncService
             ->get();
 
         return $records->contains(function (Attendance $a) use ($employee) {
-            // Rekap checkout-only sebelum pukul 09:00 pada shift non-malam
-            // hampir selalu merupakan scan datang terlalu awal yang salah
-            // diklasifikasikan oleh batas kedatangan awal.
+            // Rekap checkout-only sebelum pukul 09:00 hampir selalu scan
+            // datang pagi yang salah masuk ke jam pulang. Pada shift lintas
+            // tengah malam, pertahankan hanya checkout sebelum batas jam
+            // checkout pagi yang dikonfigurasi.
             if ($a->time_in === null && $a->time_out !== null) {
-                return $a->time_out < '09:00:00'
-                    && ! $this->isOvernightCheckoutShift($employee, $a->date);
+                if ($a->time_out >= '09:00:00') {
+                    return false;
+                }
+
+                $isEarlyOvernightCheckout = $this->isOvernightCheckoutShift($employee, $a->date)
+                    && $a->time_out < sprintf('%02d:00:00', (int) config('attendance.overnight_latest_checkout_hour', 7));
+
+                return ! $isEarlyOvernightCheckout;
             }
 
             if ($a->time_in === null) {
@@ -435,10 +442,11 @@ class AttendanceSyncService
         $isMalam = str_contains((string) $employee->position, '(Malam)');
         $isSubuh = str_contains((string) $employee->position, '(Subuh)');
 
-        // Untuk shift siang, scan pagi sebelum pukul 09:00 tetap dianggap
-        // absen datang meski jaraknya lebih dari dua jam dari jadwal shift.
-        // Tanpa batas ini, scan 08:02 untuk shift 13:00 masuk ke time_out.
-        if ($minutes < 9 * 60 && ! $this->isOvernightCheckoutShift($employee, $sessionDate)) {
+        // Scan pukul 07:00-08:59 tetap dianggap absen datang meski lebih
+        // awal dari jadwal shift. Checkout shift lintas malam dibatasi oleh
+        // overnight_latest_checkout_hour di atas, sehingga scan 08:02 tidak
+        // keliru masuk ke time_out.
+        if ($minutes < 9 * 60) {
             return true;
         }
 
