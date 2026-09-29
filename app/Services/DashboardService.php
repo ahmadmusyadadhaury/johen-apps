@@ -509,6 +509,7 @@ class DashboardService
     public function getKaryawanDashboard(int $employeeId): array
     {
         $now = now();
+        $isSuperAdminViewer = auth()->user()?->isSuperAdmin() ?? false;
         $employee = Employee::with('divisions')->find($employeeId);
 
         if (! $employee) {
@@ -575,7 +576,7 @@ class DashboardService
             ->get()
             ->map(fn ($a) => [
                 'date' => $a->date->isoFormat('D MMM YYYY'),
-                'status' => $a->display_status,
+                'status' => $a->displayStatusForViewer($isSuperAdminViewer),
                 'time_in' => $a->time_in ? Carbon::parse($a->time_in)->format('H:i') : '-',
                 'time_out' => $a->time_out ? Carbon::parse($a->time_out)->format('H:i') : '-',
                 'work_duration' => $a->time_in && $a->time_out
@@ -607,7 +608,7 @@ class DashboardService
             ->where('status', 'hadir')
             ->whereNotNull('time_in')
             ->get()
-            ->filter(fn ($a) => $a->time_in > ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
+            ->filter(fn ($a) => $a->isLateForViewer($isSuperAdminViewer))
             ->count();
 
         $attendanceToday = Attendance::where('employee_id', $employeeId)
@@ -662,7 +663,7 @@ class DashboardService
             'attendance_today' => $attendanceToday ? [
                 'time_in' => $attendanceToday->time_in ? Carbon::parse($attendanceToday->time_in)->format('H:i') : '-',
                 'time_out' => $attendanceToday->time_out ? Carbon::parse($attendanceToday->time_out)->format('H:i') : '-',
-                'status' => $attendanceToday->display_status,
+                'status' => $attendanceToday->displayStatusForViewer($isSuperAdminViewer),
                 'location' => $attendanceToday->location ?? '-',
                 'method' => $attendanceToday->method ?? 'GPS',
             ] : null,

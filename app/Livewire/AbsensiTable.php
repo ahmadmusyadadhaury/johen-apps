@@ -275,6 +275,7 @@ class AbsensiTable extends Component
     public function render()
     {
         $user = auth()->user();
+        $isSuperAdminViewer = $user->isSuperAdmin();
         $today = $this->date ?: now()->toDateString();
         $this->normalizeTabForUser();
 
@@ -310,6 +311,7 @@ class AbsensiTable extends Component
                     'monthOptions' => collect(),
                     'yearOptions' => collect(),
                     'mingguLiburHariIni' => false,
+                    'isSuperAdminViewer' => $isSuperAdminViewer,
                 ]);
             }
 
@@ -348,9 +350,9 @@ class AbsensiTable extends Component
 
             $totalAbsensi = $semuaAbsensi->count();
             $mingguLiburHariIni = $employee->isWeeklyDayOff();
-            $tepatWaktu = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && (! $a->time_in || $a->time_in <= ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
+            $tepatWaktu = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && ! $a->isLateForViewer($isSuperAdminViewer)
             )->count();
-            $terlambat = $semuaAbsensi->filter(fn ($a) => $a->status === 'hadir' && $a->time_in && $a->time_in > ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00')
+            $terlambat = $semuaAbsensi->filter(fn ($a) => $a->isLateForViewer($isSuperAdminViewer)
             )->count();
             $totalHadir = $tepatWaktu + $terlambat;
 
@@ -407,7 +409,7 @@ class AbsensiTable extends Component
                 'employee', 'totalAbsensi', 'tepatWaktu', 'terlambat', 'totalHadir',
                 'jumlahHariKerja', 'riwayat', 'attendanceHariIni', 'today', 'periodeLabel', 'monthOptions', 'yearOptions',
                 'mingguLiburHariIni'
-            ))->with('karyawanView', true);
+            ))->with(['karyawanView' => true, 'isSuperAdminViewer' => $isSuperAdminViewer]);
         }
 
         // Kolom karyawan dibatasi (tanpa foto base64) agar memori aman saat
@@ -448,10 +450,10 @@ class AbsensiTable extends Component
         $teamIds = (clone $employeeQuery)->pluck('id')->toArray();
         $teamAttendances = $attendances->filter(fn ($a) => in_array($a->employee_id, $teamIds));
 
-        $hadir = $teamAttendances->filter(fn ($a) => $a->status === 'hadir' && (! $a->time_in || $a->time_in <= ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00'))
+        $hadir = $teamAttendances->filter(fn ($a) => $a->status === 'hadir' && ! $a->isLateForViewer($isSuperAdminViewer)
         )->count();
 
-        $terlambat = $teamAttendances->filter(fn ($a) => $a->status === 'hadir' && $a->time_in && $a->time_in > ($a->employee?->jamMasukCutoff($a->date?->toDateString()) ?? '09:00:00')
+        $terlambat = $teamAttendances->filter(fn ($a) => $a->isLateForViewer($isSuperAdminViewer)
         )->count();
 
         $totalHadir = $hadir + $terlambat;
@@ -472,7 +474,7 @@ class AbsensiTable extends Component
 
         return view('livewire.absensi-table', compact(
             'attendances', 'totalKaryawan', 'hadir', 'terlambat', 'totalHadir', 'employees', 'today', 'statsMembers'
-        ))->with('karyawanView', false);
+        ))->with(['karyawanView' => false, 'isSuperAdminViewer' => $isSuperAdminViewer]);
     }
 
     private function buildStatsMembers($teamAttendances): array
@@ -485,7 +487,7 @@ class AbsensiTable extends Component
                 continue;
             }
 
-            $cutoff = $a->employee?->jamMasukCutoff($this->date) ?? '09:00:00';
+            $cutoff = $a->lateCutoffForViewer(auth()->user()->isSuperAdmin());
             $row = [
                 'nama' => $a->employee?->nama ?? 'Tidak dikenal',
                 'jabatan' => $a->employee?->position ?? '-',
@@ -493,7 +495,7 @@ class AbsensiTable extends Component
                 'cutoff' => substr($cutoff, 0, 5),
             ];
 
-            if ($a->time_in && $a->time_in > $cutoff) {
+            if ($a->isLateForViewer(auth()->user()->isSuperAdmin())) {
                 $terlambat[] = $row;
             } else {
                 $tepat[] = $row;

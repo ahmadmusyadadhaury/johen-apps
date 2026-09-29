@@ -59,6 +59,37 @@ class Attendance extends Model
         };
     }
 
+    public function displayStatusForViewer(bool $superAdminViewer): string
+    {
+        return match ($this->status) {
+            'hadir' => $this->isLateForViewer($superAdminViewer) ? 'terlambat' : 'tepat waktu',
+            'izin' => 'izin',
+            'sakit' => 'sakit',
+            'alpha' => 'tidak hadir',
+            'cuti' => 'cuti',
+            'jatah' => 'jatah libur',
+            default => $this->status,
+        };
+    }
+
+    public function isLateForViewer(bool $superAdminViewer): bool
+    {
+        if ($this->status !== 'hadir' || ! $this->time_in) {
+            return false;
+        }
+
+        $cutoff = $this->employee?->jamMasukCutoffUntukTampilan($this->date?->toDateString(), $superAdminViewer)
+            ?? ($superAdminViewer ? '09:05:00' : '09:00:00');
+
+        return $this->time_in > $cutoff;
+    }
+
+    public function lateCutoffForViewer(bool $superAdminViewer): string
+    {
+        return $this->employee?->jamMasukCutoffUntukTampilan($this->date?->toDateString(), $superAdminViewer)
+            ?? ($superAdminViewer ? '09:05:00' : '09:00:00');
+    }
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

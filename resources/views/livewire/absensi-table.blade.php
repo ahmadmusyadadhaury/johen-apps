@@ -145,7 +145,7 @@
                 @forelse($riwayat as $att)
                     @php
                         $tanggal = \Carbon\Carbon::parse($att->date);
-                        $dsMobile = $att->display_status;
+                        $dsMobile = $att->displayStatusForViewer($isSuperAdminViewer);
                         $isLibur = $dsMobile === 'libur';
                     @endphp
                     <article class="px-4 py-3.5">
@@ -217,7 +217,7 @@
                                 <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $riwayat->firstItem() + $loop->index }}</td>
                                 <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ \Carbon\Carbon::parse($att->date)->locale('id')->isoFormat('dddd') }}</td>
-                                @php $ds = $att->display_status; @endphp
+                                @php $ds = $att->displayStatusForViewer($isSuperAdminViewer); @endphp
                                 @if($ds === 'libur')
                                     <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
                                     <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">-</td>
@@ -430,7 +430,7 @@
                 @forelse($employees as $emp)
                     @php
                         $attMobile = $attendances->get($emp->id);
-                        $dsMobile = $attMobile?->display_status
+                        $dsMobile = $attMobile?->displayStatusForViewer($isSuperAdminViewer)
                             ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
                         $isLiburMobile = $dsMobile === 'libur';
                     @endphp
@@ -528,7 +528,7 @@
                                     // Tanpa record presensi: pegawai Office pada hari
                                     // Minggu adalah libur mingguannya (jenis kerja sebagai
                                     // acuan), bukan tidak hadir.
-                                    $ds = $att?->display_status
+                                    $ds = $att?->displayStatusForViewer($isSuperAdminViewer)
                                         ?? ($emp->isWeeklyDayOff(\Carbon\Carbon::parse($today)) ? 'libur' : 'tidak hadir');
                                 @endphp
                                 @if($ds === 'libur')

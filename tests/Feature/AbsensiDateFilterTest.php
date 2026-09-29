@@ -54,6 +54,41 @@ class AbsensiDateFilterTest extends TestCase
         });
     }
 
+    public function test_late_status_uses_viewer_role_tolerance_and_effective_shift(): void
+    {
+        $employee = Employee::create([
+            'nik' => 'LATE-001',
+            'nama' => 'Karyawan Late',
+            'status' => 'aktif',
+            'jam_kerja' => '08:00-17:00',
+        ]);
+
+        $attendance = Attendance::create([
+            'employee_id' => $employee->id,
+            'date' => '2026-08-14',
+            'status' => 'hadir',
+            'time_in' => '08:00:00',
+        ]);
+
+        $this->assertSame('tepat waktu', $attendance->displayStatusForViewer(false));
+
+        $attendance->time_in = '08:01:00';
+        $this->assertSame('terlambat', $attendance->displayStatusForViewer(false));
+        $this->assertSame('tepat waktu', $attendance->displayStatusForViewer(true));
+
+        $attendance->time_in = '08:05:00';
+        $this->assertSame('tepat waktu', $attendance->displayStatusForViewer(true));
+
+        $attendance->time_in = '08:06:00';
+        $this->assertSame('terlambat', $attendance->displayStatusForViewer(true));
+
+        $employee->recordShiftHistory('09:00-18:00', null, '2026-08-14');
+        $attendance->time_in = '09:01:00';
+        $attendance->unsetRelation('employee');
+        $this->assertSame('terlambat', $attendance->displayStatusForViewer(false));
+        $this->assertSame('tepat waktu', $attendance->displayStatusForViewer(true));
+    }
+
     public function test_date_filter_changes_data_on_livewire_update(): void
     {
         $user = $this->superAdmin();

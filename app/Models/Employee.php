@@ -426,6 +426,11 @@ class Employee extends Model
         return $this->minutesToTime($this->shiftStartMinutes($date) + 5);
     }
 
+    public function jamMasukCutoffUntukTampilan(?string $date = null, bool $superAdminViewer = false): string
+    {
+        return $this->minutesToTime($this->shiftStartMinutes($date) + ($superAdminViewer ? 5 : 0));
+    }
+
     /**
      * Shift yang berlaku pada tanggal tertentu: ['jam_kerja', 'jam_masuk'].
      * Memakai catatan pergantian shift terakhir yang berlaku, fallback ke nilai kini.
