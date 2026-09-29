@@ -36,7 +36,7 @@
                                 Pelatihan
                             </a>
                             @endif
-                            @if(auth()->user()->isKoordinator() && !auth()->user()->isManager() && !auth()->user()->isHeadOfStore())
+                            @if(auth()->user()->isKoordinator() && !auth()->user()->isStaffCreative() && !auth()->user()->isManager() && !auth()->user()->isHeadOfStore())
                             <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.weekly-report') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 <a href="{{ route('hris.weekly-report') }}" class="flex-1">Weekly Plan Report</a>
                                 <livewire:sidebar-feedback-badge type="weekly" />

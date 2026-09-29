@@ -255,12 +255,12 @@
                     <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                     </div>
-                    <div class="grid min-w-0 flex-1 grid-cols-2 gap-3">
+                    <div class="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
                         <div class="min-w-0">
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Atasan 1</p>
                             <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $employee->atasan ?: '-' }}</p>
                         </div>
-                        <div class="min-w-0 border-l border-gray-100 dark:border-gray-700 pl-3">
+                        <div class="min-w-0 border-t border-gray-100 dark:border-gray-700 pt-3 sm:border-l sm:border-t-0 sm:pt-0 sm:pl-3">
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Atasan 2</p>
                             <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $employee->atasan2 ?: '-' }}</p>
                         </div>
