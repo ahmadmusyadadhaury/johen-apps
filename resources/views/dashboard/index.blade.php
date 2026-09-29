@@ -110,13 +110,13 @@
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                 </div>
-                <span class="badge-danger text-[10px]">Bulan Ini</span>
+                <span class="badge-danger text-[10px]">Periode Ini</span>
             </div>
             <div class="flex items-baseline gap-1">
                 <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $karyawanData['total_terlambat_bulan_ini'] }}</span>
                 <span class="text-sm font-medium text-gray-400">kali</span>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Keterlambatan Bulan Ini</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Keterlambatan Periode Ini</p>
         </div>
     </div>
 
@@ -572,13 +572,13 @@
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                 </div>
-                <span class="badge-danger text-[10px]">Bulan Ini</span>
+                <span class="badge-danger text-[10px]">Periode Ini</span>
             </div>
             <div class="flex items-baseline gap-1">
                 <span class="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">{{ $koordinatorStats['total_terlambat_bulan_ini'] }}</span>
                 <span class="text-sm font-medium text-gray-400">kali</span>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Keterlambatan Bulan Ini</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Keterlambatan Periode Ini</p>
         </div>
     </div>
     @endif

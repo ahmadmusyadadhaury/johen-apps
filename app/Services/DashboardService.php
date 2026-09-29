@@ -603,7 +603,7 @@ class DashboardService
 
         $totalTerlambat = Attendance::with('employee')
             ->where('employee_id', $employeeId)
-            ->whereBetween('date', [$now->startOfMonth()->format('Y-m-d'), $now->endOfMonth()->format('Y-m-d')])
+            ->whereBetween('date', [$periodeMulai->toDateString(), $periodeSelesai->toDateString()])
             ->where('status', 'hadir')
             ->whereNotNull('time_in')
             ->get()
