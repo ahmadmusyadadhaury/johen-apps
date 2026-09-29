@@ -323,6 +323,8 @@
                                       @else
                                         <span class="text-xs text-gray-400">Menunggu persetujuan HR</span>
                                       @endif
+                                    @else
+                                        <span class="text-xs text-gray-400">-</span>
                                     @endif
                                 </td>
                                 @unless($hideAksi)
