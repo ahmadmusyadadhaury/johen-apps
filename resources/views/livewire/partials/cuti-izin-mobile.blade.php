@@ -202,7 +202,7 @@
             </section>
             <section x-show="selected.isSakitApprovedByHr" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <h3 class="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">Surat Keterangan Dokter</h3>
-                <a x-show="selected.certificateUrl && selected.canViewCertificate" :href="selected.certificateUrl" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center rounded-xl bg-primary-50 px-4 text-sm font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">Lihat foto surat</a>
+                <a x-show="selected.certificateUrl && selected.canViewCertificate" :href="selected.certificateUrl" @click.prevent="medicalPhotoUrl = selected.certificateUrl; medicalPhotoOpen = true" class="inline-flex min-h-11 items-center rounded-xl bg-primary-50 px-4 text-sm font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">Lihat foto surat</a>
                 <div x-show="!selected.certificateUrl && selected.canUploadCertificate" class="space-y-3">
                     <input type="file" wire:model="suratDokterUpload" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary-700 dark:text-gray-300 dark:file:bg-primary-900/30 dark:file:text-primary-300">
                     <button type="button" @click="$wire.uploadSuratDokter(selected.id)" class="min-h-11 w-full rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white">Unggah foto surat</button>

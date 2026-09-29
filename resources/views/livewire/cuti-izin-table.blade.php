@@ -4,7 +4,7 @@
     </div>
 @endpush
 
-<div x-data="{ confirmAction: false, confirmTitle: '', confirmMessage: '', confirmHandler: null, filtersOpen: false, detailOpen: false, selected: null }" @medical-certificate-uploaded.window="if (selected) selected.certificateUrl = $event.detail.url">
+<div x-data="{ confirmAction: false, confirmTitle: '', confirmMessage: '', confirmHandler: null, filtersOpen: false, detailOpen: false, selected: null, medicalPhotoOpen: false, medicalPhotoUrl: '' }" @medical-certificate-uploaded.window="if (selected) selected.certificateUrl = $event.detail.url">
 
     @if(!auth()->user()->isGmCeo() && (auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorCreative() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorStock() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorMlbb() || auth()->user()->isKoordinatorEfootball() || auth()->user()->isKoordinatorValorant() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isKoordinatorFcMobile() || auth()->user()->isHeadOfStore() || auth()->user()->isSuperAdmin()))
     {{-- Tab Navigation --}}
@@ -310,7 +310,7 @@
                                     @if($lr->jenis === 'izin' && $lr->perihal === 'Sakit')
                                       @if($lr->persetujuan_hr === 'disetujui')
                                         @if($lr->surat_dokter_path && $canViewMedicalCertificate)
-                                            <a href="{{ route('hris.cuti-izin.surat-dokter', $lr) }}" target="_blank" rel="noopener" class="text-sm font-semibold text-primary-600 hover:underline dark:text-primary-400">Lihat foto</a>
+                                            <a href="{{ route('hris.cuti-izin.surat-dokter', $lr) }}" @click.prevent="medicalPhotoUrl = $el.href; medicalPhotoOpen = true" class="text-sm font-semibold text-primary-600 hover:underline dark:text-primary-400">Lihat foto</a>
                                         @elseif($isOwner)
                                             <div class="min-w-48 space-y-2">
                                                 <input type="file" wire:model="suratDokterUpload" accept="image/jpeg,image/png,image/webp" class="block w-full text-xs text-gray-600 file:mr-2 file:rounded-lg file:border-0 file:bg-primary-50 file:px-2 file:py-1.5 file:text-xs file:font-semibold file:text-primary-700 dark:text-gray-300 dark:file:bg-primary-900/30 dark:file:text-primary-300">
@@ -655,6 +655,13 @@
             </div>
         </div>
     </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="medicalPhotoOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/85 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label="Foto surat keterangan dokter" @click.self="medicalPhotoOpen = false" @keydown.escape.window="medicalPhotoOpen = false">
+            <button type="button" @click="medicalPhotoOpen = false" aria-label="Tutup foto" class="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-2xl text-white hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white">&times;</button>
+            <img :src="medicalPhotoUrl" alt="Foto surat keterangan dokter" class="h-auto w-auto max-h-[90dvh] max-w-[95vw] rounded-lg object-contain shadow-2xl" @click.stop>
+        </div>
     </template>
 
 
