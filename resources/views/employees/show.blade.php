@@ -1081,7 +1081,12 @@ data-promotion-success="{{ session('promotion_success') }}"
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
                         <div class="min-w-0">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Masa Kerja</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Masa Kerja</p>
+                                @if($cutiAktif)
+                                <span class="text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">Cuti Aktif</span>
+                                @endif
+                            </div>
                             <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $masaKerjaText }}
                                 <span class="text-xs font-medium text-gray-400">sejak {{ $firstContractStart->isoFormat('D MMM YYYY') }}</span>
                             </p>
@@ -1098,7 +1103,6 @@ data-promotion-success="{{ session('promotion_success') }}"
                         </div>
                         <div class="flex flex-col items-start gap-1">
                             <span class="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">Sisa {{ $sisaCuti }}x cuti</span>
-                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Cuti Aktif</span>
                         </div>
                         @else
                         <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
