@@ -5,7 +5,7 @@
     </div>
 @endpush
 
-<div class="space-y-4">
+<div class="space-y-4" x-data="{ showAbsentEmployees: false }" @keydown.escape.window="showAbsentEmployees = false">
     {{-- Tab QR Code / Weekly Saya (khusus Super Admin & Staff HR) --}}
     @if($this->showTabs && $mode === 'list')
     <div class="flex items-center gap-1 w-fit bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
@@ -60,10 +60,70 @@
         @endif
     </div>
     @elseif($mode === 'attendance')
-    <div class="flex items-center justify-between" wire:poll.30s="regenerateQrAuto">
-        <div class="flex items-center gap-2">
-            <button wire:click="backToList" class="btn-secondary text-xs">Kembali ke Daftar</button>
-        </div>
+    <div class="flex items-center justify-between gap-3" wire:poll.30s="regenerateQrAuto">
+        <button wire:click="backToList" class="btn-secondary shrink-0 text-xs">Kembali ke Daftar</button>
+        @if(auth()->user()->isSuperAdmin())
+        <button type="button" @click="showAbsentEmployees = true" class="flex min-w-0 items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-left shadow-sm transition hover:border-amber-300 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:hover:bg-amber-950/70">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/70 dark:text-amber-300">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 9v3.75m0 3h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            <span class="min-w-0">
+                <span class="block text-xs font-semibold text-amber-900 dark:text-amber-200">Lihat Karyawan Belum Absen</span>
+                <span class="block text-[10px] text-amber-700 dark:text-amber-400">{{ $absentEmployees->count() }} karyawan</span>
+            </span>
+        </button>
+        @endif
+    </div>
+    @endif
+
+    @if($mode === 'attendance' && $selectedMeetingId && auth()->user()->isSuperAdmin())
+    <div x-show="showAbsentEmployees" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-gray-950/60 px-4 py-6 backdrop-blur-sm" @click.self="showAbsentEmployees = false">
+        <section x-show="showAbsentEmployees" x-transition class="relative flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+            <header class="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+                <div>
+                    <h2 class="text-base font-bold text-gray-900 dark:text-gray-100">Karyawan Belum Absen</h2>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $this->selectedMeeting?->title }} | {{ $absentEmployees->count() }} karyawan</p>
+                </div>
+                <button type="button" @click="showAbsentEmployees = false" aria-label="Tutup" class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 6 12 12M18 6 6 18"/></svg>
+                </button>
+            </header>
+            <div class="min-h-0 flex-1 overflow-auto">
+                @if($absentEmployees->isNotEmpty())
+                <table class="w-full text-sm">
+                    <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
+                        <tr class="table-header">
+                            <th class="px-5 py-3 w-12 text-center">No</th>
+                            <th class="px-5 py-3">Nama</th>
+                            <th class="px-5 py-3">NIK</th>
+                            <th class="px-5 py-3">Divisi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        @foreach($absentEmployees as $employee)
+                        <tr>
+                            <td class="px-5 py-3 text-center text-gray-500">{{ $loop->iteration }}</td>
+                            <td class="px-5 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $employee->nama }}</td>
+                            <td class="px-5 py-3 font-mono text-gray-600 dark:text-gray-400">{{ $employee->nik ?: '-' }}</td>
+                            <td class="px-5 py-3 text-gray-600 dark:text-gray-400">{{ $employee->divisionNames() ?: '-' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <div class="flex min-h-48 flex-col items-center justify-center px-6 text-center">
+                    <span class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>
+                    </span>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">Semua karyawan sudah absen</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tidak ada karyawan aktif yang tercatat belum hadir.</p>
+                </div>
+                @endif
+            </div>
+            <footer class="flex justify-end border-t border-gray-100 px-5 py-3 dark:border-gray-800">
+                <button type="button" @click="showAbsentEmployees = false" class="btn-secondary text-xs">Tutup</button>
+            </footer>
+        </section>
     </div>
     @endif
 
@@ -149,9 +209,8 @@
                 </section>
                 @endif
 
-                {{-- Attendance and no-show lists --}}
-                <div class="flex min-w-0 min-h-0 flex-col gap-3 lg:order-1 lg:h-full">
-                <div id="attendance-table-scroll" class="min-h-[12rem] flex-1 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-700 lg:min-h-0">
+                {{-- Attendance List --}}
+                <div id="attendance-table-scroll" class="min-w-0 min-h-[18rem] overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-700 lg:order-1 lg:h-full lg:min-h-0">
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 z-10">
                         <tr class="table-header">
@@ -197,39 +256,6 @@
                         @endforelse
                     </tbody>
                 </table>
-                </div>
-                @if(auth()->user()->isSuperAdmin())
-                <section class="max-h-56 min-h-0 overflow-auto rounded-xl border border-amber-200 dark:border-amber-900/60">
-                    <div class="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-amber-100 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/50 px-4 py-2.5">
-                        <h4 class="text-xs font-semibold text-amber-900 dark:text-amber-200">Karyawan Belum Absen</h4>
-                        <span class="rounded-full bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-200">{{ $absentEmployees->count() }}</span>
-                    </div>
-                    @if($absentEmployees->isNotEmpty())
-                    <table class="w-full text-xs">
-                        <thead class="sticky top-10 z-[5] bg-white dark:bg-gray-900">
-                            <tr class="table-header">
-                                <th class="px-4 py-2 w-10 text-center">No</th>
-                                <th class="px-4 py-2">Nama</th>
-                                <th class="px-4 py-2">NIK</th>
-                                <th class="px-4 py-2">Divisi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-                            @foreach($absentEmployees as $employee)
-                            <tr>
-                                <td class="px-4 py-2 text-center text-gray-500">{{ $loop->iteration }}</td>
-                                <td class="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">{{ $employee->nama }}</td>
-                                <td class="px-4 py-2 font-mono text-gray-600 dark:text-gray-400">{{ $employee->nik ?: '-' }}</td>
-                                <td class="px-4 py-2 text-gray-600 dark:text-gray-400">{{ $employee->divisionNames() ?: '-' }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                    @else
-                    <p class="px-4 py-4 text-center text-xs text-emerald-600 dark:text-emerald-400">Semua karyawan aktif sudah melakukan absensi.</p>
-                    @endif
-                </section>
-                @endif
                 </div>
             </div>
         </div>
