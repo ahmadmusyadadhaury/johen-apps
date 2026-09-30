@@ -50,6 +50,13 @@ class InfluencerTable extends Component
     public string $keterangan = '';
     public string $link_sosmed = '';
     public string $biaya = '';
+    public string $initialMonitoringMonth = '';
+    public string $initialMonitoringFollowers = '';
+    public string $initialMonitoringViewers = '';
+    public string $initialMonitoringDuration = '';
+    public string $initialMonitoringTargetDuration = '130';
+    public string $initialMonitoringNotes = '';
+    public string $initialMonitoringBenefits = '';
 
     public string $activeTab = 'monitoring';
 
@@ -110,6 +117,8 @@ class InfluencerTable extends Component
 
     protected function rules(): array
     {
+        $monitoringRequired = filled($this->initialMonitoringMonth);
+
         return [
             'no_kontrak' => 'nullable|string|max:255',
             'nama' => 'required|string|max:255',
@@ -118,6 +127,13 @@ class InfluencerTable extends Component
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|string|max:1000',
+            'initialMonitoringMonth' => ['nullable', 'date_format:Y-m', 'before_or_equal:'.now()->format('Y-m').'-01'],
+            'initialMonitoringFollowers' => [$monitoringRequired ? 'required' : 'nullable', 'integer', 'min:0'],
+            'initialMonitoringViewers' => [$monitoringRequired ? 'required' : 'nullable', 'integer', 'min:0'],
+            'initialMonitoringDuration' => [$monitoringRequired ? 'required' : 'nullable', 'numeric', 'min:0', 'max:10000'],
+            'initialMonitoringTargetDuration' => [$monitoringRequired ? 'required' : 'nullable', 'numeric', 'min:0', 'max:10000'],
+            'initialMonitoringNotes' => 'nullable|string|max:2000',
+            'initialMonitoringBenefits' => 'nullable|string|max:5000',
         ];
     }
 
@@ -131,6 +147,16 @@ class InfluencerTable extends Component
             'rekomendasiLamaKontrak.integer' => 'Lama kontrak harus berupa jumlah bulan.',
             'rekomendasiLamaKontrak.min' => 'Lama kontrak minimal 1 bulan.',
             'rekomendasiLamaKontrak.max' => 'Lama kontrak maksimal 60 bulan.',
+            'initialMonitoringMonth.date_format' => 'Bulan monitoring harus berformat bulan dan tahun.',
+            'initialMonitoringMonth.before_or_equal' => 'Bulan monitoring tidak boleh berada di masa depan.',
+            'initialMonitoringFollowers.required' => 'Followers wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringFollowers.integer' => 'Followers harus berupa angka.',
+            'initialMonitoringViewers.required' => 'Viewers wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringViewers.integer' => 'Viewers harus berupa angka.',
+            'initialMonitoringDuration.required' => 'Durasi wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringDuration.numeric' => 'Durasi harus berupa angka.',
+            'initialMonitoringTargetDuration.required' => 'Target durasi wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringTargetDuration.numeric' => 'Target durasi harus berupa angka.',
         ];
     }
 
@@ -138,6 +164,7 @@ class InfluencerTable extends Component
     {
         $this->authorizeCreate();
         $this->resetInput();
+        $this->initialMonitoringMonth = now()->format('Y-m');
         $this->showModal = true;
     }
 
@@ -186,6 +213,7 @@ class InfluencerTable extends Component
                 'status' => 'pending_creative',
                 'pengaju_id' => auth()->id(),
                 'assigned_hos_position_id' => $assignedHos->id,
+                ...$this->initialMonitoringPayload(),
             ]);
 
             $this->dispatch('influencer-pengajuan-updated');
@@ -471,6 +499,7 @@ class InfluencerTable extends Component
         $this->showMonitoringModal = false;
         $this->monitoringInfluencerId = null;
         session()->flash('message', 'Monitoring influencer berhasil disimpan.');
+        $this->dispatch('influencer-monitoring-updated');
     }
 
     public function closeMonitoring(): void
@@ -538,7 +567,31 @@ class InfluencerTable extends Component
         $this->keterangan = '';
         $this->link_sosmed = '';
         $this->biaya = '';
+        $this->initialMonitoringMonth = '';
+        $this->initialMonitoringFollowers = '';
+        $this->initialMonitoringViewers = '';
+        $this->initialMonitoringDuration = '';
+        $this->initialMonitoringTargetDuration = '130';
+        $this->initialMonitoringNotes = '';
+        $this->initialMonitoringBenefits = '';
         $this->resetErrorBag();
+    }
+
+    /**
+     * Payload monitoring awal yang dititipkan di pengajuan. Disalin menjadi baris
+     * InfluencerMonitoring pertama saat GM/CEO menyetujui pengajuan.
+     */
+    private function initialMonitoringPayload(): array
+    {
+        return [
+            'monitoring_month' => $this->initialMonitoringMonth !== '' ? $this->initialMonitoringMonth.'-01' : null,
+            'monitoring_followers' => $this->initialMonitoringFollowers !== '' ? (int) $this->initialMonitoringFollowers : null,
+            'monitoring_viewers_last_month' => $this->initialMonitoringViewers !== '' ? (int) $this->initialMonitoringViewers : null,
+            'monitoring_duration_hours' => $this->initialMonitoringDuration !== '' ? (float) $this->initialMonitoringDuration : null,
+            'monitoring_target_duration_hours' => $this->initialMonitoringTargetDuration !== '' ? (float) $this->initialMonitoringTargetDuration : null,
+            'monitoring_notes' => $this->initialMonitoringNotes ?: null,
+            'monitoring_benefits' => $this->initialMonitoringBenefits ?: null,
+        ];
     }
 
     private function authorizeEdit(): void
@@ -560,10 +613,7 @@ class InfluencerTable extends Component
 
     private function isKolSubmitter(): bool
     {
-        $user = auth()->user();
-        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
-
-        return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
+        return InfluencerPengajuanRouting::isKolSubmitter(auth()->user());
     }
 
     private function canViewInfluencerMonitoring(): bool
@@ -617,12 +667,7 @@ class InfluencerTable extends Component
         }
         // Admin KOL hanya melihat influencer hasil pengajuannya sendiri.
         $visibleInfluencerIds = $isKolSubmitter
-            ? InfluencerPengajuan::query()
-                ->where('pengaju_id', auth()->id())
-                ->where('status', 'approved')
-                ->where('is_perpanjangan', false)
-                ->whereNotNull('influencer_id')
-                ->pluck('influencer_id')
+            ? InfluencerPengajuanRouting::approvedInfluencerIdsFor(auth()->user())
             : null;
 
         $items = Influencer::with(['payments', 'latestMonitoring'])

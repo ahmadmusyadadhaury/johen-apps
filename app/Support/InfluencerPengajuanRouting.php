@@ -108,4 +108,28 @@ class InfluencerPengajuanRouting
     {
         return Position::query()->where('nama', 'like', 'Head of Store%')->exists();
     }
+
+    public static function isKolSubmitter(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
+
+        return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
+    }
+
+    /**
+     * Influencer milik sendiri yang sudah disetujui, tidak termasuk perpanjangan.
+     */
+    public static function approvedInfluencerIdsFor(User $user)
+    {
+        return InfluencerPengajuan::query()
+            ->where('pengaju_id', $user->id)
+            ->where('status', 'approved')
+            ->where('is_perpanjangan', false)
+            ->whereNotNull('influencer_id')
+            ->pluck('influencer_id');
+    }
 }

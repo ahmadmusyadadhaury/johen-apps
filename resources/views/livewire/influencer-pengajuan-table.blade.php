@@ -238,6 +238,56 @@
                 </div>
                 @endif
 
+                @if($editId === null || $editStatus !== 'approved')
+                <div class="rounded-2xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900/50 dark:bg-primary-950/20">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Monitoring Awal</h4>
+                        <span class="text-[11px] font-medium uppercase tracking-wide text-primary-700 dark:text-primary-300">Opsional</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Data ini otomatis menjadi monitoring pertama influencer setelah pengajuan disetujui GM/CEO. Kosongkan bila belum punya data.
+                    </p>
+
+                    <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <x-input-label value="Bulan Monitoring" />
+                            <x-text-input type="month" wire:model.live.debounce.500ms="monitoringMonth" class="mt-1 block w-full" />
+                            @error('monitoringMonth') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Followers" />
+                            <x-text-input type="number" min="0" step="1" wire:model="monitoringFollowers" class="mt-1 block w-full" placeholder="Contoh: 1700000" />
+                            @error('monitoringFollowers') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Viewers 1 Bulan Terakhir" />
+                            <x-text-input type="number" min="0" step="1" wire:model="monitoringViewers" class="mt-1 block w-full" placeholder="Contoh: 1400000" />
+                            @error('monitoringViewers') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Durasi 1 Bulan Terakhir (jam)" />
+                            <x-text-input type="number" min="0" step="0.01" wire:model="monitoringDuration" class="mt-1 block w-full" placeholder="162" />
+                            @error('monitoringDuration') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Target Durasi (jam)" />
+                            <x-text-input type="number" min="0" step="0.01" wire:model="monitoringTargetDuration" class="mt-1 block w-full" placeholder="130" />
+                            @error('monitoringTargetDuration') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-input-label value="Keterangan" />
+                            <textarea wire:model="monitoringNotes" rows="2" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Catatan monitoring"></textarea>
+                            @error('monitoringNotes') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-input-label value="Benefit" />
+                            <textarea wire:model="monitoringBenefits" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Masukkan benefit kerja sama influencer"></textarea>
+                            @error('monitoringBenefits') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" wire:click="close" class="btn-secondary text-xs">Batal</button>
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn-primary text-xs disabled:opacity-60">

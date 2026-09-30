@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Influencer;
+use App\Models\InfluencerMonitoring;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use App\Models\User;
@@ -31,6 +32,14 @@ class InfluencerPengajuanTable extends Component
     public string $link_sosmed = '';
     public string $biaya = '';
     public string $keterangan = '';
+    public string $monitoringMonth = '';
+    public string $monitoringFollowers = '';
+    public string $monitoringViewers = '';
+    public string $monitoringDuration = '';
+    public string $monitoringTargetDuration = '130';
+    public string $monitoringNotes = '';
+    public string $monitoringBenefits = '';
+    public ?string $editStatus = null;
 
     public const DIVISI_OPTIONS = [
         'Johen PUBG',
@@ -53,6 +62,8 @@ class InfluencerPengajuanTable extends Component
 
     protected function rules(): array
     {
+        $monitoringRequired = filled($this->monitoringMonth);
+
         return [
             'nama' => 'required|string|max:255',
             'divisi' => ['required', 'in:'.implode(',', self::DIVISI_OPTIONS)],
@@ -60,6 +71,13 @@ class InfluencerPengajuanTable extends Component
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|string|max:1000',
+            'monitoringMonth' => ['nullable', 'date_format:Y-m', 'before_or_equal:'.now()->format('Y-m').'-01'],
+            'monitoringFollowers' => [$monitoringRequired ? 'required' : 'nullable', 'integer', 'min:0'],
+            'monitoringViewers' => [$monitoringRequired ? 'required' : 'nullable', 'integer', 'min:0'],
+            'monitoringDuration' => [$monitoringRequired ? 'required' : 'nullable', 'numeric', 'min:0', 'max:10000'],
+            'monitoringTargetDuration' => [$monitoringRequired ? 'required' : 'nullable', 'numeric', 'min:0', 'max:10000'],
+            'monitoringNotes' => 'nullable|string|max:2000',
+            'monitoringBenefits' => 'nullable|string|max:5000',
         ];
     }
 
@@ -72,12 +90,23 @@ class InfluencerPengajuanTable extends Component
             'rekomendasiLamaKontrak.integer' => 'Lama kontrak harus berupa jumlah bulan.',
             'rekomendasiLamaKontrak.min' => 'Lama kontrak minimal 1 bulan.',
             'rekomendasiLamaKontrak.max' => 'Lama kontrak maksimal 60 bulan.',
+            'monitoringMonth.date_format' => 'Bulan monitoring harus berformat bulan dan tahun.',
+            'monitoringMonth.before_or_equal' => 'Bulan monitoring tidak boleh berada di masa depan.',
+            'monitoringFollowers.required' => 'Followers wajib diisi bila bulan monitoring dipilih.',
+            'monitoringFollowers.integer' => 'Followers harus berupa angka.',
+            'monitoringViewers.required' => 'Viewers wajib diisi bila bulan monitoring dipilih.',
+            'monitoringViewers.integer' => 'Viewers harus berupa angka.',
+            'monitoringDuration.required' => 'Durasi wajib diisi bila bulan monitoring dipilih.',
+            'monitoringDuration.numeric' => 'Durasi harus berupa angka.',
+            'monitoringTargetDuration.required' => 'Target durasi wajib diisi bila bulan monitoring dipilih.',
+            'monitoringTargetDuration.numeric' => 'Target durasi harus berupa angka.',
         ];
     }
 
     public function openNew(): void
     {
         $this->resetInput();
+        $this->monitoringMonth = now()->format('Y-m');
         $this->showModal = true;
     }
 
@@ -87,6 +116,7 @@ class InfluencerPengajuanTable extends Component
         abort_unless($this->canEditSubmission($pengajuan), 403);
 
         $this->editId = $pengajuan->id;
+        $this->editStatus = $pengajuan->status;
         $this->no_kontrak = $pengajuan->no_kontrak ?? '';
         $this->nama = $pengajuan->nama;
         $this->divisi = $pengajuan->divisi ?? '';
@@ -94,6 +124,13 @@ class InfluencerPengajuanTable extends Component
         $this->link_sosmed = $pengajuan->link_sosmed ?? '';
         $this->biaya = $pengajuan->biaya !== null ? (string) $pengajuan->biaya : '';
         $this->keterangan = $pengajuan->keterangan ?? '';
+        $this->monitoringMonth = $pengajuan->monitoring_month?->format('Y-m') ?? '';
+        $this->monitoringFollowers = $pengajuan->monitoring_followers !== null ? (string) $pengajuan->monitoring_followers : '';
+        $this->monitoringViewers = $pengajuan->monitoring_viewers_last_month !== null ? (string) $pengajuan->monitoring_viewers_last_month : '';
+        $this->monitoringDuration = $pengajuan->monitoring_duration_hours !== null ? (string) $pengajuan->monitoring_duration_hours : '';
+        $this->monitoringTargetDuration = $pengajuan->monitoring_target_duration_hours !== null ? (string) $pengajuan->monitoring_target_duration_hours : '130';
+        $this->monitoringNotes = $pengajuan->monitoring_notes ?? '';
+        $this->monitoringBenefits = $pengajuan->monitoring_benefits ?? '';
         $this->showModal = true;
     }
 
@@ -127,6 +164,9 @@ class InfluencerPengajuanTable extends Component
                     'approved_gm_by' => null,
                     'approved_gm_at' => null,
                 ];
+                // Monitoring awal hanya bisa diubah selagi pengajuan belum disetujui.
+                // Setelah approved, data ini sudah menjadi baris InfluencerMonitoring.
+                $updates += $this->initialMonitoringPayload();
             }
 
             $pengajuan->update($updates);
@@ -167,6 +207,7 @@ class InfluencerPengajuanTable extends Component
             'status' => 'pending_hos1',
             'pengaju_id' => auth()->id(),
             'assigned_hos_position_id' => $assignedHos?->id,
+            ...$this->initialMonitoringPayload(),
         ]);
         $this->dispatch('influencer-pengajuan-updated');
 
@@ -298,6 +339,7 @@ class InfluencerPengajuanTable extends Component
                     'keterangan' => $pengajuan->keterangan,
                 ]);
                 $pengajuan->update(['influencer_id' => $influencer->id]);
+                $this->createInitialMonitoring($influencer, $pengajuan);
                 $this->generatePayments($influencer);
                 session()->flash('message', 'Pengajuan disetujui. Data influencer dan pembayaran otomatis dibuat.');
             }
@@ -354,6 +396,7 @@ class InfluencerPengajuanTable extends Component
     private function resetInput(): void
     {
         $this->editId = null;
+        $this->editStatus = null;
         $this->no_kontrak = '';
         $this->nama = '';
         $this->divisi = '';
@@ -361,9 +404,33 @@ class InfluencerPengajuanTable extends Component
         $this->link_sosmed = '';
         $this->biaya = '';
         $this->keterangan = '';
+        $this->monitoringMonth = '';
+        $this->monitoringFollowers = '';
+        $this->monitoringViewers = '';
+        $this->monitoringDuration = '';
+        $this->monitoringTargetDuration = '130';
+        $this->monitoringNotes = '';
+        $this->monitoringBenefits = '';
         $this->alasanTolak = '';
         $this->tolakId = null;
         $this->resetErrorBag();
+    }
+
+    /**
+     * Payload monitoring awal yang dititipkan di pengajuan. Disalin menjadi baris
+     * InfluencerMonitoring pertama saat GM/CEO menyetujui pengajuan.
+     */
+    private function initialMonitoringPayload(): array
+    {
+        return [
+            'monitoring_month' => $this->monitoringMonth !== '' ? $this->monitoringMonth.'-01' : null,
+            'monitoring_followers' => $this->monitoringFollowers !== '' ? (int) $this->monitoringFollowers : null,
+            'monitoring_viewers_last_month' => $this->monitoringViewers !== '' ? (int) $this->monitoringViewers : null,
+            'monitoring_duration_hours' => $this->monitoringDuration !== '' ? (float) $this->monitoringDuration : null,
+            'monitoring_target_duration_hours' => $this->monitoringTargetDuration !== '' ? (float) $this->monitoringTargetDuration : null,
+            'monitoring_notes' => $this->monitoringNotes ?: null,
+            'monitoring_benefits' => $this->monitoringBenefits ?: null,
+        ];
     }
 
     private function isAssignedHeadOfStore(User $user, InfluencerPengajuan $pengajuan): bool
@@ -410,10 +477,7 @@ class InfluencerPengajuanTable extends Component
 
     private function isKolSubmitter(): bool
     {
-        $user = auth()->user();
-        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
-
-        return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
+        return InfluencerPengajuanRouting::isKolSubmitter(auth()->user());
     }
 
     public function isWaitingForPreviousApproval(InfluencerPengajuan $pengajuan): bool
@@ -445,6 +509,33 @@ class InfluencerPengajuanTable extends Component
                 'status' => 'pending',
             ]);
         }
+    }
+
+    /**
+     * Menyalin monitoring awal yang dititipkan di pengajuan menjadi baris
+     * InfluencerMonitoring pertama. Idempoten: aman dijalankan ulang karena
+     * kunci updateOrCreate sama dengan unique index di influencer_monitorings.
+     */
+    private function createInitialMonitoring(Influencer $influencer, InfluencerPengajuan $pengajuan): void
+    {
+        if (! $pengajuan->monitoring_month || $pengajuan->monitoring_followers === null) {
+            return;
+        }
+
+        InfluencerMonitoring::updateOrCreate(
+            [
+                'influencer_id' => $influencer->id,
+                'period_month' => $pengajuan->monitoring_month->toDateString(),
+            ],
+            [
+                'followers' => $pengajuan->monitoring_followers,
+                'viewers_last_month' => $pengajuan->monitoring_viewers_last_month ?? 0,
+                'duration_hours' => $pengajuan->monitoring_duration_hours ?? 0,
+                'target_duration_hours' => $pengajuan->monitoring_target_duration_hours ?? 130,
+                'notes' => $pengajuan->monitoring_notes,
+                'benefits' => $pengajuan->monitoring_benefits,
+            ],
+        );
     }
 
     private function generateExtensionPayments(Influencer $influencer, \Illuminate\Support\Carbon $start, int $months, ?string $amount): void
