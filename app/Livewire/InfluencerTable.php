@@ -20,6 +20,11 @@ class InfluencerTable extends Component
 
     public bool $showPaymentModal = false;
     public bool $showMonitoringModal = false;
+    public bool $showExtensionModal = false;
+    public ?int $extensionInfluencerId = null;
+    public string $extensionDuration = '';
+    public string $extensionCost = '';
+    public string $extensionNotes = '';
     public ?int $monitoringInfluencerId = null;
     public string $monitoringMonth = '';
     public string $monitoringFollowers = '';
@@ -320,6 +325,69 @@ class InfluencerTable extends Component
         $this->monitoringModalView = 'months';
     }
 
+    public function openExtensionRequest(int $id): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        abort_unless($this->isOwnApprovedKolInfluencer($id), 403);
+
+        $influencer = Influencer::findOrFail($id);
+        $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($influencer->divisi);
+        abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
+
+        $this->extensionInfluencerId = $influencer->id;
+        $this->extensionDuration = '';
+        $this->extensionCost = $influencer->biaya !== null ? (string) $influencer->biaya : '';
+        $this->extensionNotes = $influencer->keterangan ?? '';
+        $this->resetValidation();
+        $this->showMonitoringModal = false;
+        $this->showExtensionModal = true;
+    }
+
+    public function submitExtensionRequest(): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        abort_unless($this->extensionInfluencerId && $this->isOwnApprovedKolInfluencer($this->extensionInfluencerId), 403);
+
+        $validated = $this->validate([
+            'extensionDuration' => 'required|integer|min:1|max:60',
+            'extensionCost' => 'nullable|numeric|min:0',
+            'extensionNotes' => 'nullable|string|max:1000',
+        ]);
+
+        $influencer = Influencer::findOrFail($this->extensionInfluencerId);
+        $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($influencer->divisi);
+        abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
+
+        InfluencerPengajuan::create([
+            'no_kontrak' => $influencer->no_kontrak ?? '',
+            'nama' => $influencer->nama,
+            'divisi' => $influencer->divisi,
+            'rekomendasi_lama_kontrak' => $validated['extensionDuration'],
+            'biaya' => $validated['extensionCost'] !== '' ? ($validated['extensionCost'] ?? null) : null,
+            'keterangan' => $validated['extensionNotes'] ?: null,
+            'status' => 'pending_creative',
+            'pengaju_id' => auth()->id(),
+            'influencer_id' => $influencer->id,
+            'assigned_hos_position_id' => $assignedHos->id,
+            'is_perpanjangan' => true,
+        ]);
+
+        $this->dispatch('influencer-pengajuan-updated');
+        $this->showExtensionModal = false;
+        $this->extensionInfluencerId = null;
+        session()->flash('message', 'Pengajuan perpanjangan influencer berhasil dikirim dan menunggu persetujuan Koordinator Creative.');
+    }
+
+    public function closeExtensionRequest(): void
+    {
+        $this->showExtensionModal = false;
+        $this->extensionInfluencerId = null;
+        $this->extensionDuration = '';
+        $this->extensionCost = '';
+        $this->extensionNotes = '';
+        $this->resetValidation();
+    }
+
     public function updatedMonitoringMonth(): void
     {
         $this->loadMonitoringMonth();
@@ -546,6 +614,7 @@ class InfluencerTable extends Component
             ? InfluencerPengajuan::with('influencer.latestMonitoring')
                 ->where('pengaju_id', auth()->id())
                 ->where('status', 'approved')
+                ->where('is_perpanjangan', false)
                 ->whereNotNull('influencer_id')
                 ->whereHas('influencer')
                 ->latest()

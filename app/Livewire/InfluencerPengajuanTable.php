@@ -168,32 +168,50 @@ class InfluencerPengajuanTable extends Component
             $this->dispatch('influencer-pengajuan-updated');
             session()->flash('message', 'Pengajuan disetujui, menunggu persetujuan General Manager.');
         } elseif ($isGm && $pengajuan->status === 'pending_gm') {
-            $contractStart = now()->startOfDay();
-            $contractMonths = max(1, (int) ($pengajuan->rekomendasi_lama_kontrak
-                ?? ($pengajuan->mulai_kontrak?->diffInMonths($pengajuan->habis_kontrak) + 1)
-                ?? 1));
-
             $pengajuan->update([
                 'status' => 'approved',
                 'approved_gm_by' => $user->id,
                 'approved_gm_at' => now(),
             ]);
 
-            $influencer = Influencer::create([
-                'no_kontrak' => null,
-                'nama' => $pengajuan->nama,
-                'divisi' => $pengajuan->divisi,
-                'mulai_kontrak' => $contractStart,
-                'habis_kontrak' => $contractStart->copy()->addMonthsNoOverflow($contractMonths - 1),
-                'link_sosmed' => $pengajuan->link_sosmed,
-                'biaya' => $pengajuan->biaya,
-                'keterangan' => $pengajuan->keterangan,
-            ]);
-            $pengajuan->update(['influencer_id' => $influencer->id]);
-            $this->generatePayments($influencer);
-            $this->dispatch('influencer-pengajuan-updated');
+            if ($pengajuan->is_perpanjangan && $pengajuan->influencer_id) {
+                $influencer = Influencer::findOrFail($pengajuan->influencer_id);
+                $contractMonths = max(1, (int) $pengajuan->rekomendasi_lama_kontrak);
+                $nextContractStart = $influencer->habis_kontrak->copy()->addDay()->startOfDay();
+                if ($nextContractStart->lt(now()->startOfDay())) {
+                    $nextContractStart = now()->startOfDay();
+                }
+                $extensionEnd = $nextContractStart->copy()->addMonthsNoOverflow($contractMonths - 1);
+                $extensionCost = $pengajuan->biaya ?? $influencer->biaya;
 
-            session()->flash('message', 'Pengajuan disetujui. Data influencer dan pembayaran otomatis dibuat.');
+                $influencer->update([
+                    'habis_kontrak' => $extensionEnd,
+                    'biaya' => $extensionCost,
+                    'keterangan' => $pengajuan->keterangan ?? $influencer->keterangan,
+                ]);
+                $this->generateExtensionPayments($influencer, $nextContractStart, $contractMonths, $extensionCost);
+                session()->flash('message', 'Perpanjangan influencer disetujui. Masa kontrak dan jadwal pembayaran telah diperbarui.');
+            } else {
+                $contractStart = now()->startOfDay();
+                $contractMonths = max(1, (int) ($pengajuan->rekomendasi_lama_kontrak
+                    ?? ($pengajuan->mulai_kontrak?->diffInMonths($pengajuan->habis_kontrak) + 1)
+                    ?? 1));
+
+                $influencer = Influencer::create([
+                    'no_kontrak' => null,
+                    'nama' => $pengajuan->nama,
+                    'divisi' => $pengajuan->divisi,
+                    'mulai_kontrak' => $contractStart,
+                    'habis_kontrak' => $contractStart->copy()->addMonthsNoOverflow($contractMonths - 1),
+                    'link_sosmed' => $pengajuan->link_sosmed,
+                    'biaya' => $pengajuan->biaya,
+                    'keterangan' => $pengajuan->keterangan,
+                ]);
+                $pengajuan->update(['influencer_id' => $influencer->id]);
+                $this->generatePayments($influencer);
+                session()->flash('message', 'Pengajuan disetujui. Data influencer dan pembayaran otomatis dibuat.');
+            }
+            $this->dispatch('influencer-pengajuan-updated');
         } else {
             session()->flash('error', 'Anda tidak memiliki wewenang untuk menyetujui pengajuan ini.');
         }
@@ -313,6 +331,24 @@ class InfluencerPengajuanTable extends Component
                 'bulan_ke' => $i + 1,
                 'tanggal_jatuh_tempo' => $jatuhTempo,
                 'jumlah' => $jumlah,
+                'status' => 'pending',
+            ]);
+        }
+    }
+
+    private function generateExtensionPayments(Influencer $influencer, \Illuminate\Support\Carbon $start, int $months, ?string $amount): void
+    {
+        $firstMonthNumber = ((int) $influencer->payments()->max('bulan_ke')) + 1;
+
+        for ($index = 0; $index < $months; $index++) {
+            $current = $start->copy()->addMonthsNoOverflow($index);
+            $dueDate = $current->copy()->day(min($start->day, $current->daysInMonth));
+
+            InfluencerPembayaran::create([
+                'influencer_id' => $influencer->id,
+                'bulan_ke' => $firstMonthNumber + $index,
+                'tanggal_jatuh_tempo' => $dueDate,
+                'jumlah' => $amount ?? 0,
                 'status' => 'pending',
             ]);
         }

@@ -81,7 +81,7 @@
                         <th class="px-6 py-3">Pengaju</th>
                         <th class="px-6 py-3">Nama</th>
                         <th class="px-6 py-3">Divisi</th>
-                        <th class="px-6 py-3">Rekomendasi Lama Kontrak</th>
+                        <th class="px-6 py-3">Durasi Kontrak / Perpanjangan</th>
                         <th class="px-6 py-3">Biaya</th>
                         <th class="px-6 py-3">Koordinator Creative</th>
                         <th class="px-6 py-3">Head of Store</th>
@@ -94,7 +94,10 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             <td class="table-cell text-center text-gray-500">{{ $items->firstItem() + $loop->index }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->pengaju->name ?? $item->pengaju->username }}</td>
-                            <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
+                            <td class="table-cell font-medium text-gray-900 dark:text-gray-100">
+                                {{ $item->nama }}
+                                @if($item->is_perpanjangan)<span class="ml-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">Perpanjangan</span>@endif
+                            </td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->divisi ?: '-' }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">
                                 @if($item->rekomendasi_lama_kontrak)

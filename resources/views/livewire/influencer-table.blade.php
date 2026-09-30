@@ -513,6 +513,11 @@
                     @empty
                     @endforelse
                 </div>
+                <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                    <button type="button" wire:click="openExtensionRequest({{ $monitoringInfluencerId }})" class="btn-secondary w-full justify-center text-xs sm:w-auto">
+                        Ajukan Perpanjangan
+                    </button>
+                </div>
             </div>
             @else
             @php
@@ -609,6 +614,62 @@
             </footer>
             @endif
             @endif
+        </section>
+    </div>
+    @endteleport
+    @endif
+
+    {{-- Influencer Contract Extension Request Modal --}}
+    @if($showExtensionModal && $isKolSubmitter)
+    @php $extensionInfluencer = \App\Models\Influencer::find($extensionInfluencerId); @endphp
+    @teleport('body')
+    <div class="influencer-modal-backdrop fixed inset-0 z-[2147483001] flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4">
+        <section role="dialog" aria-modal="true" aria-labelledby="influencer-extension-title" class="influencer-modal-panel my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900 sm:max-h-[calc(100dvh-2rem)] sm:p-7">
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <div>
+                    <h3 id="influencer-extension-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Ajukan Perpanjangan</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Isi rekomendasi durasi dan biaya perpanjangan.</p>
+                </div>
+                <button type="button" wire:click="closeExtensionRequest" class="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200" aria-label="Tutup pengajuan perpanjangan">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form wire:submit.prevent="submitExtensionRequest" class="space-y-4">
+                <div>
+                    <x-input-label value="Nama Influencer" />
+                    <x-text-input type="text" value="{{ $extensionInfluencer?->nama }}" class="mt-1 block w-full bg-gray-50 dark:bg-gray-800" readonly />
+                </div>
+                <div>
+                    <x-input-label value="Divisi" />
+                    <x-text-input type="text" value="{{ $extensionInfluencer?->divisi }}" class="mt-1 block w-full bg-gray-50 dark:bg-gray-800" readonly />
+                </div>
+                <div>
+                    <x-input-label value="Kontrak Saat Ini" />
+                    <x-text-input type="text" value="{{ $extensionInfluencer?->mulai_kontrak?->isoFormat('D MMM YYYY') }} — {{ $extensionInfluencer?->habis_kontrak?->isoFormat('D MMM YYYY') }}" class="mt-1 block w-full bg-gray-50 dark:bg-gray-800" readonly />
+                </div>
+                <div>
+                    <x-input-label value="Rekomendasi Durasi Perpanjangan *" />
+                    <div class="mt-1 flex items-center gap-2">
+                        <x-text-input type="number" min="1" max="60" step="1" wire:model="extensionDuration" class="block w-full" placeholder="Masukkan durasi perpanjangan" />
+                        <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
+                    </div>
+                    @error('extensionDuration')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <x-input-label value="Biaya (per bulan)" />
+                    <x-text-input type="number" min="0" step="0.01" wire:model="extensionCost" class="mt-1 block w-full" placeholder="0" />
+                    @error('extensionCost')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <x-input-label value="Keterangan" />
+                    <textarea wire:model="extensionNotes" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"></textarea>
+                    @error('extensionNotes')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                    <button type="button" wire:click="closeExtensionRequest" class="btn-secondary text-xs">Batal</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="submitExtensionRequest" class="btn-primary text-xs">Ajukan</button>
+                </div>
+            </form>
         </section>
     </div>
     @endteleport
