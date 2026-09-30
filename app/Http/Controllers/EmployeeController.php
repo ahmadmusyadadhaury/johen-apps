@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeContract;
 use App\Models\EmployeeDocument;
+use App\Models\LeaveRequest;
 use App\Models\Position;
 use App\Models\PositionHistory;
 use Carbon\Carbon;
@@ -67,6 +68,21 @@ class EmployeeController extends Controller
     {
         $employee->load(['divisions', 'documents', 'contracts', 'positionHistories', 'payrollDetails.payrollImport', 'promotions', 'positions']);
         $employee->setRelation('contracts', $employee->contracts->sortByDesc('tanggal_mulai')->values());
+
+        $cutiAccrual = $employee->cutiAccrual();
+        $cutiTerpakai = 0;
+        if ($cutiAccrual['eligible']) {
+            $cutiTerpakai = LeaveRequest::query()
+                ->where('employee_id', $employee->id)
+                ->where('jenis', 'cuti_tahunan')
+                ->where('tanggal_mulai', '>=', $cutiAccrual['cycle_start']->toDateString())
+                ->where('persetujuan_koor', 'disetujui')
+                ->where('persetujuan_atasan2', 'disetujui')
+                ->where('persetujuan_hr', 'disetujui')
+                ->get()
+                ->sum(fn ($request) => (int) filter_var($request->durasi, FILTER_SANITIZE_NUMBER_INT));
+        }
+        $sisaCuti = max(0, $cutiAccrual['earned'] - $cutiTerpakai);
 
         $payrollDetails = $employee->payrollDetails()
             ->with('payrollImport')
@@ -143,7 +159,7 @@ class EmployeeController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions', 'viewedUnreadPayroll');
+        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions', 'viewedUnreadPayroll', 'sisaCuti');
     }
 
     public function edit(Employee $employee)

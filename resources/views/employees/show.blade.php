@@ -1093,6 +1093,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
                             Cuti Aktif
                         </span>
+                        <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Sisa {{ $sisaCuti }} hari</span>
                         @else
                         <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
