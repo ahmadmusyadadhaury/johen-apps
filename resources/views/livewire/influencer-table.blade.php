@@ -82,8 +82,8 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px] text-sm">
-                <thead><tr class="table-header"><th class="px-5 py-3 text-center">No</th><th class="px-5 py-3">Nama Influencer</th><th class="px-5 py-3">Divisi</th><th class="px-5 py-3">Kontrak Mulai</th><th class="px-5 py-3">Kontrak Selesai</th><th class="px-5 py-3">Biaya</th><th class="px-5 py-3">Link Sosmed</th><th class="px-5 py-3 text-center">Aksi</th></tr></thead>
+            <table class="w-full min-w-[800px] text-sm">
+                <thead><tr class="table-header"><th class="px-5 py-3 text-center">No</th><th class="px-5 py-3">Nama Influencer</th><th class="px-5 py-3">Divisi</th><th class="px-5 py-3">Kontrak Mulai</th><th class="px-5 py-3">Kontrak Selesai</th><th class="px-5 py-3">Biaya</th><th class="px-5 py-3 text-center">Aksi</th></tr></thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                     @if($isKolSubmitter)
                     @forelse($kolApprovedSubmissions as $submission)
@@ -94,11 +94,10 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->biaya ? 'Rp '.number_format($submission->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell">@if($submission->link_sosmed)<a href="{{ $submission->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="break-all text-primary-600 hover:underline dark:text-primary-400">{{ $submission->link_sosmed }}</a>@else<span class="text-gray-400">-</span>@endif</td>
                         <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $submission->influencer_id }})" class="inline-flex min-h-10 items-center rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700">Monitoring</button></td>
                     </tr>
                     @empty
-                    <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
+                    <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
                     @endforelse
                     @else
                     @forelse($items as $item)
@@ -109,11 +108,10 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell">@if($item->link_sosmed)<a href="{{ $item->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="break-all text-primary-600 hover:underline dark:text-primary-400">{{ $item->link_sosmed }}</a>@else<span class="text-gray-400">-</span>@endif</td>
                         <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700">Monitoring</button></td>
                     </tr>
                     @empty
-                    <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada data influencer.</td></tr>
+                    <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada data influencer.</td></tr>
                     @endforelse
                     @endif
                 </tbody>
@@ -435,11 +433,13 @@
                     @error('keterangan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                @unless($isKolSubmitter)
                 <div>
                     <x-input-label value="Link Sosmed" />
                     <x-text-input type="url" wire:model="link_sosmed" class="mt-1 block w-full" placeholder="https://instagram.com/..." />
                     @error('link_sosmed') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
+                @endunless
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" wire:click="close" class="btn-secondary text-xs">Batal</button>

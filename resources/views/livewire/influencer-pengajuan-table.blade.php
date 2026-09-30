@@ -234,12 +234,6 @@
                 </div>
                 @endif
 
-                <div>
-                    <x-input-label value="Link Sosmed" />
-                    <x-text-input type="url" wire:model="link_sosmed" class="mt-1 block w-full" placeholder="https://instagram.com/..." />
-                    @error('link_sosmed') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" wire:click="close" class="btn-secondary text-xs">Batal</button>
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn-primary text-xs disabled:opacity-60">
