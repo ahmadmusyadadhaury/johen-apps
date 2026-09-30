@@ -481,7 +481,7 @@
                 $monitoringDetailBenefits = $isKolSubmitter ? $monitoringBenefits : ($monitoringHistory->first()?->benefits ?? '');
             @endphp
             <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
-            <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }} grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div>
                     @if($isKolSubmitter && !$monitoringReadOnly)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
@@ -524,7 +524,7 @@
                     </form>
                     @endif
 
-                    <div class="mt-6">
+                    <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }}">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Riwayat Monitoring</h4>
                         <div class="mt-3 {{ $isKolSubmitter ? 'overflow-x-hidden' : 'overflow-x-auto' }} rounded-xl border border-gray-200 dark:border-gray-700">
                             <table class="w-full {{ $isKolSubmitter ? 'table-fixed' : '' }} text-left text-xs">
