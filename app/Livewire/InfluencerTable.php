@@ -27,6 +27,7 @@ class InfluencerTable extends Component
     public string $monitoringDuration = '';
     public string $monitoringTargetDuration = '130';
     public string $monitoringNotes = '';
+    public string $monitoringBenefits = '';
     public ?int $paymentInfluencerId = null;
     public bool $showDeleteConfirmation = false;
     public ?int $deleteInfluencerId = null;
@@ -53,19 +54,6 @@ class InfluencerTable extends Component
         'Johen FC Mobile',
         'Johen Valorant',
         'Monkey PUBG',
-    ];
-
-    public const INFLUENCER_BENEFITS = [
-        'Penempatan Logo Johen Gaming saat live streaming.',
-        'Penempatan Logo Johen Gaming di setiap video TikTok.',
-        'Menggunakan hashtag #johengaming pada setiap video TikTok.',
-        'Mengganti nama TikTok menjadi: Nama | JOHEN GAMING.',
-        'Menambahkan tag akun Johen Gaming pada bio TikTok.',
-        'Menambahkan tag akun Johen Gaming pada caption setiap video TikTok.',
-        'Melakukan soft promotion kepada viewer mengenai layanan JUAL BELI AKUN PUBG, MLBB, FF, ROBLOX, VALORANT, EFOOTBALL, FC MOBILE serta TOP UP ALL GAME tercepat dari Johen Gaming.',
-        'Memasukkan Linktree Johen Gaming Store ke dalam Linktree streamer untuk mempermudah akses konsumen dan memperluas jangkauan brand.',
-        'Mengirimkan rekapan live streaming setiap hari melalui WhatsApp.',
-        'Melakukan repost konten Johen sesuai divisi game masing-masing.',
     ];
 
     public function mount(): void
@@ -288,6 +276,7 @@ class InfluencerTable extends Component
         $this->monitoringDuration = '';
         $this->monitoringTargetDuration = '130';
         $this->monitoringNotes = '';
+        $this->monitoringBenefits = '';
         $this->loadMonitoringMonth();
         $this->showMonitoringModal = true;
     }
@@ -308,6 +297,7 @@ class InfluencerTable extends Component
         $this->monitoringDuration = '';
         $this->monitoringTargetDuration = '130';
         $this->monitoringNotes = '';
+        $this->monitoringBenefits = '';
 
         $record = InfluencerMonitoring::query()
             ->where('influencer_id', $this->monitoringInfluencerId)
@@ -323,6 +313,7 @@ class InfluencerTable extends Component
         $this->monitoringDuration = (string) $record->duration_hours;
         $this->monitoringTargetDuration = (string) $record->target_duration_hours;
         $this->monitoringNotes = $record->notes ?? '';
+        $this->monitoringBenefits = $record->benefits ?? '';
     }
 
     public function formatAudienceCount(int $count): string
@@ -351,6 +342,7 @@ class InfluencerTable extends Component
             'monitoringDuration' => 'required|numeric|min:0|max:10000',
             'monitoringTargetDuration' => 'required|numeric|min:0|max:10000',
             'monitoringNotes' => 'nullable|string|max:2000',
+            'monitoringBenefits' => 'nullable|string|max:5000',
         ]);
 
         InfluencerMonitoring::updateOrCreate(
@@ -364,6 +356,7 @@ class InfluencerTable extends Component
                 'duration_hours' => $validated['monitoringDuration'],
                 'target_duration_hours' => $validated['monitoringTargetDuration'],
                 'notes' => $validated['monitoringNotes'] ?: null,
+                'benefits' => $validated['monitoringBenefits'] ?: null,
             ]
         );
 

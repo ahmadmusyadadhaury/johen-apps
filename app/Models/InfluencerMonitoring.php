@@ -15,6 +15,7 @@ class InfluencerMonitoring extends Model
         'duration_hours',
         'target_duration_hours',
         'notes',
+        'benefits',
     ];
 
     protected function casts(): array
