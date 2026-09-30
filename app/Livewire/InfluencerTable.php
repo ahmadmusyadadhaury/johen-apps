@@ -256,10 +256,14 @@ class InfluencerTable extends Component
 
     public function openMonitoring(int $id): void
     {
-        $this->authorizeEdit();
+        abort_unless($this->canViewInfluencerMonitoring(), 403);
         $influencer = Influencer::findOrFail($id);
+        abort_unless(!$this->isKolSubmitter() || $this->isOwnApprovedKolInfluencer($influencer->id), 403);
         $this->monitoringInfluencerId = $influencer->id;
-        $this->monitoringMonth = now()->format('Y-m');
+        $latestMonitoring = $influencer->latestMonitoring;
+        $this->monitoringMonth = $this->isKolSubmitter() || !$latestMonitoring
+            ? now()->format('Y-m')
+            : $latestMonitoring->period_month->format('Y-m');
         $this->monitoringFollowers = '';
         $this->monitoringViewers = '';
         $this->monitoringDuration = '';
@@ -280,6 +284,12 @@ class InfluencerTable extends Component
             return;
         }
 
+        $this->monitoringFollowers = '';
+        $this->monitoringViewers = '';
+        $this->monitoringDuration = '';
+        $this->monitoringTargetDuration = '130';
+        $this->monitoringNotes = '';
+
         $record = InfluencerMonitoring::query()
             ->where('influencer_id', $this->monitoringInfluencerId)
             ->whereDate('period_month', $this->monitoringMonth.'-01')
@@ -296,10 +306,24 @@ class InfluencerTable extends Component
         $this->monitoringNotes = $record->notes ?? '';
     }
 
+    public function formatAudienceCount(int $count): string
+    {
+        if ($count >= 1_000_000) {
+            return number_format($count / 1_000_000, 1, ',', '.').' M';
+        }
+
+        if ($count >= 1_000) {
+            return number_format($count / 1_000, 1, ',', '.').' K';
+        }
+
+        return number_format($count, 0, ',', '.');
+    }
+
     public function saveMonitoring(): void
     {
-        $this->authorizeEdit();
+        abort_unless($this->isKolSubmitter(), 403);
         abort_unless($this->monitoringInfluencerId, 404);
+        abort_unless($this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId), 403);
 
         $validated = $this->validate([
             'monitoringMonth' => 'required|date_format:Y-m',
@@ -417,6 +441,26 @@ class InfluencerTable extends Component
         return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
     }
 
+    private function canViewInfluencerMonitoring(): bool
+    {
+        $user = auth()->user();
+
+        return $this->isKolSubmitter()
+            || $user->isKoordinatorCreative()
+            || $user->isHeadOfStore()
+            || $user->isGmCeo()
+            || $user->isSuperAdminLike();
+    }
+
+    private function isOwnApprovedKolInfluencer(int $influencerId): bool
+    {
+        return InfluencerPengajuan::query()
+            ->where('pengaju_id', auth()->id())
+            ->where('influencer_id', $influencerId)
+            ->where('status', 'approved')
+            ->exists();
+    }
+
     private function authorizePaymentManagement(): void
     {
         $user = auth()->user();
@@ -431,12 +475,22 @@ class InfluencerTable extends Component
     {
         $isKolSubmitter = $this->isKolSubmitter();
         $showRequestTabs = $this->canSeeSubmissionTab() || $isKolSubmitter;
+        $canViewMonitoring = $this->canViewInfluencerMonitoring();
+        if ($this->showMonitoringModal && (
+            !$canViewMonitoring
+            || !$this->monitoringInfluencerId
+            || ($isKolSubmitter && !$this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId))
+        )) {
+            $this->showMonitoringModal = false;
+            $this->monitoringInfluencerId = null;
+        }
         $items = Influencer::with(['payments', 'latestMonitoring'])->latest()->paginate(10);
         $kolApprovedSubmissions = $isKolSubmitter
             ? InfluencerPengajuan::with('influencer.latestMonitoring')
                 ->where('pengaju_id', auth()->id())
                 ->where('status', 'approved')
                 ->whereNotNull('influencer_id')
+                ->whereHas('influencer')
                 ->latest()
                 ->paginate(10, ['*'], 'kolMonitoringPage')
             : collect();
@@ -465,7 +519,7 @@ class InfluencerTable extends Component
         return view('livewire.influencer-table', compact(
             'items', 'aktifCount', 'segeraHabisCount', 'tidakAktifCount',
             'upcomingPayments', 'paymentRecords', 'showRequestTabs', 'monitoringHistory',
-            'kolApprovedSubmissions', 'isKolSubmitter',
+            'kolApprovedSubmissions', 'isKolSubmitter', 'canViewMonitoring',
         ));
     }
 }

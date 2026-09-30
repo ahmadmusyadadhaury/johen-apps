@@ -24,7 +24,7 @@
     </div>
     @endif
 
-    @if(!$showRequestTabs || $activeTab === 'monitoring')
+    @if(!$showRequestTabs || $activeTab === 'monitoring' || ($isKolSubmitter && $showModal))
     <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer" class="influencer-feedback-enter">
 
     @if($isKolSubmitter)
@@ -34,24 +34,24 @@
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h2>
                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Daftar pengajuan Anda yang sudah disetujui dan masuk tahap monitoring.</p>
             </div>
-            <button type="button" wire:click="openNew" class="btn-primary min-h-10 text-xs">Ajukan Influencer</button>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-[900px] text-sm">
-                <thead><tr class="table-header"><th class="px-5 py-3">Nama Influencer</th><th class="px-5 py-3">Divisi</th><th class="px-5 py-3">Rekomendasi Lama Kontrak</th><th class="px-5 py-3">Biaya (per bulan)</th><th class="px-5 py-3">Keterangan</th><th class="px-5 py-3">Link Sosmed</th><th class="px-5 py-3 text-center">Aksi</th></tr></thead>
+                <thead><tr class="table-header"><th class="px-5 py-3 text-center">No</th><th class="px-5 py-3">Nama Influencer</th><th class="px-5 py-3">Divisi</th><th class="px-5 py-3">Kontrak Mulai</th><th class="px-5 py-3">Kontrak Selesai</th><th class="px-5 py-3">Biaya</th><th class="px-5 py-3">Link Sosmed</th><th class="px-5 py-3 text-center">Aksi</th></tr></thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                     @forelse($kolApprovedSubmissions as $submission)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td class="table-cell text-center text-gray-500">{{ $kolApprovedSubmissions->firstItem() + $loop->index }}</td>
                         <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $submission->nama }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->divisi ?: '-' }}</td>
-                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->rekomendasi_lama_kontrak ? $submission->rekomendasi_lama_kontrak.' bulan' : '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->biaya ? 'Rp '.number_format($submission->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell max-w-xs text-gray-600 dark:text-gray-400">{{ $submission->keterangan ?: '-' }}</td>
                         <td class="table-cell">@if($submission->link_sosmed)<a href="{{ $submission->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="break-all text-primary-600 hover:underline dark:text-primary-400">{{ $submission->link_sosmed }}</a>@else<span class="text-gray-400">-</span>@endif</td>
                         <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $submission->influencer_id }})" class="inline-flex min-h-10 items-center rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700">Monitoring</button></td>
                     </tr>
                     @empty
-                    <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
+                    <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -178,11 +178,13 @@
                         <div class="col-span-2 min-w-0"><dt class="text-gray-500 dark:text-gray-400">Link media sosial</dt><dd class="mt-1">@if($item->link_sosmed)<a href="{{ $item->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 max-w-full items-center gap-1 break-all font-medium text-primary-600 underline decoration-primary-300 underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-400" aria-label="Buka media sosial {{ $item->nama }} di tab baru">{{ $item->link_sosmed }}</a>@else<span class="text-gray-500 dark:text-gray-400">Belum ada</span>@endif</dd></div>
                     </dl>
 
-                    @if($canEditInfluencers)
+                    @if($canEditInfluencers || $canViewMonitoring)
                     <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
-                        <button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">Monitoring influencer</button>
+                        @if($canViewMonitoring)<button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">Monitoring influencer</button>@endif
+                        @if($canEditInfluencers)
                         <button type="button" wire:click="openEdit({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-primary-200 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-900/20">Edit</button>
                         <button type="button" wire:click="delete({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20">Hapus</button>
+                        @endif
                         @if($canManageInfluencerPayments)
                         <button type="button" wire:click="openPaymentModal({{ $item->id }})" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">Kelola pembayaran</button>
                         @endif
@@ -268,8 +270,10 @@
                             </td>
                             <td class="table-cell text-center">
                                 <div class="flex items-center justify-center gap-1">
-                                    @if($canEditInfluencers)
+                                    @if($canViewMonitoring)
                                     <button wire:click="openMonitoring({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors">Monitoring</button>
+                                    @endif
+                                    @if($canEditInfluencers)
                                     <button wire:click="openEdit({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
                                         Edit
@@ -406,8 +410,9 @@
             <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
                 @php
                     $monitoringMetrics = [
-                        ['Followers', $monitoringHistory->first() ? number_format($monitoringHistory->first()->followers, 0, ',', '.') : '—'],
-                        ['Viewers · 1 Bulan Terakhir', $monitoringHistory->first() ? number_format($monitoringHistory->first()->viewers_last_month, 0, ',', '.') : '—'],
+                        ['Nama', $monitoringInfluencer?->nama ?? '—'],
+                        ['Followers', $monitoringHistory->first() ? $this->formatAudienceCount($monitoringHistory->first()->followers) : '—'],
+                        ['Viewers · 1 Bulan Terakhir', $monitoringHistory->first() ? $this->formatAudienceCount($monitoringHistory->first()->viewers_last_month) : '—'],
                         ['Durasi · 1 Bulan Terakhir', $monitoringHistory->first() ? number_format((float) $monitoringHistory->first()->duration_hours, 0, ',', '.').' Jam' : '—'],
                         ['Target Durasi', $monitoringHistory->first() ? number_format((float) $monitoringHistory->first()->target_duration_hours, 0, ',', '.').' Jam' : '—'],
                     ];
@@ -423,6 +428,7 @@
 
             <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div>
+                    @if($isKolSubmitter)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
                     <form wire:submit.prevent="saveMonitoring" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div class="sm:col-span-2">
@@ -460,6 +466,7 @@
                             <button type="submit" wire:loading.attr="disabled" wire:target="saveMonitoring" class="btn-primary text-xs">Simpan Monitoring</button>
                         </div>
                     </form>
+                    @endif
 
                     <div class="mt-6">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Riwayat Monitoring</h4>
@@ -468,7 +475,7 @@
                                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400"><tr><th class="px-3 py-2.5">Bulan</th><th class="px-3 py-2.5">Followers</th><th class="px-3 py-2.5">Viewers</th><th class="px-3 py-2.5">Durasi</th><th class="px-3 py-2.5">Target</th></tr></thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                     @forelse($monitoringHistory as $record)
-                                    <tr class="text-gray-700 dark:text-gray-300"><td class="px-3 py-2.5">{{ $record->period_month->isoFormat('MMM YYYY') }}</td><td class="px-3 py-2.5">{{ number_format($record->followers, 0, ',', '.') }}</td><td class="px-3 py-2.5">{{ number_format($record->viewers_last_month, 0, ',', '.') }}</td><td class="px-3 py-2.5">{{ number_format((float) $record->duration_hours, 0, ',', '.') }} jam</td><td class="px-3 py-2.5">{{ number_format((float) $record->target_duration_hours, 0, ',', '.') }} jam</td></tr>
+                                    <tr class="text-gray-700 dark:text-gray-300"><td class="px-3 py-2.5">{{ $record->period_month->isoFormat('MMM YYYY') }}</td><td class="px-3 py-2.5">{{ $this->formatAudienceCount($record->followers) }}</td><td class="px-3 py-2.5">{{ $this->formatAudienceCount($record->viewers_last_month) }}</td><td class="px-3 py-2.5">{{ number_format((float) $record->duration_hours, 0, ',', '.') }} jam</td><td class="px-3 py-2.5">{{ number_format((float) $record->target_duration_hours, 0, ',', '.') }} jam</td></tr>
                                     @empty
                                     <tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">Belum ada riwayat monitoring.</td></tr>
                                     @endforelse
@@ -590,6 +597,12 @@
     </section>
     @else
     <section id="influencer-submission-panel" role="tabpanel" aria-label="Pengajuan Influencer" class="influencer-feedback-enter">
+        @if($isKolSubmitter)
+        <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between">
+            <div><h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Pengajuan Influencer</h2><p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Ajukan influencer baru dan pantau proses persetujuannya.</p></div>
+            <button type="button" wire:click="openNew" class="btn-primary min-h-10 text-xs">Ajukan Influencer</button>
+        </div>
+        @endif
         @livewire('influencer-pengajuan-table', [], key('influencer-submission-tab'))
     </section>
     @endif
