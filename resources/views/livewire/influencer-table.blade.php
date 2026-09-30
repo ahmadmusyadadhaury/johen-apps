@@ -420,8 +420,8 @@
     <style>body:has(.kol-monitoring-modal-backdrop) { overflow: hidden !important; }</style>
     @endif
     @teleport('body')
-    <div class="influencer-modal-backdrop fixed inset-0 z-[2147483000] isolate flex justify-center overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm sm:p-4 {{ $isKolSubmitter ? 'kol-monitoring-modal-backdrop items-center overflow-hidden' : 'items-start overflow-y-auto sm:items-center' }}" style="position: fixed; inset: 0;" wire:keydown.escape="closeMonitoring">
-        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);" class="influencer-modal-panel {{ $isKolSubmitter ? 'flex min-h-0 flex-col overflow-hidden' : 'overflow-y-auto' }} my-2 w-full max-w-4xl overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:my-4 sm:p-5">
+    <div class="influencer-modal-backdrop fixed inset-0 z-[2147483000] isolate flex justify-center overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm {{ $isKolSubmitter ? 'kol-monitoring-modal-backdrop items-center overflow-hidden' : 'items-start overflow-y-auto sm:items-center sm:p-4' }}" style="position: fixed; inset: 0;" wire:keydown.escape="closeMonitoring">
+        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="{{ $isKolSubmitter ? 'max-height: calc(100vh - 1rem); max-height: calc(100dvh - 1rem);' : 'max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);' }}" class="influencer-modal-panel {{ $isKolSubmitter ? 'my-0 flex min-h-0 flex-col overflow-hidden' : 'my-2 overflow-y-auto sm:my-4' }} w-full max-w-4xl overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:p-5">
             <div class="flex {{ $isKolSubmitter ? 'shrink-0' : '' }} items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
                 <div>
                     <h3 id="influencer-monitoring-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h3>
