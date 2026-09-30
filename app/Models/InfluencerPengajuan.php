@@ -10,6 +10,8 @@ class InfluencerPengajuan extends Model
     protected $fillable = [
         'no_kontrak',
         'nama',
+        'divisi',
+        'rekomendasi_lama_kontrak',
         'mulai_kontrak',
         'habis_kontrak',
         'link_sosmed',
@@ -31,6 +33,7 @@ class InfluencerPengajuan extends Model
         return [
             'mulai_kontrak' => 'date',
             'habis_kontrak' => 'date',
+            'rekomendasi_lama_kontrak' => 'integer',
             'approved_hos1_at' => 'datetime',
             'approved_gm_at' => 'datetime',
             'rejected_at' => 'datetime',

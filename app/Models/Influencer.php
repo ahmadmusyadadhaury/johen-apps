@@ -10,6 +10,7 @@ class Influencer extends Model
     protected $fillable = [
         'no_kontrak',
         'nama',
+        'divisi',
         'mulai_kontrak',
         'habis_kontrak',
         'link_sosmed',

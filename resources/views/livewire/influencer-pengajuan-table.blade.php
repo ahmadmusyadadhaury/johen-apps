@@ -75,8 +75,8 @@
                         <th class="px-6 py-3 text-center w-12">No</th>
                         <th class="px-6 py-3">Pengaju</th>
                         <th class="px-6 py-3">Nama</th>
-                        <th class="px-6 py-3">Mulai</th>
-                        <th class="px-6 py-3">Habis</th>
+                        <th class="px-6 py-3">Divisi</th>
+                        <th class="px-6 py-3">Rekomendasi Lama Kontrak</th>
                         <th class="px-6 py-3">Biaya</th>
                         <th class="px-6 py-3">Persetujuan Atasan 1</th>
                         <th class="px-6 py-3">Persetujuan Atasan 2</th>
@@ -89,8 +89,16 @@
                             <td class="table-cell text-center text-gray-500">{{ $items->firstItem() + $loop->index }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->pengaju->name ?? $item->pengaju->username }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
-                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak->isoFormat('D MMM YYYY') }}</td>
-                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak->isoFormat('D MMM YYYY') }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->divisi ?: '-' }}</td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">
+                                @if($item->rekomendasi_lama_kontrak)
+                                    {{ $item->rekomendasi_lama_kontrak }} bulan
+                                @elseif($item->mulai_kontrak && $item->habis_kontrak)
+                                    {{ $item->mulai_kontrak->isoFormat('D MMM YYYY') }} – {{ $item->habis_kontrak->isoFormat('D MMM YYYY') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td class="table-cell text-left text-gray-600 dark:text-gray-400">@if($item->biaya)Rp {{ number_format($item->biaya, 0, ',', '.') }}@else<span class="text-gray-400">-</span>@endif</td>
                             <td class="table-cell">
                                 @if($item->approved_hos1_by)
@@ -173,17 +181,24 @@
                     @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <x-input-label value="Mulai Kontrak *" />
-                        <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
-                        @error('mulai_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                <div>
+                    <x-input-label value="Divisi *" />
+                    <select wire:model="divisi" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="">Pilih divisi</option>
+                        @foreach(\App\Livewire\InfluencerPengajuanTable::DIVISI_OPTIONS as $divisionOption)
+                        <option value="{{ $divisionOption }}">{{ $divisionOption }}</option>
+                        @endforeach
+                    </select>
+                    @error('divisi') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <x-input-label value="Rekomendasi Lama Kontrak *" />
+                    <div class="mt-1 flex items-center gap-2">
+                        <x-text-input type="number" min="1" max="60" step="1" wire:model="rekomendasiLamaKontrak" class="block w-full" placeholder="Contoh: 6" />
+                        <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
                     </div>
-                    <div>
-                        <x-input-label value="Habis Kontrak *" />
-                        <x-text-input type="date" wire:model="habis_kontrak" class="mt-1 block w-full" />
-                        @error('habis_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                    @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 @if(auth()->user()->canSeeBiaya())

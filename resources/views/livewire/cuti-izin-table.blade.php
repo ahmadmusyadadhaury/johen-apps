@@ -29,6 +29,30 @@
 
         {{-- Stats --}}
         @unless(auth()->user()->isGmCeo())
+        @if($showTeamStats)
+        <div class="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 mb-6">
+            <div class="stat-card">
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalPengajuan }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Total Pengajuan Tim</p>
+                <p class="mt-1 text-[11px] text-gray-400">Dalam cakupan tim Anda</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalCuti }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pengajuan Cuti Tahunan</p>
+                <p class="mt-1 text-[11px] text-gray-400">Jumlah permohonan tim</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $totalIzin }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pengajuan Izin</p>
+                <p class="mt-1 text-[11px] text-gray-400">Jumlah permohonan tim</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $menunggu }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Menunggu Persetujuan</p>
+                <p class="mt-1 text-[11px] text-gray-400">Seluruh tahap persetujuan</p>
+            </div>
+        </div>
+        @else
         <div class="cuti-stats-grid grid grid-cols-2 md:grid-cols-2 {{ $jatahAvailable ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-3 sm:gap-5 mb-6">
             <div class="cuti-stats-total cuti-stats-compact stat-card group">
                 <div class="flex items-center justify-between mb-3">
@@ -102,6 +126,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu Persetujuan</p>
             </div>
         </div>
+        @endif
         @endunless
 
         @include('livewire.partials.cuti-izin-mobile')

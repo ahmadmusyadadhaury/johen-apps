@@ -23,10 +23,21 @@ class InfluencerPengajuanTable extends Component
 
     public string $no_kontrak = '';
     public string $nama = '';
-    public string $mulai_kontrak = '';
-    public string $habis_kontrak = '';
+    public string $divisi = '';
+    public string $rekomendasiLamaKontrak = '';
     public string $link_sosmed = '';
     public string $biaya = '';
+
+    public const DIVISI_OPTIONS = [
+        'Johen PUBG',
+        'Johen MLBB',
+        'Johen E-Football',
+        'Johen Roblox',
+        'Johen Free Fire',
+        'Johen FC Mobile',
+        'Johen Valorant',
+        'Monkey PUBG',
+    ];
 
     public string $alasanTolak = '';
     public ?int $tolakId = null;
@@ -35,8 +46,8 @@ class InfluencerPengajuanTable extends Component
     {
         return [
             'nama' => 'required|string|max:255',
-            'mulai_kontrak' => 'required|date',
-            'habis_kontrak' => 'required|date|after_or_equal:mulai_kontrak',
+            'divisi' => ['required', 'in:'.implode(',', self::DIVISI_OPTIONS)],
+            'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
         ];
@@ -46,9 +57,11 @@ class InfluencerPengajuanTable extends Component
     {
         return [
             'nama.required' => 'Nama influencer wajib diisi.',
-            'mulai_kontrak.required' => 'Mulai kontrak wajib diisi.',
-            'habis_kontrak.required' => 'Habis kontrak wajib diisi.',
-            'habis_kontrak.after_or_equal' => 'Habis kontrak harus setelah atau sama dengan mulai kontrak.',
+            'divisi.required' => 'Divisi wajib dipilih.',
+            'rekomendasiLamaKontrak.required' => 'Rekomendasi lama kontrak wajib diisi.',
+            'rekomendasiLamaKontrak.integer' => 'Lama kontrak harus berupa jumlah bulan.',
+            'rekomendasiLamaKontrak.min' => 'Lama kontrak minimal 1 bulan.',
+            'rekomendasiLamaKontrak.max' => 'Lama kontrak maksimal 60 bulan.',
         ];
     }
 
@@ -70,8 +83,8 @@ class InfluencerPengajuanTable extends Component
         InfluencerPengajuan::create([
             'no_kontrak' => '',
             'nama' => $this->nama,
-            'mulai_kontrak' => $this->mulai_kontrak,
-            'habis_kontrak' => $this->habis_kontrak,
+            'divisi' => $this->divisi,
+            'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
             'link_sosmed' => $this->link_sosmed ?: null,
             'biaya' => $this->biaya ?: null,
             'status' => 'pending_hos1',
@@ -145,6 +158,11 @@ class InfluencerPengajuanTable extends Component
             $this->dispatch('influencer-pengajuan-updated');
             session()->flash('message', 'Pengajuan disetujui, menunggu persetujuan General Manager.');
         } elseif ($isGm && $pengajuan->status === 'pending_gm') {
+            $contractStart = now()->startOfDay();
+            $contractMonths = max(1, (int) ($pengajuan->rekomendasi_lama_kontrak
+                ?? ($pengajuan->mulai_kontrak?->diffInMonths($pengajuan->habis_kontrak) + 1)
+                ?? 1));
+
             $pengajuan->update([
                 'status' => 'approved',
                 'approved_gm_by' => $user->id,
@@ -154,8 +172,9 @@ class InfluencerPengajuanTable extends Component
             $influencer = Influencer::create([
                 'no_kontrak' => null,
                 'nama' => $pengajuan->nama,
-                'mulai_kontrak' => $pengajuan->mulai_kontrak,
-                'habis_kontrak' => $pengajuan->habis_kontrak,
+                'divisi' => $pengajuan->divisi,
+                'mulai_kontrak' => $contractStart,
+                'habis_kontrak' => $contractStart->copy()->addMonthsNoOverflow($contractMonths - 1),
                 'link_sosmed' => $pengajuan->link_sosmed,
                 'biaya' => $pengajuan->biaya,
             ]);
@@ -215,8 +234,8 @@ class InfluencerPengajuanTable extends Component
         $this->editId = null;
         $this->no_kontrak = '';
         $this->nama = '';
-        $this->mulai_kontrak = '';
-        $this->habis_kontrak = '';
+        $this->divisi = '';
+        $this->rekomendasiLamaKontrak = '';
         $this->link_sosmed = '';
         $this->biaya = '';
         $this->alasanTolak = '';

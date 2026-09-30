@@ -190,8 +190,8 @@ class CutiIzinTable extends Component
         }
 
         if ($this->pengajuanJenis === 'jatah') {
-            if ($user->isSuperAdmin() || $user->isStaffIt() || $user->isKoordinatorIt()) {
-                $this->dispatch('notify', type: 'error', message: 'Jatah libur tidak tersedia untuk role Anda.');
+            if ($user->isSuperAdmin() || $user->isStaffIt() || $user->isKoordinatorIt() || $employee->jenis_kerja !== Employee::JENIS_KERJA_OPERASIONAL) {
+                $this->dispatch('notify', type: 'error', message: 'Jatah libur hanya tersedia untuk karyawan Operasional.');
 
                 return;
             }
@@ -704,7 +704,11 @@ class CutiIzinTable extends Component
             $sisaBulan = $accrual['earned'];
         }
 
-        $jatahAvailable = ! $user->isSuperAdmin() && ! $user->isStaffIt() && ! $user->isKoordinatorIt();
+        $jatahAvailable = $userEmployee
+            && $userEmployee->jenis_kerja === Employee::JENIS_KERJA_OPERASIONAL
+            && ! $user->isSuperAdmin()
+            && ! $user->isStaffIt()
+            && ! $user->isKoordinatorIt();
         $jatahBulanIni = 4;
         $usedJatah = 0;
         if ($userEmployee && $jatahAvailable) {
@@ -721,6 +725,8 @@ class CutiIzinTable extends Component
         $cutiEligibleDate = $userEmployee?->cutiEligibleDate();
 
         $timMenungguCount = $this->getTimMenungguCountProperty();
+        $showTeamStats = $this->tab === 'tim'
+            && ($user->isAnyKoordinator() || $user->isKoordinatorFcMobile() || $user->isHeadOfStore() || $user->isSuperAdmin());
 
         $userPositions = $userEmployee?->positions()->with('division')->get() ?? collect();
 
@@ -746,7 +752,7 @@ class CutiIzinTable extends Component
             || $user->isStaffHostMonkeyPubg() || $user->isStaffHostFcMobile();
 
         return view('livewire.cuti-izin-table', compact(
-            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'totalJatah', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'sisaBulan', 'terakumulasiCuti', 'usedCuti', 'jatahBulanIni', 'usedJatah', 'sisaJatah', 'jatahAvailable', 'lihatSemua', 'timMenungguCount', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
+            'leaveRequests', 'totalPengajuan', 'totalCuti', 'totalIzin', 'totalJatah', 'menunggu', 'userEmployee', 'isHr', 'user', 'sisaCuti', 'sisaBulan', 'terakumulasiCuti', 'usedCuti', 'jatahBulanIni', 'usedJatah', 'sisaJatah', 'jatahAvailable', 'lihatSemua', 'timMenungguCount', 'showTeamStats', 'userPositions', 'showPositionDropdown', 'hideAksi', 'cutiEligible', 'cutiEligibleDate'
         ))->with('karyawanView', false);
     }
 
