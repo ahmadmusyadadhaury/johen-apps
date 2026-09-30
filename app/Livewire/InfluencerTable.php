@@ -303,7 +303,13 @@ class InfluencerTable extends Component
         abort_unless($this->monitoringInfluencerId && $this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId), 403);
 
         $this->monitoringMonth = now()->format('Y-m');
-        $this->loadMonitoringMonth();
+        $this->monitoringFollowers = '';
+        $this->monitoringViewers = '';
+        $this->monitoringDuration = '';
+        $this->monitoringTargetDuration = '';
+        $this->monitoringNotes = '';
+        $this->monitoringBenefits = '';
+        $this->resetValidation();
         $this->monitoringReadOnly = false;
         $this->monitoringModalView = 'detail';
     }
