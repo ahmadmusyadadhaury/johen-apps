@@ -156,6 +156,7 @@ class InfluencerDeletionTest extends TestCase
             ->assertViewHas('aktifCount', 1)
             ->assertViewHas('tidakAktifCount', 0)
             ->assertDontSee('Influencer B')
+            ->assertSee('Hapus influencer Influencer A', false)
             ->assertSee('Influencer A');
     }
 
