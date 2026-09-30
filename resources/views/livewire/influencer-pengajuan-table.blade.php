@@ -109,7 +109,7 @@
                                 @elseif($item->status === 'pending_creative')
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Menunggu</span>
                                 @else
-                                <span class="text-xs text-gray-400">-</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Menunggu</span>
                                 @endif
                             </td>
                             <td class="table-cell">
@@ -118,7 +118,7 @@
                                 @elseif($item->status === 'rejected' && !$item->approved_hos1_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ $item->status === 'pending_hos1' ? 'Menunggu · '.($item->assignedHosPosition?->nama ?? 'Head of Store') : '-' }}</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Menunggu</span>
                                 @endif
                             </td>
                             <td class="table-cell">
@@ -127,7 +127,7 @@
                                 @elseif($item->status === 'rejected' && $item->approved_hos1_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Menunggu</span>
                                 @endif
                             </td>
                             <td class="table-cell">
