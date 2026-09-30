@@ -443,9 +443,12 @@
                 $hasCurrentMonthMonitoring = $monitoringHistory->contains(fn ($record) => $record->period_month->format('Y-m') === $currentMonthKey);
             @endphp
             <div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-5">
-                <div class="mb-4">
-                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Pilih Bulan Monitoring</h4>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih bulan untuk melihat atau mengisi detail monitoring.</p>
+                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Pilih Bulan Monitoring</h4>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih bulan untuk melihat atau mengisi detail monitoring.</p>
+                    </div>
+                    <button type="button" wire:click="addMonitoringForCurrentMonth" class="btn-primary shrink-0 text-xs">Tambah Monitoring</button>
                 </div>
                 <div class="space-y-2">
                     @unless($hasCurrentMonthMonitoring)
@@ -470,10 +473,17 @@
                 </div>
             </div>
             @else
+            @php
+                $monitoringRows = $isKolSubmitter && $monitoringReadOnly
+                    ? $monitoringHistory->filter(fn ($record) => $record->period_month->format('Y-m') === $monitoringMonth)
+                    : $monitoringHistory;
+                $monitoringDetailNotes = $isKolSubmitter ? $monitoringNotes : ($monitoringHistory->first()?->notes ?? '');
+                $monitoringDetailBenefits = $isKolSubmitter ? $monitoringBenefits : ($monitoringHistory->first()?->benefits ?? '');
+            @endphp
             <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
             <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div>
-                    @if($isKolSubmitter)
+                    @if($isKolSubmitter && !$monitoringReadOnly)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
                     <form id="kol-monitoring-form" wire:submit.prevent="saveMonitoring" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div class="sm:col-span-2">
@@ -520,10 +530,10 @@
                             <table class="w-full {{ $isKolSubmitter ? 'table-fixed' : '' }} text-left text-xs">
                                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400"><tr><th class="px-3 py-2.5">Bulan</th><th class="px-3 py-2.5">Followers</th><th class="px-3 py-2.5">Viewers</th><th class="px-3 py-2.5">Durasi</th><th class="px-3 py-2.5">Target</th></tr></thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                                    @forelse($monitoringHistory as $record)
+                                    @forelse($monitoringRows as $record)
                                     <tr class="text-gray-700 dark:text-gray-300"><td class="px-3 py-2.5">{{ $record->period_month->isoFormat('MMM YYYY') }}</td><td class="px-3 py-2.5">{{ $this->formatAudienceCount($record->followers) }}</td><td class="px-3 py-2.5">{{ $this->formatAudienceCount($record->viewers_last_month) }}</td><td class="px-3 py-2.5">{{ number_format((float) $record->duration_hours, 0, ',', '.') }} jam</td><td class="px-3 py-2.5">{{ number_format((float) $record->target_duration_hours, 0, ',', '.') }} jam</td></tr>
                                     @empty
-                                    <tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">Belum ada riwayat monitoring.</td></tr>
+                                    <tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">{{ $monitoringReadOnly ? 'Belum ada data monitoring pada bulan ini.' : 'Belum ada riwayat monitoring.' }}</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -533,20 +543,20 @@
 
                 <aside class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900 sm:p-5">
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Keterangan &amp; Benefit</h4>
-                    @if($monitoringHistory->first()?->notes)
+                    @if($monitoringDetailNotes)
                     <div class="mt-4">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Keterangan</p>
-                        <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringHistory->first()->notes }}</p>
+                        <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailNotes }}</p>
                     </div>
                     @endif
-                    <div class="mt-4 {{ $monitoringHistory->first()?->notes ? 'border-t border-gray-200 pt-4 dark:border-gray-700' : '' }}">
+                    <div class="mt-4 {{ $monitoringDetailNotes ? 'border-t border-gray-200 pt-4 dark:border-gray-700' : '' }}">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Benefit</p>
-                        <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringHistory->first()?->benefits ?: 'Belum ada benefit yang diinput.' }}</p>
+                        <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailBenefits ?: 'Belum ada benefit yang diinput.' }}</p>
                     </div>
                 </aside>
             </div>
             </div>
-            @if($isKolSubmitter)
+            @if($isKolSubmitter && !$monitoringReadOnly)
             <footer class="flex shrink-0 justify-end gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
                 <button type="button" wire:click="closeMonitoring" class="btn-secondary text-xs">Tutup</button>
                 <button type="submit" form="kol-monitoring-form" wire:loading.attr="disabled" wire:target="saveMonitoring" class="btn-primary text-xs">Simpan Monitoring</button>

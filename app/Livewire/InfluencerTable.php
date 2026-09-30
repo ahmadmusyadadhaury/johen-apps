@@ -29,6 +29,7 @@ class InfluencerTable extends Component
     public string $monitoringNotes = '';
     public string $monitoringBenefits = '';
     public string $monitoringModalView = 'detail';
+    public bool $monitoringReadOnly = false;
     public ?int $paymentInfluencerId = null;
     public bool $showDeleteConfirmation = false;
     public ?int $deleteInfluencerId = null;
@@ -269,6 +270,7 @@ class InfluencerTable extends Component
         abort_unless(!$this->isKolSubmitter() || $this->isOwnApprovedKolInfluencer($influencer->id), 403);
         $this->monitoringInfluencerId = $influencer->id;
         $this->monitoringModalView = $this->isKolSubmitter() ? 'months' : 'detail';
+        $this->monitoringReadOnly = false;
         $latestMonitoring = $influencer->latestMonitoring;
         $this->monitoringMonth = $this->isKolSubmitter() || !$latestMonitoring
             ? now()->format('Y-m')
@@ -291,6 +293,18 @@ class InfluencerTable extends Component
 
         $this->monitoringMonth = $month;
         $this->loadMonitoringMonth();
+        $this->monitoringReadOnly = true;
+        $this->monitoringModalView = 'detail';
+    }
+
+    public function addMonitoringForCurrentMonth(): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        abort_unless($this->monitoringInfluencerId && $this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId), 403);
+
+        $this->monitoringMonth = now()->format('Y-m');
+        $this->loadMonitoringMonth();
+        $this->monitoringReadOnly = false;
         $this->monitoringModalView = 'detail';
     }
 
