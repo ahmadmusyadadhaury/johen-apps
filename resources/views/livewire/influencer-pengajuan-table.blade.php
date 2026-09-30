@@ -139,7 +139,7 @@
                                 @endif
                             </td>
                             <td class="table-cell">
-                                @if($this->canApprove($item) || $this->canDeleteSubmission($item))
+                                @if($this->canApprove($item) || $this->canEditSubmission($item) || $this->canDeleteSubmission($item))
                                 <div class="flex flex-wrap gap-2">
                                     @if($this->canApprove($item))
                                     <button type="button" wire:click="approve({{ $item->id }})" wire:loading.attr="disabled" wire:target="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60">
@@ -147,6 +147,9 @@
                                         Setujui
                                     </button>
                                     <button type="button" wire:click="openTolak({{ $item->id }})" wire:loading.attr="disabled" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Tolak</button>
+                                    @endif
+                                    @if($this->canEditSubmission($item))
+                                    <button type="button" wire:click="openEdit({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-900/30 dark:text-blue-300">Edit</button>
                                     @endif
                                     @if($this->canDeleteSubmission($item))
                                     <button type="button" wire:click="confirmDelete({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Hapus</button>
@@ -188,8 +191,8 @@
         <div class="influencer-modal-panel isolate relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_24px_80px_-20px_rgba(15,23,42,0.55)] dark:border-gray-700 dark:bg-gray-900 sm:max-h-[calc(100dvh-2.5rem)] sm:p-7">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Ajukan Influencer</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Isi data influencer baru</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit Pengajuan Influencer' : 'Ajukan Influencer' }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui data pengajuan influencer' : 'Isi data influencer baru' }}</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -242,7 +245,7 @@
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn-primary text-xs disabled:opacity-60">
                         <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        Ajukan
+                        {{ $editId ? 'Simpan Perubahan' : 'Ajukan' }}
                     </button>
                 </div>
             </form>
@@ -258,7 +261,7 @@
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" aria-hidden="true">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.75 4.5 4.5L19 7.5"/></svg>
             </div>
-            <h3 id="influencer-submission-success-title" class="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Pengajuan berhasil dikirim</h3>
+            <h3 id="influencer-submission-success-title" class="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Pengajuan influencer berhasil</h3>
             <p id="influencer-submission-success-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">{{ $successMessage }}</p>
             <button type="button" wire:click="closeSuccessModal" class="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 sm:w-auto">Mengerti</button>
         </section>

@@ -79,8 +79,55 @@ class InfluencerPengajuanTable extends Component
         $this->showModal = true;
     }
 
+    public function openEdit(int $id): void
+    {
+        $pengajuan = InfluencerPengajuan::findOrFail($id);
+        abort_unless($this->canEditSubmission($pengajuan), 403);
+
+        $this->editId = $pengajuan->id;
+        $this->no_kontrak = $pengajuan->no_kontrak ?? '';
+        $this->nama = $pengajuan->nama;
+        $this->divisi = $pengajuan->divisi ?? '';
+        $this->rekomendasiLamaKontrak = (string) $pengajuan->rekomendasi_lama_kontrak;
+        $this->link_sosmed = $pengajuan->link_sosmed ?? '';
+        $this->biaya = $pengajuan->biaya !== null ? (string) $pengajuan->biaya : '';
+        $this->keterangan = $pengajuan->keterangan ?? '';
+        $this->showModal = true;
+    }
+
     public function save(): void
     {
+        if ($this->editId) {
+            $pengajuan = InfluencerPengajuan::findOrFail($this->editId);
+            abort_unless($this->canEditSubmission($pengajuan), 403);
+            $this->validate();
+
+            $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($this->divisi);
+            abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
+
+            $pengajuan->update([
+                'nama' => $this->nama,
+                'divisi' => $this->divisi,
+                'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
+                'biaya' => $this->biaya ?: null,
+                'keterangan' => $this->keterangan ?: null,
+                'assigned_hos_position_id' => $assignedHos->id,
+                'status' => 'pending_creative',
+                'approved_coordinator_by' => null,
+                'approved_coordinator_at' => null,
+                'approved_hos1_by' => null,
+                'approved_hos1_at' => null,
+                'approved_gm_by' => null,
+                'approved_gm_at' => null,
+            ]);
+
+            $this->dispatch('influencer-pengajuan-updated');
+            $this->successMessage = 'Pengajuan influencer berhasil diperbarui dan menunggu persetujuan Koordinator Creative.';
+            $this->showSuccessModal = true;
+            $this->close();
+            return;
+        }
+
         abort_unless(auth()->user()->isKoordinatorCreative(), 403);
         $this->validate();
 
@@ -134,7 +181,12 @@ class InfluencerPengajuanTable extends Component
         $this->deletePengajuanId = null;
         $this->resetPage();
         $this->dispatch('influencer-pengajuan-updated');
-        session()->flash('message', 'Pengajuan influencer berhasil dihapus.');
+        if ($this->isKolSubmitter()) {
+            $this->successMessage = 'Pengajuan influencer berhasil dihapus.';
+            $this->showSuccessModal = true;
+        } else {
+            session()->flash('message', 'Pengajuan influencer berhasil dihapus.');
+        }
     }
 
     public function cancelDeletePengajuan(): void
@@ -297,12 +349,27 @@ class InfluencerPengajuanTable extends Component
     public function canDeleteSubmission(InfluencerPengajuan $pengajuan): bool
     {
         $user = auth()->user();
-        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
-        $isKolSubmitter = $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
 
-        return ($user->isKoordinatorCreative() || $isKolSubmitter)
+        return ($user->isKoordinatorCreative() || $this->isKolSubmitter())
             && (int) $pengajuan->pengaju_id === (int) $user->id
             && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true);
+    }
+
+    public function canEditSubmission(InfluencerPengajuan $pengajuan): bool
+    {
+        $user = auth()->user();
+
+        return $this->isKolSubmitter()
+            && (int) $pengajuan->pengaju_id === (int) $user->id
+            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true);
+    }
+
+    private function isKolSubmitter(): bool
+    {
+        $user = auth()->user();
+        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
+
+        return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
     }
 
     public function isWaitingForPreviousApproval(InfluencerPengajuan $pengajuan): bool
