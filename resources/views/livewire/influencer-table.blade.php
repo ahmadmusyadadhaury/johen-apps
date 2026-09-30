@@ -421,7 +421,7 @@
     @endif
     @teleport('body')
     <div class="influencer-modal-backdrop fixed inset-0 z-[2147483000] isolate flex justify-center overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm {{ $isKolSubmitter ? 'kol-monitoring-modal-backdrop items-center overflow-hidden' : 'items-start overflow-y-auto sm:items-center sm:p-4' }}" style="position: fixed; inset: 0;" wire:keydown.escape="closeMonitoring">
-        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="{{ $isKolSubmitter ? 'max-height: calc(100vh - 1rem); max-height: calc(100dvh - 1rem);' : 'max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);' }}" class="influencer-modal-panel {{ $isKolSubmitter ? 'my-0 flex min-h-0 flex-col overflow-hidden' : 'my-2 overflow-y-auto sm:my-4' }} w-full max-w-4xl overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:p-5">
+        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="{{ $isKolSubmitter ? 'max-height: calc(100vh - 1rem); max-height: calc(100dvh - 1rem);' : 'max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);' }}" class="influencer-modal-panel {{ $isKolSubmitter ? 'my-0 flex min-h-0 flex-col overflow-hidden' : 'my-2 overflow-y-auto sm:my-4' }} {{ $isKolSubmitter && $monitoringReadOnly ? 'h-[80vh] sm:h-[70vh]' : '' }} w-full max-w-4xl overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:p-5">
             <div class="flex {{ $isKolSubmitter ? 'shrink-0' : '' }} items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
                 <div>
                     <h3 id="influencer-monitoring-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h3>
@@ -481,7 +481,7 @@
                 $monitoringDetailBenefits = $isKolSubmitter ? $monitoringBenefits : ($monitoringHistory->first()?->benefits ?? '');
             @endphp
             <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
-            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }} grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }} grid gap-6 {{ $isKolSubmitter && !$monitoringReadOnly ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]' }}">
                 <div>
                     @if($isKolSubmitter && !$monitoringReadOnly)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
@@ -524,6 +524,7 @@
                     </form>
                     @endif
 
+                    @if(!$isKolSubmitter || $monitoringReadOnly)
                     <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }}">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Riwayat Monitoring</h4>
                         <div class="mt-3 {{ $isKolSubmitter ? 'overflow-x-hidden' : 'overflow-x-auto' }} rounded-xl border border-gray-200 dark:border-gray-700">
@@ -539,8 +540,10 @@
                             </table>
                         </div>
                     </div>
+                    @endif
                 </div>
 
+                @if(!$isKolSubmitter || $monitoringReadOnly)
                 <aside class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900 sm:p-5">
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Keterangan &amp; Benefit</h4>
                     @if($monitoringDetailNotes)
@@ -554,6 +557,7 @@
                         <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailBenefits ?: 'Belum ada benefit yang diinput.' }}</p>
                     </div>
                 </aside>
+                @endif
             </div>
             </div>
             @if($isKolSubmitter && !$monitoringReadOnly)
