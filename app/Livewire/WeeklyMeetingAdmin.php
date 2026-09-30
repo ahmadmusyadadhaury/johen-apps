@@ -285,6 +285,24 @@ class WeeklyMeetingAdmin extends Component
         return $meeting->attendances()->with('employee')->orderBy('attended_at')->get();
     }
 
+    public function getAbsentEmployeesProperty()
+    {
+        if (! $this->selectedMeetingId) {
+            return collect();
+        }
+
+        $attendedEmployeeIds = WeeklyMeetingAttendance::query()
+            ->where('weekly_meeting_id', $this->selectedMeetingId)
+            ->select('employee_id');
+
+        return Employee::query()
+            ->with('divisions')
+            ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
+            ->whereNotIn('id', $attendedEmployeeIds)
+            ->orderBy('nama')
+            ->get();
+    }
+
     public function getSelectedMeetingProperty(): ?WeeklyMeeting
     {
         if (!$this->selectedMeetingId) {
@@ -323,6 +341,7 @@ class WeeklyMeetingAdmin extends Component
         return view('livewire.weekly-meeting-admin', [
             'meetings' => $this->meetings,
             'attendance' => $this->attendance,
+            'absentEmployees' => auth()->user()->isSuperAdmin() ? $this->absentEmployees : collect(),
             'totalEmployees' => $this->totalEmployees,
         ]);
     }

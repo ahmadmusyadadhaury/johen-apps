@@ -149,8 +149,9 @@
                 </section>
                 @endif
 
-                {{-- Attendance List --}}
-                <div id="attendance-table-scroll" class="min-w-0 min-h-[18rem] overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-700 lg:order-1 lg:h-full lg:min-h-0">
+                {{-- Attendance and no-show lists --}}
+                <div class="flex min-w-0 min-h-0 flex-col gap-3 lg:order-1 lg:h-full">
+                <div id="attendance-table-scroll" class="min-h-[12rem] flex-1 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-700 lg:min-h-0">
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 z-10">
                         <tr class="table-header">
@@ -196,6 +197,39 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
+                @if(auth()->user()->isSuperAdmin())
+                <section class="max-h-56 min-h-0 overflow-auto rounded-xl border border-amber-200 dark:border-amber-900/60">
+                    <div class="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-amber-100 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/50 px-4 py-2.5">
+                        <h4 class="text-xs font-semibold text-amber-900 dark:text-amber-200">Karyawan Belum Absen</h4>
+                        <span class="rounded-full bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-200">{{ $absentEmployees->count() }}</span>
+                    </div>
+                    @if($absentEmployees->isNotEmpty())
+                    <table class="w-full text-xs">
+                        <thead class="sticky top-10 z-[5] bg-white dark:bg-gray-900">
+                            <tr class="table-header">
+                                <th class="px-4 py-2 w-10 text-center">No</th>
+                                <th class="px-4 py-2">Nama</th>
+                                <th class="px-4 py-2">NIK</th>
+                                <th class="px-4 py-2">Divisi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                            @foreach($absentEmployees as $employee)
+                            <tr>
+                                <td class="px-4 py-2 text-center text-gray-500">{{ $loop->iteration }}</td>
+                                <td class="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">{{ $employee->nama }}</td>
+                                <td class="px-4 py-2 font-mono text-gray-600 dark:text-gray-400">{{ $employee->nik ?: '-' }}</td>
+                                <td class="px-4 py-2 text-gray-600 dark:text-gray-400">{{ $employee->divisionNames() ?: '-' }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    @else
+                    <p class="px-4 py-4 text-center text-xs text-emerald-600 dark:text-emerald-400">Semua karyawan aktif sudah melakukan absensi.</p>
+                    @endif
+                </section>
+                @endif
                 </div>
             </div>
         </div>
