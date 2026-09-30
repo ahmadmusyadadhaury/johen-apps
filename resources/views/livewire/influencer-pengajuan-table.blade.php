@@ -78,7 +78,6 @@
                 <thead>
                     <tr class="table-header">
                         <th class="px-6 py-3 text-center w-12">No</th>
-                        <th class="px-6 py-3">Pengaju</th>
                         <th class="px-6 py-3">Nama</th>
                         <th class="px-6 py-3">Divisi</th>
                         <th class="px-6 py-3">Durasi Kontrak / Perpanjangan</th>
@@ -93,7 +92,6 @@
                     @forelse($items as $item)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             <td class="table-cell text-center text-gray-500">{{ $items->firstItem() + $loop->index }}</td>
-                            <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->pengaju->name ?? $item->pengaju->username }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">
                                 {{ $item->nama }}
                                 @if($item->is_perpanjangan)<span class="ml-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">Perpanjangan</span>@endif
@@ -164,7 +162,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                     <p class="font-medium">Belum ada pengajuan</p>
