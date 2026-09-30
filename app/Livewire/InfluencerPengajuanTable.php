@@ -6,6 +6,7 @@ use App\Models\Influencer;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use App\Models\User;
+use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -197,12 +198,22 @@ class InfluencerPengajuanTable extends Component
         abort_unless($this->canDeleteSubmission($pengajuan), 403);
 
         DB::transaction(function () use ($pengajuan): void {
-            if ($pengajuan->status === 'approved' && !$pengajuan->is_perpanjangan && $pengajuan->influencer_id) {
-                // The influencer owns its monitoring history and payment schedule; deleting it cascades those records.
-                Influencer::query()->whereKey($pengajuan->influencer_id)->delete();
+            $influencerId = null;
+
+            if ($pengajuan->status === 'approved' && ! $pengajuan->is_perpanjangan) {
+                $deletion = app(InfluencerDeletionService::class);
+                $influencerId = $deletion->resolveInfluencerId($pengajuan);
             }
 
-            $pengajuan->delete();
+            if ($influencerId !== null) {
+                // Menghapus influencer beserta monitoring, pembayaran, dan semua
+                // pengajuan tertaut (termasuk pengajuan ini) dalam satu transaksi.
+                app(InfluencerDeletionService::class)->purgeInfluencer($influencerId);
+            }
+
+            // Pengajuan dihapus terakhir. Jika purgeInfluencer sudah menghapusnya
+            // (karena terhubung ke influencer_id), query ini hanya no-op.
+            InfluencerPengajuan::query()->whereKey($pengajuan->id)->delete();
         });
         $this->showDeleteConfirmation = false;
         $this->deletePengajuanId = null;

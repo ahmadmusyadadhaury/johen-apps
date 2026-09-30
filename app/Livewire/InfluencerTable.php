@@ -6,6 +6,7 @@ use App\Models\Influencer;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use App\Models\InfluencerMonitoring;
+use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -243,7 +244,7 @@ class InfluencerTable extends Component
         $this->authorizeEdit();
         abort_unless($this->deleteInfluencerId, 404);
         $influencer = Influencer::findOrFail($this->deleteInfluencerId);
-        $influencer->delete();
+        app(InfluencerDeletionService::class)->purgeInfluencer($influencer->id);
         $this->showDeleteConfirmation = false;
         $this->deleteInfluencerId = null;
         $this->deleteInfluencerName = '';
@@ -609,7 +610,20 @@ class InfluencerTable extends Component
             $this->showMonitoringModal = false;
             $this->monitoringInfluencerId = null;
         }
-        $items = Influencer::with(['payments', 'latestMonitoring'])->latest()->paginate(10);
+        // Admin KOL hanya melihat influencer hasil pengajuannya sendiri.
+        $visibleInfluencerIds = $isKolSubmitter
+            ? InfluencerPengajuan::query()
+                ->where('pengaju_id', auth()->id())
+                ->where('status', 'approved')
+                ->where('is_perpanjangan', false)
+                ->whereNotNull('influencer_id')
+                ->pluck('influencer_id')
+            : null;
+
+        $items = Influencer::with(['payments', 'latestMonitoring'])
+            ->when($visibleInfluencerIds !== null, fn ($q) => $q->whereIn('id', $visibleInfluencerIds))
+            ->latest()
+            ->paginate(10);
         $kolApprovedSubmissions = $isKolSubmitter
             ? InfluencerPengajuan::with('influencer.latestMonitoring')
                 ->where('pengaju_id', auth()->id())
@@ -625,15 +639,19 @@ class InfluencerTable extends Component
             : collect();
 
         $now = now()->startOfDay();
-        $aktifCount = Influencer::where('habis_kontrak', '>', $now)->count();
-        $segeraHabisCount = Influencer::where('habis_kontrak', '>', $now)
+        $statsQuery = fn () => Influencer::query()
+            ->when($visibleInfluencerIds !== null, fn ($q) => $q->whereIn('id', $visibleInfluencerIds));
+        $aktifCount = $statsQuery()->where('habis_kontrak', '>', $now)->count();
+        $segeraHabisCount = $statsQuery()->where('habis_kontrak', '>', $now)
             ->where('habis_kontrak', '<=', $now->copy()->addDays(7))
             ->count();
-        $tidakAktifCount = Influencer::where('habis_kontrak', '<=', $now)->count();
+        $tidakAktifCount = $statsQuery()->where('habis_kontrak', '<=', $now)->count();
 
         $upcomingPayments = InfluencerPembayaran::with('influencer')
             ->where('status', 'pending')
             ->whereBetween('tanggal_jatuh_tempo', [$now, $now->copy()->addDays(7)])
+            ->whereHas('influencer')
+            ->when($visibleInfluencerIds !== null, fn ($q) => $q->whereIn('influencer_id', $visibleInfluencerIds))
             ->get();
 
         $paymentRecords = $this->paymentInfluencerId

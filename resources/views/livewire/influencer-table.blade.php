@@ -528,7 +528,7 @@
                 $monitoringDetailBenefits = $isKolSubmitter ? $monitoringBenefits : ($monitoringHistory->first()?->benefits ?? '');
             @endphp
             <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
-            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }} grid gap-6 {{ $isKolSubmitter ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]' }}">
+            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }}">
                 <div>
                     @if($isKolSubmitter && !$monitoringReadOnly)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
@@ -587,24 +587,22 @@
                             </table>
                         </div>
                     </div>
+
+                    <aside class="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900 sm:p-5">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Keterangan &amp; Benefit</h4>
+                        @if($monitoringDetailNotes)
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Keterangan</p>
+                            <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailNotes }}</p>
+                        </div>
+                        @endif
+                        <div class="{{ $monitoringDetailNotes ? 'mt-4 border-t border-gray-200 pt-4 dark:border-gray-700' : '' }}">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Benefit</p>
+                            <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailBenefits ?: 'Belum ada benefit yang diinput.' }}</p>
+                        </div>
+                    </aside>
                     @endif
                 </div>
-
-                @if(!$isKolSubmitter || $monitoringReadOnly)
-                <aside class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900 sm:p-5">
-                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Keterangan &amp; Benefit</h4>
-                    @if($monitoringDetailNotes)
-                    <div class="mt-4">
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Keterangan</p>
-                        <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailNotes }}</p>
-                    </div>
-                    @endif
-                    <div class="mt-4 {{ $monitoringDetailNotes ? 'border-t border-gray-200 pt-4 dark:border-gray-700' : '' }}">
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Benefit</p>
-                        <p class="mt-1 whitespace-pre-line break-words text-sm leading-6 text-gray-700 dark:text-gray-300">{{ $monitoringDetailBenefits ?: 'Belum ada benefit yang diinput.' }}</p>
-                    </div>
-                </aside>
-                @endif
             </div>
             </div>
             @if($isKolSubmitter && !$monitoringReadOnly)
