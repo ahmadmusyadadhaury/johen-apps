@@ -4,6 +4,8 @@
         $canCreateInfluencers = $canEditInfluencers && !auth()->user()->isKoordinatorCreative();
         $canManageInfluencerPayments = $canEditInfluencers && (auth()->user()->canSeeBiaya() || auth()->user()->isKoordinatorCreative());
         $isCoordinatorCreative = auth()->user()->isKoordinatorCreative();
+        $canDeleteMonitoringInfluencer = !auth()->user()->isReadOnlyWorkspace()
+            && ($isKolSubmitter || auth()->user()->isKoordinatorCreative() || auth()->user()->isHeadOfStore());
     @endphp
 
     @if(session('message'))
@@ -117,7 +119,13 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button></td>
+                        <td class="table-cell text-center"><div class="flex items-center justify-center gap-1.5"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button>
+                        @if($canDeleteMonitoringInfluencer)
+                        <button type="button" wire:click="delete({{ $item->id }})" aria-label="Hapus influencer {{ $item->nama }}" title="Hapus influencer" class="inline-flex min-h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:focus-visible:ring-offset-gray-900">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                        </button>
+                        @endif
+                    </div></td>
                     </tr>
                     @empty
                     <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada data influencer.</td></tr>
@@ -251,6 +259,9 @@
                     @if($canEditInfluencers || $canViewMonitoring)
                     <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
                         @if($canViewMonitoring)<button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring influencer</button>@endif
+                        @if($canDeleteMonitoringInfluencer && !$canEditInfluencers)
+                        <button type="button" wire:click="delete({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">Hapus</button>
+                        @endif
                         @if($canEditInfluencers)
                         <button type="button" wire:click="openEdit({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-primary-200 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-900/20">Edit</button>
                         <button type="button" wire:click="delete({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20">Hapus</button>
@@ -342,6 +353,11 @@
                                 <div class="flex items-center justify-center gap-1">
                                     @if($canViewMonitoring)
                                     <button wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button>
+                                    @endif
+                                    @if($canDeleteMonitoringInfluencer && !$canEditInfluencers)
+                                    <button wire:click="delete({{ $item->id }})" aria-label="Hapus influencer {{ $item->nama }}" title="Hapus influencer" class="inline-flex min-h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:focus-visible:ring-offset-gray-900">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                    </button>
                                     @endif
                                     @if($canEditInfluencers)
                                     <button wire:click="openEdit({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">

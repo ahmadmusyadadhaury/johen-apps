@@ -232,7 +232,7 @@ class InfluencerTable extends Component
 
     public function delete(int $id): void
     {
-        $this->authorizeEdit();
+        $this->authorizeDeletion();
         $influencer = Influencer::findOrFail($id);
         $this->deleteInfluencerId = $influencer->id;
         $this->deleteInfluencerName = $influencer->nama;
@@ -241,7 +241,7 @@ class InfluencerTable extends Component
 
     public function deleteConfirmed(): void
     {
-        $this->authorizeEdit();
+        $this->authorizeDeletion();
         abort_unless($this->deleteInfluencerId, 404);
         $influencer = Influencer::findOrFail($this->deleteInfluencerId);
         app(InfluencerDeletionService::class)->purgeInfluencer($influencer->id);
@@ -544,6 +544,11 @@ class InfluencerTable extends Component
     private function authorizeEdit(): void
     {
         abort_unless(! auth()->user()->isReadOnlyWorkspace() && !auth()->user()->isHeadOfStore(), 403);
+    }
+
+    private function authorizeDeletion(): void
+    {
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
     }
 
     private function authorizeCreate(): void

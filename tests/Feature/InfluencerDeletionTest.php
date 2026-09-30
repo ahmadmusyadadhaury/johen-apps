@@ -37,6 +37,28 @@ class InfluencerDeletionTest extends TestCase
         ]);
     }
 
+    private function coordinator(): User
+    {
+        return User::factory()->create(['role' => 'koordinator_creative']);
+    }
+
+    private function hos(string $nama = 'Head of Store 1'): User
+    {
+        $position = Position::create(['nama' => $nama, 'is_active' => true]);
+        $employee = Employee::create([
+            'nik' => 'NIK-'.uniqid(),
+            'nama' => $nama,
+            'status' => 'aktif',
+            'posisi' => $nama,
+        ]);
+        $employee->positions()->attach($position->id, ['is_main' => true]);
+
+        return User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'employee_id' => $employee->id,
+        ]);
+    }
+
     private function influencer(string $nama = 'Influencer Test', string $divisi = 'Johen PUBG'): Influencer
     {
         return Influencer::create([
@@ -158,6 +180,40 @@ class InfluencerDeletionTest extends TestCase
             ->assertDontSee('Influencer B')
             ->assertSee('Hapus influencer Influencer A', false)
             ->assertSee('Influencer A');
+    }
+
+    public function test_koordinator_creative_bisa_hapus_influencer_dari_tab_monitoring(): void
+    {
+        $coordinator = $this->coordinator();
+        $influencer = $this->influencer();
+        $monitoring = $this->monitoring($influencer, now()->subMonth());
+
+        Livewire::actingAs($coordinator)
+            ->test(InfluencerTable::class)
+            ->assertSee('Hapus influencer '.$influencer->nama, false)
+            ->call('delete', $influencer->id)
+            ->call('deleteConfirmed')
+            ->assertOk();
+
+        $this->assertDatabaseMissing('influencers', ['id' => $influencer->id]);
+        $this->assertDatabaseMissing('influencer_monitorings', ['id' => $monitoring->id]);
+    }
+
+    public function test_head_of_store_bisa_hapus_influencer_dari_tab_monitoring(): void
+    {
+        $hos = $this->hos();
+        $influencer = $this->influencer();
+        $monitoring = $this->monitoring($influencer, now()->subMonth());
+
+        Livewire::actingAs($hos)
+            ->test(InfluencerTable::class)
+            ->assertSee('Hapus influencer '.$influencer->nama, false)
+            ->call('delete', $influencer->id)
+            ->call('deleteConfirmed')
+            ->assertOk();
+
+        $this->assertDatabaseMissing('influencers', ['id' => $influencer->id]);
+        $this->assertDatabaseMissing('influencer_monitorings', ['id' => $monitoring->id]);
     }
 
     public function test_menghapus_influencer_menurunkan_angka_stats_card(): void
