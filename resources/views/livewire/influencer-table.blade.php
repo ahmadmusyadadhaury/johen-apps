@@ -273,8 +273,10 @@
     </div>
 
     {{-- Modal --}}
-    <div wire:ignore.self class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4"
-         x-data="{ open: false }"
+    @if($showModal)
+    @teleport('body')
+    <div class="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4"
+         x-data="{ open: @js($showModal) }"
          x-init="$watch('$wire.showModal', value => open = value)"
          x-show="open" x-cloak
          x-transition:enter="ease-out duration-300"
@@ -282,7 +284,7 @@
          x-transition:enter-end="opacity-100"
          x-transition:leave="ease-in duration-200"
          x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
+             x-transition:leave-end="opacity-0"
          @click="open = false">
         <div x-show="open"
              x-transition:enter="ease-out duration-300"
@@ -315,17 +317,24 @@
                     @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <x-input-label value="Mulai Kontrak *" />
-                        <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
-                        @error('mulai_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                <div>
+                    <x-input-label value="Divisi *" />
+                    <select wire:model="divisi" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                        <option value="">Pilih divisi</option>
+                        @foreach(\App\Livewire\InfluencerTable::DIVISI_OPTIONS as $divisionOption)
+                        <option value="{{ $divisionOption }}">{{ $divisionOption }}</option>
+                        @endforeach
+                    </select>
+                    @error('divisi') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <x-input-label value="Rekomendasi Lama Kontrak *" />
+                    <div class="mt-1 flex items-center gap-2">
+                        <x-text-input type="number" min="1" max="60" step="1" wire:model="rekomendasiLamaKontrak" class="block w-full" placeholder="Contoh: 6" />
+                        <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
                     </div>
-                    <div>
-                        <x-input-label value="Habis Kontrak *" />
-                        <x-text-input type="date" wire:model="habis_kontrak" class="mt-1 block w-full" />
-                        @error('habis_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                    @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 @if(auth()->user()->canSeeBiaya())
@@ -353,6 +362,8 @@
             </form>
         </div>
     </div>
+    @endteleport
+    @endif
 
     {{-- Payment Modal --}}
     @if($showPaymentModal)

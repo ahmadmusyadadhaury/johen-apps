@@ -24,10 +24,23 @@ class InfluencerTable extends Component
     public string $nama = '';
     public string $mulai_kontrak = '';
     public string $habis_kontrak = '';
+    public string $divisi = '';
+    public string $rekomendasiLamaKontrak = '';
     public string $link_sosmed = '';
     public string $biaya = '';
 
     public string $activeTab = 'monitoring';
+
+    public const DIVISI_OPTIONS = [
+        'Johen PUBG',
+        'Johen MLBB',
+        'Johen E-Football',
+        'Johen Roblox',
+        'Johen Free Fire',
+        'Johen FC Mobile',
+        'Johen Valorant',
+        'Monkey PUBG',
+    ];
 
     public function mount(): void
     {
@@ -68,8 +81,8 @@ class InfluencerTable extends Component
         return [
             'no_kontrak' => 'nullable|string|max:255',
             'nama' => 'required|string|max:255',
-            'mulai_kontrak' => 'required|date',
-            'habis_kontrak' => 'required|date|after_or_equal:mulai_kontrak',
+            'divisi' => ['required', 'in:'.implode(',', self::DIVISI_OPTIONS)],
+            'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
         ];
@@ -80,9 +93,11 @@ class InfluencerTable extends Component
         return [
             'no_kontrak.required' => 'No. Kontrak wajib diisi.',
             'nama.required' => 'Nama influencer wajib diisi.',
-            'mulai_kontrak.required' => 'Mulai kontrak wajib diisi.',
-            'habis_kontrak.required' => 'Habis kontrak wajib diisi.',
-            'habis_kontrak.after_or_equal' => 'Habis kontrak harus setelah atau sama dengan mulai kontrak.',
+            'divisi.required' => 'Divisi wajib dipilih.',
+            'rekomendasiLamaKontrak.required' => 'Rekomendasi lama kontrak wajib diisi.',
+            'rekomendasiLamaKontrak.integer' => 'Lama kontrak harus berupa jumlah bulan.',
+            'rekomendasiLamaKontrak.min' => 'Lama kontrak minimal 1 bulan.',
+            'rekomendasiLamaKontrak.max' => 'Lama kontrak maksimal 60 bulan.',
         ];
     }
 
@@ -102,6 +117,8 @@ class InfluencerTable extends Component
         $this->nama = $item->nama;
         $this->mulai_kontrak = $item->mulai_kontrak->format('Y-m-d');
         $this->habis_kontrak = $item->habis_kontrak->format('Y-m-d');
+        $this->divisi = $item->divisi ?? '';
+        $this->rekomendasiLamaKontrak = (string) max(1, $item->mulai_kontrak->diffInMonths($item->habis_kontrak) + 1);
         $this->link_sosmed = $item->link_sosmed ?? '';
         $this->biaya = $item->biaya ? (string) $item->biaya : '';
         $this->showModal = true;
@@ -112,13 +129,19 @@ class InfluencerTable extends Component
         $this->editId ? $this->authorizeEdit() : $this->authorizeCreate();
         $this->validate();
 
+        $contractStart = $this->editId && $this->mulai_kontrak
+            ? \Illuminate\Support\Carbon::parse($this->mulai_kontrak)->startOfDay()
+            : now()->startOfDay();
+        $contractEnd = $contractStart->copy()->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1);
+
         if ($this->editId) {
             $item = Influencer::findOrFail($this->editId);
             $item->update([
                 'no_kontrak' => $this->no_kontrak,
                 'nama' => $this->nama,
-                'mulai_kontrak' => $this->mulai_kontrak,
-                'habis_kontrak' => $this->habis_kontrak,
+                'divisi' => $this->divisi,
+                'mulai_kontrak' => $contractStart,
+                'habis_kontrak' => $contractEnd,
                 'link_sosmed' => $this->link_sosmed ?: null,
                 'biaya' => $this->biaya ?: null,
             ]);
@@ -127,8 +150,9 @@ class InfluencerTable extends Component
             $influencer = Influencer::create([
                 'no_kontrak' => $this->no_kontrak,
                 'nama' => $this->nama,
-                'mulai_kontrak' => $this->mulai_kontrak,
-                'habis_kontrak' => $this->habis_kontrak,
+                'divisi' => $this->divisi,
+                'mulai_kontrak' => $contractStart,
+                'habis_kontrak' => $contractEnd,
                 'link_sosmed' => $this->link_sosmed ?: null,
                 'biaya' => $this->biaya ?: null,
             ]);
@@ -231,6 +255,8 @@ class InfluencerTable extends Component
         $this->nama = '';
         $this->mulai_kontrak = '';
         $this->habis_kontrak = '';
+        $this->divisi = '';
+        $this->rekomendasiLamaKontrak = '';
         $this->link_sosmed = '';
         $this->biaya = '';
         $this->resetErrorBag();
