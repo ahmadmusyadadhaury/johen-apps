@@ -427,11 +427,49 @@
                     <h3 id="influencer-monitoring-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h3>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $monitoringInfluencer?->nama }} · {{ $monitoringInfluencer?->divisi }}</p>
                 </div>
-                <button type="button" wire:click="closeMonitoring" class="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200" aria-label="Tutup monitoring">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                <div class="flex shrink-0 items-center gap-2">
+                    @if($isKolSubmitter && $monitoringModalView === 'detail')
+                    <button type="button" wire:click="showMonitoringMonths" class="btn-secondary text-xs">Kembali ke daftar bulan</button>
+                    @endif
+                    <button type="button" wire:click="closeMonitoring" class="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200" aria-label="Tutup monitoring">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
             </div>
 
+            @if($isKolSubmitter && $monitoringModalView === 'months')
+            @php
+                $currentMonthKey = now()->format('Y-m');
+                $hasCurrentMonthMonitoring = $monitoringHistory->contains(fn ($record) => $record->period_month->format('Y-m') === $currentMonthKey);
+            @endphp
+            <div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-5">
+                <div class="mb-4">
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Pilih Bulan Monitoring</h4>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih bulan untuk melihat atau mengisi detail monitoring.</p>
+                </div>
+                <div class="space-y-2">
+                    @unless($hasCurrentMonthMonitoring)
+                    <button type="button" wire:click="selectMonitoringMonth('{{ $currentMonthKey }}')" class="flex w-full items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-3 text-left transition-colors hover:bg-primary-50 dark:border-primary-900/50 dark:bg-primary-950/20 dark:hover:bg-primary-950/40">
+                        <span>
+                            <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100">{{ now()->isoFormat('MMMM YYYY') }}</span>
+                            <span class="mt-1 block text-xs text-primary-700 dark:text-primary-300">Bulan berjalan · belum diisi</span>
+                        </span>
+                        <span class="text-xs font-semibold text-primary-700 dark:text-primary-300">Isi monitoring</span>
+                    </button>
+                    @endunless
+                    @forelse($monitoringHistory as $record)
+                    <button type="button" wire:click="selectMonitoringMonth('{{ $record->period_month->format('Y-m') }}')" class="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800">
+                        <span>
+                            <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $record->period_month->isoFormat('MMMM YYYY') }}</span>
+                            <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">{{ $record->period_month->format('Y-m') === $currentMonthKey ? 'Bulan berjalan · sudah diisi' : 'Monitoring sudah diisi' }}</span>
+                        </span>
+                        <span class="text-xs font-semibold text-sky-700 dark:text-sky-300">Lihat detail</span>
+                    </button>
+                    @empty
+                    @endforelse
+                </div>
+            </div>
+            @else
             <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
             <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div>
@@ -513,6 +551,7 @@
                 <button type="button" wire:click="closeMonitoring" class="btn-secondary text-xs">Tutup</button>
                 <button type="submit" form="kol-monitoring-form" wire:loading.attr="disabled" wire:target="saveMonitoring" class="btn-primary text-xs">Simpan Monitoring</button>
             </footer>
+            @endif
             @endif
         </section>
     </div>

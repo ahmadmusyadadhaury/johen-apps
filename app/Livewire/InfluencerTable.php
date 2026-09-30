@@ -28,6 +28,7 @@ class InfluencerTable extends Component
     public string $monitoringTargetDuration = '130';
     public string $monitoringNotes = '';
     public string $monitoringBenefits = '';
+    public string $monitoringModalView = 'detail';
     public ?int $paymentInfluencerId = null;
     public bool $showDeleteConfirmation = false;
     public ?int $deleteInfluencerId = null;
@@ -267,6 +268,7 @@ class InfluencerTable extends Component
         $influencer = Influencer::findOrFail($id);
         abort_unless(!$this->isKolSubmitter() || $this->isOwnApprovedKolInfluencer($influencer->id), 403);
         $this->monitoringInfluencerId = $influencer->id;
+        $this->monitoringModalView = $this->isKolSubmitter() ? 'months' : 'detail';
         $latestMonitoring = $influencer->latestMonitoring;
         $this->monitoringMonth = $this->isKolSubmitter() || !$latestMonitoring
             ? now()->format('Y-m')
@@ -279,6 +281,23 @@ class InfluencerTable extends Component
         $this->monitoringBenefits = '';
         $this->loadMonitoringMonth();
         $this->showMonitoringModal = true;
+    }
+
+    public function selectMonitoringMonth(string $month): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        abort_unless($this->monitoringInfluencerId && $this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId), 403);
+        abort_unless(preg_match('/^\\d{4}-\\d{2}$/', $month), 422);
+
+        $this->monitoringMonth = $month;
+        $this->loadMonitoringMonth();
+        $this->monitoringModalView = 'detail';
+    }
+
+    public function showMonitoringMonths(): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        $this->monitoringModalView = 'months';
     }
 
     public function updatedMonitoringMonth(): void
