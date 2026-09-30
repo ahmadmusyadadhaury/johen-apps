@@ -137,7 +137,7 @@ class InfluencerTable extends Component
         if ($this->editId) {
             $item = Influencer::findOrFail($this->editId);
             $item->update([
-                'no_kontrak' => $this->no_kontrak,
+                'no_kontrak' => $this->no_kontrak ?: null,
                 'nama' => $this->nama,
                 'divisi' => $this->divisi,
                 'mulai_kontrak' => $contractStart,
@@ -148,7 +148,7 @@ class InfluencerTable extends Component
             session()->flash('message', 'Data influencer berhasil diperbarui.');
         } else {
             $influencer = Influencer::create([
-                'no_kontrak' => $this->no_kontrak,
+                'no_kontrak' => $this->no_kontrak ?: null,
                 'nama' => $this->nama,
                 'divisi' => $this->divisi,
                 'mulai_kontrak' => $contractStart,

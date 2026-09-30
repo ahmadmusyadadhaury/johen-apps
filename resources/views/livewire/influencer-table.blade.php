@@ -296,8 +296,8 @@
              @click.stop role="dialog" aria-modal="true" aria-labelledby="influencer-form-title" class="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 id="influencer-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Influencer</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui' : 'Isi' }} data influencer</p>
+                    <h3 id="influencer-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit Influencer' : 'Ajukan Influencer' }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $editId ? 'Perbarui data influencer' : 'Isi data influencer baru' }}</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -305,12 +305,6 @@
             </div>
 
             <form wire:submit.prevent="save" class="space-y-4">
-                <div>
-                    <x-input-label value="No. Kontrak *" />
-                    <x-text-input type="text" wire:model="no_kontrak" class="mt-1 block w-full" placeholder="Contoh: SPK/2026/001" />
-                    @error('no_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-
                 <div>
                     <x-input-label value="Nama Influencer *" />
                     <x-text-input type="text" wire:model="nama" class="mt-1 block w-full" placeholder="Nama influencer" />
@@ -339,7 +333,7 @@
 
                 @if(auth()->user()->canSeeBiaya())
                 <div>
-                    <x-input-label value="Biaya" />
+                    <x-input-label value="Biaya (per bulan)" />
                     <x-text-input type="number" step="0.01" min="0" wire:model="biaya" class="mt-1 block w-full" placeholder="0" />
                     @error('biaya') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -356,7 +350,7 @@
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn-primary text-xs disabled:opacity-60">
                         <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        {{ $editId ? 'Perbarui' : 'Simpan' }}
+                        {{ $editId ? 'Perbarui' : 'Ajukan' }}
                     </button>
                 </div>
             </form>
