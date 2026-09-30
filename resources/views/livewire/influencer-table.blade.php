@@ -275,25 +275,8 @@
     {{-- Modal --}}
     @if($showModal)
     @teleport('body')
-    <div class="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4"
-         x-data="{ open: @js($showModal) }"
-         x-init="$watch('$wire.showModal', value => open = value)"
-         x-show="open" x-cloak
-         x-transition:enter="ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-         @click="open = false">
-        <div x-show="open"
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop role="dialog" aria-modal="true" aria-labelledby="influencer-form-title" class="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-8">
+    <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10000] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-3 sm:items-center sm:p-5">
+        <div role="dialog" aria-modal="true" aria-labelledby="influencer-form-title" class="influencer-modal-panel isolate relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_24px_80px_-20px_rgba(15,23,42,0.55)] dark:border-gray-700 dark:bg-gray-900 sm:max-h-[calc(100dvh-2.5rem)] sm:p-7">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 id="influencer-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit Influencer' : 'Ajukan Influencer' }}</h3>
@@ -313,7 +296,7 @@
 
                 <div>
                     <x-input-label value="Divisi *" />
-                    <select wire:model="divisi" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <select wire:model="divisi" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">Pilih divisi</option>
                         @foreach(\App\Livewire\InfluencerTable::DIVISI_OPTIONS as $divisionOption)
                         <option value="{{ $divisionOption }}">{{ $divisionOption }}</option>
