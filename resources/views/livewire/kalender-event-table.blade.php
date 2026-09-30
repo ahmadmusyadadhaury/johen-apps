@@ -95,6 +95,9 @@
                         <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $event->kegiatan }}
                             @if($event->waktu_mulai) <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">· {{ $event->waktu_mulai }}@if($event->waktu_selesai)-{{ $event->waktu_selesai }}@endif</span> @endif
                         </p>
+                        @if($event->tanggal_selesai && !$event->tanggal_selesai->isSameDay($event->tanggal))
+                        <p class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">{{ $event->tanggal->isoFormat('D MMM YYYY') }} – {{ $event->tanggal_selesai->isoFormat('D MMM YYYY') }}</p>
+                        @endif
                         @if($event->keterangan)
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $event->keterangan }}</p>
                         @endif
@@ -141,7 +144,9 @@
                 <div>
                     <h3 id="event-form-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Tambah' }} Event</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ $selectedDate ? \Carbon\Carbon::parse($selectedDate)->translatedFormat('l, d F Y') : '' }}
+                        @if($tanggalMulai)
+                            {{ \Carbon\Carbon::parse($tanggalMulai)->translatedFormat('d F Y') }}@if($tanggalSelesai && $tanggalSelesai !== $tanggalMulai) – {{ \Carbon\Carbon::parse($tanggalSelesai)->translatedFormat('d F Y') }}@endif
+                        @endif
                     </p>
                 </div>
                 <button wire:click="closeForm" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -154,6 +159,18 @@
                     <x-input-label value="Kegiatan *" />
                     <x-text-input type="text" wire:model="kegiatan" class="mt-1 block w-full" placeholder="Nama kegiatan" />
                     @error('kegiatan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <x-input-label value="Tanggal Mulai *" />
+                        <x-text-input type="date" wire:model="tanggalMulai" class="mt-1 block w-full" />
+                        @error('tanggalMulai') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <x-input-label value="Tanggal Selesai *" />
+                        <x-text-input type="date" wire:model="tanggalSelesai" min="{{ $tanggalMulai }}" class="mt-1 block w-full" />
+                        @error('tanggalSelesai') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>

@@ -9,6 +9,7 @@ class KalenderEvent extends Model
 {
     protected $fillable = [
         'tanggal',
+        'tanggal_selesai',
         'kegiatan',
         'waktu_mulai',
         'waktu_selesai',
@@ -20,6 +21,7 @@ class KalenderEvent extends Model
     {
         return [
             'tanggal' => 'date',
+            'tanggal_selesai' => 'date',
         ];
     }
 

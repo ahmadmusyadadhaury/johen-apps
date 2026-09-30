@@ -10,6 +10,8 @@ class KalenderEventTable extends Component
     public int $currentMonth;
     public int $currentYear;
     public ?string $selectedDate = null;
+    public string $tanggalMulai = '';
+    public string $tanggalSelesai = '';
 
     public string $kegiatan = '';
     public string $waktuMulai = '';
@@ -23,6 +25,8 @@ class KalenderEventTable extends Component
     {
         return [
             'kegiatan' => 'required|string|max:255',
+            'tanggalMulai' => 'required|date',
+            'tanggalSelesai' => 'required|date|after_or_equal:tanggalMulai',
             'waktuMulai' => 'nullable|string|max:255',
             'waktuSelesai' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
@@ -85,6 +89,8 @@ class KalenderEventTable extends Component
         if (!$this->selectedDate) {
             $this->selectedDate = now()->format('Y-m-d');
         }
+        $this->tanggalMulai = $this->selectedDate;
+        $this->tanggalSelesai = $this->selectedDate;
         $this->showForm = true;
         $this->showDetailModal = false;
         $this->editId = null;
@@ -96,6 +102,8 @@ class KalenderEventTable extends Component
         $event = KalenderEvent::findOrFail($id);
         $this->editId = $event->id;
         $this->kegiatan = $event->kegiatan;
+        $this->tanggalMulai = $event->tanggal->format('Y-m-d');
+        $this->tanggalSelesai = ($event->tanggal_selesai ?? $event->tanggal)->format('Y-m-d');
         $this->waktuMulai = $event->waktu_mulai ?? '';
         $this->waktuSelesai = $event->waktu_selesai ?? '';
         $this->keterangan = $event->keterangan ?? '';
@@ -110,12 +118,14 @@ class KalenderEventTable extends Component
         $this->validate();
 
         $data = [
-            'tanggal' => $this->selectedDate,
+            'tanggal' => $this->tanggalMulai,
+            'tanggal_selesai' => $this->tanggalSelesai,
             'kegiatan' => $this->kegiatan,
             'waktu_mulai' => $this->waktuMulai ?: null,
             'waktu_selesai' => $this->waktuSelesai ?: null,
             'keterangan' => $this->keterangan ?: null,
         ];
+        $this->selectedDate = $this->tanggalMulai;
 
         if ($this->editId) {
             KalenderEvent::where('id', $this->editId)->update($data);
@@ -151,6 +161,8 @@ class KalenderEventTable extends Component
         $this->waktuMulai = '';
         $this->waktuSelesai = '';
         $this->keterangan = '';
+        $this->tanggalMulai = '';
+        $this->tanggalSelesai = '';
     }
 
     public function render()
@@ -167,10 +179,28 @@ class KalenderEventTable extends Component
             $current->addDay();
         }
 
-        $events = KalenderEvent::whereYear('tanggal', $this->currentYear)
-            ->whereMonth('tanggal', $this->currentMonth)
+        $events = KalenderEvent::whereDate('tanggal', '<=', $endOfCalendar->toDateString())
+            ->where(function ($query) use ($startOfCalendar) {
+                $query->where(function ($legacyQuery) use ($startOfCalendar) {
+                    $legacyQuery->whereNull('tanggal_selesai')
+                        ->whereDate('tanggal', '>=', $startOfCalendar->toDateString());
+                })->orWhereDate('tanggal_selesai', '>=', $startOfCalendar->toDateString());
+            })
             ->get()
-            ->groupBy(fn($item) => $item->tanggal->format('Y-m-d'));
+            ->reduce(function ($grouped, $item) use ($startOfCalendar, $endOfCalendar) {
+                $eventStart = $item->tanggal->copy()->max($startOfCalendar);
+                $eventEnd = ($item->tanggal_selesai ?? $item->tanggal)->copy()->min($endOfCalendar);
+
+                for ($date = $eventStart->copy(); $date->lte($eventEnd); $date->addDay()) {
+                    $dateKey = $date->format('Y-m-d');
+                    if (! $grouped->has($dateKey)) {
+                        $grouped->put($dateKey, collect());
+                    }
+                    $grouped->get($dateKey)->push($item);
+                }
+
+                return $grouped;
+            }, collect());
 
         $selectedEvents = $this->selectedDate && isset($events[$this->selectedDate])
             ? $events[$this->selectedDate]
