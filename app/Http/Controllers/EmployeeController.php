@@ -83,6 +83,9 @@ class EmployeeController extends Controller
                 ->sum(fn ($request) => (int) filter_var($request->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
         $sisaCuti = max(0, $cutiAccrual['earned'] - $cutiTerpakai);
+        $cutiBulan = $cutiAccrual['eligible']
+            ? 13 - (int) $cutiAccrual['cycle_start']->month
+            : 0;
 
         $payrollDetails = $employee->payrollDetails()
             ->with('payrollImport')
@@ -159,7 +162,7 @@ class EmployeeController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions', 'viewedUnreadPayroll', 'sisaCuti');
+        return compact('employee', 'divisions', 'jenisDokumenList', 'payrollDetails', 'stats', 'statusClasses', 'allPositions', 'positionHistoryList', 'canSeePayroll', 'atasanOptions', 'viewedUnreadPayroll', 'sisaCuti', 'cutiTerpakai', 'cutiBulan');
     }
 
     public function edit(Employee $employee)
