@@ -197,9 +197,9 @@ class InfluencerPengajuanTable extends Component
         abort_unless($this->canDeleteSubmission($pengajuan), 403);
 
         DB::transaction(function () use ($pengajuan): void {
-            if ($pengajuan->status === 'approved' && !$pengajuan->is_perpanjangan && $pengajuan->influencer) {
+            if ($pengajuan->status === 'approved' && !$pengajuan->is_perpanjangan && $pengajuan->influencer_id) {
                 // The influencer owns its monitoring history and payment schedule; deleting it cascades those records.
-                $pengajuan->influencer->delete();
+                Influencer::query()->whereKey($pengajuan->influencer_id)->delete();
             }
 
             $pengajuan->delete();
@@ -377,7 +377,11 @@ class InfluencerPengajuanTable extends Component
     {
         $user = auth()->user();
 
-        return ($user->isKoordinatorCreative() || $this->isKolSubmitter())
+        if ($this->isKolSubmitter()) {
+            return true;
+        }
+
+        return $user->isKoordinatorCreative()
             && (int) $pengajuan->pengaju_id === (int) $user->id
             && in_array($pengajuan->status, ['pending_creative', 'pending_hos1', 'approved'], true);
     }
@@ -386,9 +390,11 @@ class InfluencerPengajuanTable extends Component
     {
         $user = auth()->user();
 
-        return $this->isKolSubmitter()
-            && (int) $pengajuan->pengaju_id === (int) $user->id
-            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1', 'approved'], true);
+        if ($this->isKolSubmitter()) {
+            return true;
+        }
+
+        return false;
     }
 
     private function isKolSubmitter(): bool
