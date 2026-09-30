@@ -400,7 +400,7 @@
     @php $monitoringInfluencer = \App\Models\Influencer::find($monitoringInfluencerId); @endphp
     @teleport('body')
     <div class="influencer-modal-backdrop fixed inset-0 z-[10002] flex items-start justify-center overflow-y-auto overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4" wire:keydown.escape="closeMonitoring">
-        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" class="influencer-modal-panel my-auto max-h-[calc(100dvh-1rem)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-5">
+        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);" class="influencer-modal-panel my-2 w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:my-4 sm:p-5">
             <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
                 <div>
                     <h3 id="influencer-monitoring-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h3>
@@ -409,25 +409,6 @@
                 <button type="button" wire:click="closeMonitoring" class="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200" aria-label="Tutup monitoring">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
-            </div>
-
-            <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-5">
-                @php
-                    $monitoringMetrics = [
-                        ['Nama', $monitoringInfluencer?->nama ?? '—'],
-                        ['Followers', $monitoringHistory->first() ? $this->formatAudienceCount($monitoringHistory->first()->followers) : '—'],
-                        ['Viewers · 1 Bulan Terakhir', $monitoringHistory->first() ? $this->formatAudienceCount($monitoringHistory->first()->viewers_last_month) : '—'],
-                        ['Durasi · 1 Bulan Terakhir', $monitoringHistory->first() ? number_format((float) $monitoringHistory->first()->duration_hours, 0, ',', '.').' Jam' : '—'],
-                        ['Target Durasi', $monitoringHistory->first() ? number_format((float) $monitoringHistory->first()->target_duration_hours, 0, ',', '.').' Jam' : '—'],
-                    ];
-                @endphp
-                @foreach($monitoringMetrics as [$label, $value])
-                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $label }}</p>
-                    <p class="mt-2 text-xl font-bold text-gray-900 dark:text-gray-100">{{ $value }}</p>
-                    @if($loop->first && $monitoringHistory->first())<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $monitoringHistory->first()->period_month->isoFormat('MMMM YYYY') }}</p>@endif
-                </div>
-                @endforeach
             </div>
 
             <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
