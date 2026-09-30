@@ -27,6 +27,39 @@
     @if(!$showRequestTabs || $activeTab === 'monitoring')
     <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer" class="influencer-feedback-enter">
 
+    @if($isKolSubmitter)
+    <div class="card">
+        <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h2>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Daftar pengajuan Anda yang sudah disetujui dan masuk tahap monitoring.</p>
+            </div>
+            <button type="button" wire:click="openNew" class="btn-primary min-h-10 text-xs">Ajukan Influencer</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[900px] text-sm">
+                <thead><tr class="table-header"><th class="px-5 py-3">Nama Influencer</th><th class="px-5 py-3">Divisi</th><th class="px-5 py-3">Rekomendasi Lama Kontrak</th><th class="px-5 py-3">Biaya (per bulan)</th><th class="px-5 py-3">Keterangan</th><th class="px-5 py-3">Link Sosmed</th><th class="px-5 py-3 text-center">Aksi</th></tr></thead>
+                <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                    @forelse($kolApprovedSubmissions as $submission)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $submission->nama }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->divisi ?: '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->rekomendasi_lama_kontrak ? $submission->rekomendasi_lama_kontrak.' bulan' : '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->biaya ? 'Rp '.number_format($submission->biaya, 0, ',', '.') : '-' }}</td>
+                        <td class="table-cell max-w-xs text-gray-600 dark:text-gray-400">{{ $submission->keterangan ?: '-' }}</td>
+                        <td class="table-cell">@if($submission->link_sosmed)<a href="{{ $submission->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="break-all text-primary-600 hover:underline dark:text-primary-400">{{ $submission->link_sosmed }}</a>@else<span class="text-gray-400">-</span>@endif</td>
+                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $submission->influencer_id }})" class="inline-flex min-h-10 items-center rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700">Monitoring</button></td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($kolApprovedSubmissions->hasPages())<div class="border-t border-gray-100 px-5 py-4 dark:border-gray-800">{{ $kolApprovedSubmissions->links() }}</div>@endif
+    </div>
+    @else
+
     @if($upcomingPayments->count() > 0)
     <div class="mb-5 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-5 py-4">
         <div class="flex items-center gap-3">
@@ -276,6 +309,8 @@
         </div>
         @endif
     </div>
+
+    @endif
 
     {{-- Modal --}}
     @if($showModal)

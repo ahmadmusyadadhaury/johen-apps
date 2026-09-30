@@ -429,8 +429,17 @@ class InfluencerTable extends Component
 
     public function render()
     {
-        $showRequestTabs = $this->canSeeSubmissionTab() || $this->isKolSubmitter();
+        $isKolSubmitter = $this->isKolSubmitter();
+        $showRequestTabs = $this->canSeeSubmissionTab() || $isKolSubmitter;
         $items = Influencer::with(['payments', 'latestMonitoring'])->latest()->paginate(10);
+        $kolApprovedSubmissions = $isKolSubmitter
+            ? InfluencerPengajuan::with('influencer.latestMonitoring')
+                ->where('pengaju_id', auth()->id())
+                ->where('status', 'approved')
+                ->whereNotNull('influencer_id')
+                ->latest()
+                ->paginate(10, ['*'], 'kolMonitoringPage')
+            : collect();
         $monitoringHistory = $this->monitoringInfluencerId
             ? InfluencerMonitoring::where('influencer_id', $this->monitoringInfluencerId)->orderByDesc('period_month')->get()
             : collect();
@@ -456,6 +465,7 @@ class InfluencerTable extends Component
         return view('livewire.influencer-table', compact(
             'items', 'aktifCount', 'segeraHabisCount', 'tidakAktifCount',
             'upcomingPayments', 'paymentRecords', 'showRequestTabs', 'monitoringHistory',
+            'kolApprovedSubmissions', 'isKolSubmitter',
         ));
     }
 }

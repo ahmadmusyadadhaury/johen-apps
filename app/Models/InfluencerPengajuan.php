@@ -19,6 +19,7 @@ class InfluencerPengajuan extends Model
         'keterangan',
         'status',
         'pengaju_id',
+        'influencer_id',
         'assigned_hos_position_id',
         'approved_hos1_by',
         'approved_hos1_at',
@@ -48,6 +49,11 @@ class InfluencerPengajuan extends Model
     public function pengaju(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pengaju_id');
+    }
+
+    public function influencer(): BelongsTo
+    {
+        return $this->belongsTo(Influencer::class);
     }
 
     public function assignedHosPosition(): BelongsTo

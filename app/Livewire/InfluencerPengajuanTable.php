@@ -183,6 +183,7 @@ class InfluencerPengajuanTable extends Component
                 'biaya' => $pengajuan->biaya,
                 'keterangan' => $pengajuan->keterangan,
             ]);
+            $pengajuan->update(['influencer_id' => $influencer->id]);
             $this->generatePayments($influencer);
 
             session()->flash('message', 'Pengajuan disetujui. Data influencer dan pembayaran otomatis dibuat.');
