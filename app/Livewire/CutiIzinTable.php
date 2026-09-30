@@ -701,7 +701,7 @@ class CutiIzinTable extends Component
 
         $sisaBulan = 0;
         if ($accrual['eligible'] ?? false) {
-            $sisaBulan = 13 - (int) $accrual['cycle_start']->month;
+            $sisaBulan = $accrual['earned'];
         }
 
         $jatahAvailable = ! $user->isSuperAdmin() && ! $user->isStaffIt() && ! $user->isKoordinatorIt();

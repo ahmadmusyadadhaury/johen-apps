@@ -83,9 +83,9 @@ class EmployeeController extends Controller
                 ->sum(fn ($request) => (int) filter_var($request->durasi, FILTER_SANITIZE_NUMBER_INT));
         }
         $sisaCuti = max(0, $cutiAccrual['earned'] - $cutiTerpakai);
-        $cutiBulan = $cutiAccrual['eligible']
-            ? 13 - (int) $cutiAccrual['cycle_start']->month
-            : 0;
+        // Jumlah bulan sejak jatah cuti aktif pada siklus ini, dihitung inklusif.
+        // Contoh: aktif Januari dan sekarang September = 9 bulan.
+        $cutiBulan = $cutiAccrual['eligible'] ? $cutiAccrual['earned'] : 0;
 
         $payrollDetails = $employee->payrollDetails()
             ->with('payrollImport')
