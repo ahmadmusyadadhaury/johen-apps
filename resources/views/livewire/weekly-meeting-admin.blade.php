@@ -63,7 +63,7 @@
     <div class="flex items-center justify-between gap-3" wire:poll.30s="regenerateQrAuto">
         <button wire:click="backToList" class="btn-secondary shrink-0 text-xs">Kembali ke Daftar</button>
         @if(auth()->user()->isSuperAdmin())
-        <button type="button" @click="showAbsentEmployees = true" class="flex min-w-0 items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-950/80">
+        <button type="button" @click="showAbsentEmployees = true" class="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-950/80">
             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm dark:bg-blue-500">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 9v3.75m0 3h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </span>
