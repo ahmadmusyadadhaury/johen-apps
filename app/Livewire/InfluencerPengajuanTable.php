@@ -15,6 +15,7 @@ class InfluencerPengajuanTable extends Component
     use WithPagination;
 
     public bool $showModal = false;
+    public bool $showKolCreateButton = false;
     public bool $showSuccessModal = false;
     public string $successMessage = '';
     public bool $showDeleteConfirmation = false;
@@ -42,6 +43,11 @@ class InfluencerPengajuanTable extends Component
 
     public string $alasanTolak = '';
     public ?int $tolakId = null;
+
+    public function mount(bool $showKolCreateButton = false): void
+    {
+        $this->showKolCreateButton = $showKolCreateButton;
+    }
 
     protected function rules(): array
     {

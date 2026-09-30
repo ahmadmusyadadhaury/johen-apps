@@ -597,13 +597,7 @@
     </section>
     @else
     <section id="influencer-submission-panel" role="tabpanel" aria-label="Pengajuan Influencer" class="influencer-feedback-enter">
-        @if($isKolSubmitter)
-        <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between">
-            <div><h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Pengajuan Influencer</h2><p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Ajukan influencer baru dan pantau proses persetujuannya.</p></div>
-            <button type="button" wire:click="openNew" class="btn-primary min-h-10 text-xs">Ajukan Influencer</button>
-        </div>
-        @endif
-        @livewire('influencer-pengajuan-table', [], key('influencer-submission-tab'))
+        @livewire('influencer-pengajuan-table', ['showKolCreateButton' => $isKolSubmitter], key('influencer-submission-tab'))
     </section>
     @endif
 </div>

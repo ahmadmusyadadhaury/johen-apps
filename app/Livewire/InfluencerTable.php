@@ -7,6 +7,7 @@ use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use App\Models\InfluencerMonitoring;
 use App\Support\InfluencerPengajuanRouting;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -132,6 +133,14 @@ class InfluencerTable extends Component
         $this->authorizeCreate();
         $this->resetInput();
         $this->showModal = true;
+    }
+
+    #[On('open-kol-influencer-request')]
+    public function openKolRequestFromSubmissionTab(): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        $this->activeTab = 'pengajuan';
+        $this->openNew();
     }
 
     public function openEdit(int $id): void

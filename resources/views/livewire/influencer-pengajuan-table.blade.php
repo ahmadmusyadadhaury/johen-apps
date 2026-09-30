@@ -65,6 +65,11 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Ajukan Influencer
             </button>
+            @elseif($showKolCreateButton)
+            <button type="button" wire:click="$dispatch('open-kol-influencer-request')" class="btn-primary text-xs py-2 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Ajukan Influencer
+            </button>
             @endif
         </div>
 
