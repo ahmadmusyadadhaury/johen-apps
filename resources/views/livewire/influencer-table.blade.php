@@ -3,6 +3,7 @@
         $canEditInfluencers = !auth()->user()->isReadOnlyWorkspace() && !auth()->user()->isHeadOfStore();
         $canCreateInfluencers = $canEditInfluencers && !auth()->user()->isKoordinatorCreative();
         $canManageInfluencerPayments = $canEditInfluencers && (auth()->user()->canSeeBiaya() || auth()->user()->isKoordinatorCreative());
+        $isCoordinatorCreative = auth()->user()->isKoordinatorCreative();
     @endphp
 
     @if(session('message'))
@@ -30,18 +31,19 @@
     @if(!$showRequestTabs || $activeTab === 'monitoring' || ($isKolSubmitter && $showModal))
     <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer" class="influencer-feedback-enter">
 
-    @if($isKolSubmitter)
+    @if($isKolSubmitter || $isCoordinatorCreative)
     <div class="card">
         <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h2>
-                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Daftar pengajuan Anda yang sudah disetujui dan masuk tahap monitoring.</p>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $isKolSubmitter ? 'Daftar pengajuan Anda yang sudah disetujui dan masuk tahap monitoring.' : 'Daftar influencer yang sudah masuk tahap monitoring.' }}</p>
             </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-[900px] text-sm">
                 <thead><tr class="table-header"><th class="px-5 py-3 text-center">No</th><th class="px-5 py-3">Nama Influencer</th><th class="px-5 py-3">Divisi</th><th class="px-5 py-3">Kontrak Mulai</th><th class="px-5 py-3">Kontrak Selesai</th><th class="px-5 py-3">Biaya</th><th class="px-5 py-3">Link Sosmed</th><th class="px-5 py-3 text-center">Aksi</th></tr></thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                    @if($isKolSubmitter)
                     @forelse($kolApprovedSubmissions as $submission)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td class="table-cell text-center text-gray-500">{{ $kolApprovedSubmissions->firstItem() + $loop->index }}</td>
@@ -56,10 +58,26 @@
                     @empty
                     <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
                     @endforelse
+                    @else
+                    @forelse($items as $item)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td class="table-cell text-center text-gray-500">{{ $items->firstItem() + $loop->index }}</td>
+                        <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->nama }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->divisi ?: '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
+                        <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</td>
+                        <td class="table-cell">@if($item->link_sosmed)<a href="{{ $item->link_sosmed }}" target="_blank" rel="noopener noreferrer" class="break-all text-primary-600 hover:underline dark:text-primary-400">{{ $item->link_sosmed }}</a>@else<span class="text-gray-400">-</span>@endif</td>
+                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700">Monitoring</button></td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada data influencer.</td></tr>
+                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>
-        @if($kolApprovedSubmissions->hasPages())<div class="border-t border-gray-100 px-5 py-4 dark:border-gray-800">{{ $kolApprovedSubmissions->links() }}</div>@endif
+        @if($isKolSubmitter && $kolApprovedSubmissions->hasPages())<div class="border-t border-gray-100 px-5 py-4 dark:border-gray-800">{{ $kolApprovedSubmissions->links() }}</div>@elseif($isCoordinatorCreative && $items->hasPages())<div class="border-t border-gray-100 px-5 py-4 dark:border-gray-800">{{ $items->links() }}</div>@endif
     </div>
     @else
 
