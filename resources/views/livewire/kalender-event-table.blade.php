@@ -7,6 +7,49 @@
 
 <div>
 
+    <div class="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:grid-cols-4 sm:gap-4" aria-label="Ringkasan event pada bulan {{ $monthName }}">
+        <div class="stat-card">
+            <div class="mb-3 flex items-center justify-between">
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-200 dark:shadow-blue-950/40">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5M5.25 5.25h13.5A2.25 2.25 0 0121 7.5v11.25A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75V7.5a2.25 2.25 0 012.25-2.25z"/></svg>
+                </div>
+                <span class="badge-success">{{ $monthName }}</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $eventStats['total'] }}</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Total Event</p>
+        </div>
+        <div class="stat-card">
+            <div class="mb-3 flex items-center justify-between">
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-200 dark:shadow-sky-950/40">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-warning">Mendatang</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $eventStats['upcoming'] }}</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Event Akan Datang</p>
+        </div>
+        <div class="stat-card">
+            <div class="mb-3 flex items-center justify-between">
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-950/40">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-success">Hari Ini</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $eventStats['today'] }}</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Event Hari Ini</p>
+        </div>
+        <div class="stat-card">
+            <div class="mb-3 flex items-center justify-between">
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-gray-500 to-slate-600 text-white shadow-lg shadow-gray-200 dark:shadow-gray-950/40">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="badge-danger">Selesai</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $eventStats['completed'] }}</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Event Selesai</p>
+        </div>
+    </div>
+
     <div class="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
         <div class="flex items-center justify-between gap-2 sm:justify-start">
             <button wire:click="prevMonth" aria-label="Bulan sebelumnya" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-gray-800">

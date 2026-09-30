@@ -179,14 +179,28 @@ class KalenderEventTable extends Component
             $current->addDay();
         }
 
-        $events = KalenderEvent::whereDate('tanggal', '<=', $endOfCalendar->toDateString())
+        $calendarEvents = KalenderEvent::whereDate('tanggal', '<=', $endOfCalendar->toDateString())
             ->where(function ($query) use ($startOfCalendar) {
                 $query->where(function ($legacyQuery) use ($startOfCalendar) {
                     $legacyQuery->whereNull('tanggal_selesai')
                         ->whereDate('tanggal', '>=', $startOfCalendar->toDateString());
                 })->orWhereDate('tanggal_selesai', '>=', $startOfCalendar->toDateString());
             })
-            ->get()
+            ->get();
+
+        $today = now()->startOfDay();
+        $eventStats = [
+            'total' => $calendarEvents->count(),
+            'upcoming' => $calendarEvents->filter(fn ($event) => $event->tanggal->copy()->startOfDay()->gt($today))->count(),
+            'today' => $calendarEvents->filter(function ($event) use ($today) {
+                $eventEnd = ($event->tanggal_selesai ?? $event->tanggal)->copy()->startOfDay();
+
+                return $event->tanggal->copy()->startOfDay()->lte($today) && $eventEnd->gte($today);
+            })->count(),
+            'completed' => $calendarEvents->filter(fn ($event) => ($event->tanggal_selesai ?? $event->tanggal)->copy()->startOfDay()->lt($today))->count(),
+        ];
+
+        $events = $calendarEvents
             ->reduce(function ($grouped, $item) use ($startOfCalendar, $endOfCalendar) {
                 $eventStart = $item->tanggal->copy()->max($startOfCalendar);
                 $eventEnd = ($item->tanggal_selesai ?? $item->tanggal)->copy()->min($endOfCalendar);
@@ -210,6 +224,7 @@ class KalenderEventTable extends Component
             'days' => $days,
             'events' => $events,
             'selectedEvents' => $selectedEvents,
+            'eventStats' => $eventStats,
             'monthName' => $startOfMonth->isoFormat('MMMM YYYY'),
             'today' => now()->format('Y-m-d'),
         ]);
