@@ -94,7 +94,7 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->biaya ? 'Rp '.number_format($submission->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $submission->influencer_id }})" class="inline-flex min-h-10 items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button></td>
+                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $submission->influencer_id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button></td>
                     </tr>
                     @empty
                     <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada pengajuan yang disetujui. Pengajuan akan muncul di sini setelah melewati seluruh tahap persetujuan.</td></tr>
@@ -108,7 +108,7 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button></td>
+                        <td class="table-cell text-center"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button></td>
                     </tr>
                     @empty
                     <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">Belum ada data influencer.</td></tr>
