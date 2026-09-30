@@ -528,7 +528,7 @@
                 $monitoringDetailBenefits = $isKolSubmitter ? $monitoringBenefits : ($monitoringHistory->first()?->benefits ?? '');
             @endphp
             <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
-            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }} grid gap-6 {{ $isKolSubmitter && !$monitoringReadOnly ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]' }}">
+            <div class="{{ $isKolSubmitter && $monitoringReadOnly ? 'mt-2' : 'mt-6' }} grid gap-6 {{ $isKolSubmitter ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]' }}">
                 <div>
                     @if($isKolSubmitter && !$monitoringReadOnly)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
