@@ -111,7 +111,7 @@
                             <td class="table-cell text-left text-gray-600 dark:text-gray-400">@if($item->biaya)Rp {{ number_format($item->biaya, 0, ',', '.') }}@else<span class="text-gray-400">-</span>@endif</td>
                             <td class="table-cell">
                                 @if($item->approved_coordinator_by)
-                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverCoordinator->name ?? $item->approverCoordinator->username }}</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Disetujui</span>
                                 @elseif($item->status === 'rejected' && !$item->approved_coordinator_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @elseif($item->status === 'pending_creative')
@@ -122,7 +122,7 @@
                             </td>
                             <td class="table-cell">
                                 @if($item->approved_hos1_by)
-                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverHos1->name ?? $item->approverHos1->username }}</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Disetujui</span>
                                 @elseif($item->status === 'rejected' && !$item->approved_hos1_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
@@ -131,7 +131,7 @@
                             </td>
                             <td class="table-cell">
                                 @if($item->approved_gm_by)
-                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverGm->name ?? $item->approverGm->username }}</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Disetujui</span>
                                 @elseif($item->status === 'rejected' && $item->approved_hos1_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
