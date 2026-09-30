@@ -417,9 +417,12 @@
     @if($showMonitoringModal)
     @php $monitoringInfluencer = \App\Models\Influencer::find($monitoringInfluencerId); @endphp
     @teleport('body')
-    <div class="influencer-modal-backdrop fixed inset-0 z-[2147483000] isolate flex items-start justify-center overflow-y-auto overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4" style="position: fixed; inset: 0;" wire:keydown.escape="closeMonitoring">
-        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);" class="influencer-modal-panel my-2 w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:my-4 sm:p-5">
-            <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
+    @if($isKolSubmitter)
+    <style>body:has(.kol-monitoring-modal-backdrop) { overflow: hidden !important; }</style>
+    @endif
+    <div class="influencer-modal-backdrop fixed inset-0 z-[2147483000] isolate flex justify-center overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm sm:p-4 {{ $isKolSubmitter ? 'kol-monitoring-modal-backdrop items-center overflow-hidden' : 'items-start overflow-y-auto sm:items-center' }}" style="position: fixed; inset: 0;" wire:keydown.escape="closeMonitoring">
+        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);" class="influencer-modal-panel {{ $isKolSubmitter ? 'flex min-h-0 flex-col overflow-hidden' : 'overflow-y-auto' }} my-2 w-full max-w-4xl overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:my-4 sm:p-5">
+            <div class="flex {{ $isKolSubmitter ? 'shrink-0' : '' }} items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
                 <div>
                     <h3 id="influencer-monitoring-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h3>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $monitoringInfluencer?->nama }} · {{ $monitoringInfluencer?->divisi }}</p>
@@ -429,11 +432,12 @@
                 </button>
             </div>
 
+            <div class="{{ $isKolSubmitter ? 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain' : '' }}">
             <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div>
                     @if($isKolSubmitter)
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
-                    <form wire:submit.prevent="saveMonitoring" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <form id="kol-monitoring-form" wire:submit.prevent="saveMonitoring" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <x-input-label value="Bulan Monitoring *" />
                             <x-text-input type="month" wire:model.live="monitoringMonth" class="mt-1 block w-full" />
@@ -469,17 +473,13 @@
                             <textarea wire:model="monitoringBenefits" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Masukkan benefit kerja sama influencer"></textarea>
                             @error('monitoringBenefits')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
-                        <div class="flex justify-end gap-2 border-t border-gray-100 pt-3 dark:border-gray-700 sm:col-span-2">
-                            <button type="button" wire:click="closeMonitoring" class="btn-secondary text-xs">Tutup</button>
-                            <button type="submit" wire:loading.attr="disabled" wire:target="saveMonitoring" class="btn-primary text-xs">Simpan Monitoring</button>
-                        </div>
                     </form>
                     @endif
 
                     <div class="mt-6">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Riwayat Monitoring</h4>
-                        <div class="mt-3 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-                            <table class="w-full text-left text-xs">
+                        <div class="mt-3 {{ $isKolSubmitter ? 'overflow-x-hidden' : 'overflow-x-auto' }} rounded-xl border border-gray-200 dark:border-gray-700">
+                            <table class="w-full {{ $isKolSubmitter ? 'table-fixed' : '' }} text-left text-xs">
                                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400"><tr><th class="px-3 py-2.5">Bulan</th><th class="px-3 py-2.5">Followers</th><th class="px-3 py-2.5">Viewers</th><th class="px-3 py-2.5">Durasi</th><th class="px-3 py-2.5">Target</th></tr></thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                     @forelse($monitoringHistory as $record)
@@ -507,6 +507,13 @@
                     </div>
                 </aside>
             </div>
+            </div>
+            @if($isKolSubmitter)
+            <footer class="flex shrink-0 justify-end gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+                <button type="button" wire:click="closeMonitoring" class="btn-secondary text-xs">Tutup</button>
+                <button type="submit" form="kol-monitoring-form" wire:loading.attr="disabled" wire:target="saveMonitoring" class="btn-primary text-xs">Simpan Monitoring</button>
+            </footer>
+            @endif
         </section>
     </div>
     @endteleport
