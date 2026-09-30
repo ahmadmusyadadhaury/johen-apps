@@ -399,7 +399,7 @@
     @if($showMonitoringModal)
     @php $monitoringInfluencer = \App\Models\Influencer::find($monitoringInfluencerId); @endphp
     @teleport('body')
-    <div class="influencer-modal-backdrop fixed inset-0 z-[10002] flex items-start justify-center overflow-y-auto overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4" wire:keydown.escape="closeMonitoring">
+    <div class="influencer-modal-backdrop fixed inset-0 z-[2147483000] isolate flex items-start justify-center overflow-y-auto overscroll-contain bg-gray-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4" style="position: fixed; inset: 0;" wire:keydown.escape="closeMonitoring">
         <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" style="max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);" class="influencer-modal-panel my-2 w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-3 shadow-2xl dark:bg-gray-800 sm:my-4 sm:p-5">
             <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
                 <div>
