@@ -63,13 +63,13 @@
     <div class="flex items-center justify-between gap-3" wire:poll.30s="regenerateQrAuto">
         <button wire:click="backToList" class="btn-secondary shrink-0 text-xs">Kembali ke Daftar</button>
         @if(auth()->user()->isSuperAdmin())
-        <button type="button" @click="showAbsentEmployees = true" class="flex min-w-0 items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-left shadow-sm transition hover:border-amber-300 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:hover:bg-amber-950/70">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/70 dark:text-amber-300">
+        <button type="button" @click="showAbsentEmployees = true" class="flex min-w-0 items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-950/80">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm dark:bg-blue-500">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 9v3.75m0 3h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </span>
             <span class="min-w-0">
-                <span class="block text-xs font-semibold text-amber-900 dark:text-amber-200">Lihat Karyawan Belum Absen</span>
-                <span class="block text-[10px] text-amber-700 dark:text-amber-400">{{ $absentEmployees->count() }} karyawan</span>
+                <span class="block text-xs font-semibold text-blue-900 dark:text-blue-100">Lihat Karyawan Belum Absen</span>
+                <span class="block text-[10px] text-blue-700 dark:text-blue-300">{{ $absentEmployees->count() }} karyawan</span>
             </span>
         </button>
         @endif
