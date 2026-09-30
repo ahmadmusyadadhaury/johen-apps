@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Influencer extends Model
 {
@@ -30,5 +31,15 @@ class Influencer extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(InfluencerPembayaran::class, 'influencer_id');
+    }
+
+    public function monitorings(): HasMany
+    {
+        return $this->hasMany(InfluencerMonitoring::class)->orderByDesc('period_month');
+    }
+
+    public function latestMonitoring(): HasOne
+    {
+        return $this->hasOne(InfluencerMonitoring::class)->latestOfMany('period_month');
     }
 }

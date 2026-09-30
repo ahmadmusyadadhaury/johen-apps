@@ -27,10 +27,10 @@
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <span class="badge-warning">Head of Store</span>
+                <span class="badge-warning">Koordinator Creative</span>
             </div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['pending_hos1'] }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu Atasan 1</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['pending_creative'] }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Menunggu Koordinator Creative</p>
         </div>
         <div class="stat-card group">
             <div class="flex items-center justify-between mb-3">
@@ -78,8 +78,9 @@
                         <th class="px-6 py-3">Divisi</th>
                         <th class="px-6 py-3">Rekomendasi Lama Kontrak</th>
                         <th class="px-6 py-3">Biaya</th>
-                        <th class="px-6 py-3">Persetujuan Atasan 1</th>
-                        <th class="px-6 py-3">Persetujuan Atasan 2</th>
+                        <th class="px-6 py-3">Koordinator Creative</th>
+                        <th class="px-6 py-3">Head of Store</th>
+                        <th class="px-6 py-3">General Manager</th>
                         <th class="px-6 py-3">Aksi</th>
                     </tr>
                 </thead>
@@ -101,12 +102,23 @@
                             </td>
                             <td class="table-cell text-left text-gray-600 dark:text-gray-400">@if($item->biaya)Rp {{ number_format($item->biaya, 0, ',', '.') }}@else<span class="text-gray-400">-</span>@endif</td>
                             <td class="table-cell">
+                                @if($item->approved_coordinator_by)
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverCoordinator->name ?? $item->approverCoordinator->username }}</span>
+                                @elseif($item->status === 'rejected' && !$item->approved_coordinator_by)
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
+                                @elseif($item->status === 'pending_creative')
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Menunggu</span>
+                                @else
+                                <span class="text-xs text-gray-400">-</span>
+                                @endif
+                            </td>
+                            <td class="table-cell">
                                 @if($item->approved_hos1_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $item->approverHos1->name ?? $item->approverHos1->username }}</span>
                                 @elseif($item->status === 'rejected' && !$item->approved_hos1_by)
                                 <span class="influencer-status-enter inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">Ditolak</span>
                                 @else
-                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Belum ada persetujuan</span>
+                                <span class="influencer-status-enter inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ $item->status === 'pending_hos1' ? 'Menunggu · '.($item->assignedHosPosition?->nama ?? 'Head of Store') : '-' }}</span>
                                 @endif
                             </td>
                             <td class="table-cell">
@@ -119,7 +131,7 @@
                                 @endif
                             </td>
                             <td class="table-cell">
-                                @if($this->canApprove($item) || (auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id()))
+                                @if($this->canApprove($item) || $this->canDeleteSubmission($item))
                                 <div class="flex flex-wrap gap-2">
                                     @if($this->canApprove($item))
                                     <button type="button" wire:click="approve({{ $item->id }})" wire:loading.attr="disabled" wire:target="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60">
@@ -128,7 +140,7 @@
                                     </button>
                                     <button type="button" wire:click="openTolak({{ $item->id }})" wire:loading.attr="disabled" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Tolak</button>
                                     @endif
-                                    @if(auth()->user()->isKoordinatorCreative() && (int) $item->pengaju_id === (int) auth()->id())
+                                    @if($this->canDeleteSubmission($item))
                                     <button type="button" wire:click="confirmDelete({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Hapus</button>
                                     @endif
                                 </div>
@@ -139,7 +151,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                     <p class="font-medium">Belum ada pengajuan</p>
@@ -199,6 +211,12 @@
                         <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
                     </div>
                     @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <x-input-label value="Keterangan" />
+                    <textarea wire:model="keterangan" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Keterangan tambahan..."></textarea>
+                    @error('keterangan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 @if(auth()->user()->canSeeBiaya())

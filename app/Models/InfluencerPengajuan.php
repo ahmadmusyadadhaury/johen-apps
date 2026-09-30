@@ -16,11 +16,14 @@ class InfluencerPengajuan extends Model
         'habis_kontrak',
         'link_sosmed',
         'biaya',
+        'keterangan',
         'status',
         'pengaju_id',
         'assigned_hos_position_id',
         'approved_hos1_by',
         'approved_hos1_at',
+        'approved_coordinator_by',
+        'approved_coordinator_at',
         'approved_gm_by',
         'approved_gm_at',
         'rejected_by',
@@ -35,6 +38,7 @@ class InfluencerPengajuan extends Model
             'habis_kontrak' => 'date',
             'rekomendasi_lama_kontrak' => 'integer',
             'approved_hos1_at' => 'datetime',
+            'approved_coordinator_at' => 'datetime',
             'approved_gm_at' => 'datetime',
             'rejected_at' => 'datetime',
             'biaya' => 'decimal:2',
@@ -54,6 +58,11 @@ class InfluencerPengajuan extends Model
     public function approverHos1(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_hos1_by');
+    }
+
+    public function approverCoordinator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_coordinator_by');
     }
 
     public function approverGm(): BelongsTo

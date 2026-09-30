@@ -147,6 +147,7 @@
 
                     @if($canEditInfluencers)
                     <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
+                        <button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">Monitoring influencer</button>
                         <button type="button" wire:click="openEdit({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-primary-200 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-900/20">Edit</button>
                         <button type="button" wire:click="delete({{ $item->id }})" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20">Hapus</button>
                         @if($canManageInfluencerPayments)
@@ -235,6 +236,7 @@
                             <td class="table-cell text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     @if($canEditInfluencers)
+                                    <button wire:click="openMonitoring({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors">Monitoring</button>
                                     <button wire:click="openEdit({{ $item->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
                                         Edit
@@ -349,6 +351,110 @@
         </div>
     </div>
     @endteleport
+    @endif
+
+    {{-- Monitoring Influencer Modal --}}
+    @if($showMonitoringModal)
+    @php $monitoringInfluencer = \App\Models\Influencer::find($monitoringInfluencerId); @endphp
+    <div class="influencer-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-5" wire:keydown.escape="closeMonitoring">
+        <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" class="influencer-modal-panel my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6">
+            <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
+                <div>
+                    <h3 id="influencer-monitoring-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Monitoring Influencer</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $monitoringInfluencer?->nama }} · {{ $monitoringInfluencer?->divisi }}</p>
+                </div>
+                <button type="button" wire:click="closeMonitoring" class="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200" aria-label="Tutup monitoring">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+                @php
+                    $monitoringMetrics = [
+                        ['Followers', $monitoringHistory->first() ? number_format($monitoringHistory->first()->followers, 0, ',', '.') : '—'],
+                        ['Viewers · 1 Bulan Terakhir', $monitoringHistory->first() ? number_format($monitoringHistory->first()->viewers_last_month, 0, ',', '.') : '—'],
+                        ['Durasi · 1 Bulan Terakhir', $monitoringHistory->first() ? number_format((float) $monitoringHistory->first()->duration_hours, 0, ',', '.').' Jam' : '—'],
+                        ['Target Durasi', $monitoringHistory->first() ? number_format((float) $monitoringHistory->first()->target_duration_hours, 0, ',', '.').' Jam' : '—'],
+                    ];
+                @endphp
+                @foreach($monitoringMetrics as [$label, $value])
+                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $label }}</p>
+                    <p class="mt-2 text-xl font-bold text-gray-900 dark:text-gray-100">{{ $value }}</p>
+                    @if($loop->first && $monitoringHistory->first())<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $monitoringHistory->first()->period_month->isoFormat('MMMM YYYY') }}</p>@endif
+                </div>
+                @endforeach
+            </div>
+
+            <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Input Monitoring Bulanan</h4>
+                    <form wire:submit.prevent="saveMonitoring" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <x-input-label value="Bulan Monitoring *" />
+                            <x-text-input type="month" wire:model.live="monitoringMonth" class="mt-1 block w-full" />
+                            @error('monitoringMonth')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Followers *" />
+                            <x-text-input type="number" min="0" step="1" wire:model="monitoringFollowers" class="mt-1 block w-full" placeholder="Contoh: 1700000" />
+                            @error('monitoringFollowers')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Viewers 1 Bulan Terakhir *" />
+                            <x-text-input type="number" min="0" step="1" wire:model="monitoringViewers" class="mt-1 block w-full" placeholder="Contoh: 1400000" />
+                            @error('monitoringViewers')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Durasi 1 Bulan Terakhir (jam) *" />
+                            <x-text-input type="number" min="0" step="0.01" wire:model="monitoringDuration" class="mt-1 block w-full" placeholder="162" />
+                            @error('monitoringDuration')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <x-input-label value="Target Durasi (jam) *" />
+                            <x-text-input type="number" min="0" step="0.01" wire:model="monitoringTargetDuration" class="mt-1 block w-full" placeholder="130" />
+                            @error('monitoringTargetDuration')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-input-label value="Catatan" />
+                            <textarea wire:model="monitoringNotes" rows="2" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Catatan monitoring"></textarea>
+                            @error('monitoringNotes')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="flex justify-end gap-2 border-t border-gray-100 pt-3 dark:border-gray-700 sm:col-span-2">
+                            <button type="button" wire:click="closeMonitoring" class="btn-secondary text-xs">Tutup</button>
+                            <button type="submit" wire:loading.attr="disabled" wire:target="saveMonitoring" class="btn-primary text-xs">Simpan Monitoring</button>
+                        </div>
+                    </form>
+
+                    <div class="mt-6">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Riwayat Monitoring</h4>
+                        <div class="mt-3 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 text-gray-500 dark:bg-gray-900 dark:text-gray-400"><tr><th class="px-3 py-2.5">Bulan</th><th class="px-3 py-2.5">Followers</th><th class="px-3 py-2.5">Viewers</th><th class="px-3 py-2.5">Durasi</th><th class="px-3 py-2.5">Target</th></tr></thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    @forelse($monitoringHistory as $record)
+                                    <tr class="text-gray-700 dark:text-gray-300"><td class="px-3 py-2.5">{{ $record->period_month->isoFormat('MMM YYYY') }}</td><td class="px-3 py-2.5">{{ number_format($record->followers, 0, ',', '.') }}</td><td class="px-3 py-2.5">{{ number_format($record->viewers_last_month, 0, ',', '.') }}</td><td class="px-3 py-2.5">{{ number_format((float) $record->duration_hours, 0, ',', '.') }} jam</td><td class="px-3 py-2.5">{{ number_format((float) $record->target_duration_hours, 0, ',', '.') }} jam</td></tr>
+                                    @empty
+                                    <tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">Belum ada riwayat monitoring.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900/50 dark:bg-primary-950/20 sm:p-5">
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Benefit Kerja Sama</h4>
+                    <p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-400">Berikut merupakan benefit yang diminta kepada influencer sebagai bentuk kerja sama:</p>
+                    <ol class="mt-4 list-decimal space-y-3 pl-5 text-xs leading-5 text-gray-700 dark:text-gray-300">
+                        @foreach(\App\Livewire\InfluencerTable::INFLUENCER_BENEFITS as $benefit)
+                        <li>{{ $benefit }}</li>
+                        @endforeach
+                    </ol>
+                </aside>
+            </div>
+        </section>
+    </div>
     @endif
 
     {{-- Payment Modal --}}

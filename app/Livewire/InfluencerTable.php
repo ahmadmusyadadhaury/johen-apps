@@ -4,6 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Influencer;
 use App\Models\InfluencerPembayaran;
+use App\Models\InfluencerPengajuan;
+use App\Models\InfluencerMonitoring;
+use App\Support\InfluencerPengajuanRouting;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,6 +18,14 @@ class InfluencerTable extends Component
     public ?int $editId = null;
 
     public bool $showPaymentModal = false;
+    public bool $showMonitoringModal = false;
+    public ?int $monitoringInfluencerId = null;
+    public string $monitoringMonth = '';
+    public string $monitoringFollowers = '';
+    public string $monitoringViewers = '';
+    public string $monitoringDuration = '';
+    public string $monitoringTargetDuration = '130';
+    public string $monitoringNotes = '';
     public ?int $paymentInfluencerId = null;
     public bool $showDeleteConfirmation = false;
     public ?int $deleteInfluencerId = null;
@@ -43,6 +54,19 @@ class InfluencerTable extends Component
         'Monkey PUBG',
     ];
 
+    public const INFLUENCER_BENEFITS = [
+        'Penempatan Logo Johen Gaming saat live streaming.',
+        'Penempatan Logo Johen Gaming di setiap video TikTok.',
+        'Menggunakan hashtag #johengaming pada setiap video TikTok.',
+        'Mengganti nama TikTok menjadi: Nama | JOHEN GAMING.',
+        'Menambahkan tag akun Johen Gaming pada bio TikTok.',
+        'Menambahkan tag akun Johen Gaming pada caption setiap video TikTok.',
+        'Melakukan soft promotion kepada viewer mengenai layanan JUAL BELI AKUN PUBG, MLBB, FF, ROBLOX, VALORANT, EFOOTBALL, FC MOBILE serta TOP UP ALL GAME tercepat dari Johen Gaming.',
+        'Memasukkan Linktree Johen Gaming Store ke dalam Linktree streamer untuk mempermudah akses konsumen dan memperluas jangkauan brand.',
+        'Mengirimkan rekapan live streaming setiap hari melalui WhatsApp.',
+        'Melakukan repost konten Johen sesuai divisi game masing-masing.',
+    ];
+
     public function mount(): void
     {
         if (auth()->user()->isGmCeo() && $this->isCreativeWorkspace()) {
@@ -54,7 +78,7 @@ class InfluencerTable extends Component
 
     public function switchTab(string $tab): void
     {
-        abort_unless($this->canSeeSubmissionTab(), 403);
+        abort_unless($this->canSeeSubmissionTab() || $this->isKolSubmitter(), 403);
         abort_unless(in_array($tab, ['monitoring', 'pengajuan'], true), 404);
 
         $this->activeTab = $tab;
@@ -132,6 +156,29 @@ class InfluencerTable extends Component
         $this->editId ? $this->authorizeEdit() : $this->authorizeCreate();
         $this->validate();
 
+        if (!$this->editId && $this->isKolSubmitter()) {
+            $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($this->divisi);
+            abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
+
+            InfluencerPengajuan::create([
+                'no_kontrak' => '',
+                'nama' => $this->nama,
+                'divisi' => $this->divisi,
+                'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
+                'link_sosmed' => $this->link_sosmed ?: null,
+                'biaya' => $this->biaya ?: null,
+                'keterangan' => $this->keterangan ?: null,
+                'status' => 'pending_creative',
+                'pengaju_id' => auth()->id(),
+                'assigned_hos_position_id' => $assignedHos->id,
+            ]);
+
+            $this->dispatch('influencer-pengajuan-updated');
+            session()->flash('message', 'Pengajuan influencer berhasil dikirim dan menunggu persetujuan Koordinator Creative.');
+            $this->close();
+            return;
+        }
+
         $contractStart = $this->editId && $this->mulai_kontrak
             ? \Illuminate\Support\Carbon::parse($this->mulai_kontrak)->startOfDay()
             : now()->startOfDay();
@@ -207,6 +254,88 @@ class InfluencerTable extends Component
         $this->showPaymentModal = true;
     }
 
+    public function openMonitoring(int $id): void
+    {
+        $this->authorizeEdit();
+        $influencer = Influencer::findOrFail($id);
+        $this->monitoringInfluencerId = $influencer->id;
+        $this->monitoringMonth = now()->format('Y-m');
+        $this->monitoringFollowers = '';
+        $this->monitoringViewers = '';
+        $this->monitoringDuration = '';
+        $this->monitoringTargetDuration = '130';
+        $this->monitoringNotes = '';
+        $this->loadMonitoringMonth();
+        $this->showMonitoringModal = true;
+    }
+
+    public function updatedMonitoringMonth(): void
+    {
+        $this->loadMonitoringMonth();
+    }
+
+    private function loadMonitoringMonth(): void
+    {
+        if (!$this->monitoringInfluencerId || !preg_match('/^\\d{4}-\\d{2}$/', $this->monitoringMonth)) {
+            return;
+        }
+
+        $record = InfluencerMonitoring::query()
+            ->where('influencer_id', $this->monitoringInfluencerId)
+            ->whereDate('period_month', $this->monitoringMonth.'-01')
+            ->first();
+
+        if (!$record) {
+            return;
+        }
+
+        $this->monitoringFollowers = (string) $record->followers;
+        $this->monitoringViewers = (string) $record->viewers_last_month;
+        $this->monitoringDuration = (string) $record->duration_hours;
+        $this->monitoringTargetDuration = (string) $record->target_duration_hours;
+        $this->monitoringNotes = $record->notes ?? '';
+    }
+
+    public function saveMonitoring(): void
+    {
+        $this->authorizeEdit();
+        abort_unless($this->monitoringInfluencerId, 404);
+
+        $validated = $this->validate([
+            'monitoringMonth' => 'required|date_format:Y-m',
+            'monitoringFollowers' => 'required|integer|min:0',
+            'monitoringViewers' => 'required|integer|min:0',
+            'monitoringDuration' => 'required|numeric|min:0|max:10000',
+            'monitoringTargetDuration' => 'required|numeric|min:0|max:10000',
+            'monitoringNotes' => 'nullable|string|max:2000',
+        ]);
+
+        InfluencerMonitoring::updateOrCreate(
+            [
+                'influencer_id' => $this->monitoringInfluencerId,
+                'period_month' => $this->monitoringMonth.'-01',
+            ],
+            [
+                'followers' => $validated['monitoringFollowers'],
+                'viewers_last_month' => $validated['monitoringViewers'],
+                'duration_hours' => $validated['monitoringDuration'],
+                'target_duration_hours' => $validated['monitoringTargetDuration'],
+                'notes' => $validated['monitoringNotes'] ?: null,
+            ]
+        );
+
+        $this->showMonitoringModal = false;
+        $this->monitoringInfluencerId = null;
+        session()->flash('message', 'Monitoring influencer berhasil disimpan.');
+    }
+
+    public function closeMonitoring(): void
+    {
+        $this->showMonitoringModal = false;
+        $this->monitoringInfluencerId = null;
+        $this->resetErrorBag();
+    }
+
     public function closePaymentModal(): void
     {
         $this->showPaymentModal = false;
@@ -280,6 +409,14 @@ class InfluencerTable extends Component
         abort_unless(! $user->isReadOnlyWorkspace() && ! $user->isKoordinatorCreative(), 403);
     }
 
+    private function isKolSubmitter(): bool
+    {
+        $user = auth()->user();
+        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
+
+        return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
+    }
+
     private function authorizePaymentManagement(): void
     {
         $user = auth()->user();
@@ -292,8 +429,11 @@ class InfluencerTable extends Component
 
     public function render()
     {
-        $showRequestTabs = $this->canSeeSubmissionTab();
-        $items = Influencer::with('payments')->latest()->paginate(10);
+        $showRequestTabs = $this->canSeeSubmissionTab() || $this->isKolSubmitter();
+        $items = Influencer::with(['payments', 'latestMonitoring'])->latest()->paginate(10);
+        $monitoringHistory = $this->monitoringInfluencerId
+            ? InfluencerMonitoring::where('influencer_id', $this->monitoringInfluencerId)->orderByDesc('period_month')->get()
+            : collect();
 
         $now = now()->startOfDay();
         $aktifCount = Influencer::where('habis_kontrak', '>', $now)->count();
@@ -315,7 +455,7 @@ class InfluencerTable extends Component
 
         return view('livewire.influencer-table', compact(
             'items', 'aktifCount', 'segeraHabisCount', 'tidakAktifCount',
-            'upcomingPayments', 'paymentRecords', 'showRequestTabs',
+            'upcomingPayments', 'paymentRecords', 'showRequestTabs', 'monitoringHistory',
         ));
     }
 }

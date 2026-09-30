@@ -8,6 +8,22 @@ use App\Models\User;
 
 class InfluencerPengajuanRouting
 {
+    private const DIVISI_HEAD_OF_STORE = [
+        'Head of Store 1' => ['Johen PUBG', 'Johen E-Football', 'Johen FC Mobile', 'Johen Roblox'],
+        'Head of Store 2' => ['Johen MLBB', 'Johen Free Fire', 'Johen Valorant', 'Monkey PUBG'],
+    ];
+
+    public static function headOfStorePositionForDivision(string $division): ?Position
+    {
+        foreach (self::DIVISI_HEAD_OF_STORE as $positionName => $divisions) {
+            if (in_array($division, $divisions, true)) {
+                return Position::query()->where('nama', $positionName)->first();
+            }
+        }
+
+        return null;
+    }
+
     public static function headOfStorePositionForUser(?User $user): ?Position
     {
         $employee = $user?->employee;

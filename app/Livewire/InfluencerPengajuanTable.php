@@ -27,6 +27,7 @@ class InfluencerPengajuanTable extends Component
     public string $rekomendasiLamaKontrak = '';
     public string $link_sosmed = '';
     public string $biaya = '';
+    public string $keterangan = '';
 
     public const DIVISI_OPTIONS = [
         'Johen PUBG',
@@ -50,6 +51,7 @@ class InfluencerPengajuanTable extends Component
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
+            'keterangan' => 'nullable|string|max:1000',
         ];
     }
 
@@ -87,6 +89,7 @@ class InfluencerPengajuanTable extends Component
             'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
             'link_sosmed' => $this->link_sosmed ?: null,
             'biaya' => $this->biaya ?: null,
+            'keterangan' => $this->keterangan ?: null,
             'status' => 'pending_hos1',
             'pengaju_id' => auth()->id(),
             'assigned_hos_position_id' => $assignedHos?->id,
@@ -107,11 +110,7 @@ class InfluencerPengajuanTable extends Component
     public function confirmDelete(int $id): void
     {
         $pengajuan = InfluencerPengajuan::findOrFail($id);
-        abort_unless(
-            auth()->user()->isKoordinatorCreative()
-            && (int) $pengajuan->pengaju_id === (int) auth()->id(),
-            403
-        );
+        abort_unless($this->canDeleteSubmission($pengajuan), 403);
 
         $this->deletePengajuanId = $pengajuan->id;
         $this->showDeleteConfirmation = true;
@@ -119,13 +118,10 @@ class InfluencerPengajuanTable extends Component
 
     public function deletePengajuan(): void
     {
-        abort_unless(auth()->user()->isKoordinatorCreative() && $this->deletePengajuanId, 403);
+        abort_unless($this->deletePengajuanId, 403);
 
         $pengajuan = InfluencerPengajuan::findOrFail($this->deletePengajuanId);
-        abort_unless(
-            (int) $pengajuan->pengaju_id === (int) auth()->id(),
-            403
-        );
+        abort_unless($this->canDeleteSubmission($pengajuan), 403);
 
         $pengajuan->delete();
         $this->showDeleteConfirmation = false;
@@ -149,7 +145,15 @@ class InfluencerPengajuanTable extends Component
         $isAssignedHos = $this->isAssignedHeadOfStore($user, $pengajuan);
         $isGm = $user->isGmCeo();
 
-        if ($isAssignedHos && $pengajuan->status === 'pending_hos1') {
+        if ($user->isKoordinatorCreative() && $pengajuan->status === 'pending_creative') {
+            $pengajuan->update([
+                'status' => 'pending_hos1',
+                'approved_coordinator_by' => $user->id,
+                'approved_coordinator_at' => now(),
+            ]);
+            $this->dispatch('influencer-pengajuan-updated');
+            session()->flash('message', 'Pengajuan disetujui Koordinator Creative, menunggu persetujuan '.$pengajuan->assignedHosPosition?->nama.'.');
+        } elseif ($isAssignedHos && $pengajuan->status === 'pending_hos1') {
             $pengajuan->update([
                 'status' => 'pending_gm',
                 'approved_hos1_by' => $user->id,
@@ -177,6 +181,7 @@ class InfluencerPengajuanTable extends Component
                 'habis_kontrak' => $contractStart->copy()->addMonthsNoOverflow($contractMonths - 1),
                 'link_sosmed' => $pengajuan->link_sosmed,
                 'biaya' => $pengajuan->biaya,
+                'keterangan' => $pengajuan->keterangan,
             ]);
             $this->generatePayments($influencer);
 
@@ -204,6 +209,7 @@ class InfluencerPengajuanTable extends Component
         $user = auth()->user();
         abort_unless(
             ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
+            || ($pengajuan->status === 'pending_creative' && $user->isKoordinatorCreative())
             || ($pengajuan->status === 'pending_gm' && $user->isGmCeo()),
             403
         );
@@ -238,6 +244,7 @@ class InfluencerPengajuanTable extends Component
         $this->rekomendasiLamaKontrak = '';
         $this->link_sosmed = '';
         $this->biaya = '';
+        $this->keterangan = '';
         $this->alasanTolak = '';
         $this->tolakId = null;
         $this->resetErrorBag();
@@ -256,8 +263,20 @@ class InfluencerPengajuanTable extends Component
     {
         $user = auth()->user();
 
-        return ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
+        return ($pengajuan->status === 'pending_creative' && $user->isKoordinatorCreative())
+            || ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
             || ($pengajuan->status === 'pending_gm' && $user->isGmCeo());
+    }
+
+    public function canDeleteSubmission(InfluencerPengajuan $pengajuan): bool
+    {
+        $user = auth()->user();
+        $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
+        $isKolSubmitter = $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
+
+        return ($user->isKoordinatorCreative() || $isKolSubmitter)
+            && (int) $pengajuan->pengaju_id === (int) $user->id
+            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true);
     }
 
     private function generatePayments(Influencer $influencer): void
@@ -289,10 +308,16 @@ class InfluencerPengajuanTable extends Component
         $isHos = $user->isHeadOfStore();
         $isGm = $user->isGmCeo();
 
-        $query = InfluencerPengajuan::with('pengaju', 'approverHos1', 'approverGm', 'rejector');
+        $query = InfluencerPengajuan::with('pengaju', 'approverCoordinator', 'approverHos1', 'approverGm', 'rejector', 'assignedHosPosition');
 
         if ($user->isSuperAdminLike()) {
             // lihat semua
+        } elseif ($user->isKoordinatorCreative()) {
+            $query->where(function ($q) use ($user) {
+                $q->where('status', 'pending_creative')
+                    ->orWhere('approved_coordinator_by', $user->id)
+                    ->orWhere('pengaju_id', $user->id);
+            });
         } elseif ($isHos) {
             $assignedPendingIds = InfluencerPengajuan::query()
                 ->where('status', 'pending_hos1')
@@ -318,6 +343,7 @@ class InfluencerPengajuanTable extends Component
 
         $stats = [
             'total' => InfluencerPengajuan::count(),
+            'pending_creative' => InfluencerPengajuan::where('status', 'pending_creative')->count(),
             'pending_hos1' => InfluencerPengajuan::where('status', 'pending_hos1')->count(),
             'pending_gm' => InfluencerPengajuan::where('status', 'pending_gm')->count(),
             'approved' => InfluencerPengajuan::where('status', 'approved')->count(),
