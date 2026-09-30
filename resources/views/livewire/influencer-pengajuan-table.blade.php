@@ -149,6 +149,8 @@
                                     <button type="button" wire:click="confirmDelete({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-900/30 dark:text-red-300">Hapus</button>
                                     @endif
                                 </div>
+                                @elseif($this->isWaitingForPreviousApproval($item))
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">Menunggu tahap sebelumnya</span>
                                 @else
                                 <span class="text-xs text-gray-400">-</span>
                                 @endif

@@ -286,6 +286,14 @@ class InfluencerPengajuanTable extends Component
             && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true);
     }
 
+    public function isWaitingForPreviousApproval(InfluencerPengajuan $pengajuan): bool
+    {
+        $user = auth()->user();
+
+        return ($user->isHeadOfStore() && $pengajuan->status === 'pending_creative')
+            || ($user->isGmCeo() && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true));
+    }
+
     private function generatePayments(Influencer $influencer): void
     {
         $start = $influencer->mulai_kontrak->copy();
@@ -327,7 +335,7 @@ class InfluencerPengajuanTable extends Component
             });
         } elseif ($isHos) {
             $assignedPendingIds = InfluencerPengajuan::query()
-                ->where('status', 'pending_hos1')
+                ->whereIn('status', ['pending_creative', 'pending_hos1'])
                 ->with('pengaju.employee')
                 ->get()
                 ->filter(fn (InfluencerPengajuan $item) => InfluencerPengajuanRouting::isAssignedToHeadOfStore($item, $user))
@@ -339,8 +347,13 @@ class InfluencerPengajuanTable extends Component
             });
         } elseif ($isGm) {
             $query->where(function ($q) {
-                $q->where('status', 'pending_gm')
-                  ->orWhere('approved_gm_by', auth()->id());
+                $q->where('status', 'pending_creative')
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'pending_hos1')
+                            ->whereNotNull('approved_coordinator_by');
+                    })
+                    ->orWhere('status', 'pending_gm')
+                    ->orWhere('approved_gm_by', auth()->id());
             });
         } else {
             $query->where('pengaju_id', $user->id);
