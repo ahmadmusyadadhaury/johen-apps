@@ -105,24 +105,43 @@ class InfluencerPengajuanTable extends Component
             $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($this->divisi);
             abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
 
-            $pengajuan->update([
+            $wasApproved = $pengajuan->status === 'approved';
+            $updates = [
                 'nama' => $this->nama,
                 'divisi' => $this->divisi,
                 'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
                 'biaya' => $this->biaya ?: null,
                 'keterangan' => $this->keterangan ?: null,
                 'assigned_hos_position_id' => $assignedHos->id,
-                'status' => 'pending_creative',
-                'approved_coordinator_by' => null,
-                'approved_coordinator_at' => null,
-                'approved_hos1_by' => null,
-                'approved_hos1_at' => null,
-                'approved_gm_by' => null,
-                'approved_gm_at' => null,
-            ]);
+            ];
+
+            if (!$wasApproved) {
+                $updates += [
+                    'status' => 'pending_creative',
+                    'approved_coordinator_by' => null,
+                    'approved_coordinator_at' => null,
+                    'approved_hos1_by' => null,
+                    'approved_hos1_at' => null,
+                    'approved_gm_by' => null,
+                    'approved_gm_at' => null,
+                ];
+            }
+
+            $pengajuan->update($updates);
+
+            if ($wasApproved && $pengajuan->influencer) {
+                $pengajuan->influencer->update([
+                    'nama' => $this->nama,
+                    'divisi' => $this->divisi,
+                    'biaya' => $this->biaya ?: null,
+                    'keterangan' => $this->keterangan ?: null,
+                ]);
+            }
 
             $this->dispatch('influencer-pengajuan-updated');
-            $this->successMessage = 'Pengajuan influencer berhasil diperbarui dan menunggu persetujuan Koordinator Creative.';
+            $this->successMessage = $wasApproved
+                ? 'Pengajuan influencer berhasil diperbarui.'
+                : 'Pengajuan influencer berhasil diperbarui dan menunggu persetujuan Koordinator Creative.';
             $this->showSuccessModal = true;
             $this->close();
             return;
@@ -352,7 +371,7 @@ class InfluencerPengajuanTable extends Component
 
         return ($user->isKoordinatorCreative() || $this->isKolSubmitter())
             && (int) $pengajuan->pengaju_id === (int) $user->id
-            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true);
+            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1', 'approved'], true);
     }
 
     public function canEditSubmission(InfluencerPengajuan $pengajuan): bool
@@ -361,7 +380,7 @@ class InfluencerPengajuanTable extends Component
 
         return $this->isKolSubmitter()
             && (int) $pengajuan->pengaju_id === (int) $user->id
-            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1'], true);
+            && in_array($pengajuan->status, ['pending_creative', 'pending_hos1', 'approved'], true);
     }
 
     private function isKolSubmitter(): bool
