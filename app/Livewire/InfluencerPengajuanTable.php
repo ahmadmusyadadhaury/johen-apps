@@ -7,6 +7,7 @@ use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use App\Models\User;
 use App\Support\InfluencerPengajuanRouting;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -195,7 +196,14 @@ class InfluencerPengajuanTable extends Component
         $pengajuan = InfluencerPengajuan::findOrFail($this->deletePengajuanId);
         abort_unless($this->canDeleteSubmission($pengajuan), 403);
 
-        $pengajuan->delete();
+        DB::transaction(function () use ($pengajuan): void {
+            if ($pengajuan->status === 'approved' && !$pengajuan->is_perpanjangan && $pengajuan->influencer) {
+                // The influencer owns its monitoring history and payment schedule; deleting it cascades those records.
+                $pengajuan->influencer->delete();
+            }
+
+            $pengajuan->delete();
+        });
         $this->showDeleteConfirmation = false;
         $this->deletePengajuanId = null;
         $this->resetPage();

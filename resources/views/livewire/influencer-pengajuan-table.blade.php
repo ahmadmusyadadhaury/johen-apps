@@ -293,7 +293,7 @@
     <div data-influencer-motion class="influencer-modal-backdrop fixed inset-0 z-[10001] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm" role="presentation" wire:keydown.escape="cancelDeletePengajuan">
         <section role="alertdialog" aria-modal="true" aria-labelledby="delete-influencer-submission-title" aria-describedby="delete-influencer-submission-description" class="influencer-modal-panel w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <h3 id="delete-influencer-submission-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Hapus pengajuan influencer?</h3>
-            <p id="delete-influencer-submission-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">Riwayat pengajuan akan dihapus. Jika sudah disetujui, data influencer di menu monitoring tetap tersedia.</p>
+            <p id="delete-influencer-submission-description" class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">Riwayat pengajuan akan dihapus. Jika pengajuan kontrak sudah disetujui, data influencer, riwayat monitoring, dan jadwal pembayarannya juga akan dihapus. Menghapus pengajuan perpanjangan tidak menghapus data influencer utama.</p>
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" wire:click="cancelDeletePengajuan" class="btn-secondary min-h-10 text-xs">Batal</button>
                 <button type="button" wire:click="deletePengajuan" wire:loading.attr="disabled" wire:target="deletePengajuan" class="inline-flex min-h-10 items-center rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-60">
