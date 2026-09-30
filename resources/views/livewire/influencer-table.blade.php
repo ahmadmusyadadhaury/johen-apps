@@ -514,7 +514,7 @@
                     @endforelse
                 </div>
                 <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
-                    <button type="button" wire:click="openExtensionRequest({{ $monitoringInfluencerId }})" class="btn-secondary w-full justify-center text-xs sm:w-auto">
+                    <button type="button" wire:click="openExtensionRequest({{ $monitoringInfluencerId }})" class="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:focus-visible:ring-offset-gray-900 sm:w-auto">
                         Ajukan Perpanjangan
                     </button>
                 </div>
