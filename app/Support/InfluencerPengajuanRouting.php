@@ -94,6 +94,16 @@ class InfluencerPengajuanRouting
             ->count();
     }
 
+    public static function pendingCountForCoordinator(): int
+    {
+        return InfluencerPengajuan::query()->where('status', 'pending_creative')->count();
+    }
+
+    public static function pendingCountForGeneralManager(): int
+    {
+        return InfluencerPengajuan::query()->where('status', 'pending_gm')->count();
+    }
+
     public static function organizationHasHeadOfStorePositions(): bool
     {
         return Position::query()->where('nama', 'like', 'Head of Store%')->exists();

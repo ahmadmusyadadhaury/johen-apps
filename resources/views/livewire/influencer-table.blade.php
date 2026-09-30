@@ -1,6 +1,6 @@
 <div data-influencer-motion>
     @php
-        $canEditInfluencers = !auth()->user()->isReadOnlyWorkspace();
+        $canEditInfluencers = !auth()->user()->isReadOnlyWorkspace() && !auth()->user()->isHeadOfStore();
         $canCreateInfluencers = $canEditInfluencers && !auth()->user()->isKoordinatorCreative();
         $canManageInfluencerPayments = $canEditInfluencers && (auth()->user()->canSeeBiaya() || auth()->user()->isKoordinatorCreative());
     @endphp
@@ -20,6 +20,9 @@
         <button type="button" role="tab" aria-controls="influencer-submission-panel" aria-selected="{{ $activeTab === 'pengajuan' ? 'true' : 'false' }}" wire:click="switchTab('pengajuan')"
                 class="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-sm {{ $activeTab === 'pengajuan' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
             Pengajuan Influencer
+            @if($pendingActionCount > 0)
+            <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm" aria-label="{{ $pendingActionCount }} pengajuan menunggu persetujuan">{{ $pendingActionCount > 99 ? '99+' : $pendingActionCount }}</span>
+            @endif
         </button>
     </div>
     @endif
@@ -395,7 +398,8 @@
     {{-- Monitoring Influencer Modal --}}
     @if($showMonitoringModal)
     @php $monitoringInfluencer = \App\Models\Influencer::find($monitoringInfluencerId); @endphp
-    <div class="influencer-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-5" wire:keydown.escape="closeMonitoring">
+    @teleport('body')
+    <div class="influencer-modal-backdrop fixed inset-0 z-[10002] flex items-center justify-center overflow-y-auto bg-gray-900/60 p-3 backdrop-blur-sm sm:p-5" wire:keydown.escape="closeMonitoring">
         <section role="dialog" aria-modal="true" aria-labelledby="influencer-monitoring-title" class="influencer-modal-panel my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6">
             <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-700">
                 <div>
@@ -407,7 +411,7 @@
                 </button>
             </div>
 
-            <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-5">
                 @php
                     $monitoringMetrics = [
                         ['Nama', $monitoringInfluencer?->nama ?? '—'],
@@ -497,6 +501,7 @@
             </div>
         </section>
     </div>
+    @endteleport
     @endif
 
     {{-- Payment Modal --}}

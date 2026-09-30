@@ -74,6 +74,8 @@ class InfluencerTable extends Component
             $this->activeTab = 'pengajuan';
         } elseif (auth()->user()->isKoordinatorCreative() && request()->query('tab') === 'pengajuan') {
             $this->activeTab = 'pengajuan';
+        } elseif (auth()->user()->isHeadOfStore() && (request()->query('tab') === 'pengajuan' || request()->routeIs('hris.influencer-pengajuan'))) {
+            $this->activeTab = 'pengajuan';
         }
     }
 
@@ -83,6 +85,12 @@ class InfluencerTable extends Component
         abort_unless(in_array($tab, ['monitoring', 'pengajuan'], true), 404);
 
         $this->activeTab = $tab;
+    }
+
+    #[On('influencer-pengajuan-updated')]
+    public function refreshSubmissionNotifications(): void
+    {
+        // Re-render the tab badge after submission or approval changes.
     }
 
     private function isCreativeWorkspace(): bool
@@ -99,7 +107,9 @@ class InfluencerTable extends Component
 
     private function canSeeSubmissionTab(): bool
     {
-        return auth()->user()->isKoordinatorCreative() || $this->isCreativeWorkspace();
+        return auth()->user()->isKoordinatorCreative()
+            || auth()->user()->isHeadOfStore()
+            || $this->isCreativeWorkspace();
     }
 
     protected function rules(): array
@@ -432,14 +442,14 @@ class InfluencerTable extends Component
 
     private function authorizeEdit(): void
     {
-        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace() && !auth()->user()->isHeadOfStore(), 403);
     }
 
     private function authorizeCreate(): void
     {
         $user = auth()->user();
 
-        abort_unless(! $user->isReadOnlyWorkspace() && ! $user->isKoordinatorCreative(), 403);
+        abort_unless(! $user->isReadOnlyWorkspace() && ! $user->isKoordinatorCreative() && !$user->isHeadOfStore(), 403);
     }
 
     private function isKolSubmitter(): bool
@@ -485,6 +495,12 @@ class InfluencerTable extends Component
         $isKolSubmitter = $this->isKolSubmitter();
         $showRequestTabs = $this->canSeeSubmissionTab() || $isKolSubmitter;
         $canViewMonitoring = $this->canViewInfluencerMonitoring();
+        $pendingActionCount = match (true) {
+            auth()->user()->isKoordinatorCreative() => InfluencerPengajuanRouting::pendingCountForCoordinator(),
+            auth()->user()->isHeadOfStore() => InfluencerPengajuanRouting::pendingCountForHeadOfStore(auth()->user()),
+            auth()->user()->isGmCeo() => InfluencerPengajuanRouting::pendingCountForGeneralManager(),
+            default => 0,
+        };
         if ($this->showMonitoringModal && (
             !$canViewMonitoring
             || !$this->monitoringInfluencerId
@@ -528,7 +544,7 @@ class InfluencerTable extends Component
         return view('livewire.influencer-table', compact(
             'items', 'aktifCount', 'segeraHabisCount', 'tidakAktifCount',
             'upcomingPayments', 'paymentRecords', 'showRequestTabs', 'monitoringHistory',
-            'kolApprovedSubmissions', 'isKolSubmitter', 'canViewMonitoring',
+            'kolApprovedSubmissions', 'isKolSubmitter', 'canViewMonitoring', 'pendingActionCount',
         ));
     }
 }

@@ -17,9 +17,12 @@ class SidebarInfluencerPengajuanBadge extends Component
     public function render()
     {
         $user = auth()->user();
-        $total = $user?->isHeadOfStore()
-            ? InfluencerPengajuanRouting::pendingCountForHeadOfStore($user)
-            : 0;
+        $total = match (true) {
+            $user?->isKoordinatorCreative() => InfluencerPengajuanRouting::pendingCountForCoordinator(),
+            $user?->isHeadOfStore() => InfluencerPengajuanRouting::pendingCountForHeadOfStore($user),
+            $user?->isGmCeo() => InfluencerPengajuanRouting::pendingCountForGeneralManager(),
+            default => 0,
+        };
 
         return view('livewire.sidebar-influencer-pengajuan-badge', compact('total'));
     }

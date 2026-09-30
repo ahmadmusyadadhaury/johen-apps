@@ -94,6 +94,10 @@ Route::middleware(['auth'])->group(function () {
                 return redirect()->route('hris.influencer', ['tab' => 'pengajuan']);
             }
 
+            if (auth()->user()->isHeadOfStore()) {
+                return view('influencer.index');
+            }
+
             return view('influencer.pengajuan');
         })->name('influencer-pengajuan');
         Route::get('/kalender-event', KalenderEventTable::class)->name('kalender-event');
