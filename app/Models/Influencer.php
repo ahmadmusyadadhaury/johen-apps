@@ -11,6 +11,7 @@ class Influencer extends Model
         'no_kontrak',
         'nama',
         'divisi',
+        'keterangan',
         'mulai_kontrak',
         'habis_kontrak',
         'link_sosmed',

@@ -130,6 +130,7 @@
                         <div><dt class="text-gray-500 dark:text-gray-400">Divisi</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->divisi ?: '-' }}</dd></div>
                         <div><dt class="text-gray-500 dark:text-gray-400">Mulai kontrak</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->mulai_kontrak->isoFormat('D MMM YYYY') }}</dd></div>
                         <div><dt class="text-gray-500 dark:text-gray-400">Habis kontrak</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->habis_kontrak->isoFormat('D MMM YYYY') }}</dd></div>
+                        <div class="col-span-2"><dt class="text-gray-500 dark:text-gray-400">Keterangan</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->keterangan ?: '-' }}</dd></div>
                         @if(auth()->user()->canSeeBiaya())
                         <div><dt class="text-gray-500 dark:text-gray-400">Biaya</dt><dd class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</dd></div>
                         <div>
@@ -167,6 +168,7 @@
                         <th class="px-6 py-3">No. Kontrak</th>
                         <th class="px-6 py-3">Nama Influencer</th>
                         <th class="px-6 py-3">Divisi</th>
+                        <th class="px-6 py-3">Keterangan</th>
                         <th class="px-6 py-3">Mulai Kontrak</th>
                         <th class="px-6 py-3">Habis Kontrak</th>
                         <th class="px-6 py-3">Status</th>
@@ -185,6 +187,7 @@
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100">{{ $item->no_kontrak ?: '-' }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->nama }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->divisi ?: '-' }}</td>
+                            <td class="table-cell max-w-xs text-gray-600 dark:text-gray-400">{{ $item->keterangan ?: '-' }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak->isoFormat('D MMMM YYYY') }}</td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak->isoFormat('D MMMM YYYY') }}</td>
                             <td class="table-cell">
@@ -252,7 +255,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->canSeeBiaya() ? 11 : 9 }}" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="{{ auth()->user()->canSeeBiaya() ? 12 : 10 }}" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-10 h-10 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                     <p class="font-medium">Belum ada data influencer</p>
@@ -321,6 +324,12 @@
                     @error('biaya') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 @endif
+
+                <div>
+                    <x-input-label value="Keterangan" />
+                    <textarea wire:model="keterangan" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Keterangan tambahan..."></textarea>
+                    @error('keterangan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
 
                 <div>
                     <x-input-label value="Link Sosmed" />

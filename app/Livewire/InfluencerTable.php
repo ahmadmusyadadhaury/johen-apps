@@ -26,6 +26,7 @@ class InfluencerTable extends Component
     public string $habis_kontrak = '';
     public string $divisi = '';
     public string $rekomendasiLamaKontrak = '';
+    public string $keterangan = '';
     public string $link_sosmed = '';
     public string $biaya = '';
 
@@ -85,6 +86,7 @@ class InfluencerTable extends Component
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
+            'keterangan' => 'nullable|string|max:1000',
         ];
     }
 
@@ -121,6 +123,7 @@ class InfluencerTable extends Component
         $this->rekomendasiLamaKontrak = (string) max(1, $item->mulai_kontrak->diffInMonths($item->habis_kontrak) + 1);
         $this->link_sosmed = $item->link_sosmed ?? '';
         $this->biaya = $item->biaya ? (string) $item->biaya : '';
+        $this->keterangan = $item->keterangan ?? '';
         $this->showModal = true;
     }
 
@@ -144,6 +147,7 @@ class InfluencerTable extends Component
                 'habis_kontrak' => $contractEnd,
                 'link_sosmed' => $this->link_sosmed ?: null,
                 'biaya' => $this->biaya ?: null,
+                'keterangan' => $this->keterangan ?: null,
             ]);
             session()->flash('message', 'Data influencer berhasil diperbarui.');
         } else {
@@ -155,6 +159,7 @@ class InfluencerTable extends Component
                 'habis_kontrak' => $contractEnd,
                 'link_sosmed' => $this->link_sosmed ?: null,
                 'biaya' => $this->biaya ?: null,
+                'keterangan' => $this->keterangan ?: null,
             ]);
             $this->generatePayments($influencer);
             session()->flash('message', 'Data influencer berhasil ditambahkan.');
@@ -257,6 +262,7 @@ class InfluencerTable extends Component
         $this->habis_kontrak = '';
         $this->divisi = '';
         $this->rekomendasiLamaKontrak = '';
+        $this->keterangan = '';
         $this->link_sosmed = '';
         $this->biaya = '';
         $this->resetErrorBag();

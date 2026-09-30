@@ -265,7 +265,7 @@ class User extends Authenticatable
     public function canSeeBiaya(): bool
     {
         if ($this->isKoordinatorCreative()) return true;
-        if ($this->isStaffCreative() && $this->employee?->mainPosition()?->nama === 'Admin KOL') return true;
+        if ($this->isStaffCreative() && str_starts_with($this->employee?->mainPosition()?->nama ?? '', 'Admin KOL')) return true;
         return false;
     }
 
