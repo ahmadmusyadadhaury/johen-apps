@@ -146,7 +146,7 @@ if ($divisionViewUser) {
 
 
                     @if(auth()->user()->isKoordinatorCreative() || auth()->user()->isStaffCreative())
-                    <div class="mt-4" data-development-menu>
+                    <div class="mt-4">
                         <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Divisi Creative</p>
 
                         @if(!auth()->user()->isStaffCreative() || str_starts_with(auth()->user()->employee?->mainPosition()?->nama ?? '', 'Admin KOL'))
