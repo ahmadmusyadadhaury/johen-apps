@@ -496,7 +496,7 @@
             </div>
             <div class="mt-4 flex flex-wrap gap-3">
                 <div class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
-                    <span class="text-xs font-semibold text-white/80">Total Karyawan</span>
+                    <span class="text-xs font-semibold text-white/80">{{ auth()->user()->pegawaiLabel('Total Karyawan') }}</span>
                     <span class="text-sm font-bold text-white">{{ $stats['total_employees'] }}</span>
                 </div>
                 <div class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
@@ -606,13 +606,13 @@
                 </div>
                 <div>
                     <p class="text-sm font-bold font-display text-gray-900 dark:text-gray-100">Data SDM</p>
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Karyawan & Divisi</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500">{{ auth()->user()->pegawaiLabel('Karyawan & Divisi') }}</p>
                 </div>
             </div>
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4 text-sm">
                 <div class="flex items-baseline gap-1">
                     <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['total_employees'] }}</span>
-                    <span class="text-xs text-gray-400">Karyawan</span>
+                    <span class="text-xs text-gray-400">{{ auth()->user()->pegawaiLabel('Karyawan') }}</span>
                 </div>
                 <div class="flex items-baseline gap-1">
                     <span class="text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $stats['total_divisions'] }}</span>
@@ -760,7 +760,7 @@
             <a href="{{ route('hris.employees.index') }}"
                    class="w-full flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 border-primary-100 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 transition-all group">
                     <div>
-                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">Semua Karyawan</p>
+                        <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">{{ auth()->user()->pegawaiLabel('Semua Karyawan') }}</p>
                         <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">Seluruh divisi</p>
                     </div>
                     <span class="text-base sm:text-lg font-bold font-display text-primary-600 dark:text-primary-400">{{ $stats['total_employees'] }}</span>
@@ -776,7 +776,7 @@
                    class="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/5 transition-all group">
                     <div>
                         <p class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">{{ $ds['nama'] }}</p>
-                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $ds['total'] }} karyawan</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $ds['total'] }} {{ lcfirst(auth()->user()->pegawaiLabel('Karyawan')) }}</p>
                     </div>
                     <span class="text-base sm:text-lg font-bold font-display text-gray-900 dark:text-gray-100">{{ $ds['total'] }}</span>
                 </a>

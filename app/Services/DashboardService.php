@@ -33,7 +33,7 @@ class DashboardService
         return [
             'total_payroll' => PayrollImport::sum('total_payroll'),
             'total_employee' => PayrollImport::sum('total_employee'),
-            'total_employees' => Employee::count(),
+            'total_employees' => Employee::where('tipe', Employee::TIPE_KARYAWAN_AKTIF)->count(),
             'total_divisions' => Division::count(),
             'total_assets' => Asset::count() + DigitalAssetRegistry::count(),
             'email_sent' => EmailLog::where('status', 'sent')->count(),
@@ -73,7 +73,7 @@ class DashboardService
 
     public function getDivisionStats(): array
     {
-        return Division::withCount('employees')
+        return Division::withCount(['employees' => fn ($q) => $q->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)])
             ->orderByDesc('employees_count')
             ->get()
             ->map(fn ($d) => [

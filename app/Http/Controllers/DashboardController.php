@@ -156,9 +156,10 @@ class DashboardController extends Controller
 
         session(['division_menu' => $division->id]);
 
-        $division->loadCount('employees');
+        $division->loadCount(['employees' => fn ($q) => $q->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)]);
         $menu = DivisionMenu::for($division->nama);
         $employees = $division->employees()
+            ->where('employees.tipe', Employee::TIPE_KARYAWAN_AKTIF)
             ->orderBy('employees.nama')
             ->get(['employees.id', 'employees.nama', 'employees.position', 'employees.foto', 'employees.updated_at']);
 

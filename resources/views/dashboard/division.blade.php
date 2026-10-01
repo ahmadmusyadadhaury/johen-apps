@@ -25,7 +25,7 @@
                 </div>
                 <div class="mt-4 flex flex-wrap gap-3">
                     <div class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
-                        <span class="text-xs font-semibold text-white/80">Karyawan</span>
+                        <span class="text-xs font-semibold text-white/80">{{ auth()->user()->pegawaiLabel('Karyawan') }}</span>
                         <span class="text-sm font-bold text-white">{{ $division->employees_count }}</span>
                     </div>
                     @if($division->koordinator)
