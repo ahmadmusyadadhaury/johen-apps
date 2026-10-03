@@ -208,7 +208,15 @@
                 </button>
             </div>
 
+            @if($editId && $editStatus !== 'approved')
+            <div class="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800" role="tablist" aria-label="Form edit pengajuan influencer">
+                <button type="button" role="tab" aria-selected="{{ $editFormTab === 'data' ? 'true' : 'false' }}" wire:click="$set('editFormTab', 'data')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $editFormTab === 'data' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">Data Awal</button>
+                <button type="button" role="tab" aria-selected="{{ $editFormTab === 'monitoring' ? 'true' : 'false' }}" wire:click="$set('editFormTab', 'monitoring')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $editFormTab === 'monitoring' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">Monitoring</button>
+            </div>
+            @endif
+
             <form wire:submit.prevent="save" class="space-y-4">
+                @if(!$editId || $editStatus === 'approved' || $editFormTab === 'data')
                 <div>
                     <x-input-label value="Nama Influencer *" />
                     <x-text-input type="text" wire:model="nama" class="mt-1 block w-full" placeholder="Nama influencer" />
@@ -261,8 +269,9 @@
                     @error('biaya') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 @endif
+                @endif
 
-                @if($editId === null || $editStatus !== 'approved')
+                @if(($editId === null || $editStatus !== 'approved') && (!$editId || $editFormTab === 'monitoring'))
                 <div class="rounded-2xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900/50 dark:bg-primary-950/20">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Monitoring Awal</h4>

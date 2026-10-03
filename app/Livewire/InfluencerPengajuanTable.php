@@ -11,6 +11,7 @@ use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -26,6 +27,7 @@ class InfluencerPengajuanTable extends Component
     public bool $showDeleteConfirmation = false;
     public ?int $deletePengajuanId = null;
     public ?int $editId = null;
+    public string $editFormTab = 'data';
 
     public string $no_kontrak = '';
     public string $nama = '';
@@ -134,6 +136,21 @@ class InfluencerPengajuanTable extends Component
             ->format('Y-m-d');
     }
 
+    private function validateForm(): array
+    {
+        try {
+            return $this->validate();
+        } catch (ValidationException $exception) {
+            if ($this->editId && $this->editStatus !== 'approved') {
+                $errorFields = array_keys($exception->errors());
+                $hasDataErrors = collect($errorFields)->contains(fn (string $field) => ! str_starts_with($field, 'monitoring'));
+                $this->editFormTab = $hasDataErrors ? 'data' : 'monitoring';
+            }
+
+            throw $exception;
+        }
+    }
+
     public function uploadContractFile(int $pengajuanId): void
     {
         abort_unless($this->isKolSubmitter(), 403);
@@ -179,6 +196,7 @@ class InfluencerPengajuanTable extends Component
         abort_unless($this->canEditSubmission($pengajuan), 403);
 
         $this->editId = $pengajuan->id;
+        $this->editFormTab = 'data';
         $this->editStatus = $pengajuan->status;
         $this->no_kontrak = $pengajuan->no_kontrak ?? '';
         $this->nama = $pengajuan->nama;
@@ -204,7 +222,7 @@ class InfluencerPengajuanTable extends Component
         if ($this->editId) {
             $pengajuan = InfluencerPengajuan::findOrFail($this->editId);
             abort_unless($this->canEditSubmission($pengajuan), 403);
-            $this->validate();
+            $this->validateForm();
 
             $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($this->divisi);
             abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
@@ -259,7 +277,7 @@ class InfluencerPengajuanTable extends Component
         }
 
         abort_unless(auth()->user()->isKoordinatorCreative(), 403);
-        $this->validate();
+        $this->validateForm();
 
         $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForUser(auth()->user());
         $assignedHosName = InfluencerPengajuanRouting::headOfStoreNameForUser(auth()->user());
@@ -467,6 +485,7 @@ class InfluencerPengajuanTable extends Component
     private function resetInput(): void
     {
         $this->editId = null;
+        $this->editFormTab = 'data';
         $this->editStatus = null;
         $this->no_kontrak = '';
         $this->nama = '';
