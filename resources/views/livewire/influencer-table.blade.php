@@ -4,6 +4,8 @@
         $canCreateInfluencers = $canEditInfluencers && !auth()->user()->isKoordinatorCreative();
         $canManageInfluencerPayments = $canEditInfluencers && (auth()->user()->canSeeBiaya() || auth()->user()->isKoordinatorCreative());
         $isCoordinatorCreative = auth()->user()->isKoordinatorCreative();
+        $showExpiringContractAlert = $isKolSubmitter || $isCoordinatorCreative
+            || auth()->user()->isHeadOfStore() || auth()->user()->isGmCeo();
         $canDeleteMonitoringInfluencer = !auth()->user()->isReadOnlyWorkspace()
             && ($isKolSubmitter || auth()->user()->isKoordinatorCreative() || auth()->user()->isHeadOfStore());
     @endphp
@@ -33,7 +35,7 @@
     @if(!$showRequestTabs || $activeTab === 'monitoring' || ($isKolSubmitter && $showModal))
     <section id="influencer-monitoring-panel" role="tabpanel" aria-label="Monitoring Influencer" class="influencer-feedback-enter">
 
-    @if($isKolSubmitter || $isCoordinatorCreative)
+    @if($showExpiringContractAlert)
     <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4" aria-label="Ringkasan kontrak influencer">
         <div class="stat-card">
             <div class="flex items-center justify-between mb-3">
@@ -53,7 +55,7 @@
                 <span class="badge-warning">Akan Berakhir</span>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $segeraHabisCount }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kontrak Segera Habis</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kontrak habis dalam 30 hari</p>
         </div>
         <div class="stat-card">
             <div class="flex items-center justify-between mb-3">
@@ -230,7 +232,7 @@
                         </div>
                         @if($daysRemaining <= 0)
                             <span class="shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-[11px] font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Habis</span>
-                        @elseif($daysRemaining <= 7)
+                        @elseif($daysRemaining <= 30)
                             <span class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Segera habis</span>
                         @else
                             <span class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Aktif</span>
@@ -313,7 +315,7 @@
                                 @endphp
                                 @if($sisa <= 0)
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Habis</span>
-                                @elseif($sisa <= 7)
+                                @elseif($sisa <= 30)
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Segera Habis</span>
                                 @else
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Aktif</span>
@@ -417,7 +419,15 @@
                 </button>
             </div>
 
+            @if($isKolSubmitter && !$editId)
+            <div class="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800" role="tablist" aria-label="Form pengajuan influencer">
+                <button type="button" role="tab" aria-selected="{{ $kolFormTab === 'pengajuan' ? 'true' : 'false' }}" wire:click="switchKolFormTab('pengajuan')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $kolFormTab === 'pengajuan' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">Pengajuan Influencer</button>
+                <button type="button" role="tab" aria-selected="{{ $kolFormTab === 'monitoring' ? 'true' : 'false' }}" wire:click="switchKolFormTab('monitoring')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $kolFormTab === 'monitoring' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">Monitoring Awal</button>
+            </div>
+            @endif
+
             <form wire:submit.prevent="save" class="space-y-4">
+                @if(!$isKolSubmitter || $editId || $kolFormTab === 'pengajuan')
                 <div>
                     <x-input-label value="Nama Influencer *" />
                     <x-text-input type="text" wire:model="nama" class="mt-1 block w-full" placeholder="Nama influencer" />
@@ -438,10 +448,20 @@
                 <div>
                     <x-input-label value="Rekomendasi Lama Kontrak *" />
                     <div class="mt-1 flex items-center gap-2">
-                        <x-text-input type="number" min="1" max="60" step="1" wire:model="rekomendasiLamaKontrak" class="block w-full" placeholder="Contoh: 6" />
+                        <x-text-input type="number" min="1" max="60" step="1" wire:model.live="rekomendasiLamaKontrak" class="block w-full" placeholder="Contoh: 6" />
                         <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
                     </div>
                     @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    @if($isKolSubmitter && !$editId && filled($rekomendasiLamaKontrak) && (int) $rekomendasiLamaKontrak > 0)
+                        @php
+                            $previewStart = now()->startOfDay();
+                            $previewEnd = $previewStart->copy()->addMonthsNoOverflow((int) $rekomendasiLamaKontrak - 1);
+                        @endphp
+                        <div class="mt-2 grid grid-cols-2 gap-3 rounded-xl bg-gray-50 px-3 py-2.5 text-xs dark:bg-gray-800/70">
+                            <div><span class="block text-gray-500 dark:text-gray-400">Perkiraan tanggal mulai</span><span class="mt-0.5 block font-semibold text-gray-800 dark:text-gray-200">{{ $previewStart->isoFormat('D MMMM YYYY') }}</span></div>
+                            <div><span class="block text-gray-500 dark:text-gray-400">Perkiraan tanggal selesai</span><span class="mt-0.5 block font-semibold text-gray-800 dark:text-gray-200">{{ $previewEnd->isoFormat('D MMMM YYYY') }}</span></div>
+                        </div>
+                    @endif
                 </div>
 
                 @if(auth()->user()->canSeeBiaya())
@@ -465,8 +485,10 @@
                     @error('link_sosmed') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 @endunless
+                @endif
 
                 @if($isKolSubmitter && !$editId)
+                @if($kolFormTab === 'monitoring')
                 <div class="rounded-2xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900/50 dark:bg-primary-950/20">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Monitoring Awal</h4>
@@ -514,6 +536,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
                 @endif
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">

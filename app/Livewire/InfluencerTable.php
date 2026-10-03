@@ -17,6 +17,7 @@ class InfluencerTable extends Component
     use WithPagination;
 
     public bool $showModal = false;
+    public string $kolFormTab = 'pengajuan';
     public ?int $editId = null;
 
     public bool $showPaymentModal = false;
@@ -165,8 +166,17 @@ class InfluencerTable extends Component
     {
         $this->authorizeCreate();
         $this->resetInput();
+        $this->kolFormTab = 'pengajuan';
         $this->initialMonitoringMonth = now()->format('Y-m');
         $this->showModal = true;
+    }
+
+    public function switchKolFormTab(string $tab): void
+    {
+        abort_unless(in_array($tab, ['pengajuan', 'monitoring'], true), 404);
+        abort_unless($this->isKolSubmitter() && ! $this->editId, 403);
+
+        $this->kolFormTab = $tab;
     }
 
     #[On('open-kol-influencer-request')]
@@ -694,7 +704,7 @@ class InfluencerTable extends Component
             ->when($visibleInfluencerIds !== null, fn ($q) => $q->whereIn('id', $visibleInfluencerIds));
         $aktifCount = $statsQuery()->where('habis_kontrak', '>', $now)->count();
         $segeraHabisCount = $statsQuery()->where('habis_kontrak', '>', $now)
-            ->where('habis_kontrak', '<=', $now->copy()->addDays(7))
+            ->where('habis_kontrak', '<=', $now->copy()->addDays(30))
             ->count();
         $tidakAktifCount = $statsQuery()->where('habis_kontrak', '<=', $now)->count();
 
