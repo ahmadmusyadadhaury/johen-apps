@@ -422,6 +422,15 @@
                             class="w-full min-h-11 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:w-auto sm:text-xs"
                         >
                     </div>
+
+                    @if(auth()->user()->isSuperAdmin() && !$karyawanView && $tab === 'tim')
+                        <a href="{{ route('hris.absensi.export', ['date' => $today, 'search' => $search]) }}"
+                            class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:w-auto sm:text-xs"
+                            title="Export presensi ke Excel">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16.5V3.75m0 12.75l-4.5-4.5m4.5 4.5l4.5-4.5M3.75 16.5v3.75h16.5V16.5"/></svg>
+                            Export Excel
+                        </a>
+                    @endif
                 </div>
             </div>
 
