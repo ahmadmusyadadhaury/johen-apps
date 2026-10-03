@@ -118,7 +118,7 @@ class InfluencerTable extends Component
 
     protected function rules(): array
     {
-        $monitoringRequired = filled($this->initialMonitoringMonth);
+        $monitoringRequired = $this->isKolSubmitter() && ! $this->editId;
         $divisionOptions = InfluencerPengajuanRouting::kolDivisionsForUser(auth()->user()) ?? self::DIVISI_OPTIONS;
 
         return [
@@ -126,10 +126,12 @@ class InfluencerTable extends Component
             'nama' => 'required|string|max:255',
             'divisi' => ['required', 'in:'.implode(',', $divisionOptions)],
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
+            'mulai_kontrak' => 'nullable|required_with:habis_kontrak|date',
+            'habis_kontrak' => 'nullable|required_with:mulai_kontrak|date|after_or_equal:mulai_kontrak',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|string|max:1000',
-            'initialMonitoringMonth' => ['nullable', 'date_format:Y-m', 'before_or_equal:'.now()->format('Y-m').'-01'],
+            'initialMonitoringMonth' => [$monitoringRequired ? 'required' : 'nullable', 'date_format:Y-m', 'before_or_equal:'.now()->format('Y-m').'-01'],
             'initialMonitoringFollowers' => [$monitoringRequired ? 'required' : 'nullable', 'integer', 'min:0'],
             'initialMonitoringViewers' => [$monitoringRequired ? 'required' : 'nullable', 'integer', 'min:0'],
             'initialMonitoringDuration' => [$monitoringRequired ? 'required' : 'nullable', 'numeric', 'min:0', 'max:10000'],
@@ -149,15 +151,16 @@ class InfluencerTable extends Component
             'rekomendasiLamaKontrak.integer' => 'Lama kontrak harus berupa jumlah bulan.',
             'rekomendasiLamaKontrak.min' => 'Lama kontrak minimal 1 bulan.',
             'rekomendasiLamaKontrak.max' => 'Lama kontrak maksimal 60 bulan.',
+            'initialMonitoringMonth.required' => 'Bulan monitoring awal wajib diisi.',
             'initialMonitoringMonth.date_format' => 'Bulan monitoring harus berformat bulan dan tahun.',
             'initialMonitoringMonth.before_or_equal' => 'Bulan monitoring tidak boleh berada di masa depan.',
-            'initialMonitoringFollowers.required' => 'Followers wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringFollowers.required' => 'Followers monitoring awal wajib diisi.',
             'initialMonitoringFollowers.integer' => 'Followers harus berupa angka.',
-            'initialMonitoringViewers.required' => 'Viewers wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringViewers.required' => 'Viewers monitoring awal wajib diisi.',
             'initialMonitoringViewers.integer' => 'Viewers harus berupa angka.',
-            'initialMonitoringDuration.required' => 'Durasi wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringDuration.required' => 'Durasi monitoring awal wajib diisi.',
             'initialMonitoringDuration.numeric' => 'Durasi harus berupa angka.',
-            'initialMonitoringTargetDuration.required' => 'Target durasi wajib diisi bila bulan monitoring dipilih.',
+            'initialMonitoringTargetDuration.required' => 'Target durasi monitoring awal wajib diisi.',
             'initialMonitoringTargetDuration.numeric' => 'Target durasi harus berupa angka.',
         ];
     }
@@ -218,6 +221,8 @@ class InfluencerTable extends Component
                 'nama' => $this->nama,
                 'divisi' => $this->divisi,
                 'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
+                'mulai_kontrak' => $this->mulai_kontrak ?: null,
+                'habis_kontrak' => $this->habis_kontrak ?: null,
                 'link_sosmed' => $this->link_sosmed ?: null,
                 'biaya' => $this->biaya ?: null,
                 'keterangan' => $this->keterangan ?: null,
@@ -233,10 +238,12 @@ class InfluencerTable extends Component
             return;
         }
 
-        $contractStart = $this->editId && $this->mulai_kontrak
+        $contractStart = $this->mulai_kontrak
             ? \Illuminate\Support\Carbon::parse($this->mulai_kontrak)->startOfDay()
             : now()->startOfDay();
-        $contractEnd = $contractStart->copy()->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1);
+        $contractEnd = $this->habis_kontrak
+            ? \Illuminate\Support\Carbon::parse($this->habis_kontrak)->startOfDay()
+            : $contractStart->copy()->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1);
 
         if ($this->editId) {
             $item = Influencer::findOrFail($this->editId);

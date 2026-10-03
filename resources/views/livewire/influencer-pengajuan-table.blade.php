@@ -224,6 +224,19 @@
                     @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <x-input-label value="Kontrak Mulai" />
+                        <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
+                        @error('mulai_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <x-input-label value="Kontrak Selesai" />
+                        <x-text-input type="date" wire:model="habis_kontrak" class="mt-1 block w-full" />
+                        @error('habis_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 <div>
                     <x-input-label value="Keterangan" />
                     <textarea wire:model="keterangan" rows="3" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Keterangan tambahan..."></textarea>

@@ -464,6 +464,19 @@
                     @endif
                 </div>
 
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <x-input-label value="Kontrak Mulai" />
+                        <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
+                        @error('mulai_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <x-input-label value="Kontrak Selesai" />
+                        <x-text-input type="date" wire:model="habis_kontrak" class="mt-1 block w-full" />
+                        @error('habis_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 @if(auth()->user()->canSeeBiaya())
                 <div>
                     <x-input-label value="Biaya (per bulan)" />
@@ -492,35 +505,35 @@
                 <div class="rounded-2xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900/50 dark:bg-primary-950/20">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Monitoring Awal</h4>
-                        <span class="text-[11px] font-medium uppercase tracking-wide text-primary-700 dark:text-primary-300">Opsional</span>
+                        <span class="text-[11px] font-medium uppercase tracking-wide text-red-600 dark:text-red-400">Wajib diisi</span>
                     </div>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Data ini otomatis menjadi monitoring pertama influencer setelah pengajuan disetujui GM/CEO. Kosongkan bila belum punya data.
+                        Lengkapi data ini sebagai monitoring pertama influencer. Pengajuan tidak dapat dikirim sebelum semua data monitoring terisi.
                     </p>
 
                     <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <x-input-label value="Bulan Monitoring" />
+                            <x-input-label value="Bulan Monitoring *" />
                             <x-text-input type="month" wire:model.live.debounce.500ms="initialMonitoringMonth" class="mt-1 block w-full" />
                             @error('initialMonitoringMonth') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <x-input-label value="Followers" />
+                            <x-input-label value="Followers *" />
                             <x-text-input type="number" min="0" step="1" wire:model="initialMonitoringFollowers" class="mt-1 block w-full" placeholder="Contoh: 1700000" />
                             @error('initialMonitoringFollowers') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <x-input-label value="Viewers 1 Bulan Terakhir" />
+                            <x-input-label value="Viewers 1 Bulan Terakhir *" />
                             <x-text-input type="number" min="0" step="1" wire:model="initialMonitoringViewers" class="mt-1 block w-full" placeholder="Contoh: 1400000" />
                             @error('initialMonitoringViewers') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <x-input-label value="Durasi 1 Bulan Terakhir (jam)" />
+                            <x-input-label value="Durasi 1 Bulan Terakhir (jam) *" />
                             <x-text-input type="number" min="0" step="0.01" wire:model="initialMonitoringDuration" class="mt-1 block w-full" placeholder="162" />
                             @error('initialMonitoringDuration') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <x-input-label value="Target Durasi (jam)" />
+                            <x-input-label value="Target Durasi (jam) *" />
                             <x-text-input type="number" min="0" step="0.01" wire:model="initialMonitoringTargetDuration" class="mt-1 block w-full" placeholder="130" />
                             @error('initialMonitoringTargetDuration') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>

@@ -29,6 +29,8 @@ class InfluencerPengajuanTable extends Component
     public string $nama = '';
     public string $divisi = '';
     public string $rekomendasiLamaKontrak = '';
+    public string $mulai_kontrak = '';
+    public string $habis_kontrak = '';
     public string $link_sosmed = '';
     public string $biaya = '';
     public string $keterangan = '';
@@ -69,6 +71,8 @@ class InfluencerPengajuanTable extends Component
             'nama' => 'required|string|max:255',
             'divisi' => ['required', 'in:'.implode(',', $divisionOptions)],
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
+            'mulai_kontrak' => 'nullable|required_with:habis_kontrak|date',
+            'habis_kontrak' => 'nullable|required_with:mulai_kontrak|date|after_or_equal:mulai_kontrak',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|string|max:1000',
@@ -127,6 +131,8 @@ class InfluencerPengajuanTable extends Component
         $this->nama = $pengajuan->nama;
         $this->divisi = $pengajuan->divisi ?? '';
         $this->rekomendasiLamaKontrak = (string) $pengajuan->rekomendasi_lama_kontrak;
+        $this->mulai_kontrak = ($pengajuan->mulai_kontrak ?? $pengajuan->influencer?->mulai_kontrak)?->format('Y-m-d') ?? '';
+        $this->habis_kontrak = ($pengajuan->habis_kontrak ?? $pengajuan->influencer?->habis_kontrak)?->format('Y-m-d') ?? '';
         $this->link_sosmed = $pengajuan->link_sosmed ?? '';
         $this->biaya = $pengajuan->biaya !== null ? (string) $pengajuan->biaya : '';
         $this->keterangan = $pengajuan->keterangan ?? '';
@@ -155,6 +161,8 @@ class InfluencerPengajuanTable extends Component
                 'nama' => $this->nama,
                 'divisi' => $this->divisi,
                 'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
+                'mulai_kontrak' => $this->mulai_kontrak ?: null,
+                'habis_kontrak' => $this->habis_kontrak ?: null,
                 'biaya' => $this->biaya ?: null,
                 'keterangan' => $this->keterangan ?: null,
                 'assigned_hos_position_id' => $assignedHos->id,
@@ -182,6 +190,8 @@ class InfluencerPengajuanTable extends Component
                     'nama' => $this->nama,
                     'divisi' => $this->divisi,
                     'biaya' => $this->biaya ?: null,
+                    'mulai_kontrak' => $this->mulai_kontrak ?: $pengajuan->influencer->mulai_kontrak,
+                    'habis_kontrak' => $this->habis_kontrak ?: $pengajuan->influencer->habis_kontrak,
                     'keterangan' => $this->keterangan ?: null,
                 ]);
             }
@@ -207,6 +217,8 @@ class InfluencerPengajuanTable extends Component
             'nama' => $this->nama,
             'divisi' => $this->divisi,
             'rekomendasi_lama_kontrak' => $this->rekomendasiLamaKontrak,
+            'mulai_kontrak' => $this->mulai_kontrak ?: null,
+            'habis_kontrak' => $this->habis_kontrak ?: null,
             'link_sosmed' => $this->link_sosmed ?: null,
             'biaya' => $this->biaya ?: null,
             'keterangan' => $this->keterangan ?: null,
@@ -329,7 +341,7 @@ class InfluencerPengajuanTable extends Component
                 $this->generateExtensionPayments($influencer, $nextContractStart, $contractMonths, $extensionCost);
                 session()->flash('message', 'Perpanjangan influencer disetujui. Masa kontrak dan jadwal pembayaran telah diperbarui.');
             } else {
-                $contractStart = now()->startOfDay();
+                $contractStart = $pengajuan->mulai_kontrak?->copy()->startOfDay() ?? now()->startOfDay();
                 $contractMonths = max(1, (int) ($pengajuan->rekomendasi_lama_kontrak
                     ?? ($pengajuan->mulai_kontrak?->diffInMonths($pengajuan->habis_kontrak) + 1)
                     ?? 1));
@@ -339,7 +351,7 @@ class InfluencerPengajuanTable extends Component
                     'nama' => $pengajuan->nama,
                     'divisi' => $pengajuan->divisi,
                     'mulai_kontrak' => $contractStart,
-                    'habis_kontrak' => $contractStart->copy()->addMonthsNoOverflow($contractMonths - 1),
+                    'habis_kontrak' => $pengajuan->habis_kontrak?->copy()->startOfDay() ?? $contractStart->copy()->addMonthsNoOverflow($contractMonths - 1),
                     'link_sosmed' => $pengajuan->link_sosmed,
                     'biaya' => $pengajuan->biaya,
                     'keterangan' => $pengajuan->keterangan,
@@ -407,6 +419,8 @@ class InfluencerPengajuanTable extends Component
         $this->nama = '';
         $this->divisi = '';
         $this->rekomendasiLamaKontrak = '';
+        $this->mulai_kontrak = '';
+        $this->habis_kontrak = '';
         $this->link_sosmed = '';
         $this->biaya = '';
         $this->keterangan = '';
