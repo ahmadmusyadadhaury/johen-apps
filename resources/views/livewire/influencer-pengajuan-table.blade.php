@@ -208,7 +208,7 @@
                     <x-input-label value="Divisi *" />
                     <select wire:model="divisi" class="mt-1 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">Pilih divisi</option>
-                        @foreach(\App\Livewire\InfluencerPengajuanTable::DIVISI_OPTIONS as $divisionOption)
+                        @foreach($divisionOptions as $divisionOption)
                         <option value="{{ $divisionOption }}">{{ $divisionOption }}</option>
                         @endforeach
                     </select>

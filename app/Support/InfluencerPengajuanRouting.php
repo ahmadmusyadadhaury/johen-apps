@@ -8,6 +8,11 @@ use App\Models\User;
 
 class InfluencerPengajuanRouting
 {
+    private const DIVISI_KOL = [
+        'Admin KOL 1' => ['Johen PUBG', 'Johen Roblox', 'Johen E-Football', 'Johen FC Mobile'],
+        'Admin KOL 2' => ['Johen MLBB', 'Johen Free Fire', 'Johen Valorant', 'Monkey PUBG'],
+    ];
+
     private const DIVISI_HEAD_OF_STORE = [
         'Head of Store 1' => ['Johen PUBG', 'Johen E-Football', 'Johen FC Mobile', 'Johen Roblox'],
         'Head of Store 2' => ['Johen MLBB', 'Johen Free Fire', 'Johen Valorant', 'Monkey PUBG'],
@@ -94,9 +99,47 @@ class InfluencerPengajuanRouting
             ->count();
     }
 
-    public static function pendingCountForCoordinator(): int
+    public static function pendingCountForCoordinator(User $coordinator): int
     {
-        return InfluencerPengajuan::query()->where('status', 'pending_creative')->count();
+        return InfluencerPengajuan::query()
+            ->where('status', 'pending_creative')
+            ->with('pengaju.employee')
+            ->get()
+            ->filter(fn (InfluencerPengajuan $pengajuan) => self::isAssignedToCoordinator($pengajuan, $coordinator))
+            ->count();
+    }
+
+    public static function coordinatorPositionForSubmitter(?User $submitter): ?Position
+    {
+        $position = $submitter?->employee?->mainPosition();
+        $visited = [];
+
+        while ($position && ! isset($visited[$position->id])) {
+            $visited[$position->id] = true;
+            $position = $position->parent;
+            if ($position && preg_match('/^Koordinator Creative(?:\s+.+)?$/i', trim($position->nama))) {
+                return $position;
+            }
+        }
+
+        return null;
+    }
+
+    public static function isAssignedToCoordinator(InfluencerPengajuan $pengajuan, ?User $coordinator): bool
+    {
+        if (! $coordinator?->isKoordinatorCreative()) {
+            return false;
+        }
+
+        $assignedPosition = self::coordinatorPositionForSubmitter($pengajuan->pengaju);
+        if (! $assignedPosition) {
+            // Compatibility for organizations that have not yet split the KOL
+            // reporting lines into separate coordinator positions.
+            return true;
+        }
+
+        $coordinatorPosition = $coordinator->employee?->mainPosition();
+        return $coordinatorPosition && (int) $coordinatorPosition->id === (int) $assignedPosition->id;
     }
 
     public static function pendingCountForGeneralManager(): int
@@ -118,6 +161,22 @@ class InfluencerPengajuanRouting
         $positionName = $user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? '';
 
         return $user->isStaffCreative() && str_starts_with($positionName, 'Admin KOL');
+    }
+
+    public static function kolDivisionsForUser(?User $user): ?array
+    {
+        if (! self::isKolSubmitter($user)) {
+            return null;
+        }
+
+        $positionName = trim((string) ($user->employee?->mainPosition()?->nama ?? $user->employee?->position ?? ''));
+        foreach (self::DIVISI_KOL as $adminPosition => $divisions) {
+            if (strcasecmp($positionName, $adminPosition) === 0) {
+                return $divisions;
+            }
+        }
+
+        return [];
     }
 
     /**

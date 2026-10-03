@@ -118,11 +118,12 @@ class InfluencerTable extends Component
     protected function rules(): array
     {
         $monitoringRequired = filled($this->initialMonitoringMonth);
+        $divisionOptions = InfluencerPengajuanRouting::kolDivisionsForUser(auth()->user()) ?? self::DIVISI_OPTIONS;
 
         return [
             'no_kontrak' => 'nullable|string|max:255',
             'nama' => 'required|string|max:255',
-            'divisi' => ['required', 'in:'.implode(',', self::DIVISI_OPTIONS)],
+            'divisi' => ['required', 'in:'.implode(',', $divisionOptions)],
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
@@ -652,7 +653,7 @@ class InfluencerTable extends Component
         $showRequestTabs = $this->canSeeSubmissionTab() || $isKolSubmitter;
         $canViewMonitoring = $this->canViewInfluencerMonitoring();
         $pendingActionCount = match (true) {
-            auth()->user()->isKoordinatorCreative() => InfluencerPengajuanRouting::pendingCountForCoordinator(),
+            auth()->user()->isKoordinatorCreative() => InfluencerPengajuanRouting::pendingCountForCoordinator(auth()->user()),
             auth()->user()->isHeadOfStore() => InfluencerPengajuanRouting::pendingCountForHeadOfStore(auth()->user()),
             auth()->user()->isGmCeo() => InfluencerPengajuanRouting::pendingCountForGeneralManager(),
             default => 0,
@@ -710,10 +711,12 @@ class InfluencerTable extends Component
                 ->get()
             : collect();
 
+        $divisionOptions = InfluencerPengajuanRouting::kolDivisionsForUser(auth()->user()) ?? self::DIVISI_OPTIONS;
+
         return view('livewire.influencer-table', compact(
             'items', 'aktifCount', 'segeraHabisCount', 'tidakAktifCount',
             'upcomingPayments', 'paymentRecords', 'showRequestTabs', 'monitoringHistory',
-            'kolApprovedSubmissions', 'isKolSubmitter', 'canViewMonitoring', 'pendingActionCount',
+            'kolApprovedSubmissions', 'isKolSubmitter', 'canViewMonitoring', 'pendingActionCount', 'divisionOptions',
         ));
     }
 }

@@ -63,10 +63,11 @@ class InfluencerPengajuanTable extends Component
     protected function rules(): array
     {
         $monitoringRequired = filled($this->monitoringMonth);
+        $divisionOptions = $this->divisionOptionsForCurrentUser();
 
         return [
             'nama' => 'required|string|max:255',
-            'divisi' => ['required', 'in:'.implode(',', self::DIVISI_OPTIONS)],
+            'divisi' => ['required', 'in:'.implode(',', $divisionOptions)],
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
@@ -79,6 +80,11 @@ class InfluencerPengajuanTable extends Component
             'monitoringNotes' => 'nullable|string|max:2000',
             'monitoringBenefits' => 'nullable|string|max:5000',
         ];
+    }
+
+    private function divisionOptionsForCurrentUser(): array
+    {
+        return InfluencerPengajuanRouting::kolDivisionsForUser(auth()->user()) ?? self::DIVISI_OPTIONS;
     }
 
     protected function messages(): array
@@ -282,7 +288,7 @@ class InfluencerPengajuanTable extends Component
         $isAssignedHos = $this->isAssignedHeadOfStore($user, $pengajuan);
         $isGm = $user->isGmCeo();
 
-        if ($user->isKoordinatorCreative() && $pengajuan->status === 'pending_creative') {
+        if ($pengajuan->status === 'pending_creative' && InfluencerPengajuanRouting::isAssignedToCoordinator($pengajuan, $user)) {
             $pengajuan->update([
                 'status' => 'pending_hos1',
                 'approved_coordinator_by' => $user->id,
@@ -367,7 +373,7 @@ class InfluencerPengajuanTable extends Component
         $user = auth()->user();
         abort_unless(
             ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
-            || ($pengajuan->status === 'pending_creative' && $user->isKoordinatorCreative())
+            || ($pengajuan->status === 'pending_creative' && InfluencerPengajuanRouting::isAssignedToCoordinator($pengajuan, $user))
             || ($pengajuan->status === 'pending_gm' && $user->isGmCeo()),
             403
         );
@@ -446,7 +452,7 @@ class InfluencerPengajuanTable extends Component
     {
         $user = auth()->user();
 
-        return ($pengajuan->status === 'pending_creative' && $user->isKoordinatorCreative())
+        return ($pengajuan->status === 'pending_creative' && InfluencerPengajuanRouting::isAssignedToCoordinator($pengajuan, $user))
             || ($pengajuan->status === 'pending_hos1' && $this->isAssignedHeadOfStore($user, $pengajuan))
             || ($pengajuan->status === 'pending_gm' && $user->isGmCeo());
     }
@@ -567,11 +573,17 @@ class InfluencerPengajuanTable extends Component
         if ($user->isSuperAdminLike()) {
             // lihat semua
         } elseif ($user->isKoordinatorCreative()) {
+            $assignedPendingIds = InfluencerPengajuan::query()
+                ->where('status', 'pending_creative')
+                ->with('pengaju.employee')
+                ->get()
+                ->filter(fn (InfluencerPengajuan $item) => InfluencerPengajuanRouting::isAssignedToCoordinator($item, $user))
+                ->pluck('id');
+
             $query->where(function ($q) use ($user) {
-                $q->where('status', 'pending_creative')
-                    ->orWhere('approved_coordinator_by', $user->id)
+                $q->where('approved_coordinator_by', $user->id)
                     ->orWhere('pengaju_id', $user->id);
-            });
+            })->orWhereIn('id', $assignedPendingIds);
         } elseif ($isHos) {
             $assignedPendingIds = InfluencerPengajuan::query()
                 ->whereIn('status', ['pending_creative', 'pending_hos1'])
@@ -608,6 +620,8 @@ class InfluencerPengajuanTable extends Component
             'approved' => InfluencerPengajuan::where('status', 'approved')->count(),
         ];
 
-        return view('livewire.influencer-pengajuan-table', compact('items', 'stats'));
+        $divisionOptions = $this->divisionOptionsForCurrentUser();
+
+        return view('livewire.influencer-pengajuan-table', compact('items', 'stats', 'divisionOptions'));
     }
 }

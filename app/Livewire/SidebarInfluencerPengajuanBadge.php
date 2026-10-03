@@ -18,7 +18,7 @@ class SidebarInfluencerPengajuanBadge extends Component
     {
         $user = auth()->user();
         $total = match (true) {
-            $user?->isKoordinatorCreative() => InfluencerPengajuanRouting::pendingCountForCoordinator(),
+            $user?->isKoordinatorCreative() => InfluencerPengajuanRouting::pendingCountForCoordinator($user),
             $user?->isHeadOfStore() => InfluencerPengajuanRouting::pendingCountForHeadOfStore($user),
             $user?->isGmCeo() => InfluencerPengajuanRouting::pendingCountForGeneralManager(),
             default => 0,
