@@ -15,6 +15,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\LeaveMedicalCertificateController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\InfluencerContractFileController;
 use App\Http\Controllers\InternetController;
 use App\Http\Controllers\IplRukoController;
 use App\Http\Controllers\ItTicketController;
@@ -89,6 +90,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/influencer', function () {
             return view('influencer.index');
         })->name('influencer');
+        Route::get('/influencer/{influencer}/kontrak', [InfluencerContractFileController::class, 'show'])
+            ->name('influencer.kontrak-file');
         Route::get('/influencer/pengajuan', function () {
             if (auth()->user()->isKoordinatorCreative()) {
                 return redirect()->route('hris.influencer', ['tab' => 'pengajuan']);

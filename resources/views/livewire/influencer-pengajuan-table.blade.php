@@ -137,8 +137,19 @@
                                 @endif
                             </td>
                             <td class="table-cell">
-                                @if($this->canApprove($item) || $this->canEditSubmission($item) || $this->canDeleteSubmission($item))
+                                @if($this->canApprove($item) || $this->canEditSubmission($item) || $this->canDeleteSubmission($item) || ($item->status === 'approved' && $item->influencer?->kontrak_file_path))
                                 <div class="flex flex-wrap gap-2">
+                                    @if($item->status === 'approved' && $item->influencer?->kontrak_file_path)
+                                    <a href="{{ route('hris.influencer.kontrak-file', $item->influencer_id) }}" target="_blank" rel="noopener" class="inline-flex min-h-10 items-center rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300">Lihat File Kontrak</a>
+                                    @endif
+                                    @if($isKolSubmitter && $item->status === 'approved' && $item->influencer_id)
+                                    <input type="file" wire:model="contractFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="block max-w-44 text-[10px] text-gray-500 file:mr-1 file:rounded-md file:border-0 file:bg-gray-100 file:px-2 file:py-1 file:text-[10px] dark:text-gray-400 dark:file:bg-gray-800">
+                                    <button type="button" wire:click="uploadContractFile({{ $item->id }})" wire:loading.attr="disabled" wire:target="uploadContractFile({{ $item->id }}),contractFile" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
+                                        <span wire:loading.remove wire:target="uploadContractFile({{ $item->id }})">{{ $item->influencer?->kontrak_file_path ? 'Ganti File Kontrak' : 'Unggah Kontrak' }}</span>
+                                        <span wire:loading wire:target="uploadContractFile({{ $item->id }})">Mengunggah…</span>
+                                    </button>
+                                    @error('contractFile') <p class="max-w-44 text-[10px] text-red-600">{{ $message }}</p> @enderror
+                                    @endif
                                     @if($this->canApprove($item))
                                     <button type="button" wire:click="approve({{ $item->id }})" wire:loading.attr="disabled" wire:target="approve({{ $item->id }})" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60">
                                         <svg wire:loading wire:target="approve({{ $item->id }})" class="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -218,7 +229,7 @@
                 <div>
                     <x-input-label value="Rekomendasi Lama Kontrak *" />
                     <div class="mt-1 flex items-center gap-2">
-                        <x-text-input type="number" min="1" max="60" step="1" wire:model="rekomendasiLamaKontrak" class="block w-full" placeholder="Contoh: 6" />
+                        <x-text-input type="number" min="1" max="60" step="1" wire:model.live="rekomendasiLamaKontrak" class="block w-full" placeholder="Contoh: 6" />
                         <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
                     </div>
                     @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
@@ -227,7 +238,7 @@
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                         <x-input-label value="Kontrak Mulai" />
-                        <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
+                        <x-text-input type="date" wire:model.live="mulai_kontrak" class="mt-1 block w-full" />
                         @error('mulai_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>

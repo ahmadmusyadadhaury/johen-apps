@@ -17,6 +17,7 @@ class Influencer extends Model
         'habis_kontrak',
         'link_sosmed',
         'biaya',
+        'kontrak_file_path',
     ];
 
     protected function casts(): array

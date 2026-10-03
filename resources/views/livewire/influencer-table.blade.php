@@ -99,8 +99,17 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->influencer?->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $submission->biaya ? 'Rp '.number_format($submission->biaya, 0, ',', '.') : '-' }}</td>
                         <td class="table-cell text-center">
-                            <div class="flex items-center justify-center gap-1.5">
+                            <div class="flex flex-col items-center justify-center gap-1.5">
                                 <button type="button" wire:click="openMonitoring({{ $submission->influencer_id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button>
+                                @if($submission->influencer?->kontrak_file_path)
+                                <a href="{{ route('hris.influencer.kontrak-file', $submission->influencer_id) }}" target="_blank" rel="noopener" class="inline-flex min-h-8 items-center rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300">Lihat Kontrak</a>
+                                @endif
+                                <input type="file" wire:model="contractFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="block max-w-44 text-[10px] text-gray-500 file:mr-1 file:rounded-md file:border-0 file:bg-gray-100 file:px-2 file:py-1 file:text-[10px] dark:text-gray-400 dark:file:bg-gray-800">
+                                <button type="button" wire:click="uploadContractFile({{ $submission->influencer_id }})" wire:loading.attr="disabled" wire:target="uploadContractFile({{ $submission->influencer_id }}),contractFile" class="inline-flex min-h-8 items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
+                                    <span wire:loading.remove wire:target="uploadContractFile({{ $submission->influencer_id }})">{{ $submission->influencer?->kontrak_file_path ? 'Ganti File Kontrak' : 'Unggah Kontrak' }}</span>
+                                    <span wire:loading wire:target="uploadContractFile({{ $submission->influencer_id }})">Mengunggah…</span>
+                                </button>
+                                @error('contractFile') <p class="max-w-44 text-[10px] text-red-600">{{ $message }}</p> @enderror
                                 @if($canEditInfluencers)
                                 <button type="button" wire:click="delete({{ $submission->influencer_id }})" aria-label="Hapus influencer {{ $submission->nama }}" title="Hapus influencer" class="inline-flex min-h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:focus-visible:ring-offset-gray-900">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
@@ -121,7 +130,10 @@
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->mulai_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->habis_kontrak?->isoFormat('D MMM YYYY') ?? '-' }}</td>
                         <td class="table-cell text-gray-600 dark:text-gray-400">{{ $item->biaya ? 'Rp '.number_format($item->biaya, 0, ',', '.') : '-' }}</td>
-                        <td class="table-cell text-center"><div class="flex items-center justify-center gap-1.5"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button>
+                        <td class="table-cell text-center"><div class="flex flex-wrap items-center justify-center gap-1.5"><button type="button" wire:click="openMonitoring({{ $item->id }})" class="inline-flex min-h-8 items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:focus-visible:ring-offset-gray-900">Monitoring</button>
+                        @if($item->kontrak_file_path)
+                        <a href="{{ route('hris.influencer.kontrak-file', $item->id) }}" target="_blank" rel="noopener" class="inline-flex min-h-8 items-center rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300">Lihat Kontrak</a>
+                        @endif
                         @if($canDeleteMonitoringInfluencer)
                         <button type="button" wire:click="delete({{ $item->id }})" aria-label="Hapus influencer {{ $item->nama }}" title="Hapus influencer" class="inline-flex min-h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:focus-visible:ring-offset-gray-900">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
@@ -452,27 +464,17 @@
                         <span class="shrink-0 text-sm text-gray-500 dark:text-gray-400">bulan</span>
                     </div>
                     @error('rekomendasiLamaKontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    @if($isKolSubmitter && !$editId && filled($rekomendasiLamaKontrak) && (int) $rekomendasiLamaKontrak > 0)
-                        @php
-                            $previewStart = now()->startOfDay();
-                            $previewEnd = $previewStart->copy()->addMonthsNoOverflow((int) $rekomendasiLamaKontrak - 1);
-                        @endphp
-                        <div class="mt-2 grid grid-cols-2 gap-3 rounded-xl bg-gray-50 px-3 py-2.5 text-xs dark:bg-gray-800/70">
-                            <div><span class="block text-gray-500 dark:text-gray-400">Perkiraan tanggal mulai</span><span class="mt-0.5 block font-semibold text-gray-800 dark:text-gray-200">{{ $previewStart->isoFormat('D MMMM YYYY') }}</span></div>
-                            <div><span class="block text-gray-500 dark:text-gray-400">Perkiraan tanggal selesai</span><span class="mt-0.5 block font-semibold text-gray-800 dark:text-gray-200">{{ $previewEnd->isoFormat('D MMMM YYYY') }}</span></div>
-                        </div>
-                    @endif
                 </div>
 
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                        <x-input-label value="Kontrak Mulai" />
-                        <x-text-input type="date" wire:model="mulai_kontrak" class="mt-1 block w-full" />
+                        <x-input-label value="Kontrak Mulai *" />
+                        <x-text-input type="date" wire:model.live="mulai_kontrak" class="mt-1 block w-full" />
                         @error('mulai_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <x-input-label value="Kontrak Selesai" />
-                        <x-text-input type="date" wire:model="habis_kontrak" class="mt-1 block w-full" />
+                        <x-input-label value="Kontrak Selesai *" />
+                        <x-text-input type="date" wire:model.live="habis_kontrak" class="mt-1 block w-full" />
                         @error('habis_kontrak') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>

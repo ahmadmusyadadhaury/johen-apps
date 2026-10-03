@@ -8,6 +8,7 @@ use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class InfluencerDeletionService
 {
@@ -23,6 +24,10 @@ class InfluencerDeletionService
     public function purgeInfluencer(int $influencerId): void
     {
         DB::transaction(function () use ($influencerId): void {
+            $influencer = Influencer::query()->find($influencerId);
+            if ($influencer?->kontrak_file_path) {
+                Storage::disk('local')->delete($influencer->kontrak_file_path);
+            }
             InfluencerMonitoring::query()->where('influencer_id', $influencerId)->delete();
             InfluencerPembayaran::query()->where('influencer_id', $influencerId)->delete();
             InfluencerPengajuan::query()->where('influencer_id', $influencerId)->delete();

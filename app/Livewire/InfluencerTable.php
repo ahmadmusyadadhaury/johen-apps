@@ -8,13 +8,16 @@ use App\Models\InfluencerPengajuan;
 use App\Models\InfluencerMonitoring;
 use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Illuminate\Validation\ValidationException;
 
 class InfluencerTable extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     public bool $showModal = false;
     public string $kolFormTab = 'pengajuan';
@@ -51,6 +54,7 @@ class InfluencerTable extends Component
     public string $keterangan = '';
     public string $link_sosmed = '';
     public string $biaya = '';
+    public $contractFile = null;
     public string $initialMonitoringMonth = '';
     public string $initialMonitoringFollowers = '';
     public string $initialMonitoringViewers = '';
@@ -119,6 +123,7 @@ class InfluencerTable extends Component
     protected function rules(): array
     {
         $monitoringRequired = $this->isKolSubmitter() && ! $this->editId;
+        $contractDatesRequired = $this->isKolSubmitter() && ! $this->editId;
         $divisionOptions = InfluencerPengajuanRouting::kolDivisionsForUser(auth()->user()) ?? self::DIVISI_OPTIONS;
 
         return [
@@ -126,8 +131,8 @@ class InfluencerTable extends Component
             'nama' => 'required|string|max:255',
             'divisi' => ['required', 'in:'.implode(',', $divisionOptions)],
             'rekomendasiLamaKontrak' => 'required|integer|min:1|max:60',
-            'mulai_kontrak' => 'nullable|required_with:habis_kontrak|date',
-            'habis_kontrak' => 'nullable|required_with:mulai_kontrak|date|after_or_equal:mulai_kontrak',
+            'mulai_kontrak' => [$contractDatesRequired ? 'required' : 'nullable', 'date'],
+            'habis_kontrak' => [$contractDatesRequired ? 'required' : 'nullable', 'date', 'after_or_equal:mulai_kontrak'],
             'link_sosmed' => 'nullable|string|max:500',
             'biaya' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|string|max:1000',
@@ -151,6 +156,9 @@ class InfluencerTable extends Component
             'rekomendasiLamaKontrak.integer' => 'Lama kontrak harus berupa jumlah bulan.',
             'rekomendasiLamaKontrak.min' => 'Lama kontrak minimal 1 bulan.',
             'rekomendasiLamaKontrak.max' => 'Lama kontrak maksimal 60 bulan.',
+            'mulai_kontrak.required' => 'Tanggal kontrak mulai wajib diisi.',
+            'habis_kontrak.required' => 'Tanggal kontrak selesai wajib diisi.',
+            'habis_kontrak.after_or_equal' => 'Tanggal kontrak selesai harus sama atau setelah tanggal mulai.',
             'initialMonitoringMonth.required' => 'Bulan monitoring awal wajib diisi.',
             'initialMonitoringMonth.date_format' => 'Bulan monitoring harus berformat bulan dan tahun.',
             'initialMonitoringMonth.before_or_equal' => 'Bulan monitoring tidak boleh berada di masa depan.',
@@ -165,11 +173,32 @@ class InfluencerTable extends Component
         ];
     }
 
+    public function updated(string $propertyName): void
+    {
+        if (in_array($propertyName, ['rekomendasiLamaKontrak', 'mulai_kontrak'], true)) {
+            $this->syncContractEndDate();
+        }
+    }
+
+    private function syncContractEndDate(): void
+    {
+        if (blank($this->mulai_kontrak) || ! is_numeric($this->rekomendasiLamaKontrak) || (int) $this->rekomendasiLamaKontrak < 1) {
+            return;
+        }
+
+        $this->habis_kontrak = \Illuminate\Support\Carbon::parse($this->mulai_kontrak)
+            ->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1)
+            ->format('Y-m-d');
+    }
+
     public function openNew(): void
     {
         $this->authorizeCreate();
         $this->resetInput();
         $this->kolFormTab = 'pengajuan';
+        if ($this->isKolSubmitter()) {
+            $this->mulai_kontrak = now()->toDateString();
+        }
         $this->initialMonitoringMonth = now()->format('Y-m');
         $this->showModal = true;
     }
@@ -188,6 +217,32 @@ class InfluencerTable extends Component
         abort_unless($this->isKolSubmitter(), 403);
         $this->activeTab = 'pengajuan';
         $this->openNew();
+    }
+
+    public function uploadContractFile(int $influencerId): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+        abort_unless($this->isOwnApprovedKolInfluencer($influencerId), 403);
+
+        $this->validate([
+            'contractFile' => 'required|file|mimes:pdf,doc,docx|max:10240',
+        ], [
+            'contractFile.required' => 'Pilih file kontrak terlebih dahulu.',
+            'contractFile.mimes' => 'File kontrak harus berformat PDF, DOC, atau DOCX.',
+            'contractFile.max' => 'Ukuran file kontrak maksimal 10 MB.',
+        ]);
+
+        $influencer = Influencer::findOrFail($influencerId);
+        $oldPath = $influencer->kontrak_file_path;
+        $newPath = $this->contractFile->store('influencer-contracts', 'local');
+
+        $influencer->update(['kontrak_file_path' => $newPath]);
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
+
+        $this->contractFile = null;
+        session()->flash('message', 'File kontrak kerja berhasil diunggah.');
     }
 
     public function openEdit(int $id): void
@@ -210,7 +265,24 @@ class InfluencerTable extends Component
     public function save(): void
     {
         $this->editId ? $this->authorizeEdit() : $this->authorizeCreate();
-        $this->validate();
+        try {
+            $this->validate();
+        } catch (ValidationException $exception) {
+            $monitoringFields = [
+                'initialMonitoringMonth',
+                'initialMonitoringFollowers',
+                'initialMonitoringViewers',
+                'initialMonitoringDuration',
+                'initialMonitoringTargetDuration',
+            ];
+
+            if ($this->isKolSubmitter() && ! $this->editId
+                && array_intersect($monitoringFields, array_keys($exception->errors()))) {
+                $this->kolFormTab = 'monitoring';
+            }
+
+            throw $exception;
+        }
 
         if (!$this->editId && $this->isKolSubmitter()) {
             $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($this->divisi);

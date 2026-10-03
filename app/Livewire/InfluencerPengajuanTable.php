@@ -10,12 +10,14 @@ use App\Models\User;
 use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class InfluencerPengajuanTable extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     public bool $showModal = false;
     public bool $showKolCreateButton = false;
@@ -33,6 +35,7 @@ class InfluencerPengajuanTable extends Component
     public string $habis_kontrak = '';
     public string $link_sosmed = '';
     public string $biaya = '';
+    public $contractFile = null;
     public string $keterangan = '';
     public string $monitoringMonth = '';
     public string $monitoringFollowers = '';
@@ -111,6 +114,56 @@ class InfluencerPengajuanTable extends Component
             'monitoringTargetDuration.required' => 'Target durasi wajib diisi bila bulan monitoring dipilih.',
             'monitoringTargetDuration.numeric' => 'Target durasi harus berupa angka.',
         ];
+    }
+
+    public function updated(string $propertyName): void
+    {
+        if (in_array($propertyName, ['rekomendasiLamaKontrak', 'mulai_kontrak'], true)) {
+            $this->syncContractEndDate();
+        }
+    }
+
+    private function syncContractEndDate(): void
+    {
+        if (blank($this->mulai_kontrak) || ! is_numeric($this->rekomendasiLamaKontrak) || (int) $this->rekomendasiLamaKontrak < 1) {
+            return;
+        }
+
+        $this->habis_kontrak = \Illuminate\Support\Carbon::parse($this->mulai_kontrak)
+            ->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1)
+            ->format('Y-m-d');
+    }
+
+    public function uploadContractFile(int $pengajuanId): void
+    {
+        abort_unless($this->isKolSubmitter(), 403);
+
+        $pengajuan = InfluencerPengajuan::query()
+            ->whereKey($pengajuanId)
+            ->where('pengaju_id', auth()->id())
+            ->where('status', 'approved')
+            ->whereNotNull('influencer_id')
+            ->firstOrFail();
+
+        $this->validate([
+            'contractFile' => 'required|file|mimes:pdf,doc,docx|max:10240',
+        ], [
+            'contractFile.required' => 'Pilih file kontrak terlebih dahulu.',
+            'contractFile.mimes' => 'File kontrak harus berformat PDF, DOC, atau DOCX.',
+            'contractFile.max' => 'Ukuran file kontrak maksimal 10 MB.',
+        ]);
+
+        $influencer = Influencer::findOrFail($pengajuan->influencer_id);
+        $oldPath = $influencer->kontrak_file_path;
+        $newPath = $this->contractFile->store('influencer-contracts', 'local');
+
+        $influencer->update(['kontrak_file_path' => $newPath]);
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
+
+        $this->contractFile = null;
+        session()->flash('message', 'File kontrak kerja berhasil diunggah.');
     }
 
     public function openNew(): void
@@ -582,7 +635,7 @@ class InfluencerPengajuanTable extends Component
         $isHos = $user->isHeadOfStore();
         $isGm = $user->isGmCeo();
 
-        $query = InfluencerPengajuan::with('pengaju', 'approverCoordinator', 'approverHos1', 'approverGm', 'rejector', 'assignedHosPosition');
+        $query = InfluencerPengajuan::with('pengaju', 'approverCoordinator', 'approverHos1', 'approverGm', 'rejector', 'assignedHosPosition', 'influencer');
 
         if ($user->isSuperAdminLike()) {
             // lihat semua
@@ -635,7 +688,8 @@ class InfluencerPengajuanTable extends Component
         ];
 
         $divisionOptions = $this->divisionOptionsForCurrentUser();
+        $isKolSubmitter = $this->isKolSubmitter();
 
-        return view('livewire.influencer-pengajuan-table', compact('items', 'stats', 'divisionOptions'));
+        return view('livewire.influencer-pengajuan-table', compact('items', 'stats', 'divisionOptions', 'isKolSubmitter'));
     }
 }
