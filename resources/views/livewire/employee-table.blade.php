@@ -592,11 +592,6 @@
                             </select>
                             <x-input-error :messages="$errors->get('informasi_lowongan')" class="mt-2" />
                         </div>
-                        <div>
-                            <x-input-label for="create-device_user_id" value="Device User ID" />
-                            <x-text-input id="create-device_user_id" wire:model="device_user_id" type="text" class="mt-1 block w-full {{ $errors->has('device_user_id') ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : '' }}" placeholder="001" />
-                            <x-input-error :messages="$errors->get('device_user_id')" class="mt-2" />
-                        </div>
                     </div>
                     <hr class="border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Kontak Darurat</p>
@@ -1267,7 +1262,6 @@
                             @endif
                         </span></div>
                         <div class="preview-field"><span class="preview-label">Informasi Lowongan</span><span class="preview-value">{{ $informasi_lowongan ? ucfirst($informasi_lowongan) : '-' }}</span></div>
-                        <div class="preview-field"><span class="preview-label">Device User ID</span><span class="preview-value">{{ $device_user_id ?: '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kontak Darurat 1</span><span class="preview-value">{{ $no_kontak_darurat1 ? $no_kontak_darurat1 . ' (' . $hubungan_darurat1 . ')' : '-' }}</span></div>
                         <div class="preview-field"><span class="preview-label">Kontak Darurat 2</span><span class="preview-value">{{ $no_kontak_darurat2 ? $no_kontak_darurat2 . ' (' . $hubungan_darurat2 . ')' : '-' }}</span></div>
                         <div class="preview-field sm:col-span-2 lg:col-span-3"><span class="preview-label">Catatan</span><span class="preview-value whitespace-pre-line">{{ $catatan ?: '-' }}</span></div>
