@@ -471,7 +471,6 @@ class EmployeeTable extends Component
 
     public function confirmPreview(): void
     {
-        $this->validate($this->rules());
         $this->showPreview = true;
     }
 
