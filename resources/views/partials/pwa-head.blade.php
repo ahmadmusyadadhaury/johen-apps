@@ -16,7 +16,7 @@
 {{-- Ikon. favicon.ico bawaan tidak dipakai karena 0 byte --}}
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('pwa/favicon-32.png') }}">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('pwa/icon-192.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('pwa/apple-touch-icon.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('pwa/apple-touch-icon.png') }}?v={{ md5_file(public_path('pwa/apple-touch-icon.png')) }}">
 
 {{-- Warna UI browser. Satu untuk light & dark karena standalone PWA butuh
      warna stabil; warna biru brand dipakai untuk keduanya. --}}
