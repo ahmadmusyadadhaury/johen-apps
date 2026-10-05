@@ -28,7 +28,7 @@ class GeneratePwaAssets extends Command
 
     /**
      * [nama file, ukuran, skala tinggi logo]
-     * Semua ikon menggunakan logo asli di atas kanvas transparan. Skala maskable
+     * Semua ikon memakai latar putih polos dan artwork logo asli. Skala maskable
      * lebih kecil agar artwork tetap di zona aman saat launcher memotong ikon.
      */
     private const ICONS = [
@@ -121,6 +121,7 @@ class GeneratePwaAssets extends Command
 
         foreach (self::ICONS as [$name, $size, $logoScale]) {
             $canvas = $this->makeCanvas($size, $size);
+            $this->paintBase($canvas, $size, $size);
 
             $targetH = (int) round($size * $logoScale);
             $this->drawLogo($canvas, $logo, (int) ($size / 2), (int) ($size / 2), $targetH);
