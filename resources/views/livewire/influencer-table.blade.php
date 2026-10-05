@@ -431,15 +431,15 @@
                 </button>
             </div>
 
-            @if($isKolSubmitter && !$editId)
-            <div class="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800" role="tablist" aria-label="Form pengajuan influencer">
-                <button type="button" role="tab" aria-selected="{{ $kolFormTab === 'pengajuan' ? 'true' : 'false' }}" wire:click="switchKolFormTab('pengajuan')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $kolFormTab === 'pengajuan' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">Pengajuan Influencer</button>
+            @if(($isKolSubmitter && !$editId) || $editId)
+            <div class="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800" role="tablist" aria-label="Form influencer">
+                <button type="button" role="tab" aria-selected="{{ $kolFormTab === 'pengajuan' ? 'true' : 'false' }}" wire:click="switchKolFormTab('pengajuan')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $kolFormTab === 'pengajuan' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">{{ $editId ? 'Data Awal' : 'Pengajuan Influencer' }}</button>
                 <button type="button" role="tab" aria-selected="{{ $kolFormTab === 'monitoring' ? 'true' : 'false' }}" wire:click="switchKolFormTab('monitoring')" class="rounded-lg px-3 py-2.5 text-sm font-semibold transition {{ $kolFormTab === 'monitoring' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' }}">Monitoring Awal</button>
             </div>
             @endif
 
             <form wire:submit.prevent="save" class="space-y-4">
-                @if(!$isKolSubmitter || $editId || $kolFormTab === 'pengajuan')
+                @if((!$isKolSubmitter && !$editId) || $kolFormTab === 'pengajuan')
                 <div>
                     <x-input-label value="Nama Influencer *" />
                     <x-text-input type="text" wire:model="nama" class="mt-1 block w-full" placeholder="Nama influencer" />
@@ -502,15 +502,18 @@
                 @endunless
                 @endif
 
-                @if($isKolSubmitter && !$editId)
-                @if($kolFormTab === 'monitoring')
+                @if($kolFormTab === 'monitoring' && ($isKolSubmitter || $editId))
                 <div class="rounded-2xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900/50 dark:bg-primary-950/20">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Monitoring Awal</h4>
-                        <span class="text-[11px] font-medium uppercase tracking-wide text-red-600 dark:text-red-400">Wajib diisi</span>
+                        <span class="text-[11px] font-medium uppercase tracking-wide {{ $isKolSubmitter && !$editId ? 'text-red-600 dark:text-red-400' : 'text-primary-700 dark:text-primary-300' }}">{{ $isKolSubmitter && !$editId ? 'Wajib diisi' : 'Opsional' }}</span>
                     </div>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Lengkapi data ini sebagai monitoring pertama influencer. Pengajuan tidak dapat dikirim sebelum semua data monitoring terisi.
+                        @if($editId)
+                            Perbarui monitoring awal influencer atau biarkan kosong bila tidak ada perubahan.
+                        @else
+                            Lengkapi data ini sebagai monitoring pertama influencer. Pengajuan tidak dapat dikirim sebelum semua data monitoring terisi.
+                        @endif
                     </p>
 
                     <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -551,7 +554,6 @@
                         </div>
                     </div>
                 </div>
-                @endif
                 @endif
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">

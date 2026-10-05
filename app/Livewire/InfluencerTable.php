@@ -122,7 +122,8 @@ class InfluencerTable extends Component
 
     protected function rules(): array
     {
-        $monitoringRequired = $this->isKolSubmitter() && ! $this->editId;
+        $monitoringRequired = ($this->isKolSubmitter() && ! $this->editId)
+            || ($this->editId && $this->kolFormTab === 'monitoring' && filled($this->initialMonitoringMonth));
         $contractDatesRequired = $this->isKolSubmitter() && ! $this->editId;
         $divisionOptions = InfluencerPengajuanRouting::kolDivisionsForUser(auth()->user()) ?? self::DIVISI_OPTIONS;
 
@@ -206,7 +207,12 @@ class InfluencerTable extends Component
     public function switchKolFormTab(string $tab): void
     {
         abort_unless(in_array($tab, ['pengajuan', 'monitoring'], true), 404);
-        abort_unless($this->isKolSubmitter() && ! $this->editId, 403);
+
+        if ($this->editId) {
+            $this->authorizeEdit();
+        } else {
+            abort_unless($this->isKolSubmitter(), 403);
+        }
 
         $this->kolFormTab = $tab;
     }
@@ -250,6 +256,7 @@ class InfluencerTable extends Component
         $this->authorizeEdit();
         $item = Influencer::findOrFail($id);
         $this->editId = $item->id;
+        $this->kolFormTab = 'pengajuan';
         $this->no_kontrak = $item->no_kontrak;
         $this->nama = $item->nama;
         $this->mulai_kontrak = $item->mulai_kontrak->format('Y-m-d');
@@ -259,6 +266,14 @@ class InfluencerTable extends Component
         $this->link_sosmed = $item->link_sosmed ?? '';
         $this->biaya = $item->biaya ? (string) $item->biaya : '';
         $this->keterangan = $item->keterangan ?? '';
+        $initialMonitoring = $item->monitorings()->orderBy('period_month')->first();
+        $this->initialMonitoringMonth = $initialMonitoring?->period_month?->format('Y-m') ?? '';
+        $this->initialMonitoringFollowers = $initialMonitoring?->followers !== null ? (string) $initialMonitoring->followers : '';
+        $this->initialMonitoringViewers = $initialMonitoring?->viewers_last_month !== null ? (string) $initialMonitoring->viewers_last_month : '';
+        $this->initialMonitoringDuration = $initialMonitoring?->duration_hours !== null ? (string) $initialMonitoring->duration_hours : '';
+        $this->initialMonitoringTargetDuration = $initialMonitoring?->target_duration_hours !== null ? (string) $initialMonitoring->target_duration_hours : '130';
+        $this->initialMonitoringNotes = $initialMonitoring?->notes ?? '';
+        $this->initialMonitoringBenefits = $initialMonitoring?->benefits ?? '';
         $this->showModal = true;
     }
 
@@ -276,9 +291,11 @@ class InfluencerTable extends Component
                 'initialMonitoringTargetDuration',
             ];
 
-            if ($this->isKolSubmitter() && ! $this->editId
-                && array_intersect($monitoringFields, array_keys($exception->errors()))) {
+            $hasMonitoringErrors = array_intersect($monitoringFields, array_keys($exception->errors()));
+            if ($hasMonitoringErrors) {
                 $this->kolFormTab = 'monitoring';
+            } elseif ($this->kolFormTab === 'monitoring') {
+                $this->kolFormTab = 'pengajuan';
             }
 
             throw $exception;
@@ -329,6 +346,22 @@ class InfluencerTable extends Component
                 'biaya' => $this->biaya ?: null,
                 'keterangan' => $this->keterangan ?: null,
             ]);
+            if ($this->kolFormTab === 'monitoring' && filled($this->initialMonitoringMonth)) {
+                InfluencerMonitoring::updateOrCreate(
+                    [
+                        'influencer_id' => $item->id,
+                        'period_month' => $this->initialMonitoringMonth.'-01',
+                    ],
+                    [
+                        'followers' => $this->initialMonitoringFollowers,
+                        'viewers_last_month' => $this->initialMonitoringViewers,
+                        'duration_hours' => $this->initialMonitoringDuration,
+                        'target_duration_hours' => $this->initialMonitoringTargetDuration,
+                        'notes' => $this->initialMonitoringNotes ?: null,
+                        'benefits' => $this->initialMonitoringBenefits ?: null,
+                    ],
+                );
+            }
             session()->flash('message', 'Data influencer berhasil diperbarui.');
         } else {
             $influencer = Influencer::create([

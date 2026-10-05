@@ -27,19 +27,17 @@ class GeneratePwaAssets extends Command
     private const BASE_LIGHT = [255, 255, 255];  // #FFFFFF, background polos ikon & splash
 
     /**
-     * [nama file, ukuran, gaya]
-     * - plain      : background solid, logo sebesar $logoScale dari tinggi kanvas
-     * - glow       : background + glow radial, untuk icon utama
-     * - maskable   : background full-bleed, logo dikecilkan agar aman di circular safe zone Android
-     * - transparent : tanpa background sama sekali, hanya logo. Untuk favicon.
+     * [nama file, ukuran, skala tinggi logo]
+     * Semua ikon menggunakan logo asli di atas kanvas transparan. Skala maskable
+     * lebih kecil agar artwork tetap di zona aman saat launcher memotong ikon.
      */
     private const ICONS = [
-        ['icon-192.png', 192, 'glow', 0.70],
-        ['icon-512.png', 512, 'glow', 0.70],
-        ['icon-maskable-192.png', 192, 'maskable', 0.62],
-        ['icon-maskable-512.png', 512, 'maskable', 0.62],
-        ['apple-touch-icon.png', 180, 'glow', 0.74],
-        ['favicon-32.png', 32, 'transparent', 0.88],
+        ['icon-192.png', 192, 0.70],
+        ['icon-512.png', 512, 0.70],
+        ['icon-maskable-192.png', 192, 0.62],
+        ['icon-maskable-512.png', 512, 0.62],
+        ['apple-touch-icon.png', 180, 0.74],
+        ['favicon-32.png', 32, 0.88],
     ];
 
     /**
@@ -96,8 +94,9 @@ class GeneratePwaAssets extends Command
 
         $this->line("  Setelah trim : {$logoW}x{$logoH} (rasio ".round($logoW / $logoH, 3).')');
 
+        // Versi gelap hanya dipakai splash screen, yang memang memiliki latar putih.
+        // Ikon launcher memakai logo asli agar putihnya tetap putih.
         $logoDark = $this->darkenForLightBase($logo);
-        $this->line('  Penyesuaian  : logo digelapkan agar kontras di base putih');
 
         if ($logoW < 512 || $logoH < 512) {
             $this->components->warn(
@@ -120,18 +119,11 @@ class GeneratePwaAssets extends Command
         $bar = $this->output->createProgressBar(count(self::ICONS) + count(self::SPLASHES));
         $bar->start();
 
-        foreach (self::ICONS as [$name, $size, $style, $logoScale]) {
+        foreach (self::ICONS as [$name, $size, $logoScale]) {
             $canvas = $this->makeCanvas($size, $size);
 
-            if ($style === 'glow') {
-                $this->paintBase($canvas, $size, $size);
-                $this->paintGlow($canvas, (int) ($size / 2), (int) ($size * 0.44), (int) ($size * 0.62), 0.42);
-            } elseif ($style !== 'transparent') {
-                $this->paintBase($canvas, $size, $size);
-            }
-
             $targetH = (int) round($size * $logoScale);
-            $this->drawLogo($canvas, $style === 'transparent' ? $logo : $logoDark, (int) ($size / 2), (int) ($size / 2), $targetH);
+            $this->drawLogo($canvas, $logo, (int) ($size / 2), (int) ($size / 2), $targetH);
 
             $this->writePng($canvas, $outDir.DIRECTORY_SEPARATOR.$name);
             imagedestroy($canvas);
