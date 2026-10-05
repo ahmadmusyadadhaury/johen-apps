@@ -129,7 +129,7 @@ class EmployeeController extends Controller
         $divisions = Division::orderBy('nama')->get();
         $jenisDokumenList = ['KTP', 'KK', 'NPWP', 'Ijazah', 'Sertifikat', 'Kontrak', 'SK', 'Lainnya'];
         $allPositions = Position::where('is_active', true)->orderBy('nama')->get();
-        $atasanOptions = Employee::ATASAN_OPTIONS;
+        $atasanOptions = Employee::atasanOptions();
 
         $contracts = $employee->contracts->whereNotNull('tanggal_mulai');
         $earliestContract = $contracts->sortBy('tanggal_mulai')->first();
