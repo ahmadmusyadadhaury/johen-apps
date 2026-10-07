@@ -165,9 +165,11 @@ class AttendanceExportController extends Controller
         $sheet->freezePane('C3');
 
         $filename = 'presensi_'.$period.'_'.$start->format('Ymd').'_sampai_'.$end->format('Ymd').'.xlsx';
-        $temp = tempnam(sys_get_temp_dir(), 'presensi_');
-        (new Xlsx($spreadsheet))->save($temp);
 
-        return response()->download($temp, $filename)->deleteFileAfterSend(true);
+        return response()->streamDownload(
+            fn () => (new Xlsx($spreadsheet))->save('php://output'),
+            $filename,
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        );
     }
 }
