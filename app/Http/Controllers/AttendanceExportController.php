@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class AttendanceExportController extends Controller
@@ -20,10 +23,20 @@ class AttendanceExportController extends Controller
 
         $filters = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
+            'period' => ['nullable', 'in:week,month'],
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $date = Carbon::createFromFormat('Y-m-d', $filters['date'])->startOfDay();
+        $period = $filters['period'] ?? 'week';
+        $start = Carbon::createFromFormat('Y-m-d', $filters['date'])->startOfDay();
+        $end = $period === 'month'
+            ? $start->copy()->endOfMonth()->startOfDay()
+            : $start->copy()->addDays(6)->startOfDay();
+        $dates = [];
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $dates[] = $day->copy();
+        }
+
         $employees = Employee::query()
             ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
             ->listSelect()
@@ -37,95 +50,121 @@ class AttendanceExportController extends Controller
             ->get();
 
         $employeeIds = $employees->pluck('id');
-        $attendances = Attendance::with('employee')
+        // The export no longer uses employee relations here. Eager-loading them
+        // also loads employee photos (stored as base64) repeatedly for every
+        // attendance row, which can exceed PHP's memory limit on monthly exports.
+        $attendanceByDay = Attendance::query()
             ->whereIn('employee_id', $employeeIds)
-            ->whereDate('date', $date->toDateString())
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->get()
-            ->keyBy('employee_id');
+            ->keyBy(fn (Attendance $attendance) => $attendance->employee_id.'|'.$attendance->date->toDateString());
 
-        // Ikuti jendela detail presensi: punch sebelum pukul 07.00 esok hari
-        // masih dapat menjadi checkout untuk tanggal kerja yang dipilih.
-        $punchesByEmployee = AttendancePunch::query()
+        // For each work date, include the configured early-morning checkout window.
+        // The preceding date owns these overnight punches, matching the current daily export.
+        $overnightHour = (int) config('attendance.overnight_latest_checkout_hour', 7);
+        $punches = AttendancePunch::query()
             ->whereIn('employee_id', $employeeIds)
-            ->where('punch_at', '>=', $date)
-            ->where('punch_at', '<', $date->copy()->addDay()->setTime(
-                (int) config('attendance.overnight_latest_checkout_hour', 7), 0
-            ))
+            ->where('punch_at', '>=', $start)
+            ->where('punch_at', '<', $end->copy()->addDay()->setTime($overnightHour, 0))
             ->orderBy('punch_at')
             ->get()
-            ->groupBy('employee_id');
+            ->groupBy(function (AttendancePunch $punch) use ($overnightHour) {
+                $workDate = $punch->punch_at->copy();
+                if ((int) $workDate->format('G') < $overnightHour) {
+                    $workDate->subDay();
+                }
+
+                return $punch->employee_id.'|'.$workDate->toDateString();
+            });
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Presensi');
+        $lastColumn = Coordinate::stringFromColumnIndex(2 + count($dates) * 2);
 
-        $headers = ['NIP', 'Nama Pegawai', 'Jabatan', 'Jam Masuk', 'Jam Keluar', 'Durasi Kerja', 'Status'];
-        foreach ($headers as $index => $header) {
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($index + 1).'1', $header);
+        $sheet->setCellValue('A1', 'Nama');
+        $sheet->setCellValue('B1', 'No.ID');
+        $sheet->mergeCells('A1:A2');
+        $sheet->mergeCells('B1:B2');
+        foreach ($dates as $index => $day) {
+            $firstColumn = Coordinate::stringFromColumnIndex(3 + $index * 2);
+            $secondColumn = Coordinate::stringFromColumnIndex(4 + $index * 2);
+            $sheet->setCellValue($firstColumn.'1', $day->format('d/m/Y'));
+            $sheet->mergeCells($firstColumn.'1:'.$secondColumn.'1');
+            $sheet->setCellValue($firstColumn.'2', 'In');
+            $sheet->setCellValue($secondColumn.'2', 'Out');
         }
 
-        $row = 2;
+        $row = 3;
         $duplicateWindow = (int) config('attendance.tap_duplicate_window_seconds', 180);
-
         foreach ($employees as $employee) {
-            $attendance = $attendances->get($employee->id);
-            $punches = $punchesByEmployee->get($employee->id, collect());
+            $sheet->setCellValue('A'.$row, $employee->nama ?? '-');
+            $sheet->setCellValueExplicit('B'.$row, (string) ($employee->nik ?? '-'), DataType::TYPE_STRING);
 
-            // Satu cluster tap berulang dihitung sebagai satu kejadian.
-            $times = [];
-            $previousPunchAt = null;
-            foreach ($punches as $punch) {
-                $punchTimestamp = $punch->punch_at->getTimestamp();
-                if ($previousPunchAt !== null && $punchTimestamp - $previousPunchAt < $duplicateWindow) {
-                    $previousPunchAt = $punchTimestamp;
-                    continue;
+            foreach ($dates as $index => $day) {
+                $key = $employee->id.'|'.$day->toDateString();
+                $attendance = $attendanceByDay->get($key);
+                $dayPunches = $punches->get($key, collect());
+
+                // Collapse rapid repeated scans, then alternate arrival/departure as in the daily export.
+                $times = [];
+                $previousPunchAt = null;
+                foreach ($dayPunches as $punch) {
+                    $timestamp = $punch->punch_at->getTimestamp();
+                    if ($previousPunchAt !== null && $timestamp - $previousPunchAt < $duplicateWindow) {
+                        $previousPunchAt = $timestamp;
+                        continue;
+                    }
+                    $times[] = $punch->punch_at->format('H:i');
+                    $previousPunchAt = $timestamp;
                 }
 
-                $times[] = $punch->punch_at->format('H:i');
-                $previousPunchAt = $punchTimestamp;
-            }
-
-            $inTimes = [];
-            $outTimes = [];
-            $startsWithCheckout = $attendance && ! $attendance->time_in && $attendance->time_out;
-            foreach ($times as $index => $time) {
-                $isCheckIn = ($index % 2 === 0) !== (bool) $startsWithCheckout;
-                if ($isCheckIn) {
-                    $inTimes[] = (count($inTimes) + 1).'. '.$time;
-                } else {
-                    $outTimes[] = (count($outTimes) + 1).'. '.$time;
+                $startsWithCheckout = $attendance && ! $attendance->time_in && $attendance->time_out;
+                $inTimes = [];
+                $outTimes = [];
+                foreach ($times as $tapIndex => $time) {
+                    $isCheckIn = ($tapIndex % 2 === 0) !== (bool) $startsWithCheckout;
+                    if ($isCheckIn) {
+                        $inTimes[] = $time;
+                    } else {
+                        $outTimes[] = $time;
+                    }
                 }
+
+                // The screenshot layout has one value per In/Out cell: first arrival and last departure.
+                $in = $inTimes[0] ?? ($attendance?->time_in ? Carbon::parse($attendance->time_in)->format('H:i') : '-');
+                $out = $outTimes ? end($outTimes) : ($attendance?->time_out ? Carbon::parse($attendance->time_out)->format('H:i') : '-');
+                $inColumn = Coordinate::stringFromColumnIndex(3 + $index * 2);
+                $outColumn = Coordinate::stringFromColumnIndex(4 + $index * 2);
+                $sheet->setCellValue($inColumn.$row, $in);
+                $sheet->setCellValue($outColumn.$row, $out);
             }
-
-            // Bila punch mentah belum tersedia, tetap tampilkan ringkasan
-            // presensi yang tersimpan.
-            $jamMasuk = $inTimes ? implode("\n", $inTimes) : ($attendance?->time_in ? Carbon::parse($attendance->time_in)->format('H:i') : '-');
-            $jamKeluar = $outTimes ? implode("\n", $outTimes) : ($attendance?->time_out ? Carbon::parse($attendance->time_out)->format('H:i') : '-');
-            $status = $attendance?->displayStatusForViewer(true)
-                ?? ($employee->isWeeklyDayOff($date) ? 'libur' : 'tidak hadir');
-
-            $sheet->setCellValueExplicit('A'.$row, (string) ($employee->nik ?? '-'), DataType::TYPE_STRING);
-            $sheet->setCellValue('B'.$row, $employee->nama ?? '-');
-            $sheet->setCellValue('C'.$row, $employee->position ?? '-');
-            $sheet->setCellValue('D'.$row, $jamMasuk);
-            $sheet->setCellValue('E'.$row, $jamKeluar);
-            $sheet->setCellValue('F'.$row, $attendance?->duration ?? '-');
-            $sheet->setCellValue('G'.$row, $status);
             $row++;
         }
 
-        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:G1')->getFill()->setFillType('solid')->getStartColor()->setARGB('FFEFF6FF');
-        if ($row > 2) {
-            $sheet->getStyle('D2:E'.($row - 1))->getAlignment()->setWrapText(true)->setVertical('top');
-            $sheet->getAutoFilter()->setRange('A1:G'.($row - 1));
+        $headerRange = 'A1:'.$lastColumn.'2';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF263648');
+        $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A3:B'.max(3, $row - 1))->getFont()->setBold(true);
+        $sheet->getStyle('A3:'.$lastColumn.max(3, $row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD7E0E8');
+        $sheet->getStyle('C3:'.$lastColumn.max(3, $row - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        for ($index = 0; $index < count($dates); $index++) {
+            $inColumn = Coordinate::stringFromColumnIndex(3 + $index * 2);
+            $outColumn = Coordinate::stringFromColumnIndex(4 + $index * 2);
+            $sheet->getStyle($inColumn.'3:'.$inColumn.max(3, $row - 1))->getFont()->getColor()->setARGB('FF47735D');
+            $sheet->getStyle($outColumn.'3:'.$outColumn.max(3, $row - 1))->getFont()->getColor()->setARGB('FFB46A6A');
         }
-        foreach (['A' => 16, 'B' => 30, 'C' => 28, 'D' => 18, 'E' => 18, 'F' => 16, 'G' => 18] as $column => $width) {
-            $sheet->getColumnDimension($column)->setWidth($width);
+        $sheet->getRowDimension(1)->setRowHeight(25);
+        $sheet->getRowDimension(2)->setRowHeight(23);
+        $sheet->getColumnDimension('A')->setWidth(36);
+        $sheet->getColumnDimension('B')->setWidth(10);
+        for ($column = 3; $column <= 2 + count($dates) * 2; $column++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($column))->setWidth(10);
         }
-        $sheet->freezePane('A2');
+        $sheet->freezePane('C3');
 
-        $filename = 'presensi_'.$date->format('Ymd').'.xlsx';
+        $filename = 'presensi_'.$period.'_'.$start->format('Ymd').'_sampai_'.$end->format('Ymd').'.xlsx';
         $temp = tempnam(sys_get_temp_dir(), 'presensi_');
         (new Xlsx($spreadsheet))->save($temp);
 

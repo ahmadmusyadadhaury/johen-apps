@@ -19,6 +19,10 @@ class AbsensiTable extends Component
 
     public string $date = '';
 
+    public string $exportPeriod = 'week';
+
+    public string $exportMonth = '';
+
     public string $search = '';
 
     public string $tab = 'saya';
@@ -57,6 +61,8 @@ class AbsensiTable extends Component
         if ($this->date === '') {
             $this->date = now()->format('Y-m-d');
         }
+
+        $this->exportMonth = Carbon::parse($this->date)->format('m');
 
         $this->refreshPeriod();
 
@@ -117,6 +123,20 @@ class AbsensiTable extends Component
     public function updatingDate(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedDate(string $value): void
+    {
+        if ($this->exportPeriod === 'week' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            $this->exportMonth = Carbon::parse($value)->format('m');
+        }
+    }
+
+    public function updatedExportPeriod(string $value): void
+    {
+        if ($value === 'month' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->date)) {
+            $this->exportMonth = Carbon::parse($this->date)->format('m');
+        }
     }
 
     public function updatedJamKerja($value): void

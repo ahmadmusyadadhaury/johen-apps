@@ -122,21 +122,21 @@
                     @endif
                     <div class="relative flex-1 sm:flex-none">
                         <label for="presensi-filter-bulan" class="sr-only">Pilih bulan presensi</label>
-                        <select id="presensi-filter-bulan" x-on:change="$wire.setBulan($event.target.value)" class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-9 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:min-h-0 sm:rounded-lg sm:py-2 sm:font-medium">
+                        <select id="presensi-filter-bulan" x-on:change="$wire.setBulan($event.target.value)" class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-10 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:min-h-0 sm:rounded-lg sm:py-2 sm:font-medium" style="appearance:none;-webkit-appearance:none;background-image:none">
                             @foreach($monthOptions as $opt)
                                 <option value="{{ $opt['value'] }}" {{ (string) $opt['value'] === (string) $bulan ? 'selected' : '' }}>{{ $opt['label'] }}</option>
                             @endforeach
                         </select>
-                        <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                        <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="m6 9 6 6 6-6"/></svg>
                     </div>
                     <div class="relative flex-1 sm:flex-none">
                         <label for="presensi-filter-tahun" class="sr-only">Pilih tahun presensi</label>
-                        <select id="presensi-filter-tahun" x-on:change="$wire.setTahun($event.target.value)" class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-9 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:min-h-0 sm:rounded-lg sm:py-2 sm:font-medium sm:min-w-[5rem]">
+                        <select id="presensi-filter-tahun" x-on:change="$wire.setTahun($event.target.value)" class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-3 pr-10 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:min-h-0 sm:rounded-lg sm:py-2 sm:font-medium sm:min-w-[5rem]" style="appearance:none;-webkit-appearance:none;background-image:none">
                             @foreach($yearOptions as $opt)
                                 <option value="{{ $opt['value'] }}" {{ (string) $opt['value'] === (string) $tahun ? 'selected' : '' }}>{{ $opt['label'] }}</option>
                             @endforeach
                         </select>
-                        <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                        <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="m6 9 6 6 6-6"/></svg>
                     </div>
                 </div>
             </div>
@@ -414,17 +414,49 @@
                     </div>
 
                     <div class="w-full sm:w-auto">
-                        <label for="presensi-date" class="sr-only">Pilih tanggal presensi</label>
-                        <input
-                            id="presensi-date"
-                            type="date"
-                            wire:model.live="date"
-                            class="w-full min-h-11 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:w-auto sm:text-xs"
-                        >
+                        @if(auth()->user()->isSuperAdmin() && !$karyawanView && $tab === 'tim' && $exportPeriod === 'month')
+                            <div class="relative">
+                                <label for="presensi-export-month" class="sr-only">Pilih bulan export presensi</label>
+                                <select
+                                    id="presensi-export-month"
+                                    wire:model.live="exportMonth"
+                                    class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-10 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500 sm:w-auto sm:text-xs"
+                                    style="appearance:none;-webkit-appearance:none;background-image:none"
+                                >
+                                    @foreach(range(1, 12) as $month)
+                                        <option value="{{ str_pad((string) $month, 2, '0', STR_PAD_LEFT) }}" @selected($exportMonth === str_pad((string) $month, 2, '0', STR_PAD_LEFT))>
+                                            {{ \Carbon\Carbon::createFromDate((int) \Carbon\Carbon::parse($today)->format('Y'), $month, 1)->locale('id')->isoFormat('MMMM') }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        @else
+                            <label for="presensi-date" class="sr-only">Pilih tanggal presensi</label>
+                            <input
+                                id="presensi-date"
+                                type="date"
+                                wire:model.live="date"
+                                class="w-full min-h-11 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:w-auto sm:text-xs"
+                            >
+                        @endif
                     </div>
 
                     @if(auth()->user()->isSuperAdmin() && !$karyawanView && $tab === 'tim')
-                        <a href="{{ route('hris.absensi.export', ['date' => $today, 'search' => $search]) }}"
+                        <div class="relative w-full sm:w-auto">
+                            <label for="presensi-export-period" class="sr-only">Pilih periode export presensi</label>
+                            <select
+                                id="presensi-export-period"
+                                wire:model.live="exportPeriod"
+                                class="w-full min-h-11 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-10 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500 sm:w-auto sm:text-xs"
+                                style="appearance:none;-webkit-appearance:none;background-image:none"
+                            >
+                                <option value="week">Mingguan</option>
+                                <option value="month">Bulanan</option>
+                            </select>
+                            <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                        <a href="{{ route('hris.absensi.export', ['date' => $exportPeriod === 'month' ? \Carbon\Carbon::parse($today)->format('Y').'-'.str_pad($exportMonth, 2, '0', STR_PAD_LEFT).'-01' : $today, 'period' => $exportPeriod, 'search' => $search]) }}"
                             class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:w-auto sm:text-xs"
                             title="Export presensi ke Excel">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16.5V3.75m0 12.75l-4.5-4.5m4.5 4.5l4.5-4.5M3.75 16.5v3.75h16.5V16.5"/></svg>
