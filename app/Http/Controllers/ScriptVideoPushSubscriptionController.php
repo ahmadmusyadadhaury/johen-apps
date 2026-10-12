@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ScriptVideoPushSubscription;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class ScriptVideoPushSubscriptionController extends Controller
+{
+    public function config(Request $request): JsonResponse
+    {
+        $this->authorizeCoordinator($request);
+
+        $publicKey = (string) config('webpush.public_key');
+
+        return response()->json([
+            'available' => $publicKey !== '' && (string) config('webpush.private_key') !== '',
+            'publicKey' => $publicKey,
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $this->authorizeCoordinator($request);
+
+        $data = $request->validate([
+            'endpoint' => ['required', 'url', 'max:2048'],
+            'keys.p256dh' => ['required', 'string', 'max:255'],
+            'keys.auth' => ['required', 'string', 'max:255'],
+        ]);
+
+        ScriptVideoPushSubscription::updateOrCreate(
+            ['endpoint_hash' => hash('sha256', $data['endpoint'])],
+            [
+                'user_id' => $request->user()->id,
+                'endpoint' => $data['endpoint'],
+                'public_key' => $data['keys']['p256dh'],
+                'auth_token' => $data['keys']['auth'],
+            ],
+        );
+
+        return response()->json(['saved' => true]);
+    }
+
+    private function authorizeCoordinator(Request $request): void
+    {
+        abort_unless($request->user()?->isAnyKoordinator(), 403);
+    }
+}

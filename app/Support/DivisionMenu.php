@@ -153,17 +153,29 @@ class DivisionMenu
         $normalized = preg_replace('/^\d+\s+/', '', trim($nama));
         $menu = self::MENUS[$normalized] ?? self::DEFAULT_MENU;
 
+        $items = array_map(fn ($item) => [
+            'label' => $item['label'],
+            'route' => $item['route'],
+            'params' => $item['params'] ?? [],
+            'query' => $item['query'] ?? [],
+            'icon' => $item['icon'],
+            'desc' => $item['desc'] ?? '',
+            'group' => $item['group'] ?? null,
+        ], $menu['items']);
+
+        $items[] = [
+            'label' => 'Script Video Animator',
+            'route' => 'hris.script-video',
+            'params' => [],
+            'query' => [],
+            'icon' => 'content',
+            'desc' => 'Unggah script video animator per konten',
+            'group' => null,
+        ];
+
         return [
             'label' => $menu['label'],
-            'items' => array_map(fn ($item) => [
-                'label' => $item['label'],
-                'route' => $item['route'],
-                'params' => $item['params'] ?? [],
-                'query' => $item['query'] ?? [],
-                'icon' => $item['icon'],
-                'desc' => $item['desc'] ?? '',
-                'group' => $item['group'] ?? null,
-            ], $menu['items']),
+            'items' => $items,
         ];
     }
 

@@ -322,22 +322,29 @@ class User extends Authenticatable
         return $this->isKoordinatorGame();
     }
 
+    public const KOORDINATOR_ROLES = [
+        self::ROLE_KOORDINATOR,
+        self::ROLE_KOORDINATOR_IT,
+        self::ROLE_KOORDINATOR_CREATIVE,
+        self::ROLE_KOORDINATOR_ADMIN,
+        self::ROLE_KOORDINATOR_PUBG,
+        self::ROLE_KOORDINATOR_FF,
+        self::ROLE_KOORDINATOR_MLBB,
+        self::ROLE_KOORDINATOR_EFOOTBALL,
+        self::ROLE_KOORDINATOR_VALORANT,
+        self::ROLE_KOORDINATOR_ROBLOX,
+        self::ROLE_KOORDINATOR_MONKEY_PUBG,
+        self::ROLE_KOORDINATOR_STOCK,
+    ];
+
+    public function scopeKoordinator($query)
+    {
+        return $query->whereIn('role', self::KOORDINATOR_ROLES);
+    }
+
     public function isAnyKoordinator(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_KOORDINATOR,
-            self::ROLE_KOORDINATOR_IT,
-            self::ROLE_KOORDINATOR_CREATIVE,
-            self::ROLE_KOORDINATOR_ADMIN,
-            self::ROLE_KOORDINATOR_PUBG,
-            self::ROLE_KOORDINATOR_FF,
-            self::ROLE_KOORDINATOR_MLBB,
-            self::ROLE_KOORDINATOR_EFOOTBALL,
-            self::ROLE_KOORDINATOR_VALORANT,
-            self::ROLE_KOORDINATOR_ROBLOX,
-            self::ROLE_KOORDINATOR_MONKEY_PUBG,
-            self::ROLE_KOORDINATOR_STOCK,
-        ]);
+        return in_array($this->role, self::KOORDINATOR_ROLES);
     }
 
     public function isStaffHostFf(): bool

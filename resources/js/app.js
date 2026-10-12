@@ -7,6 +7,134 @@
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 
+// Pengguna koordinator dapat mendaftarkan browser/PWA untuk push deadline script.
+function decodeVapidKey(value) {
+    const padding = '='.repeat((4 - value.length % 4) % 4);
+    const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = window.atob(base64);
+    return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+}
+
+async function setupScriptVideoPush(button) {
+    const panel = button.closest('[data-script-video-push-notice]');
+    const status = panel?.querySelector('[data-script-video-push-status]');
+    const setStatus = (message) => {
+        if (status) status.textContent = message;
+    };
+    const markActive = () => {
+        panel?.remove();
+    };
+
+    setStatus('Memeriksa status notifikasi pada browser ini...');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        button.textContent = 'Notifikasi tidak didukung';
+        button.disabled = true;
+        setStatus('Browser ini tidak mendukung notifikasi push.');
+        return;
+    }
+
+    button.disabled = true;
+    try {
+        const configResponse = await fetch(button.dataset.configUrl, { headers: { Accept: 'application/json' } });
+        if (!configResponse.ok) throw new Error('Konfigurasi notifikasi gagal dimuat. Muat ulang halaman lalu coba lagi.');
+        const pushConfig = await configResponse.json();
+        if (!pushConfig.available) {
+            button.textContent = 'Notifikasi belum dikonfigurasi';
+            button.disabled = true;
+            setStatus('Push belum dikonfigurasi pada server.');
+            return;
+        }
+
+        // Vite dev does not run the production-only registration at the end of
+        // this file. Register the lightweight push worker so a fresh local
+        // browser profile does not wait forever on serviceWorker.ready.
+        const workerUrl = import.meta.env.DEV ? '/push-sw.js' : '/sw.js';
+        await navigator.serviceWorker.register(workerUrl, {
+            scope: '/',
+            updateViaCache: 'none',
+        });
+        const registration = await navigator.serviceWorker.ready;
+        const existing = await registration.pushManager.getSubscription();
+        if (Notification.permission === 'denied') {
+            setStatus('Izin notifikasi diblokir di browser ini. Ubah izin situs menjadi Izinkan pada setelan Chrome.');
+        } else if (!existing) {
+            setStatus('Belum aktif pada browser/perangkat ini.');
+        }
+        button.disabled = false;
+        if (existing && Notification.permission === 'granted') {
+            const response = await fetch(button.dataset.subscribeUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify(existing.toJSON()),
+            });
+            if (response.ok) {
+                markActive();
+                return;
+            }
+            setStatus('Langganan browser ditemukan, tetapi belum tersimpan di server. Tekan tombol untuk mencoba lagi.');
+        }
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            try {
+                let permission = Notification.permission;
+                if (permission === 'default') permission = await Notification.requestPermission();
+                if (permission === 'denied') {
+                    throw new Error('Notifikasi diblokir Chrome. Klik ikon pengaturan di kiri alamat situs, ubah Notifikasi menjadi Izinkan, muat ulang halaman, lalu tekan tombol ini lagi.');
+                }
+                if (permission !== 'granted') throw new Error('Chrome belum memberikan izin notifikasi. Izinkan notifikasi untuk situs ini lalu coba lagi.');
+
+                const subscription = existing || await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: decodeVapidKey(pushConfig.publicKey),
+                });
+                const response = await fetch(button.dataset.subscribeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    },
+                    body: JSON.stringify(subscription.toJSON()),
+                });
+                if (!response.ok) throw new Error('Langganan notifikasi gagal disimpan.');
+                markActive();
+                window.dispatchEvent(new CustomEvent('script-video-push-activated'));
+            } catch (error) {
+                button.disabled = false;
+                const message = error.name === 'NotAllowedError'
+                    ? 'Chrome menolak izin notifikasi. Klik ikon pengaturan di kiri alamat situs, ubah Notifikasi menjadi Izinkan, muat ulang halaman, lalu coba lagi.'
+                    : error.message;
+                if (Notification.permission === 'denied') {
+                    setStatus('Izin notifikasi diblokir. Izinkan notifikasi untuk situs ini di setelan browser, lalu tekan tombol lagi.');
+                } else {
+                    setStatus('Aktivasi belum berhasil. ' + message);
+                }
+                if (window.Alpine?.store('toast')) window.Alpine.store('toast').error(message);
+                else window.alert(message);
+            }
+        });
+    } catch (error) {
+        button.textContent = 'Notifikasi belum siap';
+        button.disabled = true;
+        setStatus('Service worker push gagal disiapkan. Muat ulang halaman setelah server lokal berjalan.');
+        console.warn('[Script Video] gagal menyiapkan push:', error);
+    }
+}
+
+function initScriptVideoPushButtons() {
+    document.querySelectorAll('[data-script-video-push]:not([data-push-ready])').forEach((button) => {
+        button.dataset.pushReady = '1';
+        setupScriptVideoPush(button);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initScriptVideoPushButtons);
+document.addEventListener('livewire:navigated', initScriptVideoPushButtons);
+
 // Ekspos ke window agar bisa dipakai di directive x-init "@barcode" pada halaman Asset.
 window.JsBarcode = JsBarcode;
 window.QRCode = QRCode;

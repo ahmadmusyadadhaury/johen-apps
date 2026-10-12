@@ -38,6 +38,7 @@ $groupIcons = [
                 <a href="{{ route($item['route'], $item['params']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ $isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                     {{ $item['label'] }}
                     @if(($item['route'] ?? null) === 'hris.influencer')<livewire:sidebar-influencer-pengajuan-badge /><livewire:sidebar-influencer-monitoring-badge />@endif
+                    @if(($item['route'] ?? null) === 'hris.script-video')<livewire:sidebar-script-video-badge />@endif
                 </a>
             @endforeach
         @else
@@ -62,6 +63,7 @@ $groupIcons = [
                     <a href="{{ route($item['route'], $item['params']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ $isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                         {{ $item['label'] }}
                         @if(($item['route'] ?? null) === 'hris.influencer')<livewire:sidebar-influencer-pengajuan-badge /><livewire:sidebar-influencer-monitoring-badge />@endif
+                        @if(($item['route'] ?? null) === 'hris.script-video')<livewire:sidebar-script-video-badge />@endif
                     </a>
                 @endforeach
             </div>

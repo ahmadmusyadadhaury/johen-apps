@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Facades\FileVault;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeContract;
@@ -10,7 +11,6 @@ use App\Models\PositionHistory;
 use App\Models\Promotion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class PromotionService
 {
@@ -124,7 +124,7 @@ class PromotionService
 
         $path = "promotions/{$employee->id}/{$filename}";
 
-        $file->storeAs("promotions/{$employee->id}", $filename, 'public');
+        FileVault::storeAs($file, "promotions/{$employee->id}", $filename, 'public');
 
         return $path;
     }
@@ -152,14 +152,8 @@ class PromotionService
         );
 
         $path = "promotions/{$employee->id}/{$filename}";
-        $fullPath = Storage::disk('public')->path($path);
-        $dir = dirname($fullPath);
 
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $pdf->save($fullPath);
+        FileVault::put('public', $path, $pdf->output(), $filename, 'application/pdf');
 
         return $path;
     }
@@ -238,8 +232,8 @@ class PromotionService
                 $oldContract->update(['status' => 'berlaku']);
             }
 
-            if ($promotion->pdf_path && Storage::disk('public')->exists($promotion->pdf_path)) {
-                Storage::disk('public')->delete($promotion->pdf_path);
+            if ($promotion->pdf_path) {
+                FileVault::delete('public', $promotion->pdf_path);
             }
 
             $promotion->delete();

@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\BonusPubg;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
 use App\Support\GameDivision;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -17,29 +17,49 @@ class PubgDailyTrackingTable extends Component
     use WithFileUploads, WithPagination;
 
     public string $search = '';
+
     public string $bulan = '';
+
     public string $tanggalFilter = '';
+
     public string $divisi = '';
 
     public bool $showCreateModal = false;
+
     public bool $showEditModal = false;
+
     public ?int $editId = null;
+
     public bool $showDeleteConfirm = false;
+
     public ?int $deleteId = null;
 
     public string $tanggal = '';
+
     public string $nik = '';
+
     public string $nama = '';
+
     public string $sesi = '';
+
     public string $ach_sold = '';
+
     public string $ach_view = '';
+
     public string $peak_view = '';
+
     public string $durasi = '';
+
     public string $insentif = '';
+
     public string $catatan = '';
+
     public $foto_bukti_stats;
+
     public $foto_bukti_live;
+
     public string $fotoBuktiStatsPath = '';
+
     public string $fotoBuktiLivePath = '';
 
     protected $updatesQueryString = ['search'];
@@ -100,7 +120,9 @@ class PubgDailyTrackingTable extends Component
 
     public function updatedNik(string $value): void
     {
-        if (!$value) return;
+        if (! $value) {
+            return;
+        }
         $employee = Employee::where('nik', $value)->first();
         if ($employee) {
             $this->nama = $employee->nama;
@@ -134,7 +156,7 @@ class PubgDailyTrackingTable extends Component
 
     public function openCreateModal(): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
         $this->resetForm();
         if ($this->isFillingAsSelf()) {
             $employee = auth()->user()->employee;
@@ -147,9 +169,11 @@ class PubgDailyTrackingTable extends Component
 
     public function openEditModal(int $id): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
         $item = BonusPubg::findOrFail($id);
-        if (!$this->canModify($item)) return;
+        if (! $this->canModify($item)) {
+            return;
+        }
         $this->editId = $item->id;
         $this->tanggal = $item->tanggal->format('Y-m-d');
         $this->nik = $item->nik;
@@ -176,7 +200,7 @@ class PubgDailyTrackingTable extends Component
 
     public function save(): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
         if ($this->isFillingAsSelf()) {
             $employee = auth()->user()->employee;
             abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
@@ -188,15 +212,18 @@ class PubgDailyTrackingTable extends Component
         $employee = $this->isFillingAsSelf()
             ? auth()->user()->employee
             : Employee::where('nik', $this->nik)->first();
-        if (!$employee) {
+        if (! $employee) {
             $this->addError('nik', 'Karyawan dengan NIK tersebut tidak ditemukan.');
+
             return;
         }
 
         $sold = str_replace(',', '.', $this->ach_sold);
 
         $user = auth()->user();
-        if ($this->isDivisiKoordinator() && !$this->isFillingAsSelf()) return;
+        if ($this->isDivisiKoordinator() && ! $this->isFillingAsSelf()) {
+            return;
+        }
 
         $status = 'pending';
 
@@ -217,10 +244,10 @@ class PubgDailyTrackingTable extends Component
         ];
 
         if ($this->foto_bukti_stats) {
-            $data['foto_bukti_stats'] = $this->foto_bukti_stats->store('daily-tracking', 'public');
+            $data['foto_bukti_stats'] = FileVault::store($this->foto_bukti_stats, 'daily-tracking', 'public');
         }
         if ($this->foto_bukti_live) {
-            $data['foto_bukti_live'] = $this->foto_bukti_live->store('daily-tracking', 'public');
+            $data['foto_bukti_live'] = FileVault::store($this->foto_bukti_live, 'daily-tracking', 'public');
         }
 
         BonusPubg::create($data);
@@ -235,7 +262,7 @@ class PubgDailyTrackingTable extends Component
 
     public function update(): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
         if ($this->isFillingAsSelf()) {
             $employee = auth()->user()->employee;
             abort_unless($employee, 403, 'Akun staff host belum terhubung ke data karyawan.');
@@ -245,7 +272,9 @@ class PubgDailyTrackingTable extends Component
         $this->validate();
         $sold = str_replace(',', '.', $this->ach_sold);
         $item = BonusPubg::findOrFail($this->editId);
-        if (!$this->canModify($item)) return;
+        if (! $this->canModify($item)) {
+            return;
+        }
 
         $employee = $this->isFillingAsSelf() ? auth()->user()->employee : null;
 
@@ -264,15 +293,15 @@ class PubgDailyTrackingTable extends Component
 
         if ($this->foto_bukti_stats) {
             if ($item->foto_bukti_stats) {
-                Storage::disk('public')->delete($item->foto_bukti_stats);
+                FileVault::delete('public', $item->foto_bukti_stats);
             }
-            $data['foto_bukti_stats'] = $this->foto_bukti_stats->store('daily-tracking', 'public');
+            $data['foto_bukti_stats'] = FileVault::store($this->foto_bukti_stats, 'daily-tracking', 'public');
         }
         if ($this->foto_bukti_live) {
             if ($item->foto_bukti_live) {
-                Storage::disk('public')->delete($item->foto_bukti_live);
+                FileVault::delete('public', $item->foto_bukti_live);
             }
-            $data['foto_bukti_live'] = $this->foto_bukti_live->store('daily-tracking', 'public');
+            $data['foto_bukti_live'] = FileVault::store($this->foto_bukti_live, 'daily-tracking', 'public');
         }
 
         $item->update($data);
@@ -285,30 +314,41 @@ class PubgDailyTrackingTable extends Component
     private function canModify(BonusPubg $item): bool
     {
         $user = auth()->user();
-        if ($this->isKoordinatorView()) return true;
-        if ($item->status !== 'pending') return false;
+        if ($this->isKoordinatorView()) {
+            return true;
+        }
+        if ($item->status !== 'pending') {
+            return false;
+        }
         $employee = $user->employee;
+
         return $employee && $item->employee_id === $employee->id;
     }
 
     public function confirmDelete(int $id): void
     {
         $item = BonusPubg::findOrFail($id);
-        if (!$this->canModify($item)) return;
+        if (! $this->canModify($item)) {
+            return;
+        }
         $this->deleteId = $id;
         $this->showDeleteConfirm = true;
     }
 
     public function executeDelete(): void
     {
-        if (!$this->deleteId) return;
+        if (! $this->deleteId) {
+            return;
+        }
         $item = BonusPubg::findOrFail($this->deleteId);
-        if (!$this->canModify($item)) return;
+        if (! $this->canModify($item)) {
+            return;
+        }
         if ($item->foto_bukti_stats) {
-            Storage::disk('public')->delete($item->foto_bukti_stats);
+            FileVault::delete('public', $item->foto_bukti_stats);
         }
         if ($item->foto_bukti_live) {
-            Storage::disk('public')->delete($item->foto_bukti_live);
+            FileVault::delete('public', $item->foto_bukti_live);
         }
         $item->delete();
         $this->dispatch('daily-tracking-updated');
@@ -325,10 +365,14 @@ class PubgDailyTrackingTable extends Component
     public function setujui(int $id): void
     {
         $user = auth()->user();
-        if (!$this->isKoordinatorView()) return;
+        if (! $this->isKoordinatorView()) {
+            return;
+        }
 
         $item = BonusPubg::findOrFail($id);
-        if (!in_array($item->employee_id, $this->getViewEmployeeIds())) return;
+        if (! in_array($item->employee_id, $this->getViewEmployeeIds())) {
+            return;
+        }
 
         $item->update([
             'status' => 'disetujui',
@@ -341,10 +385,14 @@ class PubgDailyTrackingTable extends Component
     public function tolak(int $id): void
     {
         $user = auth()->user();
-        if (!$this->isKoordinatorView()) return;
+        if (! $this->isKoordinatorView()) {
+            return;
+        }
 
         $item = BonusPubg::findOrFail($id);
-        if (!in_array($item->employee_id, $this->getViewEmployeeIds())) return;
+        if (! in_array($item->employee_id, $this->getViewEmployeeIds())) {
+            return;
+        }
 
         $item->update(['status' => 'ditolak']);
         $this->dispatch('daily-tracking-updated');
@@ -371,8 +419,8 @@ class PubgDailyTrackingTable extends Component
             $user->isKoordinatorEfootball(), $user->isStaffHostEfootball() => 'E-football',
             $user->isKoordinatorValorant(), $user->isStaffHostValorant() => 'Valorant',
             $user->isKoordinatorRoblox(), $user->isStaffHostRoblox() => 'Roblox',
-             $user->isKoordinatorMonkeyPubg(), $user->isStaffHostMonkeyPubg() => 'Monkey PUBG',
-             $user->isKoordinatorFcMobile(), $user->isStaffHostFcMobile() => 'FC Mobile',
+            $user->isKoordinatorMonkeyPubg(), $user->isStaffHostMonkeyPubg() => 'Monkey PUBG',
+            $user->isKoordinatorFcMobile(), $user->isStaffHostFcMobile() => 'FC Mobile',
             $user->isKoordinatorFf(), $user->isStaffHostFf() => 'Free Fire',
             $user->isKoordinatorPubg(), $user->isStaffHostPubg() => 'PUBG',
             default => 'PUBG',
@@ -431,7 +479,9 @@ class PubgDailyTrackingTable extends Component
     private function getViewEmployeeIds(): array
     {
         $employee = auth()->user()->employee;
-        if (!$employee) return [];
+        if (! $employee) {
+            return [];
+        }
 
         if ($this->isDivisiKoordinator()) {
             return $this->getDivisionEmployeeIds();
@@ -457,18 +507,18 @@ class PubgDailyTrackingTable extends Component
         $items = $query->when($this->search, function ($query) {
             $query->where(function ($q) {
                 $q->where('nama', 'like', "%{$this->search}%")
-                  ->orWhere('nik', 'like', "%{$this->search}%");
+                    ->orWhere('nik', 'like', "%{$this->search}%");
             });
         })
-        ->when($this->isDivisiKoordinator() && $this->tanggalFilter, function ($query) {
-            $query->whereDate('tanggal', $this->tanggalFilter);
-        })
-        ->when(!$this->isDivisiKoordinator() && $this->bulan, function ($query) {
-            $query->whereYear('tanggal', substr($this->bulan, 0, 4))
-                  ->whereMonth('tanggal', substr($this->bulan, 5, 2));
-        })
-        ->latest('tanggal')
-        ->paginate(10);
+            ->when($this->isDivisiKoordinator() && $this->tanggalFilter, function ($query) {
+                $query->whereDate('tanggal', $this->tanggalFilter);
+            })
+            ->when(! $this->isDivisiKoordinator() && $this->bulan, function ($query) {
+                $query->whereYear('tanggal', substr($this->bulan, 0, 4))
+                    ->whereMonth('tanggal', substr($this->bulan, 5, 2));
+            })
+            ->latest('tanggal')
+            ->paginate(10);
 
         $groupedItems = $items->getCollection()->groupBy(function ($item) {
             return $item->tanggal->format('Y-m-d');
@@ -476,9 +526,9 @@ class PubgDailyTrackingTable extends Component
 
         $divisionRoot = $this->divisi !== '' ? $this->getDivisionRootPosition() : null;
 
-        $employees = Employee::when($divisionRoot, function ($q) use ($divisionRoot) {
+        $employees = Employee::when($divisionRoot, function ($q) {
             $q->whereIn('id', $this->getDivisionEmployeeIds());
-        })->when(!$divisionRoot && $userEmployee, function ($q) use ($userEmployee) {
+        })->when(! $divisionRoot && $userEmployee, function ($q) use ($userEmployee) {
             $q->where('id', $userEmployee->id);
         })->orderBy('nama')->get();
 
@@ -523,17 +573,19 @@ class PubgDailyTrackingTable extends Component
     private function getSubordinateEmployeeIds(): array
     {
         $employee = auth()->user()->employee;
-        if (!$employee) return [];
+        if (! $employee) {
+            return [];
+        }
 
         $ids = [];
 
         $mainPosition = $employee->mainPosition();
         if ($mainPosition) {
             $descendantIds = $this->getAllDescendantIds($mainPosition);
-            if (!empty($descendantIds)) {
+            if (! empty($descendantIds)) {
                 $ids = Employee::whereHas('positions', function ($q) use ($descendantIds) {
                     $q->whereIn('position_id', $descendantIds)
-                      ->where('is_main', true);
+                        ->where('is_main', true);
                 })->pluck('id')->toArray();
             }
         }
@@ -571,6 +623,7 @@ class PubgDailyTrackingTable extends Component
             $ids[] = $child->id;
             $ids = array_merge($ids, $this->getAllDescendantIds($child));
         }
+
         return $ids;
     }
 

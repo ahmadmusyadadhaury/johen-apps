@@ -81,6 +81,9 @@ export default defineConfig(({ mode }) => {
                 // sumber, manifest juga gampang direview di git.
                 manifest: false,
                 workbox: {
+                    // Handler push dipisah dari worker Workbox agar tetap
+                    // terjaga saat service worker dibuat ulang oleh Vite PWA.
+                    importScripts: ['/push-sw.js'],
                     cleanupOutdatedCaches: true,
                     clientsClaim: true,
                     skipWaiting: true,

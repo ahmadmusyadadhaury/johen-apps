@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Facades\FileVault;
 use App\Models\Influencer;
 use App\Models\InfluencerMonitoring;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class InfluencerDeletionService
 {
@@ -26,7 +26,7 @@ class InfluencerDeletionService
         DB::transaction(function () use ($influencerId): void {
             $influencer = Influencer::query()->find($influencerId);
             if ($influencer?->kontrak_file_path) {
-                Storage::disk('local')->delete($influencer->kontrak_file_path);
+                FileVault::delete('local', $influencer->kontrak_file_path);
             }
             InfluencerMonitoring::query()->where('influencer_id', $influencerId)->delete();
             InfluencerPembayaran::query()->where('influencer_id', $influencerId)->delete();

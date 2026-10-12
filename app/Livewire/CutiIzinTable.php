@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\Position;
@@ -9,12 +10,11 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Storage;
 
 class CutiIzinTable extends Component
 {
-    use WithPagination;
     use WithFileUploads;
+    use WithPagination;
 
     public $suratDokterUpload = null;
 
@@ -58,11 +58,11 @@ class CutiIzinTable extends Component
         ]);
 
         $oldPath = $lr->surat_dokter_path;
-        $path = $this->suratDokterUpload->store('leave-medical-certificates', 'local');
+        $path = FileVault::store($this->suratDokterUpload, 'leave-medical-certificates', 'local');
         $lr->update(['surat_dokter_path' => $path]);
 
         if ($oldPath) {
-            Storage::disk('local')->delete($oldPath);
+            FileVault::delete('local', $oldPath);
         }
 
         $this->suratDokterUpload = null;
@@ -484,7 +484,7 @@ class CutiIzinTable extends Component
         $lr = LeaveRequest::findOrFail($this->deleteId);
         $lr->unsyncAttendance();
         if ($lr->surat_dokter_path) {
-            Storage::disk('local')->delete($lr->surat_dokter_path);
+            FileVault::delete('local', $lr->surat_dokter_path);
         }
         $lr->delete();
 

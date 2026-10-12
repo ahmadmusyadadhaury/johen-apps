@@ -2,65 +2,105 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
+use App\Models\Division;
 use App\Models\Influencer;
+use App\Models\InfluencerMonitoring;
 use App\Models\InfluencerPembayaran;
 use App\Models\InfluencerPengajuan;
-use App\Models\InfluencerMonitoring;
 use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Illuminate\Validation\ValidationException;
 
 class InfluencerTable extends Component
 {
     use WithFileUploads, WithPagination;
 
     public bool $showModal = false;
+
     public string $kolFormTab = 'pengajuan';
+
     public ?int $editId = null;
 
     public bool $showPaymentModal = false;
+
     public bool $showMonitoringModal = false;
+
     public bool $showExtensionModal = false;
+
     public ?int $extensionInfluencerId = null;
+
     public string $extensionDuration = '';
+
     public string $extensionCost = '';
+
     public string $extensionNotes = '';
+
     public ?int $monitoringInfluencerId = null;
+
     public string $monitoringMonth = '';
+
     public string $monitoringFollowers = '';
+
     public string $monitoringViewers = '';
+
     public string $monitoringDuration = '';
+
     public string $monitoringTargetDuration = '130';
+
     public string $monitoringNotes = '';
+
     public string $monitoringBenefits = '';
+
     public string $monitoringModalView = 'detail';
+
     public bool $monitoringReadOnly = false;
+
     public ?int $paymentInfluencerId = null;
+
     public bool $showDeleteConfirmation = false;
+
     public ?int $deleteInfluencerId = null;
+
     public string $deleteInfluencerName = '';
 
     public string $no_kontrak = '';
+
     public string $nama = '';
+
     public string $mulai_kontrak = '';
+
     public string $habis_kontrak = '';
+
     public string $divisi = '';
+
     public string $rekomendasiLamaKontrak = '';
+
     public string $keterangan = '';
+
     public string $link_sosmed = '';
+
     public string $biaya = '';
+
     public $contractFile = null;
+
     public string $initialMonitoringMonth = '';
+
     public string $initialMonitoringFollowers = '';
+
     public string $initialMonitoringViewers = '';
+
     public string $initialMonitoringDuration = '';
+
     public string $initialMonitoringTargetDuration = '130';
+
     public string $initialMonitoringNotes = '';
+
     public string $initialMonitoringBenefits = '';
 
     public string $activeTab = 'monitoring';
@@ -103,11 +143,11 @@ class InfluencerTable extends Component
 
     private function isCreativeWorkspace(): bool
     {
-        if (!auth()->user()->isGmCeo() || !session()->has('division_menu')) {
+        if (! auth()->user()->isGmCeo() || ! session()->has('division_menu')) {
             return false;
         }
 
-        return \App\Models\Division::query()
+        return Division::query()
             ->whereKey(session('division_menu'))
             ->whereRaw('LOWER(nama) = ?', ['creative'])
             ->exists();
@@ -187,7 +227,7 @@ class InfluencerTable extends Component
             return;
         }
 
-        $this->habis_kontrak = \Illuminate\Support\Carbon::parse($this->mulai_kontrak)
+        $this->habis_kontrak = Carbon::parse($this->mulai_kontrak)
             ->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1)
             ->format('Y-m-d');
     }
@@ -240,11 +280,11 @@ class InfluencerTable extends Component
 
         $influencer = Influencer::findOrFail($influencerId);
         $oldPath = $influencer->kontrak_file_path;
-        $newPath = $this->contractFile->store('influencer-contracts', 'local');
+        $newPath = FileVault::store($this->contractFile, 'influencer-contracts', 'local');
 
         $influencer->update(['kontrak_file_path' => $newPath]);
         if ($oldPath) {
-            Storage::disk('local')->delete($oldPath);
+            FileVault::delete('local', $oldPath);
         }
 
         $this->contractFile = null;
@@ -301,7 +341,7 @@ class InfluencerTable extends Component
             throw $exception;
         }
 
-        if (!$this->editId && $this->isKolSubmitter()) {
+        if (! $this->editId && $this->isKolSubmitter()) {
             $assignedHos = InfluencerPengajuanRouting::headOfStorePositionForDivision($this->divisi);
             abort_unless($assignedHos, 422, 'Head of Store untuk divisi ini belum tersedia di struktur organisasi.');
 
@@ -324,14 +364,15 @@ class InfluencerTable extends Component
             $this->dispatch('influencer-pengajuan-updated');
             session()->flash('message', 'Pengajuan influencer berhasil dikirim dan menunggu persetujuan Koordinator Creative.');
             $this->close();
+
             return;
         }
 
         $contractStart = $this->mulai_kontrak
-            ? \Illuminate\Support\Carbon::parse($this->mulai_kontrak)->startOfDay()
+            ? Carbon::parse($this->mulai_kontrak)->startOfDay()
             : now()->startOfDay();
         $contractEnd = $this->habis_kontrak
-            ? \Illuminate\Support\Carbon::parse($this->habis_kontrak)->startOfDay()
+            ? Carbon::parse($this->habis_kontrak)->startOfDay()
             : $contractStart->copy()->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1);
 
         if ($this->editId) {
@@ -424,12 +465,12 @@ class InfluencerTable extends Component
     {
         abort_unless($this->canViewInfluencerMonitoring(), 403);
         $influencer = Influencer::findOrFail($id);
-        abort_unless(!$this->isKolSubmitter() || $this->isOwnApprovedKolInfluencer($influencer->id), 403);
+        abort_unless(! $this->isKolSubmitter() || $this->isOwnApprovedKolInfluencer($influencer->id), 403);
         $this->monitoringInfluencerId = $influencer->id;
         $this->monitoringModalView = $this->isKolSubmitter() ? 'months' : 'detail';
         $this->monitoringReadOnly = false;
         $latestMonitoring = $influencer->latestMonitoring;
-        $this->monitoringMonth = $this->isKolSubmitter() || !$latestMonitoring
+        $this->monitoringMonth = $this->isKolSubmitter() || ! $latestMonitoring
             ? now()->format('Y-m')
             : $latestMonitoring->period_month->format('Y-m');
         $this->monitoringFollowers = '';
@@ -547,7 +588,7 @@ class InfluencerTable extends Component
 
     private function loadMonitoringMonth(): void
     {
-        if (!$this->monitoringInfluencerId || !preg_match('/^\\d{4}-\\d{2}$/', $this->monitoringMonth)) {
+        if (! $this->monitoringInfluencerId || ! preg_match('/^\\d{4}-\\d{2}$/', $this->monitoringMonth)) {
             return;
         }
 
@@ -563,7 +604,7 @@ class InfluencerTable extends Component
             ->whereDate('period_month', $this->monitoringMonth.'-01')
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return;
         }
 
@@ -719,7 +760,7 @@ class InfluencerTable extends Component
 
     private function authorizeEdit(): void
     {
-        abort_unless(! auth()->user()->isReadOnlyWorkspace() && !auth()->user()->isHeadOfStore(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace() && ! auth()->user()->isHeadOfStore(), 403);
     }
 
     private function authorizeDeletion(): void
@@ -731,7 +772,7 @@ class InfluencerTable extends Component
     {
         $user = auth()->user();
 
-        abort_unless(! $user->isReadOnlyWorkspace() && ! $user->isKoordinatorCreative() && !$user->isHeadOfStore(), 403);
+        abort_unless(! $user->isReadOnlyWorkspace() && ! $user->isKoordinatorCreative() && ! $user->isHeadOfStore(), 403);
     }
 
     private function isKolSubmitter(): bool
@@ -781,9 +822,9 @@ class InfluencerTable extends Component
             default => 0,
         };
         if ($this->showMonitoringModal && (
-            !$canViewMonitoring
-            || !$this->monitoringInfluencerId
-            || ($isKolSubmitter && !$this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId))
+            ! $canViewMonitoring
+            || ! $this->monitoringInfluencerId
+            || ($isKolSubmitter && ! $this->isOwnApprovedKolInfluencer($this->monitoringInfluencerId))
         )) {
             $this->showMonitoringModal = false;
             $this->monitoringInfluencerId = null;

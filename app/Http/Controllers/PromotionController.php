@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\FileVault;
 use App\Models\Employee;
 use App\Models\Promotion;
 use App\Services\PromotionService;
@@ -29,7 +30,7 @@ class PromotionController extends Controller
 
         $promotion = $this->promotionService->apply($validated, $employee);
 
-        return redirect(route('hris.employees.show', $employee) . '#jabatan')
+        return redirect(route('hris.employees.show', $employee).'#jabatan')
             ->with('promotion_success', 'Perubahan jabatan berhasil diterapkan. Surat adendum telah dilampirkan.');
     }
 
@@ -39,13 +40,20 @@ class PromotionController extends Controller
             abort(404);
         }
 
-        if (!$promotion->pdf_path || !Storage::disk('public')->exists($promotion->pdf_path)) {
+        if (! $promotion->pdf_path || ! FileVault::exists('public', $promotion->pdf_path)) {
             return redirect()->back()->with('error', 'File surat tidak ditemukan.');
         }
 
-        $filename = 'Surat_Promosi_' . $employee->nik . '.pdf';
+        $filename = 'Surat_Promosi_'.$employee->nik.'.pdf';
 
-        return Storage::disk('public')->download($promotion->pdf_path, $filename);
+        if (Storage::disk('public')->exists($promotion->pdf_path)) {
+            return Storage::disk('public')->download($promotion->pdf_path, $filename);
+        }
+
+        return response(FileVault::get('public', $promotion->pdf_path), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function destroy(Employee $employee, Promotion $promotion)
@@ -57,7 +65,7 @@ class PromotionController extends Controller
 
         $this->promotionService->rollback($promotion);
 
-        return redirect(route('hris.employees.show', $employee) . '#jabatan')
+        return redirect(route('hris.employees.show', $employee).'#jabatan')
             ->with('promotion_success', 'Promosi berhasil dibatalkan. Data dikembalikan ke posisi semula.');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\FileVault;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Models\Division;
 use App\Models\Employee;
@@ -214,7 +215,7 @@ class EmployeeController extends Controller
 
         if ($request->input('_redirect') === 'show') {
             return redirect()->route('hris.employees.show', $employee)
-->with('success', auth()->user()->pegawaiLabel('Data karyawan berhasil diperbarui.'));
+                ->with('success', auth()->user()->pegawaiLabel('Data karyawan berhasil diperbarui.'));
         }
 
         return redirect()->route('hris.employees.index')
@@ -269,7 +270,7 @@ class EmployeeController extends Controller
         $file = $request->file('file');
         $filename = $employee->id.'_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
 
-        $file->storeAs('documents', $filename, 'public');
+        FileVault::storeAs($file, 'documents', $filename, 'public');
 
         EmployeeDocument::create([
             'employee_id' => $employee->id,
@@ -305,13 +306,11 @@ class EmployeeController extends Controller
         if ($request->hasFile('file')) {
             $oldPath = 'documents/'.$document->file;
 
-            if (Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
-            }
+            FileVault::delete('public', $oldPath);
 
             $file = $request->file('file');
             $filename = $employee->id.'_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-            $file->storeAs('documents', $filename, 'public');
+            FileVault::storeAs($file, 'documents', $filename, 'public');
 
             $data['file'] = $filename;
             $data['file_content'] = base64_encode($file->get());
@@ -364,11 +363,8 @@ class EmployeeController extends Controller
         }
 
         $filePath = 'documents/'.$document->file;
-        if (Storage::disk('public')->exists($filePath)) {
-            return Storage::disk('public')->get($filePath);
-        }
 
-        return null;
+        return FileVault::get('public', $filePath);
     }
 
     public function destroyDocument(Employee $employee, EmployeeDocument $document)
@@ -376,9 +372,7 @@ class EmployeeController extends Controller
         $this->authorizeManageEmployeeData();
         $filePath = 'documents/'.$document->file;
 
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
-        }
+        FileVault::delete('public', $filePath);
 
         $document->delete();
 
@@ -531,23 +525,37 @@ class EmployeeController extends Controller
     {
         $filePath = 'contracts/'.$contract->file;
 
-        if (! $contract->file || ! Storage::disk('public')->exists($filePath)) {
+        if (! $contract->file || ! FileVault::exists('public', $filePath)) {
             return redirect()->route('hris.employees.show', $employee)
                 ->with('error', 'File surat kontrak tidak ditemukan.');
         }
 
-        return Storage::disk('public')->download($filePath, 'surat-kontrak-'.$employee->nik.'.pdf');
+        if (Storage::disk('public')->exists($filePath)) {
+            return Storage::disk('public')->download($filePath, 'surat-kontrak-'.$employee->nik.'.pdf');
+        }
+
+        return response(FileVault::get('public', $filePath), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="surat-kontrak-'.$employee->nik.'.pdf"',
+        ]);
     }
 
     public function previewContract(Employee $employee, EmployeeContract $contract)
     {
         $filePath = 'contracts/'.$contract->file;
 
-        if (! $contract->file || ! Storage::disk('public')->exists($filePath)) {
+        if (! $contract->file || ! FileVault::exists('public', $filePath)) {
             abort(404);
         }
 
-        return Storage::disk('public')->response($filePath, 'surat-kontrak-'.$employee->nik.'.pdf');
+        if (Storage::disk('public')->exists($filePath)) {
+            return Storage::disk('public')->response($filePath, 'surat-kontrak-'.$employee->nik.'.pdf');
+        }
+
+        return response(FileVault::get('public', $filePath), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="surat-kontrak-'.$employee->nik.'.pdf"',
+        ]);
     }
 
     private function storeContractFile(Request $request, int $employeeId): ?string
@@ -558,7 +566,7 @@ class EmployeeController extends Controller
 
         $file = $request->file('file');
         $filename = 'contract_'.$employeeId.'_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-        $file->storeAs('contracts', $filename, 'public');
+        FileVault::storeAs($file, 'contracts', $filename, 'public');
 
         return $filename;
     }
@@ -570,9 +578,7 @@ class EmployeeController extends Controller
         }
 
         $filePath = 'contracts/'.$contract->file;
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
-        }
+        FileVault::delete('public', $filePath);
     }
 
     public function destroy(Employee $employee)

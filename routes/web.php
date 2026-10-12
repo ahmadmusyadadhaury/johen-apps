@@ -29,6 +29,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectItController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ReimbursementController;
+use App\Http\Controllers\ScriptVideoPushSubscriptionController;
 use App\Http\Controllers\StrukturOrganisasiController;
 use App\Http\Controllers\WeeklyReportController;
 use App\Livewire\AbsensiTable;
@@ -51,6 +52,7 @@ use App\Livewire\PengumumanInbox;
 use App\Livewire\PubgDailyTrackingTable;
 use App\Livewire\RunningRateDashboard;
 use App\Livewire\RekapStokTable;
+use App\Livewire\ScriptVideoTable;
 use App\Livewire\StockDailyTrackingTable;
 use App\Livewire\StokKetersediaanTable;
 use App\Livewire\StokTargetTable;
@@ -166,6 +168,28 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/activity-competitor', [ActivityCompetitorController::class, 'index'])->name('activity-competitor');
         Route::get('/activity-competitor/{employee}', [ActivityCompetitorController::class, 'show'])->name('activity-competitor.show');
         Route::get('/content-plan', ContentPlanTable::class)->name('content-plan');
+        Route::get('/script-video', ScriptVideoTable::class)->name('script-video')
+            ->middleware('role:' . implode(',', [
+                ...\App\Models\User::KOORDINATOR_ROLES,
+                \App\Models\User::ROLE_STAFF_CREATIVE,
+                \App\Models\User::ROLE_MANAGER,
+                \App\Models\User::ROLE_GM_CEO,
+                \App\Models\User::ROLE_SUPER_ADMIN,
+                \App\Models\User::ROLE_ADMIN_MASTER,
+            ]));
+        Route::get('/script-video/files/{upload}/{disposition}', [\App\Http\Controllers\ScriptVideoFileController::class, 'show'])
+            ->whereIn('disposition', ['inline', 'download'])
+            ->name('script-video.file')
+            ->middleware('role:' . implode(',', [
+                ...\App\Models\User::KOORDINATOR_ROLES,
+                \App\Models\User::ROLE_STAFF_CREATIVE,
+                \App\Models\User::ROLE_MANAGER,
+                \App\Models\User::ROLE_GM_CEO,
+                \App\Models\User::ROLE_SUPER_ADMIN,
+                \App\Models\User::ROLE_ADMIN_MASTER,
+            ]));
+        Route::get('/script-video/push-config', [ScriptVideoPushSubscriptionController::class, 'config'])->name('script-video.push-config');
+        Route::post('/script-video/push-subscription', [ScriptVideoPushSubscriptionController::class, 'store'])->name('script-video.push-subscription');
 
         // Weekly Meeting routes
         Route::prefix('weekly-meeting')->name('weekly-meeting.')->group(function () {
@@ -329,3 +353,5 @@ Route::get('livewire/update', fn () => response()->noContent());
 Route::get('livewire-{hash}/update', fn () => response()->noContent());
 
 require __DIR__.'/auth.php';
+
+

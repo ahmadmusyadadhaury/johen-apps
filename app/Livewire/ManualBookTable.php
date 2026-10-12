@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\ManualBook;
 use App\Models\TrainingVideo;
 use Illuminate\Support\Facades\Storage;
@@ -15,32 +16,45 @@ class ManualBookTable extends Component
     use WithPagination;
 
     public bool $showModal = false;
+
     public ?int $editId = null;
 
     public bool $showDeleteConfirmModal = false;
+
     public ?int $deleteId = null;
 
     public bool $showSuccessModal = false;
+
     public string $successMessage = '';
 
     public string $filterKategori = '';
+
     public string $filterVideoKategori = '';
 
     public string $nama = '';
+
     public string $kategori = '';
+
     public string $deskripsi = '';
+
     public $thumbnail = null;
+
     public $file_pdf = null;
+
     public $thumbnail_preview = null;
 
     public bool $showVideoModal = false;
+
     public ?int $videoEditId = null;
 
     public bool $showVideoDeleteConfirmModal = false;
+
     public ?int $videoDeleteId = null;
 
     public string $videoNama = '';
+
     public string $videoKategori = '';
+
     public string $videoUrl = '';
 
     public function updatingFilterKategori(): void
@@ -69,7 +83,7 @@ class ManualBookTable extends Component
     {
         $rules = [
             'nama' => 'required|string|max:255',
-            'kategori' => ['required', 'in:' . implode(',', ManualBook::KATEGORI_OPTIONS)],
+            'kategori' => ['required', 'in:'.implode(',', ManualBook::KATEGORI_OPTIONS)],
             'deskripsi' => 'nullable|string',
             'thumbnail' => $this->editId ? 'nullable|image|max:2048' : 'nullable|image|max:2048',
             'file_pdf' => $this->editId ? 'nullable|file|mimes:pdf|max:10240' : 'required|file|mimes:pdf|max:10240',
@@ -84,11 +98,11 @@ class ManualBookTable extends Component
         ];
 
         if ($this->thumbnail) {
-            $data['thumbnail'] = $this->thumbnail->store('manual-books/thumbnails', 'public');
+            $data['thumbnail'] = FileVault::store($this->thumbnail, 'manual-books/thumbnails', 'public');
         }
 
         if ($this->file_pdf) {
-            $data['file_pdf'] = $this->file_pdf->store('manual-books/pdf', 'public');
+            $data['file_pdf'] = FileVault::store($this->file_pdf, 'manual-books/pdf', 'public');
         }
 
         if ($this->editId) {
@@ -122,8 +136,12 @@ class ManualBookTable extends Component
         }
 
         $book = ManualBook::findOrFail($this->deleteId);
-        if ($book->thumbnail) Storage::disk('public')->delete($book->thumbnail);
-        if ($book->file_pdf) Storage::disk('public')->delete($book->file_pdf);
+        if ($book->thumbnail) {
+            FileVault::delete('public', $book->thumbnail);
+        }
+        if ($book->file_pdf) {
+            FileVault::delete('public', $book->file_pdf);
+        }
         $book->delete();
 
         $this->showDeleteConfirmModal = false;
@@ -170,7 +188,7 @@ class ManualBookTable extends Component
     {
         $this->validate([
             'videoNama' => 'required|string|max:255',
-            'videoKategori' => ['nullable', 'in:' . implode(',', TrainingVideo::KATEGORI_OPTIONS)],
+            'videoKategori' => ['nullable', 'in:'.implode(',', TrainingVideo::KATEGORI_OPTIONS)],
             'videoUrl' => 'required|url|max:255',
         ]);
 

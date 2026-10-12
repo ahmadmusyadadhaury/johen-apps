@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Facades\FileVault;
 use App\Models\PayrollDetail;
 use Dompdf\Dompdf;
-use Illuminate\Support\Facades\Storage;
 
 class PdfGenerationService
 {
@@ -15,7 +15,7 @@ class PdfGenerationService
 
         $logoPath = public_path('logo.png');
         $logo = file_exists($logoPath)
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath))
             : '';
 
         $html = view('pdf.slip-gaji', [
@@ -24,7 +24,7 @@ class PdfGenerationService
             'logo' => $logo,
         ])->render();
 
-        $dompdf = new Dompdf();
+        $dompdf = new Dompdf;
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
@@ -34,14 +34,7 @@ class PdfGenerationService
             $canvas->get_cpdf()->setEncryption($password, $password, []);
         }
 
-        $fullPath = Storage::disk('public')->path($path);
-        $dir = dirname($fullPath);
-
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        file_put_contents($fullPath, $dompdf->output());
+        FileVault::put('public', $path, $dompdf->output(), $filename, 'application/pdf');
 
         return $path;
     }

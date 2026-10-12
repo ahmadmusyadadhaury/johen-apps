@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\Influencer;
 use App\Models\InfluencerMonitoring;
 use App\Models\InfluencerPembayaran;
@@ -9,8 +10,8 @@ use App\Models\InfluencerPengajuan;
 use App\Models\User;
 use App\Services\InfluencerDeletionService;
 use App\Support\InfluencerPengajuanRouting;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -21,31 +22,55 @@ class InfluencerPengajuanTable extends Component
     use WithFileUploads, WithPagination;
 
     public bool $showModal = false;
+
     public bool $showKolCreateButton = false;
+
     public bool $showSuccessModal = false;
+
     public string $successMessage = '';
+
     public bool $showDeleteConfirmation = false;
+
     public ?int $deletePengajuanId = null;
+
     public ?int $editId = null;
+
     public string $editFormTab = 'data';
 
     public string $no_kontrak = '';
+
     public string $nama = '';
+
     public string $divisi = '';
+
     public string $rekomendasiLamaKontrak = '';
+
     public string $mulai_kontrak = '';
+
     public string $habis_kontrak = '';
+
     public string $link_sosmed = '';
+
     public string $biaya = '';
+
     public $contractFile = null;
+
     public string $keterangan = '';
+
     public string $monitoringMonth = '';
+
     public string $monitoringFollowers = '';
+
     public string $monitoringViewers = '';
+
     public string $monitoringDuration = '';
+
     public string $monitoringTargetDuration = '130';
+
     public string $monitoringNotes = '';
+
     public string $monitoringBenefits = '';
+
     public ?string $editStatus = null;
 
     public const DIVISI_OPTIONS = [
@@ -60,6 +85,7 @@ class InfluencerPengajuanTable extends Component
     ];
 
     public string $alasanTolak = '';
+
     public ?int $tolakId = null;
 
     public function mount(bool $showKolCreateButton = false): void
@@ -131,7 +157,7 @@ class InfluencerPengajuanTable extends Component
             return;
         }
 
-        $this->habis_kontrak = \Illuminate\Support\Carbon::parse($this->mulai_kontrak)
+        $this->habis_kontrak = Carbon::parse($this->mulai_kontrak)
             ->addMonthsNoOverflow((int) $this->rekomendasiLamaKontrak - 1)
             ->format('Y-m-d');
     }
@@ -172,11 +198,11 @@ class InfluencerPengajuanTable extends Component
 
         $influencer = Influencer::findOrFail($pengajuan->influencer_id);
         $oldPath = $influencer->kontrak_file_path;
-        $newPath = $this->contractFile->store('influencer-contracts', 'local');
+        $newPath = FileVault::store($this->contractFile, 'influencer-contracts', 'local');
 
         $influencer->update(['kontrak_file_path' => $newPath]);
         if ($oldPath) {
-            Storage::disk('local')->delete($oldPath);
+            FileVault::delete('local', $oldPath);
         }
 
         $this->contractFile = null;
@@ -239,7 +265,7 @@ class InfluencerPengajuanTable extends Component
                 'assigned_hos_position_id' => $assignedHos->id,
             ];
 
-            if (!$wasApproved) {
+            if (! $wasApproved) {
                 $updates += [
                     'status' => 'pending_creative',
                     'approved_coordinator_by' => null,
@@ -273,6 +299,7 @@ class InfluencerPengajuanTable extends Component
                 : 'Pengajuan influencer berhasil diperbarui dan menunggu persetujuan Koordinator Creative.';
             $this->showSuccessModal = true;
             $this->close();
+
             return;
         }
 
@@ -527,7 +554,7 @@ class InfluencerPengajuanTable extends Component
 
     private function isAssignedHeadOfStore(User $user, InfluencerPengajuan $pengajuan): bool
     {
-        if (!$user->isHeadOfStore()) {
+        if (! $user->isHeadOfStore()) {
             return false;
         }
 
@@ -630,7 +657,7 @@ class InfluencerPengajuanTable extends Component
         );
     }
 
-    private function generateExtensionPayments(Influencer $influencer, \Illuminate\Support\Carbon $start, int $months, ?string $amount): void
+    private function generateExtensionPayments(Influencer $influencer, Carbon $start, int $months, ?string $amount): void
     {
         $firstMonthNumber = ((int) $influencer->payments()->max('bulan_ke')) + 1;
 
@@ -680,7 +707,7 @@ class InfluencerPengajuanTable extends Component
 
             $query->where(function ($q) use ($assignedPendingIds) {
                 $q->whereIn('id', $assignedPendingIds)
-                  ->orWhere('approved_hos1_by', auth()->id());
+                    ->orWhere('approved_hos1_by', auth()->id());
             });
         } elseif ($isGm) {
             $query->where(function ($q) {

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\BonusPubg;
 use App\Models\Employee;
 use App\Models\Position;
@@ -37,12 +38,14 @@ class DailyTrackingTable extends Component
     ];
 
     public bool $showUploadModal = false;
+
     public string $uploadDivisi = '';
+
     public $uploadPhoto;
 
     private function gameKey(string $divisi): string
     {
-        return self::GAME_KEYS[$divisi] ?? 'game-' . str($divisi)->slug();
+        return self::GAME_KEYS[$divisi] ?? 'game-'.str($divisi)->slug();
     }
 
     private function resolveGamePhoto(string $divisi): ?string
@@ -53,12 +56,13 @@ class DailyTrackingTable extends Component
                 return asset("games/{$key}.{$ext}");
             }
         }
+
         return null;
     }
 
     public function openUploadModal(string $divisi): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
         $this->uploadDivisi = $divisi;
         $this->uploadPhoto = null;
         $this->showUploadModal = true;
@@ -75,7 +79,7 @@ class DailyTrackingTable extends Component
 
     public function saveUploadPhoto(): void
     {
-        abort_unless(!auth()->user()->isReadOnlyWorkspace(), 403);
+        abort_unless(! auth()->user()->isReadOnlyWorkspace(), 403);
         $this->validate([
             'uploadPhoto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
@@ -88,18 +92,21 @@ class DailyTrackingTable extends Component
         $key = $this->gameKey($this->uploadDivisi);
 
         $dir = public_path('games');
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
         $ext = strtolower($this->uploadPhoto->getClientOriginalExtension());
         foreach (self::GAME_PHOTO_EXTS as $oldExt) {
             if ($oldExt !== $ext) {
-                @unlink(public_path("games/{$key}.{$oldExt}"));
+                $oldPath = "games/{$key}.{$oldExt}";
+                FileVault::delete('web', $oldPath);
             }
         }
 
-        $this->uploadPhoto->move($dir, "{$key}.{$ext}");
+        $targetPath = "games/{$key}.{$ext}";
+        $content = file_get_contents($this->uploadPhoto->getRealPath());
+        FileVault::put('web', $targetPath, $content, basename($targetPath), $this->uploadPhoto->getClientMimeType());
 
         $this->closeUploadModal();
         $this->dispatch('notify', type: 'success', message: "Foto game {$this->uploadDivisi} berhasil diperbarui.");
@@ -108,17 +115,21 @@ class DailyTrackingTable extends Component
     private function getSubordinateIds(Employee $employee): array
     {
         $position = $employee->mainPosition();
-        if (!$position) return [];
+        if (! $position) {
+            return [];
+        }
 
         $descendantIds = $this->getDescendantIds($position->id);
         $descendantIds = array_diff($descendantIds, [$position->id]);
 
-        if (empty($descendantIds)) return [];
+        if (empty($descendantIds)) {
+            return [];
+        }
 
         return Employee::whereIn('id', function ($q) use ($descendantIds) {
             $q->select('employee_id')
-              ->from('employee_position')
-              ->whereIn('position_id', $descendantIds);
+                ->from('employee_position')
+                ->whereIn('position_id', $descendantIds);
         })->pluck('id')->toArray();
     }
 
@@ -129,13 +140,16 @@ class DailyTrackingTable extends Component
         foreach ($children as $childId) {
             $ids = array_merge($ids, $this->getDescendantIds($childId));
         }
+
         return $ids;
     }
 
     private function getManagerDivisionNames(Employee $employee): array
     {
         $position = $employee->mainPosition();
-        if (!$position) return [];
+        if (! $position) {
+            return [];
+        }
 
         $descendantIds = $this->getDescendantIds($position->id);
         $names = Position::whereIn('id', $descendantIds)->pluck('nama')
@@ -157,7 +171,9 @@ class DailyTrackingTable extends Component
     private function getEfootballEmployeeIds(): array
     {
         $efootball = Position::where('nama', 'Koordinator E-football')->first();
-        if (!$efootball) return [];
+        if (! $efootball) {
+            return [];
+        }
 
         $positionIds = $this->getDescendantIds($efootball->id);
 
@@ -169,7 +185,9 @@ class DailyTrackingTable extends Component
     private function isHeadOfStore2(Employee $employee): bool
     {
         $position = $employee->mainPosition();
-        if (!$position) return false;
+        if (! $position) {
+            return false;
+        }
 
         return str_contains(strtolower($position->nama), 'head of store 2');
     }
@@ -188,7 +206,7 @@ class DailyTrackingTable extends Component
             'pendingReviews' => collect(),
         ];
 
-        if (!$employee || !$user->isManager()) {
+        if (! $employee || ! $user->isManager()) {
             return view('livewire.daily-tracking-table', $empty);
         }
 
@@ -199,7 +217,7 @@ class DailyTrackingTable extends Component
 
         if ($this->isHeadOfStore2($employee)) {
             $efootballIds = $this->getEfootballEmployeeIds();
-            if (!empty($efootballIds)) {
+            if (! empty($efootballIds)) {
                 $subordinateIds = array_diff($subordinateIds, $efootballIds);
                 if (empty($subordinateIds)) {
                     return view('livewire.daily-tracking-table', $empty);

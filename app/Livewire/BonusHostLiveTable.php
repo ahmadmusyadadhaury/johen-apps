@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\AttendanceSession;
 use App\Models\BonusHostLive;
 use App\Models\Division;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -213,10 +213,10 @@ class BonusHostLiveTable extends Component
         $data = $this->buildData();
 
         if ($this->foto_statistik) {
-            $data['foto_statistik'] = $this->foto_statistik->store('bonus/host-live', 'public');
+            $data['foto_statistik'] = FileVault::store($this->foto_statistik, 'bonus/host-live', 'public');
         }
         if ($this->foto_bukti_live) {
-            $data['foto_bukti_live'] = $this->foto_bukti_live->store('bonus/host-live', 'public');
+            $data['foto_bukti_live'] = FileVault::store($this->foto_bukti_live, 'bonus/host-live', 'public');
         }
 
         BonusHostLive::create($data);
@@ -239,15 +239,15 @@ class BonusHostLiveTable extends Component
 
         if ($this->foto_statistik) {
             if ($item->foto_statistik) {
-                Storage::disk('public')->delete($item->foto_statistik);
+                FileVault::delete('public', $item->foto_statistik);
             }
-            $data['foto_statistik'] = $this->foto_statistik->store('bonus/host-live', 'public');
+            $data['foto_statistik'] = FileVault::store($this->foto_statistik, 'bonus/host-live', 'public');
         }
         if ($this->foto_bukti_live) {
             if ($item->foto_bukti_live) {
-                Storage::disk('public')->delete($item->foto_bukti_live);
+                FileVault::delete('public', $item->foto_bukti_live);
             }
-            $data['foto_bukti_live'] = $this->foto_bukti_live->store('bonus/host-live', 'public');
+            $data['foto_bukti_live'] = FileVault::store($this->foto_bukti_live, 'bonus/host-live', 'public');
         }
 
         $item->update($data);
@@ -271,10 +271,10 @@ class BonusHostLiveTable extends Component
         Gate::authorize('delete-data');
         $item = BonusHostLive::findOrFail($this->deleteId);
         if ($item->foto_statistik) {
-            Storage::disk('public')->delete($item->foto_statistik);
+            FileVault::delete('public', $item->foto_statistik);
         }
         if ($item->foto_bukti_live) {
-            Storage::disk('public')->delete($item->foto_bukti_live);
+            FileVault::delete('public', $item->foto_bukti_live);
         }
         $item->delete();
         $this->dispatch('notify', type: 'success', message: 'Data Host Live berhasil dihapus.');

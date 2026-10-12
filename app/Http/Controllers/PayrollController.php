@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\FileVault;
 use App\Models\PayrollDetail;
 use App\Models\PayrollImport;
 use App\Services\PdfGenerationService;
@@ -57,7 +58,7 @@ class PayrollController extends Controller
                 'status' => 'sent',
             ]);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Generate ulang gagal: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Generate ulang gagal: '.$e->getMessage());
         }
 
         return redirect()->back()->with('success', 'Slip gaji berhasil digenerate ulang.');
@@ -97,35 +98,47 @@ class PayrollController extends Controller
 
     public function downloadPdf(PayrollDetail $detail)
     {
-        if (!$detail->pdf_path || !Storage::disk('public')->exists($detail->pdf_path)) {
+        $filename = sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode);
+
+        if (! $detail->pdf_path || ! FileVault::exists('public', $detail->pdf_path)) {
             return redirect()->back()->with('error', 'File PDF tidak ditemukan.');
         }
 
-        return Storage::disk('public')->download(
-            $detail->pdf_path,
-            sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode)
-        );
+        if (Storage::disk('public')->exists($detail->pdf_path)) {
+            return Storage::disk('public')->download($detail->pdf_path, $filename);
+        }
+
+        return response(FileVault::get('public', $detail->pdf_path), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function viewPdf(PayrollDetail $detail)
     {
-        if (! $detail->pdf_path || ! Storage::disk('public')->exists($detail->pdf_path)) {
+        $filename = sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode);
+
+        if (! $detail->pdf_path || ! FileVault::exists('public', $detail->pdf_path)) {
             return redirect()->back()->with('error', 'File PDF tidak ditemukan.');
         }
 
         // `response()` memakai Content-Disposition: inline, jadi PDF dibuka di
         // tab browser (viewer bawaan) alih-alih diunduh seperti `download()`.
-        return Storage::disk('public')->response(
-            $detail->pdf_path,
-            sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode)
-        );
+        if (Storage::disk('public')->exists($detail->pdf_path)) {
+            return Storage::disk('public')->response($detail->pdf_path, $filename);
+        }
+
+        return response(FileVault::get('public', $detail->pdf_path), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
     public function markRead(Request $request): JsonResponse
     {
         $employee = auth()->user()?->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return response()->json(['marked' => 0]);
         }
 

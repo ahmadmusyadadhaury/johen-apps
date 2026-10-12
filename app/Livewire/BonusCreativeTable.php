@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\BonusCreative;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -15,24 +15,39 @@ class BonusCreativeTable extends Component
     use WithFileUploads, WithPagination;
 
     public string $search = '';
+
     public string $bulan = '';
+
     public string $sortField = 'tanggal';
+
     public string $sortDirection = 'desc';
 
     public bool $showCreateModal = false;
+
     public bool $showEditModal = false;
+
     public ?int $editId = null;
+
     public bool $showDeleteConfirm = false;
+
     public ?int $deleteId = null;
 
     public string $tanggal = '';
+
     public string $nik = '';
+
     public string $nama = '';
+
     public string $keterangan = '';
+
     public $dokumentasi;
+
     public string $dokumentasiPath = '';
+
     public string $insentif = '';
+
     public string $pencapaian = '';
+
     public string $total = '';
 
     protected $updatesQueryString = ['search'];
@@ -68,7 +83,9 @@ class BonusCreativeTable extends Component
 
     public function updatedNik(string $value): void
     {
-        if (!$value) return;
+        if (! $value) {
+            return;
+        }
         $employee = Employee::where('nik', $value)->first();
         if ($employee) {
             $this->nama = $employee->nama;
@@ -146,7 +163,7 @@ class BonusCreativeTable extends Component
         $data = $this->buildData();
 
         if ($this->dokumentasi) {
-            $data['dokumentasi'] = $this->dokumentasi->store('bonus/creative', 'public');
+            $data['dokumentasi'] = FileVault::store($this->dokumentasi, 'bonus/creative', 'public');
         }
 
         BonusCreative::create($data);
@@ -168,9 +185,9 @@ class BonusCreativeTable extends Component
 
         if ($this->dokumentasi) {
             if ($item->dokumentasi) {
-                Storage::disk('public')->delete($item->dokumentasi);
+                FileVault::delete('public', $item->dokumentasi);
             }
-            $data['dokumentasi'] = $this->dokumentasi->store('bonus/creative', 'public');
+            $data['dokumentasi'] = FileVault::store($this->dokumentasi, 'bonus/creative', 'public');
         }
 
         $item->update($data);
@@ -188,11 +205,13 @@ class BonusCreativeTable extends Component
 
     public function executeDelete(): void
     {
-        if (!$this->deleteId) return;
+        if (! $this->deleteId) {
+            return;
+        }
         Gate::authorize('delete-data');
         $item = BonusCreative::findOrFail($this->deleteId);
         if ($item->dokumentasi) {
-            Storage::disk('public')->delete($item->dokumentasi);
+            FileVault::delete('public', $item->dokumentasi);
         }
         $item->delete();
         $this->dispatch('notify', type: 'success', message: 'Data Creative berhasil dihapus.');
@@ -210,16 +229,16 @@ class BonusCreativeTable extends Component
         $items = BonusCreative::when($this->search, function ($query) {
             $query->where(function ($q) {
                 $q->where('nama', 'like', "%{$this->search}%")
-                  ->orWhere('nik', 'like', "%{$this->search}%")
-                  ->orWhere('keterangan', 'like', "%{$this->search}%");
+                    ->orWhere('nik', 'like', "%{$this->search}%")
+                    ->orWhere('keterangan', 'like', "%{$this->search}%");
             });
         })
-        ->when($this->bulan, function ($query) {
-            $query->whereYear('tanggal', substr($this->bulan, 0, 4))
-                  ->whereMonth('tanggal', substr($this->bulan, 5, 2));
-        })
-        ->orderBy($this->sortField, $this->sortDirection)
-        ->paginate(10);
+            ->when($this->bulan, function ($query) {
+                $query->whereYear('tanggal', substr($this->bulan, 0, 4))
+                    ->whereMonth('tanggal', substr($this->bulan, 5, 2));
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->paginate(10);
 
         $employees = Employee::orderBy('nama')->get();
 

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Facades\FileVault;
 use App\Models\Pengarsipan;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -14,16 +14,23 @@ class PengarsipanTable extends Component
     use WithPagination;
 
     public bool $showModal = false;
+
     public ?int $editId = null;
 
     public string $search = '';
+
     public string $filter = 'all';
 
     public string $jenis = 'surat_edaran';
+
     public string $nomor = '';
+
     public string $judul = '';
+
     public string $tanggal_surat = '';
+
     public string $keterangan = '';
+
     public $file = null;
 
     protected $listeners = ['resetFilter' => 'resetFilter'];
@@ -78,7 +85,7 @@ class PengarsipanTable extends Component
         ];
 
         if ($this->file) {
-            $data['file'] = $this->file->store('pengarsipan', 'public');
+            $data['file'] = FileVault::store($this->file, 'pengarsipan', 'public');
         }
 
         if ($this->editId) {
@@ -99,7 +106,9 @@ class PengarsipanTable extends Component
     public function delete(int $id): void
     {
         $arsip = Pengarsipan::findOrFail($id);
-        if ($arsip->file) Storage::disk('public')->delete($arsip->file);
+        if ($arsip->file) {
+            FileVault::delete('public', $arsip->file);
+        }
         $arsip->delete();
         $this->dispatch('notify', type: 'success', message: 'Arsip berhasil dihapus.');
     }
@@ -135,8 +144,8 @@ class PengarsipanTable extends Component
             $search = $this->search;
             $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
-                  ->orWhere('nomor', 'like', "%{$search}%")
-                  ->orWhere('keterangan', 'like', "%{$search}%");
+                    ->orWhere('nomor', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%");
             });
         }
 
