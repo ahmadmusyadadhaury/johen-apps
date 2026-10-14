@@ -28,6 +28,11 @@ class User extends Authenticatable
         return $this->belongsTo(Employee::class, 'employee_id');
     }
 
+    public function passkeys(): HasMany
+    {
+        return $this->hasMany(PasskeyCredential::class);
+    }
+
     public function readAnnouncements(): BelongsToMany
     {
         return $this->belongsToMany(Announcement::class, 'announcement_user')

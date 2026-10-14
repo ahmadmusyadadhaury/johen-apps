@@ -33,6 +33,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Belum ada weekly meeting</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Jadwal belum tersedia atau waktu rapat telah berakhir.</p>
             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Silakan hubungi Admin Master untuk membuat jadwal rapat baru.</p>
+            <button type="button" id="weekly-passkey-register" class="btn-secondary text-xs mt-5">Daftarkan Passkey untuk Absen Mendatang</button>
         </div>
     </div>
 
@@ -89,6 +90,25 @@
                 <p class="text-sm">{{ $message }}</p>
             </div>
             @endif
+
+            {{-- Passkey attendance --}}
+            <div class="mb-6 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Absen dengan Passkey + Lokasi</h5>
+                        @if($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters)
+                            <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Admin belum mengatur titik koordinat dan radius untuk rapat ini.</p>
+                        @else
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi melalui biometrik perangkat dan pastikan berada dalam radius {{ $currentMeeting->radius_meters }} m.</p>
+                        @endif
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Passkey belum terdaftar di perangkat ini? Daftarkan sekali terlebih dahulu.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 shrink-0">
+                        <button type="button" id="weekly-passkey-register" class="btn-secondary text-xs">Daftarkan Passkey</button>
+                        <button type="button" id="weekly-passkey-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary text-xs disabled:opacity-50">Absen Passkey</button>
+                    </div>
+                </div>
+            </div>
 
             {{-- Camera Selection --}}
             @if(!$selectedCamera)
@@ -158,6 +178,80 @@
     let pausedUntil = 0;
     let cachedCoords = '';
     let cachedName = '';
+
+    const passkeyRoutes = {
+        registerOptions: @js(route('hris.weekly-meeting.passkey.register.options')),
+        register: @js(route('hris.weekly-meeting.passkey.register')),
+        authOptions: @js(route('hris.weekly-meeting.passkey.auth.options')),
+        attend: @js(route('hris.weekly-meeting.attend.passkey')),
+    };
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const fromBase64url = value => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4)), c => c.charCodeAt(0));
+    const toBase64url = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    const decodeOptions = options => {
+        options.challenge = fromBase64url(options.challenge);
+        if (options.user) options.user.id = fromBase64url(options.user.id);
+        for (const key of ['allowCredentials', 'excludeCredentials']) if (options[key]) options[key].forEach(item => item.id = fromBase64url(item.id));
+        return options;
+    };
+    const credentialPayload = credential => {
+        const response = { clientDataJSON: toBase64url(credential.response.clientDataJSON) };
+        if (credential.response.attestationObject) {
+            response.attestationObject = toBase64url(credential.response.attestationObject);
+            response.transports = credential.response.getTransports?.() || [];
+        } else {
+            response.authenticatorData = toBase64url(credential.response.authenticatorData);
+            response.signature = toBase64url(credential.response.signature);
+            response.userHandle = credential.response.userHandle ? toBase64url(credential.response.userHandle) : null;
+        }
+        return { id: credential.id, rawId: toBase64url(credential.rawId), type: credential.type, response, clientExtensionResults: credential.getClientExtensionResults?.() || {} };
+    };
+    const api = async (url, body = null) => {
+        const response = await fetch(url, { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf }, body: body ? JSON.stringify(body) : undefined });
+        const responseText = await response.text();
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (_) {
+            const title = responseText.match(/<title[^>]*>(.*?)<\/title>/is)?.[1]?.replace(/\s+/g, ' ').trim();
+            throw new Error(`Server mengembalikan respons tidak valid (HTTP ${response.status})${title ? ': ' + title : '.'}`);
+        }
+        if (!response.ok) throw new Error(data.message || 'Permintaan gagal.');
+        return data;
+    };
+    const showPasskeyMessage = (message, error = false) => {
+        const box = document.createElement('div');
+        box.className = 'mb-4 rounded-lg px-4 py-3 text-sm ' + (error ? 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300' : 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-300');
+        box.textContent = message;
+        document.getElementById('weekly-passkey-register')?.closest('.rounded-xl')?.before(box);
+        setTimeout(() => box.remove(), 8000);
+    };
+    const registerButton = document.getElementById('weekly-passkey-register');
+    registerButton?.addEventListener('click', async () => {
+        try {
+            if (!window.PublicKeyCredential) throw new Error('Browser ini belum mendukung passkey.');
+            const options = decodeOptions(await api(passkeyRoutes.registerOptions));
+            const credential = await navigator.credentials.create({ publicKey: options });
+            if (!credential) throw new Error('Pendaftaran passkey dibatalkan.');
+            const result = await api(passkeyRoutes.register, credentialPayload(credential));
+            showPasskeyMessage(result.message);
+        } catch (error) { showPasskeyMessage(error.message || 'Passkey gagal didaftarkan.', true); }
+    });
+    document.getElementById('weekly-passkey-attend')?.addEventListener('click', async event => {
+        const button = event.currentTarget;
+        try {
+            if (!window.PublicKeyCredential) throw new Error('Browser ini belum mendukung passkey.');
+            if (!navigator.geolocation) throw new Error('Browser tidak menyediakan lokasi.');
+            button.disabled = true;
+            const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
+            const options = decodeOptions(await api(passkeyRoutes.authOptions));
+            const credential = await navigator.credentials.get({ publicKey: options });
+            if (!credential) throw new Error('Verifikasi passkey dibatalkan.');
+            const result = await api(passkeyRoutes.attend, { credential: credentialPayload(credential), latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
+            showPasskeyMessage(result.message);
+            setTimeout(() => window.location.reload(), 1200);
+        } catch (error) { showPasskeyMessage(error.message || 'Absen passkey gagal.', true); }
+        finally { button.disabled = false; }
+    });
     let locationInFlight = false;
     let geocodeInFlight = false;
     let pendingDispatch = false;

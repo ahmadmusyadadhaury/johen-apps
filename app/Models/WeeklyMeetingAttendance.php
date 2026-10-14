@@ -13,6 +13,8 @@ class WeeklyMeetingAttendance extends Model
         'attended_at',
         'method',
         'device_location',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

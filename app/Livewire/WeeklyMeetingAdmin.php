@@ -36,6 +36,9 @@ class WeeklyMeetingAdmin extends Component
     public string $end_time = '15:00';
     public string $location = 'Ruangan Meeting Lantai 1';
     public string $description = '';
+    public string $latitude = '';
+    public string $longitude = '';
+    public string $radius_meters = '100';
 
     public bool $showModal = false;
     public bool $showAttendanceModal = false;
@@ -59,6 +62,9 @@ class WeeklyMeetingAdmin extends Component
             'end_time' => 'nullable|date_format:H:i|after:start_time',
             'location' => 'nullable|string|max:500',
             'description' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90|required_with:longitude',
+            'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
+            'radius_meters' => 'nullable|integer|min:10|max:5000|required_with:latitude,longitude',
         ];
     }
 
@@ -95,6 +101,9 @@ class WeeklyMeetingAdmin extends Component
             'end_time' => $this->end_time,
             'location' => $this->location,
             'description' => $this->description,
+            'latitude' => $this->latitude !== '' ? $this->latitude : null,
+            'longitude' => $this->longitude !== '' ? $this->longitude : null,
+            'radius_meters' => $this->latitude !== '' && $this->longitude !== '' ? $this->radius_meters : null,
             'created_by' => auth()->id(),
             'is_active' => true,
         ]);
@@ -117,6 +126,9 @@ class WeeklyMeetingAdmin extends Component
         $this->end_time = $meeting->end_time?->format('H:i') ?? '';
         $this->location = $meeting->location ?? '';
         $this->description = $meeting->description ?? '';
+        $this->latitude = $meeting->latitude !== null ? (string) $meeting->latitude : '';
+        $this->longitude = $meeting->longitude !== null ? (string) $meeting->longitude : '';
+        $this->radius_meters = (string) ($meeting->radius_meters ?? 100);
         $this->mode = 'list';
         $this->showModal = true;
         $this->dispatch('open-modal', name: 'meeting-form');
@@ -134,6 +146,9 @@ class WeeklyMeetingAdmin extends Component
             'end_time' => $this->end_time,
             'location' => $this->location,
             'description' => $this->description,
+            'latitude' => $this->latitude !== '' ? $this->latitude : null,
+            'longitude' => $this->longitude !== '' ? $this->longitude : null,
+            'radius_meters' => $this->latitude !== '' && $this->longitude !== '' ? $this->radius_meters : null,
         ]);
 
         $this->resetForm();
@@ -230,10 +245,11 @@ class WeeklyMeetingAdmin extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['title', 'meeting_date', 'start_time', 'end_time', 'location', 'description', 'selectedMeetingId', 'showModal', 'showAttendanceModal']);
+        $this->reset(['title', 'meeting_date', 'start_time', 'end_time', 'location', 'description', 'latitude', 'longitude', 'selectedMeetingId', 'showModal', 'showAttendanceModal']);
         $this->meeting_date = Carbon::today()->format('Y-m-d');
         $this->start_time = '13:00';
         $this->end_time = '15:00';
+        $this->radius_meters = '100';
         $this->resetValidation();
     }
 

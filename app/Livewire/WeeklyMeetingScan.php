@@ -62,6 +62,18 @@ class WeeklyMeetingScan extends Component
             ->orderBy('meeting_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->first();
+
+        $this->alreadyAttended = false;
+        if ($this->currentMeeting && auth()->user()?->employee) {
+            $existing = WeeklyMeetingAttendance::where('weekly_meeting_id', $this->currentMeeting->id)
+                ->where('employee_id', auth()->user()->employee->id)
+                ->first();
+            if ($existing) {
+                $this->alreadyAttended = true;
+                $this->status = 'info';
+                $this->message = 'Anda sudah absen pada rapat ini pada '.$existing->attended_at->format('H:i:s');
+            }
+        }
     }
 
     public function handleQrScan(string $qrCode, ?string $deviceLocation = null): void

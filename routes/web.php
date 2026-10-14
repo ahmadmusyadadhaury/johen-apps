@@ -202,6 +202,10 @@ Route::middleware(['auth'])->group(function () {
             // All other roles - scan QR to attend
             Route::get('/scan', \App\Livewire\WeeklyMeetingScan::class)->name('scan');
             Route::post('/attend', [\App\Http\Controllers\WeeklyMeetingController::class, 'attend'])->name('attend');
+            Route::get('/passkey/register/options', [\App\Http\Controllers\PasskeyController::class, 'registrationOptions'])->name('passkey.register.options');
+            Route::post('/passkey/register', [\App\Http\Controllers\PasskeyController::class, 'register'])->name('passkey.register');
+            Route::get('/passkey/auth/options', [\App\Http\Controllers\PasskeyController::class, 'authenticationOptions'])->name('passkey.auth.options');
+            Route::post('/attend/passkey', [\App\Http\Controllers\WeeklyMeetingController::class, 'attendWithPasskey'])->name('attend.passkey');
         });
 
         Route::prefix('export')->name('export.')->group(function () {

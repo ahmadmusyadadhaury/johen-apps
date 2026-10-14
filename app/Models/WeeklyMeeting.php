@@ -17,6 +17,9 @@ class WeeklyMeeting extends Model
         'description',
         'qr_code',
         'is_active',
+        'latitude',
+        'longitude',
+        'radius_meters',
         'created_by',
     ];
 
@@ -25,6 +28,9 @@ class WeeklyMeeting extends Model
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
         'is_active' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'radius_meters' => 'integer',
     ];
 
     public function attendances(): HasMany

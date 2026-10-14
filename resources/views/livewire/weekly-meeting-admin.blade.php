@@ -170,6 +170,32 @@
                     @error('location') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <div class="rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20 p-4 space-y-3">
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Titik lokasi untuk Absen Passkey</h4>
+                        <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Klik titik rapat pada peta atau geser pin. Koordinat akan terisi otomatis; kosongkan jika rapat hanya memakai QR.</p>
+                    </div>
+                    <div id="weekly-meeting-location-map" wire:ignore class="h-64 sm:h-80 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <x-input-label for="latitude" value="Latitude" />
+                            <x-text-input id="latitude" wire:model="latitude" type="number" step="any" placeholder="Pilih titik pada peta" readonly class="mt-1 block w-full" />
+                            @error('latitude') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-input-label for="longitude" value="Longitude" />
+                            <x-text-input id="longitude" wire:model="longitude" type="number" step="any" placeholder="Pilih titik pada peta" readonly class="mt-1 block w-full" />
+                            @error('longitude') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <x-input-label for="radius_meters" value="Radius (meter)" />
+                            <x-text-input id="radius_meters" wire:model="radius_meters" type="number" min="10" max="5000" class="mt-1 block w-full" />
+                            @error('radius_meters') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <a id="weekly-meeting-google-maps-link" href="https://maps.google.com" target="_blank" rel="noopener" class="inline-flex text-xs font-medium text-blue-700 dark:text-blue-300 hover:underline">Buka titik terpilih di Google Maps ↗</a>
+                </div>
+
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <button type="button" wire:click="closeModal" class="btn-secondary text-xs">Batal</button>
                     <button type="submit" class="btn-primary text-xs">
@@ -219,6 +245,7 @@
                             <th class="px-6 py-3">NIK</th>
                             <th class="px-6 py-3">Divisi</th>
                             <th class="px-6 py-3">Waktu Absen</th>
+                            <th class="px-6 py-3">Metode</th>
                             <th class="px-6 py-3">Lokasi</th>
                         </tr>
                     </thead>
@@ -230,6 +257,7 @@
                                 <td class="table-cell text-gray-600 dark:text-gray-400 font-mono">{{ $att->employee->nik }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->employee->divisionNames() ?: '-' }}</td>
                                 <td class="table-cell text-gray-600 dark:text-gray-400">{{ $att->attended_at->format('H:i:s') }}</td>
+                                <td class="table-cell"><span class="badge-secondary">{{ match($att->method) { 'passkey_location' => 'Passkey + Lokasi', 'manual' => 'Manual', default => 'QR Code' } }}</span></td>
                                 <td class="table-cell">
                                     @if($att->device_location)
                                         <span class="badge-secondary inline-flex items-center gap-1">
@@ -243,7 +271,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-6 py-16 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                             <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15m7.5-7.5h-15"/></svg>
@@ -355,7 +383,73 @@
 </div>
 
 @push('scripts')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<style>#weekly-meeting-location-map { z-index: 0; } #weekly-meeting-location-map .leaflet-control-attribution { font-size: 9px; }</style>
 <script>
+(() => {
+    if (window.__weeklyMeetingMapPickerBound) return;
+    window.__weeklyMeetingMapPickerBound = true;
+    const loadLeaflet = () => new Promise((resolve, reject) => {
+        if (window.L) return resolve();
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.crossOrigin = '';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Peta gagal dimuat. Periksa koneksi internet.'));
+        document.head.appendChild(script);
+    });
+    let map = null;
+    let marker = null;
+    const fields = () => ({ lat: document.getElementById('latitude'), lon: document.getElementById('longitude') });
+    const setCoordinates = (lat, lon, pan = true) => {
+        const { lat: latField, lon: lonField } = fields();
+        if (!latField || !lonField) return;
+        const latitude = Number(lat).toFixed(7);
+        const longitude = Number(lon).toFixed(7);
+        latField.value = latitude;
+        lonField.value = longitude;
+        latField.dispatchEvent(new Event('input', { bubbles: true }));
+        lonField.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('weekly-meeting-google-maps-link')?.setAttribute('href', `https://www.google.com/maps?q=${latitude},${longitude}`);
+        const point = [Number(latitude), Number(longitude)];
+        if (marker) marker.setLatLng(point);
+        else marker = window.L.marker(point, { draggable: true }).addTo(map).on('dragend', event => {
+            const position = event.target.getLatLng();
+            setCoordinates(position.lat, position.lng, false);
+        });
+        if (pan) map.setView(point, Math.max(map.getZoom(), 16));
+    };
+    const initMap = async () => {
+        const container = document.getElementById('weekly-meeting-location-map');
+        if (!container || !container.getClientRects().length) return;
+        try {
+            await loadLeaflet();
+            if (!map) {
+                map = window.L.map(container).setView([-2.5, 118], 4);
+                window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                }).addTo(map);
+                map.on('click', event => setCoordinates(event.latlng.lat, event.latlng.lng, false));
+            }
+            map.invalidateSize();
+            const { lat, lon } = fields();
+            if (lat?.value && lon?.value) setCoordinates(lat.value, lon.value, true);
+            else {
+                if (marker) { map.removeLayer(marker); marker = null; }
+                map.setView([-2.5, 118], 4);
+            }
+        } catch (error) {
+            container.innerHTML = '<div class="p-4 text-sm text-red-600">' + error.message + '</div>';
+        }
+    };
+    window.addEventListener('open-modal', event => {
+        if ((typeof event.detail === 'string' ? event.detail : event.detail?.name) === 'meeting-form') setTimeout(initMap, 350);
+    });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(initMap, 350));
+    else setTimeout(initMap, 350);
+})();
+
 // Saat ada baris absensi baru ditambahkan (data terbaru di bawah), gulir
 // otomatis ke bawah agar baris yang baru masuk selalu terlihat.
 document.addEventListener('livewire:init', () => {
