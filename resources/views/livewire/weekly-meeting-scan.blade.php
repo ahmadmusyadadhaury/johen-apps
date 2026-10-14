@@ -33,7 +33,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Belum ada weekly meeting</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Jadwal belum tersedia atau waktu rapat telah berakhir.</p>
             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Silakan hubungi Admin Master untuk membuat jadwal rapat baru.</p>
-            <button type="button" id="weekly-passkey-register" class="btn-secondary text-xs mt-5">Daftarkan Passkey untuk Absen Mendatang</button>
+            <button type="button" id="weekly-face-register" class="btn-secondary text-xs mt-5">Daftarkan Wajah untuk Absen Mendatang</button>
         </div>
     </div>
 
@@ -91,21 +91,21 @@
             </div>
             @endif
 
-            {{-- Passkey attendance --}}
+            {{-- Face attendance --}}
             <div class="mb-6 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                        <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Absen dengan Passkey + Lokasi</h5>
+                        <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Absen dengan Face ID + Lokasi</h5>
                         @if($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters)
                             <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Admin belum mengatur titik koordinat dan radius untuk rapat ini.</p>
                         @else
-                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi melalui biometrik perangkat dan pastikan berada dalam radius {{ $currentMeeting->radius_meters }} m.</p>
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi wajah melalui kamera dan pastikan berada dalam radius {{ $currentMeeting->radius_meters }} m.</p>
                         @endif
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Passkey belum terdaftar di perangkat ini? Daftarkan sekali terlebih dahulu.</p>
+                        <p id="weekly-face-status" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Face ID didaftarkan satu kali pada akun Anda.</p>
                     </div>
                     <div class="flex flex-wrap gap-2 shrink-0">
-                        <button type="button" id="weekly-passkey-register" class="btn-secondary text-xs">Daftarkan Passkey</button>
-                        <button type="button" id="weekly-passkey-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary text-xs disabled:opacity-50">Absen Passkey</button>
+                        <button type="button" id="weekly-face-register" class="btn-secondary text-xs">Daftarkan Wajah</button>
+                        <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary text-xs disabled:opacity-50">Absen Face ID</button>
                     </div>
                 </div>
             </div>
@@ -179,33 +179,13 @@
     let cachedCoords = '';
     let cachedName = '';
 
-    const passkeyRoutes = {
-        registerOptions: @js(route('hris.weekly-meeting.passkey.register.options')),
-        register: @js(route('hris.weekly-meeting.passkey.register')),
-        authOptions: @js(route('hris.weekly-meeting.passkey.auth.options')),
-        attend: @js(route('hris.weekly-meeting.attend.passkey')),
+    const faceRoutes = {
+        status: @js(route('hris.weekly-meeting.face.status')),
+        preflight: @js(route('hris.weekly-meeting.face.preflight')),
+        register: @js(route('hris.weekly-meeting.face.register')),
+        attend: @js(route('hris.weekly-meeting.attend.face')),
     };
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const fromBase64url = value => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4)), c => c.charCodeAt(0));
-    const toBase64url = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-    const decodeOptions = options => {
-        options.challenge = fromBase64url(options.challenge);
-        if (options.user) options.user.id = fromBase64url(options.user.id);
-        for (const key of ['allowCredentials', 'excludeCredentials']) if (options[key]) options[key].forEach(item => item.id = fromBase64url(item.id));
-        return options;
-    };
-    const credentialPayload = credential => {
-        const response = { clientDataJSON: toBase64url(credential.response.clientDataJSON) };
-        if (credential.response.attestationObject) {
-            response.attestationObject = toBase64url(credential.response.attestationObject);
-            response.transports = credential.response.getTransports?.() || [];
-        } else {
-            response.authenticatorData = toBase64url(credential.response.authenticatorData);
-            response.signature = toBase64url(credential.response.signature);
-            response.userHandle = credential.response.userHandle ? toBase64url(credential.response.userHandle) : null;
-        }
-        return { id: credential.id, rawId: toBase64url(credential.rawId), type: credential.type, response, clientExtensionResults: credential.getClientExtensionResults?.() || {} };
-    };
     const api = async (url, body = null) => {
         const response = await fetch(url, { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf }, body: body ? JSON.stringify(body) : undefined });
         const responseText = await response.text();
@@ -218,38 +198,91 @@
         if (!response.ok) throw new Error(data.message || 'Permintaan gagal.');
         return data;
     };
-    const showPasskeyMessage = (message, error = false) => {
+    const showFaceMessage = (message, error = false) => {
         const box = document.createElement('div');
         box.className = 'mb-4 rounded-lg px-4 py-3 text-sm ' + (error ? 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300' : 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-300');
         box.textContent = message;
-        document.getElementById('weekly-passkey-register')?.closest('.rounded-xl')?.before(box);
+        (document.getElementById('weekly-face-register') || document.getElementById('weekly-face-attend'))?.closest('.rounded-xl')?.before(box);
         setTimeout(() => box.remove(), 8000);
     };
-    const registerButton = document.getElementById('weekly-passkey-register');
-    registerButton?.addEventListener('click', async () => {
+    let humanPromise = null;
+    function loadHuman() {
+        if (window.Human?.Human || window.Human) return Promise.resolve(window.Human);
+        if (!humanPromise) humanPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js';
+            script.onload = () => resolve(window.Human);
+            script.onerror = () => reject(new Error('Gagal memuat modul pengenalan wajah. Periksa koneksi internet.'));
+            document.head.appendChild(script);
+        });
+        return humanPromise;
+    }
+    async function captureFace() {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error('Kamera memerlukan HTTPS dan dukungan browser.');
+        const video = document.createElement('video');
+        video.autoplay = true; video.playsInline = true; video.muted = true;
+        video.style.cssText = 'position:fixed;inset:10% 10%;width:80%;height:80%;object-fit:contain;background:#111;z-index:10000;border-radius:16px';
+        const label = document.createElement('div');
+        label.textContent = 'Posisikan wajah di depan kamera, lalu berkedip';
+        label.style.cssText = 'position:fixed;z-index:10001;top:6%;left:10%;color:white;background:#111;padding:10px;border-radius:8px';
+        document.body.append(video, label);
+        let media;
         try {
-            if (!window.PublicKeyCredential) throw new Error('Browser ini belum mendukung passkey.');
-            const options = decodeOptions(await api(passkeyRoutes.registerOptions));
-            const credential = await navigator.credentials.create({ publicKey: options });
-            if (!credential) throw new Error('Pendaftaran passkey dibatalkan.');
-            const result = await api(passkeyRoutes.register, credentialPayload(credential));
-            showPasskeyMessage(result.message);
-        } catch (error) { showPasskeyMessage(error.message || 'Passkey gagal didaftarkan.', true); }
-    });
-    document.getElementById('weekly-passkey-attend')?.addEventListener('click', async event => {
+            media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            video.srcObject = media;
+            await new Promise(resolve => video.onloadedmetadata = resolve);
+            const HumanCtor = await loadHuman();
+            const HumanClass = HumanCtor?.Human || HumanCtor?.default || HumanCtor;
+            if (typeof HumanClass !== 'function') throw new Error('Modul pengenalan wajah tidak tersedia.');
+            const human = new HumanClass({ modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models', face: { enabled: true, detector: { rotation: true, maxDetected: 2 }, mesh: { enabled: true }, description: { enabled: true }, antispoof: { enabled: true }, liveness: { enabled: true } }, body: { enabled: false }, hand: { enabled: false }, object: { enabled: false }, gesture: { enabled: false } });
+            await human.load(); await human.warmup();
+            const deadline = Date.now() + 30000;
+            let samples = [];
+            while (Date.now() < deadline && samples.length < 3) {
+                const result = await human.detect(video);
+                const face = result.face?.length === 1 ? result.face[0] : null;
+                if (face?.embedding?.length === 1024 && Number(face.real ?? 0) > 0.5 && Number(face.live ?? 0) > 0.5) samples.push(face.embedding);
+                else await new Promise(resolve => setTimeout(resolve, 400));
+            }
+            if (samples.length < 3) throw new Error('Wajah belum terdeteksi jelas atau pemeriksaan wajah hidup gagal. Coba lagi dengan cahaya cukup dan berkedip.');
+            return samples[0].map((_, i) => samples.reduce((sum, sample) => sum + Number(sample[i]), 0) / samples.length);
+        } finally {
+            media?.getTracks().forEach(track => track.stop()); video.remove(); label.remove();
+        }
+    }
+    const registerButtons = [...document.querySelectorAll('#weekly-face-register')];
+    registerButtons.forEach(button => button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+            const embedding = await captureFace();
+            const result = await api(faceRoutes.register, { embedding });
+            showFaceMessage(result.message);
+            registerButtons.forEach(item => item.remove());
+            const faceStatus = document.getElementById('weekly-face-status');
+            if (faceStatus) faceStatus.textContent = 'Wajah sudah terdaftar di akun ini.';
+        } catch (error) { showFaceMessage(error.message || 'Pendaftaran wajah gagal.', true); }
+        finally { button.disabled = false; }
+    }));
+    api(faceRoutes.status).then(status => {
+        if (status.registered) registerButtons.forEach(button => button.remove());
+        const faceStatus = document.getElementById('weekly-face-status');
+        if (faceStatus) faceStatus.textContent = status.registered ? 'Wajah sudah terdaftar di akun ini.' : 'Daftarkan wajah satu kali sebelum absen.';
+    }).catch(error => showFaceMessage(error.message || 'Status pendaftaran wajah gagal dimuat.', true));
+    document.getElementById('weekly-face-attend')?.addEventListener('click', async event => {
         const button = event.currentTarget;
         try {
-            if (!window.PublicKeyCredential) throw new Error('Browser ini belum mendukung passkey.');
-            if (!navigator.geolocation) throw new Error('Browser tidak menyediakan lokasi.');
             button.disabled = true;
+            const eligibility = await api(faceRoutes.preflight);
+            if (!eligibility.can_attend) {
+                showFaceMessage(eligibility.message || 'Belum bisa melakukan presensi saat ini.', true);
+                return;
+            }
+            if (!navigator.geolocation) throw new Error('Browser tidak menyediakan lokasi.');
             const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
-            const options = decodeOptions(await api(passkeyRoutes.authOptions));
-            const credential = await navigator.credentials.get({ publicKey: options });
-            if (!credential) throw new Error('Verifikasi passkey dibatalkan.');
-            const result = await api(passkeyRoutes.attend, { credential: credentialPayload(credential), latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
-            showPasskeyMessage(result.message);
-            setTimeout(() => window.location.reload(), 1200);
-        } catch (error) { showPasskeyMessage(error.message || 'Absen passkey gagal.', true); }
+            const embedding = await captureFace();
+            const result = await api(faceRoutes.attend, { embedding, latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
+            showFaceMessage(result.message); setTimeout(() => window.location.reload(), 1200);
+        } catch (error) { showFaceMessage(error.message || 'Absen Face ID gagal.', true); }
         finally { button.disabled = false; }
     });
     let locationInFlight = false;

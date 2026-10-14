@@ -148,4 +148,9 @@ class WeeklyMeetingController extends Controller
         $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
         return $earth * 2 * asin(sqrt($a));
     }
+
+    public function distanceBetween(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        return $this->distanceMeters($lat1, $lon1, $lat2, $lon2);
+    }
 }
