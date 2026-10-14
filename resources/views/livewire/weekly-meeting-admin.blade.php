@@ -179,12 +179,12 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <x-input-label for="latitude" value="Latitude" />
-                            <x-text-input id="latitude" wire:model="latitude" type="number" step="any" placeholder="Pilih titik pada peta" readonly class="mt-1 block w-full" />
+                            <x-text-input id="latitude" wire:model="latitude" type="number" step="any" placeholder="-6.200000" class="mt-1 block w-full" />
                             @error('latitude') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <x-input-label for="longitude" value="Longitude" />
-                            <x-text-input id="longitude" wire:model="longitude" type="number" step="any" placeholder="Pilih titik pada peta" readonly class="mt-1 block w-full" />
+                            <x-text-input id="longitude" wire:model="longitude" type="number" step="any" placeholder="106.816666" class="mt-1 block w-full" />
                             @error('longitude') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
@@ -419,6 +419,24 @@
         });
         if (pan) map.setView(point, Math.max(map.getZoom(), 16));
     };
+    const syncMapFromFields = () => {
+        const { lat, lon } = fields();
+        if (!map || !lat || !lon) return;
+        if (!lat.value && !lon.value) {
+            if (marker) { map.removeLayer(marker); marker = null; }
+            document.getElementById('weekly-meeting-google-maps-link')?.setAttribute('href', 'https://maps.google.com');
+            return;
+        }
+        if (lat.value === '' || lon.value === '') return;
+        const latitude = Number(lat.value);
+        const longitude = Number(lon.value);
+        if (Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180) {
+            setCoordinates(latitude, longitude, false);
+        }
+    };
+    document.addEventListener('change', event => {
+        if (event.target?.id === 'latitude' || event.target?.id === 'longitude') syncMapFromFields();
+    });
     const initMap = async () => {
         const container = document.getElementById('weekly-meeting-location-map');
         if (!container || !container.getClientRects().length) return;
