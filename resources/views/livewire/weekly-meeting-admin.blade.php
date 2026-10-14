@@ -17,6 +17,12 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Weekly Saya
         </button>
+        @if(auth()->user()->isSuperAdmin())
+        <button wire:click="setTab('face')" class="flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'face' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zM4.5 19.5a7.5 7.5 0 0115 0M3.75 12a8.25 8.25 0 1116.5 0 8.25 8.25 0 01-16.5 0z"/></svg>
+            Kelola Face ID
+        </button>
+        @endif
     </div>
     @endif
 
@@ -377,6 +383,59 @@
     {{-- Tab "Weekly Saya" (khusus Super Admin & Staff HR): scan QR absen --}}
     @if($this->showTabs && $mode === 'list' && $tab === 'weekly')
     <livewire:weekly-meeting-scan :embedded="true" wire:key="weekly-scan-tab" />
+    @endif
+
+    @if($mode === 'list' && $tab === 'face' && auth()->user()->isSuperAdmin())
+    <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <header class="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Pendaftaran Face ID</h2>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Reset pendaftaran yang keliru agar karyawan dapat mendaftarkan wajah kembali. Riwayat presensi tidak akan dihapus.</p>
+        </header>
+        @php($faceTemplates = $this->faceTemplates)
+        @if($faceTemplates->isNotEmpty())
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px] text-sm">
+                <thead class="bg-gray-50 dark:bg-gray-800">
+                    <tr class="table-header">
+                        <th class="px-5 py-3 text-left">Karyawan</th>
+                        <th class="px-5 py-3 text-left">Akun</th>
+                        <th class="px-5 py-3 text-left">Terdaftar</th>
+                        <th class="px-5 py-3 text-right">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach($faceTemplates as $template)
+                    <tr>
+                        <td class="px-5 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $template->user?->employee?->nama ?? $template->user?->name ?? 'Akun tidak ditemukan' }}</td>
+                        <td class="px-5 py-3 text-gray-600 dark:text-gray-300">{{ $template->user?->username ?? $template->user?->email ?? '—' }}</td>
+                        <td class="px-5 py-3 text-gray-500 dark:text-gray-400">{{ $template->created_at?->format('d M Y, H:i') ?? '—' }}</td>
+                        <td class="px-5 py-3 text-right">
+                            <button type="button" wire:click="confirmFaceReset({{ $template->user_id }})" class="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40">Reset Wajah</button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="px-5 py-12 text-center">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Belum ada karyawan yang mendaftarkan Face ID.</p>
+        </div>
+        @endif
+    </section>
+    @endif
+
+    @if($showFaceResetConfirm && auth()->user()->isSuperAdmin())
+    <div class="fixed inset-0 z-[110] flex items-center justify-center bg-gray-950/60 px-4 py-6 backdrop-blur-sm" wire:keydown.escape="cancelFaceReset" wire:click.self="cancelFaceReset">
+        <section role="dialog" aria-modal="true" aria-labelledby="face-reset-title" class="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+            <h2 id="face-reset-title" class="text-base font-bold text-gray-900 dark:text-gray-100">Reset Face ID?</h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Pendaftaran wajah <strong>{{ $faceResetTargetName }}</strong> akan dihapus. Karyawan perlu mendaftarkan wajah kembali. Riwayat presensinya tetap tersimpan.</p>
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" wire:click="cancelFaceReset" class="btn-secondary text-xs">Batal</button>
+                <button type="button" wire:click="resetFaceRegistration" wire:loading.attr="disabled" class="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60">Ya, Reset Wajah</button>
+            </div>
+        </section>
+    </div>
     @endif
 
     <x:confirm-delete-modal title="Hapus Rapat" message="Apakah Anda yakin ingin menghapus rapat mingguan ini? Data absensi juga akan terhapus." />

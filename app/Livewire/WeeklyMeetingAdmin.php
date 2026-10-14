@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\WeeklyMeeting;
 use App\Models\WeeklyMeetingAttendance;
 use App\Models\Employee;
+use App\Models\UserFaceTemplate;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Carbon\Carbon;
@@ -14,13 +15,61 @@ class WeeklyMeetingAdmin extends Component
     public string $mode = 'list'; // list, create, attendance
     public ?int $selectedMeetingId = null;
 
-    // Tab "Weekly Saya" — saat staff_hr memilih menu Weekly Meeting, tampilkan
-    // 2 tab: "QR Code" (kelola daftar rapat) dan "Weekly Saya" (scan QR absen).
-    public string $tab = 'qr'; // qr | weekly
+    // Tabs yang tersedia pada halaman Weekly Meeting.
+    public string $tab = 'qr'; // qr | weekly | face
+
+    public bool $showFaceResetConfirm = false;
+    public ?int $faceResetTargetId = null;
+    public string $faceResetTargetName = '';
 
     public function setTab(string $tab): void
     {
-        $this->tab = $tab === 'weekly' ? 'weekly' : 'qr';
+        if ($tab === 'face') {
+            abort_unless(auth()->user()->isSuperAdmin(), 403);
+        }
+
+        $this->tab = in_array($tab, ['weekly', 'face'], true) ? $tab : 'qr';
+    }
+
+    public function getFaceTemplatesProperty()
+    {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
+        return UserFaceTemplate::with('user.employee')->latest()->get();
+    }
+
+    public function confirmFaceReset(int $userId): void
+    {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
+        $template = UserFaceTemplate::with('user.employee')->where('user_id', $userId)->firstOrFail();
+        $this->faceResetTargetId = $userId;
+        $this->faceResetTargetName = $template->user?->employee?->nama
+            ?? $template->user?->name
+            ?? 'Akun karyawan';
+        $this->showFaceResetConfirm = true;
+    }
+
+    public function cancelFaceReset(): void
+    {
+        $this->showFaceResetConfirm = false;
+        $this->faceResetTargetId = null;
+        $this->faceResetTargetName = '';
+    }
+
+    public function resetFaceRegistration(): void
+    {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless($this->faceResetTargetId, 404);
+
+        $deleted = UserFaceTemplate::where('user_id', $this->faceResetTargetId)->delete();
+        $this->cancelFaceReset();
+
+        if ($deleted) {
+            $this->dispatch('notify', type: 'success', message: 'Data Face ID berhasil direset. Karyawan dapat mendaftarkan wajah kembali.');
+        } else {
+            $this->dispatch('notify', type: 'error', message: 'Data Face ID tidak ditemukan atau sudah direset.');
+        }
     }
 
     // Tab "QR Code" / "Weekly Saya" hanya untuk Super Admin & Staff HR.

@@ -185,6 +185,8 @@
         register: @js(route('hris.weekly-meeting.face.register')),
         attend: @js(route('hris.weekly-meeting.attend.face')),
     };
+    const currentWeeklyTitle = @js($currentMeeting?->title ?? null);
+    const currentWeeklyDate = @js($currentMeeting?->meeting_date?->copy()->locale('id')->translatedFormat('d F Y') ?? null);
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
     const api = async (url, body = null) => {
         const response = await fetch(url, { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf }, body: body ? JSON.stringify(body) : undefined });
@@ -205,6 +207,27 @@
         (document.getElementById('weekly-face-register') || document.getElementById('weekly-face-attend'))?.closest('.rounded-xl')?.before(box);
         setTimeout(() => box.remove(), 8000);
     };
+    function setFaceButtonBusy(button, message) {
+        if (!button) return;
+        if (!button.dataset.faceOriginalHtml) button.dataset.faceOriginalHtml = button.innerHTML;
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.replaceChildren();
+        const spinner = document.createElement('span');
+        spinner.className = 'inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent align-[-3px]';
+        spinner.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'ml-2';
+        label.textContent = message;
+        button.append(spinner, label);
+    }
+    function clearFaceButtonBusy(button) {
+        if (!button) return;
+        if (button.dataset.faceOriginalHtml) button.innerHTML = button.dataset.faceOriginalHtml;
+        delete button.dataset.faceOriginalHtml;
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+    }
     let humanPromise = null;
     function loadHuman() {
         if (window.Human?.Human || window.Human) return Promise.resolve(window.Human);
@@ -217,7 +240,7 @@
         });
         return humanPromise;
     }
-    async function captureFace() {
+    async function captureFace(meetingContext = null, { mode = 'attend', onPoseCaptured = null } = {}) {
         if (!navigator.mediaDevices?.getUserMedia) throw new Error('Kamera memerlukan HTTPS dan dukungan browser.');
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;overflow-y:auto;background:rgba(15,23,42,.82);padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))';
@@ -229,8 +252,12 @@
         titleRow.style.cssText = 'display:flex;align-items:center;gap:12px;min-width:0';
         const brandMark = document.createElement('div');
         brandMark.setAttribute('aria-hidden', 'true');
-        brandMark.style.cssText = 'display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;color:#fff;background:linear-gradient(145deg,#2563eb,#06b6d4);border-radius:13px;box-shadow:0 5px 14px rgba(37,99,235,.24)';
-        brandMark.innerHTML = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5c0 4.7-2.9 8-7 10-4.1-2-7-5.3-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>';
+        brandMark.style.cssText = 'display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;background:#fff;border:1px solid #dbeafe;border-radius:13px;box-shadow:0 5px 14px rgba(37,99,235,.18);overflow:hidden';
+        const brandLogo = document.createElement('img');
+        brandLogo.src = @js(asset('logo.png'));
+        brandLogo.alt = 'Johen Application';
+        brandLogo.style.cssText = 'display:block;width:30px;height:36px;object-fit:contain';
+        brandMark.appendChild(brandLogo);
         const titleText = document.createElement('div');
         titleText.style.cssText = 'min-width:0';
         const heading = document.createElement('h2');
@@ -241,6 +268,21 @@
         subtitle.style.cssText = 'margin:3px 0 0;color:#64748b;font-size:12px';
         titleText.append(heading, subtitle);
         titleRow.append(brandMark, titleText);
+        const meetingInfo = document.createElement('div');
+        meetingInfo.setAttribute('role', 'status');
+        meetingInfo.setAttribute('aria-live', 'polite');
+        meetingInfo.style.cssText = 'display:flex;align-items:center;gap:9px;padding:10px 12px;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:13px;line-height:1.4';
+        const meetingDot = document.createElement('span');
+        meetingDot.style.cssText = 'width:8px;height:8px;flex:0 0 8px;border-radius:999px;background:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)';
+        const meetingLabel = document.createElement('span');
+        const meetingTitle = meetingContext?.title || currentWeeklyTitle;
+        const meetingDate = meetingContext?.meeting_date
+            ? new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${meetingContext.meeting_date}T00:00:00`))
+            : currentWeeklyDate;
+        meetingLabel.textContent = meetingTitle && meetingDate
+            ? `Presensi untuk ${meetingTitle} · ${meetingDate}`
+            : 'Pendaftaran wajah untuk Weekly Meeting berikutnya';
+        meetingInfo.append(meetingDot, meetingLabel);
         const stage = document.createElement('div');
         stage.className = 'face-camera-stage';
         const video = document.createElement('video');
@@ -258,13 +300,60 @@
         label.setAttribute('role', 'status');
         label.setAttribute('aria-live', 'polite');
         label.style.cssText = 'padding:10px 13px;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:13px;line-height:1.45;overflow-wrap:anywhere';
-        panel.append(titleRow, stage, label);
+        const controls = document.createElement('div');
+        controls.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap';
+        const retryButton = document.createElement('button');
+        retryButton.type = 'button';
+        retryButton.textContent = 'Ambil Ulang';
+        retryButton.style.cssText = 'display:none;padding:9px 13px;color:#fff;background:#2563eb;border:0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer';
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.textContent = 'Tutup Kamera';
+        closeButton.style.cssText = 'padding:9px 13px;color:#475569;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer';
+        controls.append(retryButton, closeButton);
+        panel.append(titleRow, meetingInfo, stage, label, controls);
         overlay.append(panel);
         document.head.append(frameStyle);
         document.body.append(overlay);
         let media;
+        let cancelled = false;
+        let keepOpen = false;
+        let cleaned = false;
+        let resolveRetry = null;
+        const cleanup = () => {
+            if (cleaned) return;
+            cleaned = true;
+            media?.getTracks().forEach(track => track.stop());
+            overlay.remove();
+            frameStyle.remove();
+        };
+        const setStatus = (message, error = false) => {
+            label.textContent = message;
+            label.style.color = error ? '#b91c1c' : '#1e40af';
+            label.style.background = error ? '#fef2f2' : '#eff6ff';
+            label.style.borderColor = error ? '#fecaca' : '#bfdbfe';
+        };
+        const waitForRetry = () => new Promise(resolve => {
+            resolveRetry = resolve;
+            retryButton.style.display = 'inline-flex';
+            retryButton.onclick = () => {
+                retryButton.style.display = 'none';
+                resolveRetry?.(true);
+                resolveRetry = null;
+            };
+        });
+        closeButton.addEventListener('click', () => {
+            cancelled = true;
+            cleanup();
+            resolveRetry?.(false);
+            resolveRetry = null;
+        });
         try {
             media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            if (cancelled) {
+                media.getTracks().forEach(track => track.stop());
+                throw new DOMException('Kamera ditutup.', 'AbortError');
+            }
             video.srcObject = media;
             await new Promise(resolve => video.onloadedmetadata = resolve);
             await video.play();
@@ -274,48 +363,157 @@
             if (typeof HumanClass !== 'function') throw new Error('Modul pengenalan wajah tidak tersedia.');
             const human = new HumanClass({ modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models', face: { enabled: true, detector: { rotation: true, maxDetected: 2 }, mesh: { enabled: true }, description: { enabled: true }, antispoof: { enabled: true }, liveness: { enabled: true } }, body: { enabled: false }, hand: { enabled: false }, object: { enabled: false }, gesture: { enabled: false } });
             await human.load(); await human.warmup();
-            label.textContent = 'Hadap kamera dengan pencahayaan cukup. Lepas masker/kacamata gelap dan berkedip.';
-            const deadline = Date.now() + 30000;
-            let samples = [];
-            let faceSeen = false;
-            let embeddingSeen = false;
-            let livenessSeen = false;
-            while (Date.now() < deadline && samples.length < 3) {
-                const result = await human.detect(video);
-                const face = result.face?.length === 1 ? result.face[0] : null;
-                faceSeen ||= Boolean(face);
-                embeddingSeen ||= Boolean(face?.embedding?.length === 1024);
-                livenessSeen ||= Number(face?.real ?? 0) > 0.5 && Number(face?.live ?? 0) > 0.5;
-                if (face?.embedding?.length === 1024 && Number(face.real ?? 0) > 0.5 && Number(face.live ?? 0) > 0.5) {
-                    samples.push(face.embedding);
-                    label.textContent = `Wajah terverifikasi (${samples.length}/3)...`;
-                } else {
-                    await new Promise(resolve => setTimeout(resolve, 400));
+            const enrollment = mode === 'register';
+            const poseSteps = enrollment ? [
+                { key: 'front', prompt: 'Lihat lurus ke kamera dan berkedip.' },
+                { key: 'right', prompt: 'Putar kepala ke kanan Anda.' },
+                { key: 'left', prompt: 'Putar kepala ke kiri Anda.' },
+                { key: 'up', prompt: 'Arahkan wajah sedikit ke atas.' },
+            ] : [
+                { key: 'any', prompt: 'Arahkan wajah ke kamera dari sudut yang nyaman dan berkedip.' },
+                { key: 'any', prompt: 'Tahan posisi sebentar untuk memastikan wajah terbaca.' },
+            ];
+            const samples = [];
+            let stepIndex = 0;
+            let stableEmbeddings = [];
+            let rightSign = 0;
+            let upSign = 0;
+            let liveConfirmed = false;
+            const poseMatches = face => {
+                const key = poseSteps[stepIndex].key;
+                if (key === 'any') return true;
+                const yaw = Number(face?.rotation?.angle?.yaw);
+                const pitch = Number(face?.rotation?.angle?.pitch);
+                if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) return false;
+                if (key === 'front') return Math.abs(yaw) < 0.30 && Math.abs(pitch) < 0.28;
+                if (key === 'right') {
+                    if (Math.abs(yaw) < 0.20) return false;
+                    rightSign = Math.sign(yaw);
+                    return true;
                 }
+                if (key === 'left') return rightSign !== 0 && yaw * rightSign < -0.20;
+                if (key === 'up') {
+                    if (Math.abs(pitch) < 0.16) return false;
+                    upSign = Math.sign(pitch);
+                    return true;
+                }
+                return upSign !== 0 && pitch * upSign < -0.16;
+            };
+            setStatus(enrollment ? `Pendaftaran 1/4 · ${poseSteps[0].prompt}` : 'Verifikasi presensi · Lihat lurus ke kamera dan berkedip.');
+            while (!cancelled && stepIndex < poseSteps.length) {
+                const result = await human.detect(video);
+                if (cancelled) throw new DOMException('Kamera ditutup.', 'AbortError');
+                const face = result.face?.length === 1 ? result.face[0] : null;
+                const box = Array.isArray(face?.box) ? face.box.map(Number) : null;
+                let faceInsideGuide = false;
+                if (box?.length >= 4 && box.slice(0, 4).every(Number.isFinite) && video.videoWidth && video.videoHeight) {
+                    const [x, y, width, height] = box;
+                    const stageWidth = stage.clientWidth;
+                    const stageHeight = stage.clientHeight;
+                    const guideRect = guide.getBoundingClientRect();
+                    const stageRect = stage.getBoundingClientRect();
+                    const scale = Math.max(stageWidth / video.videoWidth, stageHeight / video.videoHeight);
+                    const offsetX = (stageWidth - video.videoWidth * scale) / 2;
+                    const offsetY = (stageHeight - video.videoHeight * scale) / 2;
+                    const left = (x * scale + offsetX) / stageWidth;
+                    const right = ((x + width) * scale + offsetX) / stageWidth;
+                    const top = (y * scale + offsetY) / stageHeight;
+                    const bottom = ((y + height) * scale + offsetY) / stageHeight;
+                    const centerX = (left + right) / 2;
+                    const centerY = (top + bottom) / 2;
+                    const guideCenterX = (guideRect.left + guideRect.width / 2 - stageRect.left) / stageWidth;
+                    const guideCenterY = (guideRect.top + guideRect.height / 2 - stageRect.top) / stageHeight;
+                    const rx = guideRect.width / stageRect.width / 2;
+                    const ry = guideRect.height / stageRect.height / 2;
+                    const ellipseContains = (px, py) => ((px - guideCenterX) / rx) ** 2 + ((py - guideCenterY) / ry) ** 2 <= 1;
+                    const faceWidth = right - left;
+                    const faceHeight = bottom - top;
+                    const faceSizeValid = faceWidth >= 0.10 && faceHeight >= 0.16
+                        && faceWidth <= (rx * 2) * 1.15 && faceHeight <= (ry * 2) * 1.15;
+                    faceInsideGuide = faceSizeValid && ellipseContains(centerX, centerY);
+                }
+                const liveNow = Number(face?.real ?? 0) > 0.5 && Number(face?.live ?? 0) > 0.5;
+                const liveOkay = stepIndex > 0 ? liveConfirmed : liveNow;
+                const poseOkay = face ? poseMatches(face) : false;
+                if (face?.embedding?.length === 1024 && faceInsideGuide && poseOkay && liveOkay) {
+                    if (liveNow) liveConfirmed = true;
+                    stableEmbeddings.push(face.embedding);
+                    if (stableEmbeddings.length >= 2) {
+                        const first = stableEmbeddings[0];
+                        const embedding = first.map((_, i) => stableEmbeddings.reduce((sum, sample) => sum + Number(sample[i]), 0) / stableEmbeddings.length);
+                        samples.push(embedding);
+                        stableEmbeddings = [];
+                        stepIndex++;
+                        if (enrollment && onPoseCaptured) {
+                            const pose = poseSteps[stepIndex - 1].key;
+                            let saved = false;
+                            while (!cancelled && !saved) {
+                                setStatus(`Sudut ${pose} tertangkap. Menyimpan ${stepIndex}/4...`);
+                                try {
+                                    const response = await onPoseCaptured({ pose, embedding, complete: stepIndex === poseSteps.length });
+                                    setStatus(response.message || `Sudut ${pose} berhasil disimpan (${stepIndex}/4).`);
+                                    saved = true;
+                                } catch (error) {
+                                    setStatus(`${error.message || 'Sudut belum berhasil disimpan.'} Tekan Ambil Ulang untuk mencoba menyimpan kembali.`, true);
+                                    if (!await waitForRetry()) throw new DOMException('Pendaftaran dibatalkan.', 'AbortError');
+                                }
+                            }
+                        }
+                    }
+                    if (stepIndex < poseSteps.length) {
+                        const progress = enrollment ? `Pendaftaran ${stepIndex + 1}/4` : `Verifikasi ${stepIndex + 1}/2`;
+                        setStatus(`${progress} · ${poseSteps[stepIndex].prompt}`);
+                    }
+                } else {
+                    stableEmbeddings = [];
+                    if (!face) setStatus('Wajah belum terbaca. Hadapkan wajah ke kamera dengan pencahayaan cukup.');
+                    else if (!faceInsideGuide) setStatus('Posisikan wajah di dalam garis oval dan sesuaikan jarak kamera.');
+                    else if (!poseOkay) setStatus(poseSteps[stepIndex].prompt);
+                    else if (!liveOkay) setStatus('Lihat lurus ke kamera dan berkedip untuk verifikasi wajah hidup.');
+                    else setStatus('Tahan posisi wajah sebentar agar terbaca stabil.');
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
-            if (samples.length < 3) {
-                if (!faceSeen) throw new Error('Wajah belum terbaca kamera. Dekatkan wajah, hadap kamera, dan pastikan pencahayaan cukup.');
-                if (!embeddingSeen) throw new Error('Wajah terlihat, tetapi model tidak menghasilkan data wajah. Muat ulang halaman dan coba lagi.');
-                if (!livenessSeen) throw new Error('Wajah terdeteksi, tetapi pemeriksaan wajah hidup belum lolos. Hadap kamera langsung dan berkedip.');
-                throw new Error('Verifikasi wajah belum stabil. Tahan posisi wajah beberapa detik lalu coba lagi.');
-            }
-            return samples[0].map((_, i) => samples.reduce((sum, sample) => sum + Number(sample[i]), 0) / samples.length);
+            if (cancelled) throw new DOMException('Kamera ditutup.', 'AbortError');
+            keepOpen = true;
+            setStatus(enrollment ? 'Semua sudut tertangkap. Menyimpan pendaftaran wajah...' : 'Wajah terverifikasi. Mengirim presensi...');
+            return { embeddings: samples, setStatus, close: () => { cancelled = true; cleanup(); }, waitForRetry };
         } finally {
-            media?.getTracks().forEach(track => track.stop()); overlay.remove(); frameStyle.remove();
+            if (!keepOpen) cleanup();
+        }
+    }
+    async function submitFaceWithRetry(button, mode, meetingContext, submit, onSuccess, onPoseCaptured = null) {
+        while (true) {
+            const session = await captureFace(meetingContext, { mode, onPoseCaptured });
+            try {
+                session.setStatus(mode === 'register' ? 'Semua sudut berhasil tersimpan.' : 'Memeriksa kecocokan dan menyimpan presensi...');
+                const result = submit ? await submit(session.embeddings) : { message: 'Semua sudut tersimpan. Face ID berhasil didaftarkan.' };
+                session.setStatus(result.message || 'Berhasil.');
+                onSuccess?.(result);
+                setTimeout(session.close, 900);
+                return;
+            } catch (error) {
+                session.setStatus(error.message || 'Verifikasi belum berhasil.', true);
+                const retry = await session.waitForRetry();
+                session.close();
+                if (!retry) return;
+            }
         }
     }
     const registerButtons = [...document.querySelectorAll('#weekly-face-register')];
     registerButtons.forEach(button => button.addEventListener('click', async () => {
-        button.disabled = true;
+        setFaceButtonBusy(button, 'Menyiapkan kamera...');
         try {
-            const embedding = await captureFace();
-            const result = await api(faceRoutes.register, { embedding });
-            showFaceMessage(result.message);
-            registerButtons.forEach(item => item.remove());
-            const faceStatus = document.getElementById('weekly-face-status');
-            if (faceStatus) faceStatus.textContent = 'Wajah sudah terdaftar di akun ini.';
-        } catch (error) { showFaceMessage(error.message || 'Pendaftaran wajah gagal.', true); }
-        finally { button.disabled = false; }
+            await submitFaceWithRetry(button, 'register', null, null, () => {
+                showFaceMessage('Wajah berhasil didaftarkan dari empat sudut. Foto kamera tidak disimpan.');
+                registerButtons.forEach(item => item.remove());
+                const faceStatus = document.getElementById('weekly-face-status');
+                if (faceStatus) faceStatus.textContent = 'Wajah sudah terdaftar di akun ini.';
+            }, ({ pose, embedding, complete }) => api(faceRoutes.register, { pose, embedding, complete }));
+        } catch (error) {
+            if (error.name !== 'AbortError') showFaceMessage(error.message || 'Pendaftaran wajah gagal.', true);
+        }
+        finally { clearFaceButtonBusy(button); }
     }));
     api(faceRoutes.status).then(status => {
         if (status.registered) registerButtons.forEach(button => button.remove());
@@ -325,19 +523,22 @@
     document.getElementById('weekly-face-attend')?.addEventListener('click', async event => {
         const button = event.currentTarget;
         try {
-            button.disabled = true;
+            setFaceButtonBusy(button, 'Memeriksa jadwal...');
             const eligibility = await api(faceRoutes.preflight);
             if (!eligibility.can_attend) {
                 showFaceMessage(eligibility.message || 'Belum bisa melakukan presensi saat ini.', true);
                 return;
             }
             if (!navigator.geolocation) throw new Error('Browser tidak menyediakan lokasi.');
+            setFaceButtonBusy(button, 'Menentukan lokasi...');
             const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
-            const embedding = await captureFace();
-            const result = await api(faceRoutes.attend, { embedding, latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
-            showFaceMessage(result.message); setTimeout(() => window.location.reload(), 1200);
+            setFaceButtonBusy(button, 'Menyiapkan verifikasi...');
+            await submitFaceWithRetry(button, 'attend', eligibility.meeting, embeddings => api(faceRoutes.attend, { embeddings, latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy }), result => {
+                showFaceMessage(result.message);
+                setTimeout(() => window.location.reload(), 1200);
+            });
         } catch (error) { showFaceMessage(error.message || 'Absen Face ID gagal.', true); }
-        finally { button.disabled = false; }
+        finally { clearFaceButtonBusy(button); }
     });
     let locationInFlight = false;
     let geocodeInFlight = false;
