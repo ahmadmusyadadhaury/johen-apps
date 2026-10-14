@@ -103,9 +103,9 @@
                         @endif
                         <p id="weekly-face-status" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Face ID didaftarkan satu kali pada akun Anda.</p>
                     </div>
-                    <div class="flex flex-wrap gap-2 shrink-0">
-                        <button type="button" id="weekly-face-register" class="btn-secondary text-xs">Daftarkan Wajah</button>
-                        <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary text-xs disabled:opacity-50">Absen Face ID</button>
+                    <div class="flex w-full sm:w-auto flex-wrap gap-2 shrink-0">
+                        <button type="button" id="weekly-face-register" class="btn-secondary flex-1 sm:flex-none text-xs whitespace-nowrap">Daftarkan Wajah</button>
+                        <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary flex-1 sm:flex-none text-xs whitespace-nowrap disabled:opacity-50">Absen Face ID</button>
                     </div>
                 </div>
             </div>
@@ -219,35 +219,89 @@
     }
     async function captureFace() {
         if (!navigator.mediaDevices?.getUserMedia) throw new Error('Kamera memerlukan HTTPS dan dukungan browser.');
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;overflow-y:auto;background:rgba(15,23,42,.82);padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))';
+        const frameStyle = document.createElement('style');
+        frameStyle.textContent = '.face-camera-stage{position:relative;width:100%;aspect-ratio:4/3;max-height:min(58vh,520px);max-height:min(58dvh,520px);overflow:hidden;border-radius:14px;background:linear-gradient(145deg,#0f172a,#111827)}.face-camera-video{display:block;width:100%;height:100%;object-fit:cover}.face-guide-oval{position:absolute;left:50%;top:48%;width:43%;height:66%;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.94);border-radius:50%;box-shadow:0 0 0 3px rgba(37,99,235,.82),0 0 28px rgba(34,211,238,.62),inset 0 0 20px rgba(37,99,235,.14);pointer-events:none}.face-guide-oval:after{content:"";position:absolute;inset:7px;border:1px solid rgba(103,232,249,.6);border-radius:50%}.face-scan-line{position:absolute;left:27%;right:27%;top:18%;height:2px;border-radius:4px;background:#67e8f9;box-shadow:0 0 12px 3px rgba(34,211,238,.78);animation:faceScanMove 2.8s ease-in-out infinite alternate;pointer-events:none}@keyframes faceScanMove{from{top:18%;opacity:.55}to{top:76%;opacity:1}}@media(max-width:640px){.face-camera-stage{aspect-ratio:3/4}.face-guide-oval{width:58%;height:68%}.face-scan-line{left:22%;right:22%}}@media(prefers-reduced-motion:reduce){.face-scan-line{animation:none;top:48%}}';
+        const panel = document.createElement('div');
+        panel.style.cssText = 'width:min(100%,520px);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;gap:14px;padding:clamp(14px,3vw,22px);background:#fff;border:1px solid #dbeafe;border-radius:20px;box-shadow:0 24px 64px rgba(2,6,23,.42)';
+        const titleRow = document.createElement('div');
+        titleRow.style.cssText = 'display:flex;align-items:center;gap:12px;min-width:0';
+        const brandMark = document.createElement('div');
+        brandMark.setAttribute('aria-hidden', 'true');
+        brandMark.style.cssText = 'display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;color:#fff;background:linear-gradient(145deg,#2563eb,#06b6d4);border-radius:13px;box-shadow:0 5px 14px rgba(37,99,235,.24)';
+        brandMark.innerHTML = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5c0 4.7-2.9 8-7 10-4.1-2-7-5.3-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>';
+        const titleText = document.createElement('div');
+        titleText.style.cssText = 'min-width:0';
+        const heading = document.createElement('h2');
+        heading.textContent = 'Verifikasi Wajah';
+        heading.style.cssText = 'margin:0;color:#111827;font-size:clamp(16px,4vw,19px);font-weight:700;line-height:1.25';
+        const subtitle = document.createElement('p');
+        subtitle.textContent = 'Johen Application · Presensi aman';
+        subtitle.style.cssText = 'margin:3px 0 0;color:#64748b;font-size:12px';
+        titleText.append(heading, subtitle);
+        titleRow.append(brandMark, titleText);
+        const stage = document.createElement('div');
+        stage.className = 'face-camera-stage';
         const video = document.createElement('video');
         video.autoplay = true; video.playsInline = true; video.muted = true;
-        video.style.cssText = 'position:fixed;inset:10% 10%;width:80%;height:80%;object-fit:contain;background:#111;z-index:10000;border-radius:16px';
+        video.className = 'face-camera-video';
+        const guide = document.createElement('div');
+        guide.className = 'face-guide-oval';
+        guide.setAttribute('aria-hidden', 'true');
+        const scanLine = document.createElement('div');
+        scanLine.className = 'face-scan-line';
+        scanLine.setAttribute('aria-hidden', 'true');
+        stage.append(video, guide, scanLine);
         const label = document.createElement('div');
-        label.textContent = 'Posisikan wajah di depan kamera, lalu berkedip';
-        label.style.cssText = 'position:fixed;z-index:10001;top:6%;left:10%;color:white;background:#111;padding:10px;border-radius:8px';
-        document.body.append(video, label);
+        label.textContent = 'Meminta akses kamera...';
+        label.setAttribute('role', 'status');
+        label.setAttribute('aria-live', 'polite');
+        label.style.cssText = 'padding:10px 13px;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:13px;line-height:1.45;overflow-wrap:anywhere';
+        panel.append(titleRow, stage, label);
+        overlay.append(panel);
+        document.head.append(frameStyle);
+        document.body.append(overlay);
         let media;
         try {
             media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
             video.srcObject = media;
             await new Promise(resolve => video.onloadedmetadata = resolve);
+            await video.play();
+            label.textContent = 'Memuat model wajah. Mohon tunggu...';
             const HumanCtor = await loadHuman();
             const HumanClass = HumanCtor?.Human || HumanCtor?.default || HumanCtor;
             if (typeof HumanClass !== 'function') throw new Error('Modul pengenalan wajah tidak tersedia.');
             const human = new HumanClass({ modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models', face: { enabled: true, detector: { rotation: true, maxDetected: 2 }, mesh: { enabled: true }, description: { enabled: true }, antispoof: { enabled: true }, liveness: { enabled: true } }, body: { enabled: false }, hand: { enabled: false }, object: { enabled: false }, gesture: { enabled: false } });
             await human.load(); await human.warmup();
+            label.textContent = 'Hadap kamera dengan pencahayaan cukup. Lepas masker/kacamata gelap dan berkedip.';
             const deadline = Date.now() + 30000;
             let samples = [];
+            let faceSeen = false;
+            let embeddingSeen = false;
+            let livenessSeen = false;
             while (Date.now() < deadline && samples.length < 3) {
                 const result = await human.detect(video);
                 const face = result.face?.length === 1 ? result.face[0] : null;
-                if (face?.embedding?.length === 1024 && Number(face.real ?? 0) > 0.5 && Number(face.live ?? 0) > 0.5) samples.push(face.embedding);
-                else await new Promise(resolve => setTimeout(resolve, 400));
+                faceSeen ||= Boolean(face);
+                embeddingSeen ||= Boolean(face?.embedding?.length === 1024);
+                livenessSeen ||= Number(face?.real ?? 0) > 0.5 && Number(face?.live ?? 0) > 0.5;
+                if (face?.embedding?.length === 1024 && Number(face.real ?? 0) > 0.5 && Number(face.live ?? 0) > 0.5) {
+                    samples.push(face.embedding);
+                    label.textContent = `Wajah terverifikasi (${samples.length}/3)...`;
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                }
             }
-            if (samples.length < 3) throw new Error('Wajah belum terdeteksi jelas atau pemeriksaan wajah hidup gagal. Coba lagi dengan cahaya cukup dan berkedip.');
+            if (samples.length < 3) {
+                if (!faceSeen) throw new Error('Wajah belum terbaca kamera. Dekatkan wajah, hadap kamera, dan pastikan pencahayaan cukup.');
+                if (!embeddingSeen) throw new Error('Wajah terlihat, tetapi model tidak menghasilkan data wajah. Muat ulang halaman dan coba lagi.');
+                if (!livenessSeen) throw new Error('Wajah terdeteksi, tetapi pemeriksaan wajah hidup belum lolos. Hadap kamera langsung dan berkedip.');
+                throw new Error('Verifikasi wajah belum stabil. Tahan posisi wajah beberapa detik lalu coba lagi.');
+            }
             return samples[0].map((_, i) => samples.reduce((sum, sample) => sum + Number(sample[i]), 0) / samples.length);
         } finally {
-            media?.getTracks().forEach(track => track.stop()); video.remove(); label.remove();
+            media?.getTracks().forEach(track => track.stop()); overlay.remove(); frameStyle.remove();
         }
     }
     const registerButtons = [...document.querySelectorAll('#weekly-face-register')];
