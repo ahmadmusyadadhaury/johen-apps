@@ -89,7 +89,7 @@
                 <div class="flex items-center gap-3">
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Periode</label>
-                        <select x-model="window.location.href = '{{ route('it.maintenance') }}?periode=' + $event.target.value" class="rounded-lg border-gray-200 bg-gray-50 text-xs font-semibold focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                        <select @change="window.location.href = '{{ route('it.maintenance') }}?periode=' + $event.target.value" class="rounded-lg border-gray-200 bg-gray-50 text-xs font-semibold focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                             @foreach($periodeList as $p)
                                 <option value="{{ $p }}" {{ $p == $periode ? 'selected' : '' }}>Periode {{ $p }}</option>
                             @endforeach
@@ -152,8 +152,8 @@
                                     </td>
                                     <td class="px-5 py-3.5">
                                         @if($latest->foto_sebelum)
-                                            <button type="button" @click="fotoViewer = { src: '{{ asset('storage/' . $latest->foto_sebelum) }}', label: 'Sebelum Maintenance' }" class="rounded-lg border border-gray-200 p-1 hover:border-blue-400 dark:border-gray-700" title="Lihat foto sebelum">
-                                                <img src="{{ asset('storage/' . $latest->foto_sebelum) }}" alt="Sebelum" class="h-9 w-9 rounded-md object-cover">
+                                            <button type="button" @click="fotoViewer = { src: '{{ route('it.maintenance.photo', ['path' => $latest->foto_sebelum]) }}', label: 'Sebelum Maintenance' }" class="rounded-lg border border-gray-200 p-1 hover:border-blue-400 dark:border-gray-700" title="Lihat foto sebelum">
+                                                <img src="{{ route('it.maintenance.photo', ['path' => $latest->foto_sebelum]) }}" alt="Sebelum" class="h-9 w-9 rounded-md object-cover">
                                             </button>
                                         @else
                                             <span class="text-gray-400">-</span>
@@ -161,8 +161,8 @@
                                     </td>
                                     <td class="px-5 py-3.5">
                                         @if($latest->foto_sesudah)
-                                            <button type="button" @click="fotoViewer = { src: '{{ asset('storage/' . $latest->foto_sesudah) }}', label: 'Sesudah Maintenance' }" class="rounded-lg border border-gray-200 p-1 hover:border-emerald-400 dark:border-gray-700" title="Lihat foto sesudah">
-                                                <img src="{{ asset('storage/' . $latest->foto_sesudah) }}" alt="Sesudah" class="h-9 w-9 rounded-md object-cover">
+                                            <button type="button" @click="fotoViewer = { src: '{{ route('it.maintenance.photo', ['path' => $latest->foto_sesudah]) }}', label: 'Sesudah Maintenance' }" class="rounded-lg border border-gray-200 p-1 hover:border-emerald-400 dark:border-gray-700" title="Lihat foto sesudah">
+                                                <img src="{{ route('it.maintenance.photo', ['path' => $latest->foto_sesudah]) }}" alt="Sesudah" class="h-9 w-9 rounded-md object-cover">
                                             </button>
                                         @else
                                             <span class="text-gray-400">-</span>
@@ -185,7 +185,7 @@
                                     @if($canManage)
                                     <td class="px-5 py-3.5">
                                         <div class="flex items-center gap-2">
-                                            <button type="button" data-edit='{{ json_encode(['id' => $latest->id, 'nama' => $pc->nama, 'tanggal_mulai' => $latest->tanggal_mulai?->format('Y-m-d') ?? '', 'tanggal_selesai' => $latest->tanggal_selesai?->format('Y-m-d') ?? '', 'catatan' => $latest->catatan ?? '', 'status' => $latest->status, 'foto_sebelum' => $latest->foto_sebelum ? asset('storage/' . $latest->foto_sebelum) : '', 'foto_sesudah' => $latest->foto_sesudah ? asset('storage/' . $latest->foto_sesudah) : ''], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP) }}' @click="editTarget = JSON.parse($el.dataset.edit); editPreviewSebelum = null; editPreviewSesudah = null" class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:text-blue-400">
+                                            <button type="button" data-edit='{{ json_encode(['id' => $latest->id, 'nama' => $pc->nama, 'tanggal_mulai' => $latest->tanggal_mulai?->format('Y-m-d') ?? '', 'tanggal_selesai' => $latest->tanggal_selesai?->format('Y-m-d') ?? '', 'catatan' => $latest->catatan ?? '', 'status' => $latest->status, 'foto_sebelum' => $latest->foto_sebelum ? route('it.maintenance.photo', ['path' => $latest->foto_sebelum]) : '', 'foto_sesudah' => $latest->foto_sesudah ? route('it.maintenance.photo', ['path' => $latest->foto_sesudah]) : ''], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP) }}' @click="editTarget = JSON.parse($el.dataset.edit); editPreviewSebelum = null; editPreviewSesudah = null" class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:text-blue-400">
                                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
                                                 Edit
                                             </button>
@@ -196,22 +196,13 @@
                                         </div>
                                     </td>
                                     @endif
-                                @else
-                                    <td class="px-5 py-3.5 text-gray-400 italic" colspan="{{ 8 + (($canGiveFeedbackKoordinator || $canGiveFeedback || $canManage) ? 1 : 0) + ($canManage ? 1 : 0) }}">Belum ada jadwal</td>
-                                    @if($canManage)
-                                    <td class="px-5 py-3.5">
-                                        <button @click="showAddMaintenance = true; formNama = '{{ $pc->nama }}'; formCatatan = ''; formPeriode = '{{ $periode }}'" class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Tambah Maintenance">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                                        </button>
-                                    </td>
-                                    @endif
                                 @endif
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="{{ 8 + (($canGiveFeedbackKoordinator || $canGiveFeedback || $canManage) ? 1 : 0) + ($canManage ? 1 : 0) }}" class="px-5 py-12 text-center text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
-                                    Belum ada PC terdaftar.
+                                    Belum ada jadwal pada periode {{ $periode }}.
                                 </td>
                             </tr>
                         @endforelse

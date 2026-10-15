@@ -6,17 +6,44 @@ use App\Models\ItMaintenancePc;
 use App\Models\ItMaintenanceSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class JadwalMaintenanceController extends Controller
 {
+    public function photo(string $path)
+    {
+        abort_unless(Str::startsWith($path, 'maintenance/'), 404);
+
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($path), 404);
+
+        return $disk->response($path);
+    }
+
     public function index(Request $request)
     {
         $periode = $request->input('periode', 1);
-        $periodeList = ItMaintenanceSchedule::distinct()->pluck('periode')->sort()->values();
+        $periodeList = ItMaintenanceSchedule::query()
+            ->distinct()
+            ->orderBy('periode')
+            ->pluck('periode')
+            ->map(fn ($periode) => (int) $periode)
+            ->values();
 
-        $pcs = ItMaintenancePc::with(['schedules' => function ($q) use ($periode) {
-            $q->where('periode', $periode)->orderByDesc('tanggal_mulai')->limit(1);
-        }])->where('aktif', true)->get();
+        if (! $periodeList->contains(1)) {
+            $periodeList->prepend(1);
+        }
+
+        $periodeList->push(($periodeList->max() ?? 1) + 1);
+        $periodeList = $periodeList->unique()->sort()->values();
+
+        $pcs = ItMaintenancePc::query()
+            ->where('aktif', true)
+            ->whereHas('schedules', fn ($q) => $q->where('periode', $periode))
+            ->with(['schedules' => function ($q) use ($periode) {
+                $q->where('periode', $periode)->orderByDesc('tanggal_mulai')->limit(1);
+            }])
+            ->get();
 
         $canManage = auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt();
         $canGiveFeedback = auth()->user()->isHeadOfStore2();
@@ -29,7 +56,7 @@ class JadwalMaintenanceController extends Controller
     {
         abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
 
-        $request->validate([
+        $data = $request->validate([
             'nama' => 'required|string|max:255',
             'periode' => 'required|integer|min:1',
             'catatan' => 'nullable|string|max:500',
@@ -39,12 +66,13 @@ class JadwalMaintenanceController extends Controller
 
         ItMaintenanceSchedule::create([
             'pc_id' => $pc->id,
-            'periode' => $request->periode,
+            'periode' => $data['periode'],
             'catatan' => $request->catatan,
             'created_by' => auth()->id(),
         ]);
 
-        return back()->with('success', 'Maintenance berhasil ditambahkan.');
+        return redirect()->route('it.maintenance', ['periode' => $data['periode']])
+            ->with('success', 'Maintenance berhasil ditambahkan.');
     }
 
     public function complete(Request $request, ItMaintenanceSchedule $schedule)

@@ -325,6 +325,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/project/{project}', [ProjectItController::class, 'destroy'])->name('project.destroy');
         Route::post('/project/{project}/feedback', [ProjectItController::class, 'feedback'])->name('project.feedback');
         Route::get('/maintenance', [JadwalMaintenanceController::class, 'index'])->name('maintenance');
+        Route::get('/maintenance-photo/{path}', [JadwalMaintenanceController::class, 'photo'])->where('path', '.*')->name('maintenance.photo');
         Route::post('/maintenance', [JadwalMaintenanceController::class, 'storeMaintenance'])->name('maintenance.store');
         Route::patch('/maintenance/{schedule}/complete', [JadwalMaintenanceController::class, 'complete'])->name('maintenance.complete');
         Route::patch('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'update'])->name('maintenance.update');
