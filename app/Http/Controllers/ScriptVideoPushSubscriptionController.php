@@ -10,7 +10,7 @@ class ScriptVideoPushSubscriptionController extends Controller
 {
     public function config(Request $request): JsonResponse
     {
-        $this->authorizeCoordinator($request);
+        $this->authorizeHostLiveGame($request);
 
         $publicKey = (string) config('webpush.public_key');
 
@@ -22,7 +22,7 @@ class ScriptVideoPushSubscriptionController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->authorizeCoordinator($request);
+        $this->authorizeHostLiveGame($request);
 
         $data = $request->validate([
             'endpoint' => ['required', 'url', 'max:2048'],
@@ -43,8 +43,8 @@ class ScriptVideoPushSubscriptionController extends Controller
         return response()->json(['saved' => true]);
     }
 
-    private function authorizeCoordinator(Request $request): void
+    private function authorizeHostLiveGame(Request $request): void
     {
-        abort_unless($request->user()?->isAnyKoordinator(), 403);
+        abort_unless($request->user()?->scriptVideoGameCategory() !== null, 403);
     }
 }

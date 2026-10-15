@@ -94,29 +94,29 @@
             {{-- Face attendance --}}
             <div class="mb-6 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                        <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Absen dengan Face ID + Lokasi</h5>
+                    <div class="min-w-0 flex-1">
+                        <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Silakan presensi dengan Face ID + Lokasi</h5>
+                        <p class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300">Weekly Meeting tanggal {{ $currentMeeting->meeting_date->copy()->locale('id')->translatedFormat('d F Y') }} - PT Johen Sukses Abadi</p>
                         @if($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters)
                             <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Admin belum mengatur titik koordinat dan radius untuk rapat ini.</p>
                         @else
-                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi wajah melalui kamera dan pastikan berada dalam radius {{ $currentMeeting->radius_meters }} m.</p>
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi wajah melalui kamera dan pastikan berada dalam radius {{ $currentMeeting->radius_meters }} m dari kantor Johen Gaming.</p>
                         @endif
                         <p id="weekly-face-status" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Face ID didaftarkan satu kali pada akun Anda.</p>
                     </div>
                     <div class="flex w-full sm:w-auto flex-wrap gap-2 shrink-0">
                         <button type="button" id="weekly-face-register" class="btn-secondary flex-1 sm:flex-none text-xs whitespace-nowrap">Daftarkan Wajah</button>
-                        <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary flex-1 sm:flex-none text-xs whitespace-nowrap disabled:opacity-50">Absen Face ID</button>
                     </div>
                 </div>
             </div>
 
             {{-- Camera Selection --}}
             @if(!$selectedCamera)
-            <div class="mb-6 text-center">
-                <div x-data="{ open: false }" class="relative inline-block text-left">
-                    <button type="button" @click="open = !open" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+            <div class="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+                <div x-data="{ open: false }" class="relative w-full sm:w-auto text-left">
+                    <button type="button" @click="open = !open" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                         <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span>Pilih Kamera</span>
+                        <span>Presensi Barcode</span>
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </button>
                     <div x-show="open" @click.away="open = false" x-cloak class="absolute left-1/2 -translate-x-1/2 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl">
@@ -130,6 +130,10 @@
                         </button>
                     </div>
                 </div>
+                <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l7 3v5c0 4.4-3 8.2-7 10-4-1.8-7-5.6-7-10V6l7-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 11a3 3 0 116 0c0 1.5-1.3 2.5-3 2.5S9 12.5 9 11zm-2.5 6c.8-1.5 2.5-2.3 5.5-2.3s4.7.8 5.5 2.3"/></svg>
+                    <span>Presensi Face ID</span>
+                </button>
             </div>
 
             @else
@@ -151,10 +155,14 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-center gap-3">
-                    <button wire:click="resetScanner" class="btn-secondary text-xs">
+                <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3">
+                    <button wire:click="resetScanner" class="btn-secondary w-full sm:w-auto text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Ganti Kamera
+                    </button>
+                    <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l7 3v5c0 4.4-3 8.2-7 10-4-1.8-7-5.6-7-10V6l7-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 11a3 3 0 116 0c0 1.5-1.3 2.5-3 2.5S9 12.5 9 11zm-2.5 6c.8-1.5 2.5-2.3 5.5-2.3s4.7.8 5.5 2.3"/></svg>
+                        <span>Presensi Face ID</span>
                     </button>
                 </div>
             </div>
@@ -245,12 +253,14 @@
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;overflow-y:auto;background:rgba(15,23,42,.82);padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))';
         const frameStyle = document.createElement('style');
-        frameStyle.textContent = '.face-camera-stage{position:relative;width:100%;aspect-ratio:4/3;max-height:min(58vh,520px);max-height:min(58dvh,520px);overflow:hidden;border-radius:14px;background:linear-gradient(145deg,#0f172a,#111827)}.face-camera-video{display:block;width:100%;height:100%;object-fit:cover;transform:none!important;}.face-guide-oval{position:absolute;left:50%;top:48%;width:43%;height:66%;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.94);border-radius:50%;box-shadow:0 0 0 3px rgba(37,99,235,.82),0 0 28px rgba(34,211,238,.62),inset 0 0 20px rgba(37,99,235,.14);pointer-events:none}.face-guide-oval:after{content:"";position:absolute;inset:7px;border:1px solid rgba(103,232,249,.6);border-radius:50%}.face-scan-line{position:absolute;left:27%;right:27%;top:18%;height:2px;border-radius:4px;background:#67e8f9;box-shadow:0 0 12px 3px rgba(34,211,238,.78);animation:faceScanMove 2.8s ease-in-out infinite alternate;pointer-events:none}@keyframes faceScanMove{from{top:18%;opacity:.55}to{top:76%;opacity:1}}@media(max-width:640px){.face-camera-stage{aspect-ratio:3/4}.face-guide-oval{width:58%;height:68%}.face-scan-line{left:22%;right:22%}}@media(prefers-reduced-motion:reduce){.face-scan-line{animation:none;top:48%}}';
+        frameStyle.textContent = '.face-camera-stage{position:relative;width:100%;aspect-ratio:4/3;max-height:min(58vh,520px);max-height:min(58dvh,520px);overflow:hidden;border-radius:14px;background:linear-gradient(145deg,#0f172a,#111827)}.face-camera-video{display:block;width:100%;height:100%;object-fit:cover;transform:none!important}.face-guide-oval{position:absolute;left:50%;top:48%;width:43%;height:66%;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.94);border-radius:50%;box-shadow:0 0 0 3px rgba(37,99,235,.82),0 0 28px rgba(34,211,238,.62),inset 0 0 20px rgba(37,99,235,.14);pointer-events:none}.face-guide-oval:after{content:"";position:absolute;inset:7px;border:1px solid rgba(103,232,249,.6);border-radius:50%}.face-scan-line{position:absolute;left:27%;right:27%;top:18%;height:2px;border-radius:4px;background:#67e8f9;box-shadow:0 0 12px 3px rgba(34,211,238,.78);animation:faceScanMove 2.8s ease-in-out infinite alternate;pointer-events:none}@keyframes faceScanMove{from{top:18%;opacity:.55}to{top:76%;opacity:1}}html.dark .face-camera-panel{background:#111827!important;border-color:#334155!important}html.dark .face-camera-brand{background:#1f2937!important;border-color:#334155!important}html.dark .face-camera-heading{color:#f8fafc!important}html.dark .face-camera-subtitle{color:#94a3b8!important}html.dark .face-camera-meeting{color:#bfdbfe!important;background:#172554!important;border-color:#1e40af!important}html.dark .face-camera-close{color:#e2e8f0!important;background:#1f2937!important;border-color:#475569!important}@media(max-width:640px){.face-camera-stage{aspect-ratio:3/4}.face-guide-oval{width:58%;height:68%}.face-scan-line{left:22%;right:22%}}@media(prefers-reduced-motion:reduce){.face-scan-line{animation:none;top:48%}}';
         const panel = document.createElement('div');
+        panel.className = 'face-camera-panel';
         panel.style.cssText = 'width:min(100%,520px);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;gap:14px;padding:clamp(14px,3vw,22px);background:#fff;border:1px solid #dbeafe;border-radius:20px;box-shadow:0 24px 64px rgba(2,6,23,.42)';
         const titleRow = document.createElement('div');
         titleRow.style.cssText = 'display:flex;align-items:center;gap:12px;min-width:0';
         const brandMark = document.createElement('div');
+        brandMark.className = 'face-camera-brand';
         brandMark.setAttribute('aria-hidden', 'true');
         brandMark.style.cssText = 'display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;background:#fff;border:1px solid #dbeafe;border-radius:13px;box-shadow:0 5px 14px rgba(37,99,235,.18);overflow:hidden';
         const brandLogo = document.createElement('img');
@@ -261,14 +271,17 @@
         const titleText = document.createElement('div');
         titleText.style.cssText = 'min-width:0';
         const heading = document.createElement('h2');
+        heading.className = 'face-camera-heading';
         heading.textContent = 'Verifikasi Wajah';
         heading.style.cssText = 'margin:0;color:#111827;font-size:clamp(16px,4vw,19px);font-weight:700;line-height:1.25';
         const subtitle = document.createElement('p');
+        subtitle.className = 'face-camera-subtitle';
         subtitle.textContent = 'Johen Application · Presensi aman';
         subtitle.style.cssText = 'margin:3px 0 0;color:#64748b;font-size:12px';
         titleText.append(heading, subtitle);
         titleRow.append(brandMark, titleText);
         const meetingInfo = document.createElement('div');
+        meetingInfo.className = 'face-camera-meeting';
         meetingInfo.setAttribute('role', 'status');
         meetingInfo.setAttribute('aria-live', 'polite');
         meetingInfo.style.cssText = 'display:flex;align-items:center;gap:9px;padding:10px 12px;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:13px;line-height:1.4';
@@ -307,6 +320,7 @@
         retryButton.textContent = 'Ambil Ulang';
         retryButton.style.cssText = 'display:none;padding:9px 13px;color:#fff;background:#2563eb;border:0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer';
         const closeButton = document.createElement('button');
+        closeButton.className = 'face-camera-close';
         closeButton.type = 'button';
         closeButton.textContent = 'Tutup Kamera';
         closeButton.style.cssText = 'padding:9px 13px;color:#475569;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer';
@@ -328,10 +342,11 @@
             frameStyle.remove();
         };
         const setStatus = (message, error = false) => {
+            const darkMode = document.documentElement.classList.contains('dark');
             label.textContent = message;
-            label.style.color = error ? '#b91c1c' : '#1e40af';
-            label.style.background = error ? '#fef2f2' : '#eff6ff';
-            label.style.borderColor = error ? '#fecaca' : '#bfdbfe';
+            label.style.color = error ? (darkMode ? '#fecaca' : '#b91c1c') : (darkMode ? '#bfdbfe' : '#1e40af');
+            label.style.background = error ? (darkMode ? '#450a0a' : '#fef2f2') : (darkMode ? '#172554' : '#eff6ff');
+            label.style.borderColor = error ? (darkMode ? '#7f1d1d' : '#fecaca') : (darkMode ? '#1e40af' : '#bfdbfe');
         };
         const waitForRetry = () => new Promise(resolve => {
             resolveRetry = resolve;
@@ -520,8 +535,9 @@
         const faceStatus = document.getElementById('weekly-face-status');
         if (faceStatus) faceStatus.textContent = status.registered ? 'Wajah sudah terdaftar di akun ini.' : 'Daftarkan wajah satu kali sebelum absen.';
     }).catch(error => showFaceMessage(error.message || 'Status pendaftaran wajah gagal dimuat.', true));
-    document.getElementById('weekly-face-attend')?.addEventListener('click', async event => {
-        const button = event.currentTarget;
+    document.addEventListener('click', async event => {
+        const button = event.target.closest('#weekly-face-attend');
+        if (!button) return;
         try {
             setFaceButtonBusy(button, 'Memeriksa jadwal...');
             const eligibility = await api(faceRoutes.preflight);

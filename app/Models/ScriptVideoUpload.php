@@ -17,6 +17,7 @@ class ScriptVideoUpload extends Model
         'E-Football',
         'Valorant',
         'FC Mobile',
+        'Monkey PUBG',
     ];
 
     public const BULAN_LIST = [

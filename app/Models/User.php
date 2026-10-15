@@ -322,6 +322,60 @@ class User extends Authenticatable
         ]);
     }
 
+    /** Return the Host Live game this account belongs to, if any. */
+    public function scriptVideoGameCategory(): ?string
+    {
+        $roleGames = [
+            self::ROLE_STAFF_HOST_PUBG => 'PUBG',
+            self::ROLE_KOORDINATOR_PUBG => 'PUBG',
+            self::ROLE_STAFF_HOST_FF => 'Free Fire',
+            self::ROLE_KOORDINATOR_FF => 'Free Fire',
+            self::ROLE_STAFF_HOST_MLBB => 'MLBB',
+            self::ROLE_KOORDINATOR_MLBB => 'MLBB',
+            self::ROLE_STAFF_HOST_EFOOTBALL => 'E-Football',
+            self::ROLE_KOORDINATOR_EFOOTBALL => 'E-Football',
+            self::ROLE_STAFF_HOST_VALORANT => 'Valorant',
+            self::ROLE_KOORDINATOR_VALORANT => 'Valorant',
+            self::ROLE_STAFF_HOST_ROBLOX => 'Roblox',
+            self::ROLE_KOORDINATOR_ROBLOX => 'Roblox',
+            self::ROLE_STAFF_HOST_MONKEY_PUBG => 'Monkey PUBG',
+            self::ROLE_KOORDINATOR_MONKEY_PUBG => 'Monkey PUBG',
+            self::ROLE_STAFF_HOST_FC_MOBILE => 'FC Mobile',
+        ];
+        if (isset($roleGames[$this->role])) {
+            return $roleGames[$this->role];
+        }
+
+        foreach ([
+            'isStaffHostMonkeyPubg' => 'Monkey PUBG',
+            'isStaffHostPubg' => 'PUBG',
+            'isStaffHostFf' => 'Free Fire',
+            'isStaffHostMlbb' => 'MLBB',
+            'isStaffHostEfootball' => 'E-Football',
+            'isStaffHostValorant' => 'Valorant',
+            'isStaffHostRoblox' => 'Roblox',
+            'isStaffHostFcMobile' => 'FC Mobile',
+        ] as $method => $game) {
+            if ($this->{$method}()) {
+                return $game;
+            }
+        }
+
+        return null;
+    }
+
+    public function canAccessScriptVideo(): bool
+    {
+        return $this->scriptVideoGameCategory() !== null
+            || $this->isStaffCreative()
+            || in_array($this->role, [
+                self::ROLE_MANAGER,
+                self::ROLE_GM_CEO,
+                self::ROLE_SUPER_ADMIN,
+                self::ROLE_ADMIN_MASTER,
+            ], true);
+    }
+
     public function isKoordinatorGameRole(): bool
     {
         return $this->isKoordinatorGame();
@@ -340,6 +394,17 @@ class User extends Authenticatable
         self::ROLE_KOORDINATOR_ROBLOX,
         self::ROLE_KOORDINATOR_MONKEY_PUBG,
         self::ROLE_KOORDINATOR_STOCK,
+    ];
+
+    public const HOST_LIVE_ROLES = [
+        self::ROLE_STAFF_HOST_PUBG,
+        self::ROLE_STAFF_HOST_FF,
+        self::ROLE_STAFF_HOST_MLBB,
+        self::ROLE_STAFF_HOST_EFOOTBALL,
+        self::ROLE_STAFF_HOST_VALORANT,
+        self::ROLE_STAFF_HOST_ROBLOX,
+        self::ROLE_STAFF_HOST_MONKEY_PUBG,
+        self::ROLE_STAFF_HOST_FC_MOBILE,
     ];
 
     public function scopeKoordinator($query)

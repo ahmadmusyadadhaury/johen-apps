@@ -23,8 +23,12 @@ class ScriptVideoFileController extends Controller
                 User::ROLE_ADMIN_MASTER,
             ], true)
         );
+        $hostGame = $user?->scriptVideoGameCategory();
+        $canViewOwnUpload = $user
+            && (int) $upload->user_id === (int) $user->id
+            && ($hostGame === null || $upload->kategori_game === $hostGame);
 
-        abort_unless($user && ($canViewAll || (int) $upload->user_id === (int) $user->id), 403);
+        abort_unless($user && $user->canAccessScriptVideo() && ($canViewAll || $canViewOwnUpload), 403);
 
         $contents = FileVault::get('public', $upload->file_path);
         abort_if($contents === null, 404, 'File script tidak ditemukan.');

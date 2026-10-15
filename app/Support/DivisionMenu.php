@@ -163,15 +163,17 @@ class DivisionMenu
             'group' => $item['group'] ?? null,
         ], $menu['items']);
 
-        $items[] = [
-            'label' => 'Script Video Animator',
-            'route' => 'hris.script-video',
-            'params' => [],
-            'query' => [],
-            'icon' => 'content',
-            'desc' => 'Unggah script video animator per konten',
-            'group' => null,
-        ];
+        if (auth()->user()?->canAccessScriptVideo()) {
+            $items[] = [
+                'label' => 'Script Video Animator',
+                'route' => 'hris.script-video',
+                'params' => [],
+                'query' => [],
+                'icon' => 'content',
+                'desc' => 'Unggah script video animator per konten',
+                'group' => null,
+            ];
+        }
 
         return [
             'label' => $menu['label'],

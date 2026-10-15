@@ -54,6 +54,7 @@ class ScriptVideoTable extends Component
 
     public function mount(): void
     {
+        abort_unless(auth()->user()?->canAccessScriptVideo(), 403);
         $this->bulan = ScriptVideoUpload::currentBulanName();
         $this->tahun = ScriptVideoUpload::currentTahun();
         $this->targetInput = ScriptVideoTarget::targetFor($this->bulan, $this->tahun);
@@ -86,7 +87,7 @@ class ScriptVideoTable extends Component
         $user = auth()->user();
         $upload = ScriptVideoUpload::findOrFail($id);
 
-        abort_unless($user && ($user->isStaffCreative() || (int) $upload->user_id === (int) $user->id), 403);
+        abort_unless($user && $user->canAccessScriptVideo() && ($user->isStaffCreative() || (int) $upload->user_id === (int) $user->id), 403);
 
         if (! $upload->konten_dibuat) {
             $this->activateContentId = $upload->id;
@@ -109,7 +110,7 @@ class ScriptVideoTable extends Component
 
         $user = auth()->user();
         $upload = ScriptVideoUpload::findOrFail($this->activateContentId);
-        abort_unless($user && ($user->isStaffCreative() || (int) $upload->user_id === (int) $user->id), 403);
+        abort_unless($user && $user->canAccessScriptVideo() && ($user->isStaffCreative() || (int) $upload->user_id === (int) $user->id), 403);
 
         $upload->konten_dibuat = true;
         $upload->save();
@@ -144,7 +145,17 @@ class ScriptVideoTable extends Component
 
     public function openNew(): void
     {
+        abort_unless(auth()->user()?->canAccessScriptVideo(), 403);
         $this->resetInput();
+        if ($game = auth()->user()?->scriptVideoGameCategory()) {
+            $this->kategoriGame = $game;
+            $this->bulan = ScriptVideoUpload::currentBulanName();
+            $this->tahun = ScriptVideoUpload::currentTahun();
+            if ($this->countTodayFor(auth()->id(), $game) >= 2) {
+                $this->dispatch('notify', type: 'warning', message: 'Target hari ini sudah tercapai. Maksimal 2 script untuk game '.$game.' per hari.');
+                return;
+            }
+        }
         $this->showModal = true;
     }
 
@@ -165,6 +176,15 @@ class ScriptVideoTable extends Component
 
     public function save(): void
     {
+        $user = auth()->user();
+        abort_unless($user?->canAccessScriptVideo(), 403);
+        $hostGame = $user?->scriptVideoGameCategory();
+        if ($hostGame) {
+            $this->kategoriGame = $hostGame;
+            $this->bulan = ScriptVideoUpload::currentBulanName();
+            $this->tahun = ScriptVideoUpload::currentTahun();
+        }
+
         $this->validate([
             'bulan' => ['required', 'string', 'in:'.implode(',', ScriptVideoUpload::BULAN_LIST)],
             'tahun' => ['required', 'integer', 'min:2020', 'max:2099'],
@@ -175,8 +195,6 @@ class ScriptVideoTable extends Component
                 ? ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240']
                 : ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
         ]);
-
-        $user = auth()->user();
 
         if ($this->editId) {
             $upload = ScriptVideoUpload::findOrFail($this->editId);
@@ -200,16 +218,33 @@ class ScriptVideoTable extends Component
 
             $this->dispatch('notify', type: 'success', message: 'Script konten berhasil diperbarui.');
         } else {
-            ScriptVideoUpload::create([
-                'user_id' => $user->id,
-                'bulan' => $this->bulan,
-                'tahun' => $this->tahun,
-                'judul' => $this->judul,
-                'keterangan' => $this->keterangan ?: null,
-                'kategori_game' => $this->kategoriGame,
-                'file_path' => FileVault::store($this->file, 'script-video/'.$user->id, 'public'),
-                'file_name' => $this->file->getClientOriginalName(),
-            ]);
+            $createUpload = function () use ($user, $hostGame) {
+                if ($hostGame) {
+                    User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+                    if ($this->countTodayFor($user->id, $hostGame) >= 2) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'file' => 'Target hari ini sudah tercapai. Maksimal 2 script untuk game '.$hostGame.' per hari.',
+                        ]);
+                    }
+                }
+
+                ScriptVideoUpload::create([
+                    'user_id' => $user->id,
+                    'bulan' => $this->bulan,
+                    'tahun' => $this->tahun,
+                    'judul' => $this->judul,
+                    'keterangan' => $this->keterangan ?: null,
+                    'kategori_game' => $hostGame ?: $this->kategoriGame,
+                    'file_path' => FileVault::store($this->file, 'script-video/'.$user->id, 'public'),
+                    'file_name' => $this->file->getClientOriginalName(),
+                ]);
+            };
+
+            if ($hostGame) {
+                \Illuminate\Support\Facades\DB::transaction($createUpload);
+            } else {
+                $createUpload();
+            }
 
             $this->dispatch('notify', type: 'success', message: 'Script konten berhasil diunggah.');
         }
@@ -321,8 +356,24 @@ class ScriptVideoTable extends Component
     private function canManage(ScriptVideoUpload $upload): bool
     {
         $user = auth()->user();
+        if (! $user?->canAccessScriptVideo()) {
+            return false;
+        }
+
+        if ($game = $user?->scriptVideoGameCategory()) {
+            return (int) $upload->user_id === (int) $user->id && $upload->kategori_game === $game;
+        }
 
         return $user && ($upload->user_id === $user->id || $this->isRekap());
+    }
+
+    private function countTodayFor(int $userId, string $game): int
+    {
+        return ScriptVideoUpload::query()
+            ->where('user_id', $userId)
+            ->where('kategori_game', $game)
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
     }
 
     private function countFor(int $userId): int
@@ -368,7 +419,13 @@ class ScriptVideoTable extends Component
     public function render()
     {
         $user = auth()->user();
-        $target = ScriptVideoTarget::targetFor($this->bulan, $this->tahun);
+        abort_unless($user?->canAccessScriptVideo(), 403);
+        $hostGameCategory = $user?->scriptVideoGameCategory();
+        if ($hostGameCategory) {
+            $this->bulan = ScriptVideoUpload::currentBulanName();
+            $this->tahun = ScriptVideoUpload::currentTahun();
+        }
+        $target = $hostGameCategory ? 2 : ScriptVideoTarget::targetFor($this->bulan, $this->tahun);
         $isRekap = $this->isRekap();
         $mingguBerjalan = ScriptVideoUpload::mingguUntukTanggal(now());
 
@@ -436,6 +493,14 @@ class ScriptVideoTable extends Component
             $uploads = $this->queryUploads()
                 ->orderBy('created_at', 'desc')
                 ->paginate(12);
+        } elseif ($hostGameCategory) {
+            $jumlah = $this->countTodayFor($user->id, $hostGameCategory);
+            $uploads = $this->queryUploads()
+                ->where('user_id', $user->id)
+                ->where('kategori_game', $hostGameCategory)
+                ->whereDate('created_at', now()->toDateString())
+                ->orderByDesc('created_at')
+                ->paginate(12);
         } else {
             $jumlah = $this->countFor($user->id);
             $weeklySummary = $this->weeklySummaryFor($user->id, $target);
@@ -459,6 +524,7 @@ class ScriptVideoTable extends Component
             'weeklySummary' => $weeklySummary,
             'mingguBerjalan' => $mingguBerjalan,
             'isVideoAnimator' => $this->isVideoAnimator(),
+            'hostGameCategory' => $hostGameCategory,
             'contributorCount' => $contributorCount,
         ]);
     }
@@ -471,6 +537,11 @@ class ScriptVideoTable extends Component
 
         if ($this->filterGame) {
             $query->where('kategori_game', $this->filterGame);
+        }
+
+        $hostGame = auth()->user()?->scriptVideoGameCategory();
+        if ($hostGame && ! $this->isRekap() && ! $this->isVideoAnimator()) {
+            $query->where('kategori_game', $hostGame);
         }
 
         if ($this->search) {

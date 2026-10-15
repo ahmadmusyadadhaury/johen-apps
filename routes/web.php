@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/script-video', ScriptVideoTable::class)->name('script-video')
             ->middleware('role:' . implode(',', [
                 ...\App\Models\User::KOORDINATOR_ROLES,
+                ...\App\Models\User::HOST_LIVE_ROLES,
                 \App\Models\User::ROLE_STAFF_CREATIVE,
                 \App\Models\User::ROLE_MANAGER,
                 \App\Models\User::ROLE_GM_CEO,
@@ -182,6 +183,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('script-video.file')
             ->middleware('role:' . implode(',', [
                 ...\App\Models\User::KOORDINATOR_ROLES,
+                ...\App\Models\User::HOST_LIVE_ROLES,
                 \App\Models\User::ROLE_STAFF_CREATIVE,
                 \App\Models\User::ROLE_MANAGER,
                 \App\Models\User::ROLE_GM_CEO,

@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\ScriptVideoPushSubscription;
 use App\Models\ScriptVideoReminderSend;
-use App\Models\ScriptVideoTarget;
 use App\Models\ScriptVideoUpload;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -17,7 +16,7 @@ class SendScriptVideoReminders extends Command
 {
     protected $signature = 'script-video:send-reminders';
 
-    protected $description = 'Kirim pengingat harian upload script video kepada koordinator yang belum mencapai target';
+    protected $description = 'Kirim pengingat harian dua script konten kepada akun Host Live yang belum mencapai target';
 
     public function handle(): int
     {
@@ -31,14 +30,7 @@ class SendScriptVideoReminders extends Command
             return self::SUCCESS;
         }
 
-        $month = ScriptVideoUpload::currentBulanName();
-        $year = ScriptVideoUpload::currentTahun();
-        $target = ScriptVideoTarget::targetFor($month, $year);
         $today = now()->toDateString();
-        $counts = ScriptVideoUpload::forPeriod($month, $year)
-            ->selectRaw('user_id, COUNT(*) as jumlah')
-            ->groupBy('user_id')
-            ->pluck('jumlah', 'user_id');
 
         $webPush = new WebPush([
             'VAPID' => [
@@ -49,9 +41,14 @@ class SendScriptVideoReminders extends Command
         ]);
         $sent = 0;
 
-        foreach (User::koordinator()->get() as $coordinator) {
-            $uploaded = (int) ($counts[$coordinator->id] ?? 0);
-            if ($uploaded >= $target || ScriptVideoReminderSend::where('user_id', $coordinator->id)->whereDate('sent_on', $today)->exists()) {
+        foreach (User::query()->get()->filter(fn (User $user) => $user->scriptVideoGameCategory() !== null) as $coordinator) {
+            $game = $coordinator->scriptVideoGameCategory();
+            $uploaded = ScriptVideoUpload::query()
+                ->where('user_id', $coordinator->id)
+                ->where('kategori_game', $game)
+                ->whereDate('created_at', $today)
+                ->count();
+            if ($uploaded >= 2 || ScriptVideoReminderSend::where('user_id', $coordinator->id)->whereDate('sent_on', $today)->exists()) {
                 continue;
             }
 
@@ -62,7 +59,7 @@ class SendScriptVideoReminders extends Command
 
             $payload = json_encode([
                 'title' => 'Deadline Script Video Animator',
-                'body' => "{$coordinator->name}, upload script bulan {$month} masih {$uploaded} dari target {$target}.",
+                'body' => "{$coordinator->name}, script Host Live {$game} hari ini {$uploaded} dari 2.",
                 'url' => route('hris.script-video'),
                 'tag' => 'script-video-deadline-' . $today,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

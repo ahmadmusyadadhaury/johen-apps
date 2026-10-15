@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
         <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Script Video Animator</h1>
-        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isRekap ? 'Rekap script semua koordinator' : ($isVideoAnimator ? 'Semua script koordinator &mdash; ' . $bulan . ' ' . $tahun : 'Unggah script video animator per konten &mdash; target ' . $target . ' konten / bulan') }}</p>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">{{ $isRekap ? 'Rekap script semua koordinator' : ($isVideoAnimator ? 'Semua script koordinator &mdash; ' . $bulan . ' ' . $tahun : ($hostGameCategory ? 'Host Live ' . $hostGameCategory . ' &mdash; target 2 script per hari' : 'Unggah script video animator per konten &mdash; target ' . $target . ' konten / bulan')) }}</p>
     </div>
 @endpush
 
@@ -51,13 +51,20 @@
     </div>
     @endif
 
-    @if(!$isRekap && !$isVideoAnimator && auth()->user()?->isAnyKoordinator())
+    @if($hostGameCategory)
+    <div class="rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+        <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">Target harian Host Live {{ $hostGameCategory }}</p>
+        <p class="mt-1 text-xs text-blue-800 dark:text-blue-300">{{ $jumlah }} dari 2 script sudah dikirim hari ini. Maksimal 2 script per hari untuk game ini.</p>
+    </div>
+    @endif
+
+    @if(!$isRekap && !$isVideoAnimator && $hostGameCategory)
     @if($jumlah < $target)
     <div x-data="{ open: false }" x-init="try { let key = 'script-video-reminder-{{ now()->toDateString() }}'; if (localStorage.getItem(key) !== '1') { open = true; localStorage.setItem(key, '1'); } } catch (_) { open = true; }" x-show="open" x-cloak class="fixed z-[10000] top-4 left-1/2 -translate-x-1/2 w-[min(560px,calc(100vw-2rem))] rounded-2xl border border-amber-200 bg-white p-4 shadow-2xl dark:border-amber-800 dark:bg-gray-900">
         <div class="flex items-start gap-3">
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Deadline upload Script Video Animator</p>
-                <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">{{ $jumlah }} dari {{ $target }} script bulan {{ $bulan }} {{ $tahun }} sudah diunggah. Selesaikan sisa target hari ini.</p>
+                <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">{{ $jumlah }} dari 2 script {{ $hostGameCategory }} sudah dikirim hari ini. Selesaikan target harian sebelum hari berakhir.</p>
                 <button type="button" wire:click="openNew" @click="open = false" class="mt-3 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Upload script</button>
             </div>
             <button type="button" @click="open = false" aria-label="Tutup pengingat" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">&times;</button>
@@ -66,7 +73,7 @@
     @endif
     <div data-script-video-push-notice class="flex flex-col gap-2 rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-blue-900/50 dark:bg-blue-950/20">
         <div>
-            <p data-script-video-push-description class="text-xs text-blue-900 dark:text-blue-200">Aktifkan notifikasi agar pengingat deadline tampil di perangkat ini setiap hari pukul 09.00.</p>
+            <p data-script-video-push-description class="text-xs text-blue-900 dark:text-blue-200">Aktifkan notifikasi agar pengingat target 2 script {{ $hostGameCategory }} setiap hari pukul 09.00 tampil di perangkat ini.</p>
             <p data-script-video-push-status aria-live="polite" class="mt-1 text-xs font-semibold text-blue-700 dark:text-blue-300">Memeriksa status notifikasi pada browser ini...</p>
         </div>
         <button type="button" data-script-video-push data-config-url="{{ route('hris.script-video.push-config') }}" data-subscribe-url="{{ route('hris.script-video.push-subscription') }}" disabled class="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">Aktifkan notifikasi</button>
@@ -77,7 +84,7 @@
         <div x-show="pushSuccessOpen" x-transition class="w-full max-w-md rounded-2xl border border-green-200 bg-white p-6 shadow-2xl dark:border-green-900 dark:bg-gray-900">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700 dark:bg-green-950 dark:text-green-300" aria-hidden="true">&#10003;</div>
             <h2 id="push-success-title" class="mt-4 text-center text-lg font-bold text-gray-900 dark:text-gray-100">Notifikasi berhasil diaktifkan</h2>
-            <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">Pengingat deadline Script Video Animator akan dikirim ke perangkat ini setiap hari pukul 09.00 selama target bulan ini belum tercapai.</p>
+            <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">Pengingat target harian 2 script konten Host Live akan dikirim ke perangkat ini setiap hari pukul 09.00.</p>
             <button type="button" @click="pushSuccessOpen = false" class="mt-6 w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700">Mengerti</button>
         </div>
     </div>
@@ -100,6 +107,7 @@
     {{-- Toolbar: Periode + Search + Aksi --}}
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="flex flex-wrap items-end gap-3">
+            @unless($hostGameCategory)
             <div>
                 <x-input-label value="Bulan" />
                 <select wire:model.live="bulan"
@@ -118,6 +126,7 @@
                     @endforeach
                 </select>
             </div>
+            @endunless
         </div>
 
         <div class="flex items-center gap-3">
@@ -127,7 +136,7 @@
                        class="w-full sm:w-64 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 outline-none transition-all">
             </div>
 
-            @unless($isRekap || $isVideoAnimator)
+            @unless($isRekap || $isVideoAnimator || ($hostGameCategory && $jumlah >= 2))
             <button wire:click="openNew" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 <span class="hidden sm:inline">Upload Script</span>
@@ -138,7 +147,7 @@
     </div>
 
     {{-- Filter Kategori Game --}}
-    @unless($isRekap)
+    @if(!$isRekap && !$hostGameCategory)
     <div class="flex items-center gap-2 overflow-x-auto pb-1">
         <button wire:click="$set('filterGame', '')"
                 class="shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ $filterGame === null ? 'bg-blue-600 text-white shadow-md' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-300 dark:hover:border-blue-700' }}">
@@ -152,7 +161,7 @@
         </button>
         @endforeach
     </div>
-    @endunless
+    @endif
 
     @if($isRekap && !$detailUserId)
     {{-- Rekap Stats --}}
@@ -265,8 +274,8 @@
                 <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Progress Rekap Koordinator</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $rekapStats['tercapai'] }} dari {{ $rekapStats['total'] }} koordinator sudah mencapai {{ $target }} konten</p>
                 @else
-                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Progress Bulan Ini</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $jumlah }} dari {{ $target }} konten sudah diunggah</p>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $hostGameCategory ? 'Progress Hari Ini' : 'Progress Bulan Ini' }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $jumlah }} dari {{ $target }} script {{ $hostGameCategory ? 'hari ini' : 'konten sudah diunggah' }}</p>
                 @endif
             </div>
             <span class="{{ $isComplete ? 'badge-success' : 'badge-warning' }}">
@@ -451,7 +460,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $editId ? 'Edit' : 'Upload' }} Script Video Animator</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Periode {{ $bulan }} {{ $tahun }} &middot; target {{ $target }} konten</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $hostGameCategory ? 'Target 2 script per hari · ' . $hostGameCategory : 'Periode ' . $bulan . ' ' . $tahun . ' · target ' . $target . ' konten' }}</p>
                 </div>
                 <button wire:click="close" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -465,6 +474,12 @@
                     @error('judul') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                @if($hostGameCategory)
+                <div>
+                    <x-input-label value="Game Host Live" />
+                    <p class="mt-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">{{ $hostGameCategory }}</p>
+                </div>
+                @else
                 <div>
                     <x-input-label value="Kategori Game" />
                     <select wire:model.live="kategoriGame"
@@ -476,7 +491,9 @@
                     </select>
                     @error('kategoriGame') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
+                @endif
 
+                @unless($hostGameCategory)
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <x-input-label value="Bulan *" />
@@ -497,6 +514,7 @@
                         </select>
                     </div>
                 </div>
+                @endunless
 
                 <div>
                     <x-input-label value="File Script * (PDF, DOC, DOCX, JPG, PNG)" />

@@ -19,8 +19,16 @@ class SidebarScriptVideoBadge extends Component
             $bulan = ScriptVideoUpload::currentBulanName();
             $tahun = ScriptVideoUpload::currentTahun();
             $target = ScriptVideoTarget::targetFor($bulan, $tahun);
+            $hostGame = $user->scriptVideoGameCategory();
 
-            if (in_array($user->role, [
+            if ($hostGame !== null) {
+                $uploadedToday = ScriptVideoUpload::query()
+                    ->where('user_id', $user->id)
+                    ->where('kategori_game', $hostGame)
+                    ->whereDate('created_at', now()->toDateString())
+                    ->count();
+                $badge = max(0, 2 - $uploadedToday);
+            } elseif (in_array($user->role, [
                 User::ROLE_MANAGER,
                 User::ROLE_GM_CEO,
                 User::ROLE_SUPER_ADMIN,
