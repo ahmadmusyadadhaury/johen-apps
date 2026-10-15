@@ -163,7 +163,7 @@ class DivisionMenu
             'group' => $item['group'] ?? null,
         ], $menu['items']);
 
-        if (auth()->user()?->canAccessScriptVideo()) {
+        if (auth()->user()?->canAccessScriptVideo() && ! auth()->user()->isGmCeo()) {
             $items[] = [
                 'label' => 'Script Video Animator',
                 'route' => 'hris.script-video',

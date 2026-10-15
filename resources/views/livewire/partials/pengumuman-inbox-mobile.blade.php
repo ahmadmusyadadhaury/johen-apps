@@ -22,7 +22,7 @@
             <label for="mobile-announcement-search" class="sr-only">Cari pengumuman atau surat</label>
             <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path stroke-linecap="round" d="M16 16l4.5 4.5"/></svg>
             <input id="mobile-announcement-search" type="search" wire:model.live.debounce.300ms="search" placeholder="Cari judul, nomor surat atau isi..."
-                   class="min-h-12 w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-900/40">
+                   class="min-h-12 w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-900/40" autocomplete="off">
         </div>
 
         <button type="button" @click="filterOpen = true; draftJenisFilter = @js($jenisFilter)" aria-haspopup="dialog" aria-controls="mobile-announcement-filter"

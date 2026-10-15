@@ -4,7 +4,7 @@
             <div class="flex items-center gap-3 flex-1">
                 <div class="relative flex-1 max-w-xs">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari NIK, nama, atau keterangan..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari NIK, nama, atau keterangan..." class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 pl-9 pr-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200" autocomplete="off">
                 </div>
             </div>
             <div class="flex items-center gap-2">

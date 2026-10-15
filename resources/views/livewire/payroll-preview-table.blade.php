@@ -8,7 +8,7 @@
                         type="text"
                         placeholder="Cari karyawan..."
                         wire:model.live.debounce.300ms="search"
-                        class="input-field pl-10"
+                        class="input-field pl-10" autocomplete="off"
                     >
                 </div>
                 <span class="text-xs text-gray-400 dark:text-gray-500">Data karyawan</span>

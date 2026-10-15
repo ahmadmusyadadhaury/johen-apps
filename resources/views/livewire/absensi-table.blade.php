@@ -409,7 +409,7 @@
                             type="search"
                             wire:model.live.debounce.300ms="search"
                             placeholder="Cari nama atau NIP..."
-                            class="w-full min-h-11 rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:text-xs"
+                            class="w-full min-h-11 rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200 sm:text-xs" autocomplete="off"
                         >
                     </div>
 
