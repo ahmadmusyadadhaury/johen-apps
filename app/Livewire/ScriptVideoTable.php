@@ -463,15 +463,19 @@ class ScriptVideoTable extends Component
                     ->map(fn ($rows) => $rows->pluck('jumlah', 'minggu')->all());
 
                 $koordinators = User::koordinator()
-                    ->whereIn('role', [
-                        User::ROLE_KOORDINATOR_PUBG,
-                        User::ROLE_KOORDINATOR_FF,
-                        User::ROLE_KOORDINATOR_MLBB,
-                        User::ROLE_KOORDINATOR_EFOOTBALL,
-                        User::ROLE_KOORDINATOR_VALORANT,
-                        User::ROLE_KOORDINATOR_ROBLOX,
-                        User::ROLE_KOORDINATOR_MONKEY_PUBG,
-                    ])
+                    ->where(function ($query) {
+                        $query->whereIn('role', [
+                            User::ROLE_KOORDINATOR_PUBG,
+                            User::ROLE_KOORDINATOR_FF,
+                            User::ROLE_KOORDINATOR_MLBB,
+                            User::ROLE_KOORDINATOR_EFOOTBALL,
+                            User::ROLE_KOORDINATOR_VALORANT,
+                            User::ROLE_KOORDINATOR_ROBLOX,
+                            User::ROLE_KOORDINATOR_MONKEY_PUBG,
+                        ])->orWhereHas('employee.positions', function ($positions) {
+                            $positions->where('nama', 'Koordinator FC Mobile');
+                        });
+                    })
                     ->when($this->search, function ($q) {
                         $search = $this->search;
                         $q->where(function ($w) use ($search) {

@@ -41,6 +41,16 @@ class EmployeeTable extends Component
 
     public bool $showPreview = false;
 
+    public bool $showReplacementModal = false;
+
+    public bool $confirmingResignation = false;
+
+    public array $replacementPositions = [];
+
+    public array $replacementByPosition = [];
+
+    public array $replacementCandidates = [];
+
     public ?int $editId = null;
 
     public int $step = 1;
@@ -160,6 +170,7 @@ class EmployeeTable extends Component
     {
         $this->syncJobdeskFromPositions();
     }
+
 
     public function updatedMainPositionId($value): void
     {
@@ -526,6 +537,16 @@ class EmployeeTable extends Component
         $rules['nik'] = ['required', 'string', 'max:30', 'unique:employees,nik,'.$this->editId];
         $this->validate($rules);
 
+        if (! $this->confirmingResignation
+            && $emp->tipe !== Employee::TIPE_MANTAN_KARYAWAN
+            && $this->tipe === Employee::TIPE_MANTAN_KARYAWAN) {
+            $this->prepareReplacementModal($emp);
+            if ($this->showReplacementModal) {
+                return;
+            }
+        }
+
+        $this->confirmingResignation = false;
         $oldJamKerja = $emp->jam_kerja;
         $oldJamMasuk = $emp->jam_masuk;
 
@@ -548,12 +569,87 @@ class EmployeeTable extends Component
 
         $emp->divisions()->sync($this->division_ids);
 
+        foreach ($this->replacementByPosition as $positionId => $replacementEmployeeId) {
+            if (! $replacementEmployeeId) {
+                continue;
+            }
+
+            $replacementEmployee = Employee::query()
+                ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
+                ->findOrFail((int) $replacementEmployeeId);
+            $replacementEmployee->positions()->syncWithoutDetaching([
+                (int) $positionId => ['is_main' => false],
+            ]);
+        }
+
+        $this->showReplacementModal = false;
+        $this->replacementPositions = [];
+        $this->replacementByPosition = [];
+        $this->replacementCandidates = [];
         $this->closeModal();
         $this->dispatch('notify', type: 'success', message: 'Data karyawan berhasil diperbarui.');
 
         if ($this->modalOnly) {
             $this->dispatch('employee-updated');
         }
+    }
+
+    private function prepareReplacementModal(Employee $employee): void
+    {
+        $this->replacementPositions = $employee->positions()
+            ->orderBy('nama')
+            ->get(['positions.id', 'positions.nama'])
+            ->map(fn (Position $position) => ['id' => $position->id, 'nama' => $position->nama])
+            ->all();
+
+        if ($this->replacementPositions === []) {
+            return;
+        }
+
+        $this->replacementByPosition = array_fill_keys(
+            array_map(fn ($position) => (string) $position['id'], $this->replacementPositions),
+            ''
+        );
+        $this->replacementCandidates = Employee::query()
+            ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
+            ->where('id', '!=', $employee->id)
+            ->orderBy('nama')
+            ->get(['id', 'nama'])
+            ->toArray();
+        $this->showReplacementModal = true;
+    }
+    public function confirmResignation(): void
+    {
+        $this->authorizeWrite('update-data');
+        $positionIds = collect($this->replacementPositions)->pluck('id')->map(fn ($id) => (string) $id)->all();
+        $activeEmployeeIds = Employee::query()
+            ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
+            ->where('id', '!=', $this->editId)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+
+        $this->validate([
+            'replacementByPosition' => ['array'],
+            'replacementByPosition.*' => ['nullable', 'string', Rule::in(['', ...$activeEmployeeIds])],
+        ]);
+
+        if (array_diff(array_keys($this->replacementByPosition), $positionIds)) {
+            abort(422);
+        }
+
+        $this->showReplacementModal = false;
+        $this->confirmingResignation = true;
+        $this->update();
+    }
+
+    public function cancelResignation(): void
+    {
+        $this->showReplacementModal = false;
+        $this->confirmingResignation = false;
+        $this->replacementPositions = [];
+        $this->replacementByPosition = [];
+        $this->replacementCandidates = [];
     }
 
     public function confirmDelete(int $id): void

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Employee;
 use App\Models\Position;
 use App\Models\PositionNote;
 use App\Models\PositionNoteComment;
@@ -329,7 +330,8 @@ class StrukturOrganisasi extends Component
     {
         $allPositions = Position::where('is_active', true)
             ->with(['employees' => function ($q) {
-                $q->selectRaw("employees.id, employees.nama, employees.nik, employees.updated_at, employees.created_at, CASE WHEN employees.foto LIKE 'base64:%' THEN 1 ELSE 0 END AS foto_is_base64");
+                $q->where('employees.tipe', Employee::TIPE_KARYAWAN_AKTIF)
+                    ->selectRaw("employees.id, employees.nama, employees.nik, employees.updated_at, employees.created_at, CASE WHEN employees.foto LIKE 'base64:%' THEN 1 ELSE 0 END AS foto_is_base64");
             }])
             ->get();
 

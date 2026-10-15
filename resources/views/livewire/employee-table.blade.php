@@ -1305,6 +1305,33 @@
 
     <x:confirm-delete-modal title="{{ $k('Hapus Karyawan') }}" message="{{ $k('Apakah Anda yakin ingin menghapus data karyawan ini? Semua data terkait juga akan dihapus.') }}" />
 
+    @if($showReplacementModal)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4">
+            <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">Atur Pengganti Jabatan</h2>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Pilih pegawai aktif untuk setiap jabatan {{ $nama }}. Jika belum ada pengganti, biarkan pilihan kosong; jabatannya akan kosong sampai ada penempatan baru.</p>
+                <div class="mt-5 max-h-[50vh] space-y-4 overflow-y-auto">
+                    @foreach($replacementPositions as $replacementPosition)
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-200">{{ $replacementPosition['nama'] }}</label>
+                            <select wire:model="replacementByPosition.{{ $replacementPosition['id'] }}" class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                <option value="">Belum ada pengganti</option>
+                                @foreach($replacementCandidates as $candidate)
+                                    <option value="{{ $candidate['id'] }}">{{ $candidate['nama'] }}</option>
+                                @endforeach
+                            </select>
+                            @error('replacementByPosition.'.$replacementPosition['id']) <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                    @endforeach
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" wire:click="cancelResignation" class="btn-secondary">Kembali</button>
+                    <button type="button" wire:click="confirmResignation" class="btn-primary">Konfirmasi resign</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <script>
         document.addEventListener('livewire:init', () => {
             const syncRtRw = (group) => {
