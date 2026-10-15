@@ -109,18 +109,18 @@
         <div class="flex flex-wrap items-end gap-3">
             @unless($hostGameCategory)
             <div>
-                <x-input-label value="Bulan" />
+                @unless($isRekap)<x-input-label value="Bulan" />@endunless
                 <select wire:model.live="bulan"
-                        class="mt-1 block w-40 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                        class="{{ $isRekap ? 'w-36' : 'mt-1 w-40' }} block rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                     @foreach(\App\Models\ScriptVideoUpload::BULAN_LIST as $namaBulan)
                     <option value="{{ $namaBulan }}">{{ $namaBulan }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
-                <x-input-label value="Tahun" />
+                @unless($isRekap)<x-input-label value="Tahun" />@endunless
                 <select wire:model.live="tahun"
-                        class="mt-1 block w-28 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                        class="{{ $isRekap ? 'w-28' : 'mt-1 w-28' }} block rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                     @foreach(range(now()->year - 2, now()->year + 1) as $tahunList)
                     <option value="{{ $tahunList }}">{{ $tahunList }}</option>
                     @endforeach
@@ -165,7 +165,7 @@
 
     @if($isRekap && !$detailUserId)
     {{-- Rekap Stats --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="stat-card">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white">
@@ -212,13 +212,18 @@
     </div>
 
     {{-- Pengaturan Target --}}
-    <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Pengaturan Target</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Atur jumlah konten script wajib untuk periode {{ $bulan }} {{ $tahun }}</p>
+    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex min-w-0 items-center gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-6.364-2.636 1.591-1.591M3 12h2.25m.386-6.364 1.591 1.591M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                </span>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Pengaturan Target</h3>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Atur jumlah konten script wajib untuk periode {{ $bulan }} {{ $tahun }}</p>
+                </div>
             </div>
-            <div class="flex items-end gap-3">
+            <div class="flex items-end gap-3 sm:ml-auto">
                 <div>
                     <x-input-label value="Target Konten" />
                     <x-text-input type="number" wire:model.live="targetInput" min="1" max="1000" class="mt-1 block w-32" />
@@ -228,6 +233,37 @@
             @error('targetInput') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
         </div>
     </div>
+    @if($canManageRequiredUsers)
+    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003a6.375 6.375 0 00-12.75 0v.003M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            </span>
+            <div class="min-w-0 flex-1">
+                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Koordinator Wajib Mengumpulkan Script</h3>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Pilih koordinator host game yang masuk rekap kewajiban dan menerima pengingat harian.</p>
+                <div class="mt-2 grid max-h-48 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 xl:grid-cols-3">
+                @forelse($eligibleCoordinators as $candidate)
+                    @php
+                        $mainPosition = $candidate->employee?->positions?->first(fn ($position) => (bool) $position->pivot?->is_main);
+                    @endphp
+                    <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-100 px-2.5 py-2 text-xs dark:border-gray-700">
+                        <input type="checkbox" wire:model="requiredCoordinatorIds" value="{{ $candidate->id }}" class="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="min-w-0">
+                            <span class="block truncate font-semibold text-gray-800 dark:text-gray-100">{{ $candidate->name }}</span>
+                            <span class="block truncate text-[11px] text-gray-500 dark:text-gray-400">{{ $mainPosition?->nama ?? $candidate->username }}</span>
+                        </span>
+                    </label>
+                @empty
+                    <p class="text-xs text-gray-500">Belum ada koordinator host game yang dapat dipilih.</p>
+                @endforelse
+                </div>
+                @error('requiredCoordinatorIds.*') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <button type="button" wire:click="saveRequiredCoordinators" class="btn-primary shrink-0 text-xs">Simpan Daftar Wajib</button>
+        </div>
+    </div>
+    @endif
     @endif
 
     @if($isVideoAnimator)
@@ -269,20 +305,27 @@
     {{-- Progress Card --}}
     <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between gap-4 mb-3">
-            <div>
+            <div class="flex min-w-0 items-center gap-3">
                 @if($isRekap)
-                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Progress Rekap Koordinator</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $rekapStats['tercapai'] }} dari {{ $rekapStats['total'] }} koordinator sudah mencapai {{ $target }} konten</p>
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v17.25h17.25M7.5 15l4.125-4.125 3 3L21 7.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 7.5H21V12"/></svg>
+                </span>
+                <div class="min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Progress Rekap Koordinator</h3>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $rekapStats['tercapai'] }} dari {{ $rekapStats['total'] }} koordinator sudah mencapai {{ $target }} konten</p>
+                </div>
                 @else
-                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $hostGameCategory ? 'Progress Hari Ini' : 'Progress Bulan Ini' }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $jumlah }} dari {{ $target }} script {{ $hostGameCategory ? 'hari ini' : 'konten sudah diunggah' }}</p>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $hostGameCategory ? 'Progress Hari Ini' : 'Progress Bulan Ini' }}</h3>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $jumlah }} dari {{ $target }} script {{ $hostGameCategory ? 'hari ini' : 'konten sudah diunggah' }}</p>
+                </div>
                 @endif
             </div>
             <span class="{{ $isComplete ? 'badge-success' : 'badge-warning' }}">
                 {{ $isComplete ? 'Tercapai' : 'Dalam Proses' }}
             </span>
         </div>
-        <div class="w-full h-2.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+        <div class="{{ $isRekap ? 'ml-[52px]' : '' }} h-2.5 w-auto rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
             <div class="h-full rounded-full transition-all duration-500 {{ $isComplete ? 'bg-emerald-500' : 'bg-blue-600' }}"
                  style="width: {{ $barPercent }}%"></div>
         </div>

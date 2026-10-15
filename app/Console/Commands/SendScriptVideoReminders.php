@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Models\ScriptVideoPushSubscription;
 use App\Models\ScriptVideoReminderSend;
 use App\Models\ScriptVideoUpload;
-use App\Models\User;
+use App\Models\ScriptVideoRequirementSetting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\Subscription;
@@ -41,8 +41,12 @@ class SendScriptVideoReminders extends Command
         ]);
         $sent = 0;
 
-        foreach (User::query()->get()->filter(fn (User $user) => $user->scriptVideoGameCategory() !== null) as $coordinator) {
+        foreach (ScriptVideoRequirementSetting::requiredUsers() as $coordinator) {
             $game = $coordinator->scriptVideoGameCategory();
+            if ($game === null) {
+                continue;
+            }
+
             $uploaded = ScriptVideoUpload::query()
                 ->where('user_id', $coordinator->id)
                 ->where('kategori_game', $game)

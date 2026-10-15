@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Facades\FileVault;
 use App\Models\ScriptVideoTarget;
+use App\Models\ScriptVideoRequirementSetting;
 use App\Models\ScriptVideoUpload;
 use App\Models\User;
 use Livewire\Component;
@@ -50,6 +51,8 @@ class ScriptVideoTable extends Component
 
     public int $targetInput = 75;
 
+    public array $requiredCoordinatorIds = [];
+
     protected $listeners = ['resetFilter' => 'resetFilter'];
 
     public function mount(): void
@@ -58,6 +61,11 @@ class ScriptVideoTable extends Component
         $this->bulan = ScriptVideoUpload::currentBulanName();
         $this->tahun = ScriptVideoUpload::currentTahun();
         $this->targetInput = ScriptVideoTarget::targetFor($this->bulan, $this->tahun);
+        if ($this->isSuperAdmin()) {
+            $eligibleIds = ScriptVideoRequirementSetting::eligibleCoordinators()->pluck('id')->map(fn ($id) => (string) $id)->all();
+            $savedIds = ScriptVideoRequirementSetting::selectedUserIds() ?? $eligibleIds;
+            $this->requiredCoordinatorIds = array_values(array_intersect($eligibleIds, array_map('strval', $savedIds)));
+        }
     }
 
     public function updatedBulan(): void
@@ -136,6 +144,11 @@ class ScriptVideoTable extends Component
             User::ROLE_SUPER_ADMIN,
             User::ROLE_ADMIN_MASTER,
         ]);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
     }
 
     public function isVideoAnimator(): bool
@@ -313,6 +326,24 @@ class ScriptVideoTable extends Component
         $this->dispatch('script-video-updated');
     }
 
+    public function saveRequiredCoordinators(): void
+    {
+        abort_unless($this->isSuperAdmin(), 403);
+
+        $eligibleIds = ScriptVideoRequirementSetting::eligibleCoordinators()
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $this->validate([
+            'requiredCoordinatorIds' => ['array'],
+            'requiredCoordinatorIds.*' => ['required', 'integer', \Illuminate\Validation\Rule::in($eligibleIds)],
+        ]);
+
+        ScriptVideoRequirementSetting::saveSelectedUserIds($this->requiredCoordinatorIds);
+        $this->dispatch('notify', type: 'success', message: 'Daftar koordinator wajib mengumpulkan script berhasil disimpan.');
+        $this->dispatch('script-video-updated');
+        $this->resetPage();
+    }
     public function openDetail(int $userId): void
     {
         abort_unless($this->isRekap(), 403);
@@ -462,20 +493,14 @@ class ScriptVideoTable extends Component
                     ->groupBy('user_id')
                     ->map(fn ($rows) => $rows->pluck('jumlah', 'minggu')->all());
 
-                $koordinators = User::koordinator()
-                    ->where(function ($query) {
-                        $query->whereIn('role', [
-                            User::ROLE_KOORDINATOR_PUBG,
-                            User::ROLE_KOORDINATOR_FF,
-                            User::ROLE_KOORDINATOR_MLBB,
-                            User::ROLE_KOORDINATOR_EFOOTBALL,
-                            User::ROLE_KOORDINATOR_VALORANT,
-                            User::ROLE_KOORDINATOR_ROBLOX,
-                            User::ROLE_KOORDINATOR_MONKEY_PUBG,
-                        ])->orWhereHas('employee.positions', function ($positions) {
-                            $positions->where('nama', 'Koordinator FC Mobile');
-                        });
-                    })
+                $selectedRequiredIds = ScriptVideoRequirementSetting::selectedUserIds();
+                $eligibleCoordinators = ScriptVideoRequirementSetting::eligibleCoordinators()
+                    ->with('employee.positions')
+                    ->orderBy('name')
+                    ->get();
+                $requiredCoordinatorIds = $selectedRequiredIds ?? $eligibleCoordinators->pluck('id')->all();
+                $koordinators = ScriptVideoRequirementSetting::eligibleCoordinators()
+                    ->whereIn('id', $requiredCoordinatorIds)
                     ->when($this->search, function ($q) {
                         $search = $this->search;
                         $q->where(function ($w) use ($search) {
@@ -527,6 +552,8 @@ class ScriptVideoTable extends Component
 
         return view('livewire.script-video-table', [
             'isRekap' => $isRekap,
+            'canManageRequiredUsers' => $this->isSuperAdmin(),
+            'eligibleCoordinators' => isset($eligibleCoordinators) ? $eligibleCoordinators : collect(),
             'target' => $target,
             'jumlah' => $jumlah,
             'progress' => $progress,
