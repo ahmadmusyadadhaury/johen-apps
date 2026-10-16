@@ -43,13 +43,13 @@ class EmployeeTable extends Component
 
     public bool $showReplacementModal = false;
 
-    public bool $confirmingResignation = false;
-
     public array $replacementPositions = [];
 
     public array $replacementByPosition = [];
 
     public array $replacementCandidates = [];
+
+    public ?int $pendingResignationEmployeeId = null;
 
     public ?int $editId = null;
 
@@ -459,6 +459,8 @@ class EmployeeTable extends Component
         $this->showCreateModal = false;
         $this->showEditModal = false;
         $this->showPreview = false;
+        $this->showReplacementModal = false;
+        $this->pendingResignationEmployeeId = null;
         $this->editId = null;
         $this->step = 1;
         $this->resetValidation();
@@ -537,16 +539,8 @@ class EmployeeTable extends Component
         $rules['nik'] = ['required', 'string', 'max:30', 'unique:employees,nik,'.$this->editId];
         $this->validate($rules);
 
-        if (! $this->confirmingResignation
-            && $emp->tipe !== Employee::TIPE_MANTAN_KARYAWAN
-            && $this->tipe === Employee::TIPE_MANTAN_KARYAWAN) {
-            $this->prepareReplacementModal($emp);
-            if ($this->showReplacementModal) {
-                return;
-            }
-        }
-
-        $this->confirmingResignation = false;
+        $needsReplacementSetup = $emp->tipe !== Employee::TIPE_MANTAN_KARYAWAN
+            && $this->tipe === Employee::TIPE_MANTAN_KARYAWAN;
         $oldJamKerja = $emp->jam_kerja;
         $oldJamMasuk = $emp->jam_masuk;
 
@@ -569,17 +563,15 @@ class EmployeeTable extends Component
 
         $emp->divisions()->sync($this->division_ids);
 
-        foreach ($this->replacementByPosition as $positionId => $replacementEmployeeId) {
-            if (! $replacementEmployeeId) {
-                continue;
-            }
+        if ($needsReplacementSetup) {
+            $this->prepareReplacementModal($emp);
+            if ($this->showReplacementModal) {
+                $this->showPreview = false;
+                $this->showEditModal = false;
+                $this->dispatch('notify', type: 'success', message: 'Data pegawai berhasil disimpan. Silakan atur pengganti jabatan.');
 
-            $replacementEmployee = Employee::query()
-                ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
-                ->findOrFail((int) $replacementEmployeeId);
-            $replacementEmployee->positions()->syncWithoutDetaching([
-                (int) $positionId => ['is_main' => false],
-            ]);
+                return;
+            }
         }
 
         $this->showReplacementModal = false;
@@ -596,6 +588,7 @@ class EmployeeTable extends Component
 
     private function prepareReplacementModal(Employee $employee): void
     {
+        $this->pendingResignationEmployeeId = $employee->id;
         $this->replacementPositions = $employee->positions()
             ->orderBy('nama')
             ->get(['positions.id', 'positions.nama'])
@@ -621,8 +614,15 @@ class EmployeeTable extends Component
     public function confirmResignation(): void
     {
         $this->authorizeWrite('update-data');
-        abort_unless($this->showReplacementModal && $this->editId, 404);
-        $employee = Employee::findOrFail($this->editId);
+        $employeeId = $this->pendingResignationEmployeeId ?? $this->editId;
+        $employee = $employeeId ? Employee::find($employeeId) : null;
+        if (! $this->showReplacementModal || ! $employee) {
+            $this->dispatch('notify', type: 'error', message: 'Data pengaturan pengganti sudah tidak tersedia. Buka kembali edit pegawai lalu simpan ulang.');
+
+            return;
+        }
+
+        $this->pendingResignationEmployeeId = $employee->id;
         $positionIds = $employee->positions()
             ->pluck('positions.id')
             ->map(fn ($id) => (string) $id)
@@ -640,7 +640,7 @@ class EmployeeTable extends Component
 
         $activeEmployeeIds = Employee::query()
             ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
-            ->where('id', '!=', $this->editId)
+            ->where('id', '!=', $employee->id)
             ->pluck('id')
             ->map(fn ($id) => (string) $id)
             ->all();
@@ -650,15 +650,41 @@ class EmployeeTable extends Component
             'replacementByPosition.*' => ['nullable', 'string', Rule::in(['', ...$activeEmployeeIds])],
         ]);
 
+        foreach ($this->replacementByPosition as $positionId => $replacementEmployeeId) {
+            if (! $replacementEmployeeId) {
+                continue;
+            }
+
+            $replacementEmployee = Employee::query()
+                ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
+                ->find((int) $replacementEmployeeId);
+            if (! $replacementEmployee) {
+                $this->addError('replacementByPosition.'.$positionId, 'Pegawai pengganti tidak lagi aktif. Pilih pegawai lain.');
+
+                return;
+            }
+
+            $replacementEmployee->positions()->syncWithoutDetaching([
+                (int) $positionId => ['is_main' => false],
+            ]);
+        }
+
         $this->showReplacementModal = false;
-        $this->confirmingResignation = true;
-        $this->update();
+        $this->replacementPositions = [];
+        $this->replacementByPosition = [];
+        $this->replacementCandidates = [];
+        $this->closeModal();
+        $this->dispatch('notify', type: 'success', message: 'Data karyawan dan pengganti jabatan berhasil disimpan.');
+
+        if ($this->modalOnly) {
+            $this->dispatch('employee-updated');
+        }
     }
 
     public function cancelResignation(): void
     {
         $this->showReplacementModal = false;
-        $this->confirmingResignation = false;
+        $this->pendingResignationEmployeeId = null;
         $this->replacementPositions = [];
         $this->replacementByPosition = [];
         $this->replacementCandidates = [];
