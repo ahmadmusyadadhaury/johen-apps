@@ -77,10 +77,10 @@
 
     <template x-teleport="body">
     <div x-show="scriptPreview !== null" x-cloak
-         class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-gray-900/60 p-3 pt-6 backdrop-blur-sm sm:p-6 sm:pt-10"
+         class="fixed inset-0 z-[100] flex h-dvh items-center justify-center overflow-hidden bg-gray-900/70 p-3 backdrop-blur-sm sm:p-6"
          @click="scriptPreview = null" @keydown.escape.window="scriptPreview = null">
-        <div @click.stop class="relative my-auto flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
-            <div class="flex items-center justify-between gap-4 border-b border-gray-100 px-4 py-3 dark:border-gray-700 sm:px-6">
+        <div @click.stop class="relative flex h-[90vh] max-h-[90dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
+            <div class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-4 py-3 dark:border-gray-700 sm:px-6">
                 <div class="min-w-0">
                     <h3 class="truncate text-base font-semibold text-gray-900 dark:text-gray-100" x-text="scriptPreview?.title"></h3>
                     <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="scriptPreview?.fileName"></p>
@@ -92,7 +92,9 @@
                     </button>
                 </div>
             </div>
-            <iframe x-bind:src="scriptPreview?.url" class="min-h-[65vh] w-full flex-1 bg-gray-50 dark:bg-gray-900 sm:min-h-[75vh]" title="Preview script"></iframe>
+            <div class="min-h-0 flex-1 bg-gray-100 dark:bg-gray-900">
+                <iframe x-bind:src="scriptPreview?.url" class="h-full w-full border-0" title="Preview script"></iframe>
+            </div>
         </div>
     </div>
 </template>
