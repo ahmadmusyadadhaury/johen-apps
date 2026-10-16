@@ -621,7 +621,23 @@ class EmployeeTable extends Component
     public function confirmResignation(): void
     {
         $this->authorizeWrite('update-data');
-        $positionIds = collect($this->replacementPositions)->pluck('id')->map(fn ($id) => (string) $id)->all();
+        abort_unless($this->showReplacementModal && $this->editId, 404);
+        $employee = Employee::findOrFail($this->editId);
+        $positionIds = $employee->positions()
+            ->pluck('positions.id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+
+        // Normalize numeric keys after Livewire hydrates the selection array.
+        // PHP may cast numeric string array keys back to integers.
+        $submittedReplacements = $this->replacementByPosition;
+        $this->replacementByPosition = [];
+        foreach ($positionIds as $positionId) {
+            $this->replacementByPosition[$positionId] = $submittedReplacements[$positionId]
+                ?? $submittedReplacements[(int) $positionId]
+                ?? '';
+        }
+
         $activeEmployeeIds = Employee::query()
             ->where('tipe', Employee::TIPE_KARYAWAN_AKTIF)
             ->where('id', '!=', $this->editId)
@@ -633,10 +649,6 @@ class EmployeeTable extends Component
             'replacementByPosition' => ['array'],
             'replacementByPosition.*' => ['nullable', 'string', Rule::in(['', ...$activeEmployeeIds])],
         ]);
-
-        if (array_diff(array_keys($this->replacementByPosition), $positionIds)) {
-            abort(422);
-        }
 
         $this->showReplacementModal = false;
         $this->confirmingResignation = true;
