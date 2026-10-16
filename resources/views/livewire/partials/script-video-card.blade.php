@@ -1,12 +1,8 @@
 @props(['upload', 'manageable' => true, 'canToggle' => false])
 <div x-data="{ scriptPreview: null }" class="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-200 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700 {{ !$upload->konten_dibuat ? '!bg-gray-100 dark:!bg-gray-950 grayscale opacity-75' : '' }}">
     {{-- Cover / Thumbnail --}}
-    <div class="relative aspect-[4/3] shrink-0 overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600">
-        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,.6) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,.5) 0, transparent 45%);"></div>
-        <div class="relative flex h-full flex-col items-center justify-center gap-2 px-4">
-            <svg class="w-12 h-12 text-white/90" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-            <span class="max-w-full truncate text-[11px] font-semibold text-white/90">Konten Script</span>
-        </div>
+    <div class="relative aspect-[3/4] shrink-0 overflow-hidden bg-blue-50">
+        <img src="{{ asset('images/script-video-animator-guide.png') }}" alt="Panduan Script Konten Video Animator" class="absolute inset-0 h-full w-full object-cover">
         <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-blue-700 backdrop-blur-sm shadow-sm">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             M{{ $upload->minggu }}

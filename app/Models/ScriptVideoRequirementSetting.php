@@ -27,7 +27,16 @@ class ScriptVideoRequirementSetting extends Model
                 User::ROLE_KOORDINATOR_ROBLOX,
                 User::ROLE_KOORDINATOR_MONKEY_PUBG,
             ])->orWhereHas('employee.positions', function ($positions) {
-                $positions->whereIn('nama', array_values(GameDivision::ROOT_POSITION));
+                // Some game coordinators use the generic `koordinator` role and
+                // their position titles vary between installations. Resolve them
+                // from their game division and coordinator position instead of
+                // requiring an exact title match.
+                $positions->where(function ($titles) {
+                    $titles->where('nama', 'like', 'Koordinator%')
+                        ->orWhere('nama', 'like', 'Coordinator%');
+                })->whereHas('division', function ($division) {
+                    $division->whereIn('nama', array_values(GameDivision::DIVISION_NAME));
+                });
             });
         });
     }
