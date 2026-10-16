@@ -19,6 +19,7 @@ use App\Http\Controllers\InfluencerContractFileController;
 use App\Http\Controllers\InternetController;
 use App\Http\Controllers\IplRukoController;
 use App\Http\Controllers\ItTicketController;
+use App\Http\Controllers\TicketPushSubscriptionController;
 use App\Http\Controllers\JadwalMaintenanceController;
 use App\Http\Controllers\JobdeskController;
 use App\Http\Controllers\MeetingController;
@@ -315,6 +316,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('it')->name('it.')->group(function () {
         Route::get('/tickets', [ItTicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/push-config', [TicketPushSubscriptionController::class, 'config'])->name('tickets.push-config');
+        Route::post('/tickets/push-subscription', [TicketPushSubscriptionController::class, 'store'])->name('tickets.push-subscription');
         Route::get('/tickets/{ticket}/evidence', [ItTicketController::class, 'evidence'])->name('tickets.evidence');
         Route::post('/tickets', [ItTicketController::class, 'store'])->name('tickets.store');
         Route::patch('/tickets/{ticket}', [ItTicketController::class, 'update'])->name('tickets.update');

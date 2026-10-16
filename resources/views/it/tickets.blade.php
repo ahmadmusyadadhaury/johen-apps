@@ -49,6 +49,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <x-app-layout title="Ticketing IT">
     <div class="space-y-6">
+        <div data-ticket-push-notice data-ticket-user-id="{{ auth()->id() }}" class="flex flex-col gap-2 rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-blue-900/50 dark:bg-blue-950/20">
+            <div>
+                <p class="text-xs font-semibold text-blue-900 dark:text-blue-200">Notifikasi Ticketing</p>
+                <p data-ticket-push-status aria-live="polite" class="mt-1 text-xs text-blue-700 dark:text-blue-300">Aktifkan agar pembaruan tiket tampil sebagai notifikasi di perangkat ini.</p>
+            </div>
+            <button type="button" data-ticket-push data-config-url="{{ route('it.tickets.push-config') }}" data-subscribe-url="{{ route('it.tickets.push-subscription') }}" disabled class="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">Memeriksa notifikasi...</button>
+        </div>
         @if(session('success'))
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ session('success') }}</div>
         @endif
@@ -655,7 +662,56 @@ document.addEventListener('DOMContentLoaded', function () {
                 </template>
             </div>
         @else
-            <div x-data="{ showForm: {{ $errors->any() ? 'true' : 'false' }}, previewFoto: null }" class="space-y-6">
+            <div x-data="{
+                showForm: {{ $errors->any() ? 'true' : 'false' }},
+                previewFoto: null,
+                cameraOpen: false,
+                cameraStream: null,
+                cameraError: '',
+                async startCamera() {
+                    this.cameraError = '';
+                    this.cameraOpen = true;
+                    try {
+                        if (!navigator.mediaDevices?.getUserMedia) {
+                            throw new Error('Kamera tidak tersedia. Buka halaman melalui HTTPS atau localhost dan gunakan browser yang mendukung kamera.');
+                        }
+                        this.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+                        await this.$nextTick();
+                        this.$refs.cameraVideo.srcObject = this.cameraStream;
+                        await this.$refs.cameraVideo.play();
+                    } catch (error) {
+                        this.cameraError = error.message || 'Kamera tidak dapat dibuka. Periksa izin kamera pada browser.';
+                        this.stopCamera();
+                    }
+                },
+                stopCamera() {
+                    this.cameraStream?.getTracks().forEach(track => track.stop());
+                    this.cameraStream = null;
+                },
+                closeCamera() {
+                    this.stopCamera();
+                    this.cameraOpen = false;
+                },
+                captureCamera() {
+                    const video = this.$refs.cameraVideo;
+                    if (!video.videoWidth || !video.videoHeight) return;
+                    const scale = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(video.videoWidth * scale);
+                    canvas.height = Math.round(video.videoHeight * scale);
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                        if (!blob) return;
+                        const file = new File([blob], 'bukti-kendala.jpg', { type: 'image/jpeg' });
+                        const transfer = new DataTransfer();
+                        transfer.items.add(file);
+                        this.$refs.buktiKendala.files = transfer.files;
+                        if (this.previewFoto) URL.revokeObjectURL(this.previewFoto);
+                        this.previewFoto = URL.createObjectURL(file);
+                        this.closeCamera();
+                    }, 'image/jpeg', 0.85);
+                }
+            }" class="space-y-6">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
                 <div class="stat-card group">
                     <div class="flex items-center justify-between mb-3">
@@ -808,9 +864,28 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Bukti Kendala <span class="text-[10px] font-medium text-gray-400">(opsional, foto JPG/PNG maks 2MB)</span></label>
-                                <input type="file" name="bukti_kendala" accept="image/jpeg,image/png,image/jpg" @change="previewFoto = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-600 hover:file:bg-primary-100 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:file:bg-gray-700 dark:file:text-gray-200">
+                                <input x-ref="buktiKendala" type="file" name="bukti_kendala" accept="image/jpeg,image/png,image/jpg" @change="if (previewFoto) URL.revokeObjectURL(previewFoto); previewFoto = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" class="hidden">
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <button type="button" @click="$refs.buktiKendala.click()" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">Pilih file</button>
+                                    <button type="button" @click="startCamera()" class="rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Foto dengan kamera</button>
+                                    <span x-show="!previewFoto" class="text-xs text-gray-500">Belum ada file dipilih</span>
+                                </div>
                                 <div x-show="previewFoto" class="mt-2">
                                     <img :src="previewFoto" alt="Pratinjau bukti kendala" class="max-h-40 rounded-lg border border-gray-200 object-contain dark:border-gray-700">
+                                </div>
+                                <div x-cloak x-show="cameraOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" @keydown.escape.window="closeCamera()">
+                                    <div class="w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-900" @click.stop>
+                                        <div class="mb-3 flex items-center justify-between">
+                                            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Foto Bukti Kendala</h3>
+                                            <button type="button" @click="closeCamera()" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Tutup</button>
+                                        </div>
+                                        <video x-ref="cameraVideo" x-show="!cameraError" autoplay playsinline class="max-h-[60vh] w-full rounded-xl bg-black object-contain"></video>
+                                        <p x-show="cameraError" x-text="cameraError" class="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"></p>
+                                        <div class="mt-3 flex justify-end gap-2">
+                                            <button type="button" @click="closeCamera()" class="rounded-lg border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 dark:border-gray-700 dark:text-gray-300">Batal</button>
+                                            <button type="button" x-show="!cameraError" @click="captureCamera()" class="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white hover:bg-primary-700">Ambil Foto</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 @error('bukti_kendala') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>

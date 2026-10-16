@@ -135,6 +135,113 @@ function initScriptVideoPushButtons() {
 document.addEventListener('DOMContentLoaded', initScriptVideoPushButtons);
 document.addEventListener('livewire:navigated', initScriptVideoPushButtons);
 
+async function setupTicketPush(button) {
+    const panel = button.closest('[data-ticket-push-notice]');
+    const status = panel?.querySelector('[data-ticket-push-status]');
+    const setStatus = (message) => { if (status) status.textContent = message; };
+    const saveSubscription = async (subscription) => fetch(button.dataset.subscribeUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        },
+        body: JSON.stringify(subscription.toJSON()),
+    });
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        button.textContent = 'Notifikasi tidak didukung';
+        button.disabled = true;
+        setStatus('Browser ini tidak mendukung notifikasi push.');
+        return;
+    }
+
+    try {
+        const response = await fetch(button.dataset.configUrl, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('Konfigurasi notifikasi gagal dimuat.');
+        const config = await response.json();
+        if (!config.available) {
+            button.textContent = 'Notifikasi belum dikonfigurasi';
+            button.disabled = true;
+            setStatus('Push belum dikonfigurasi pada server.');
+            return;
+        }
+
+        const workerUrl = import.meta.env.DEV ? '/push-sw.js' : '/sw.js';
+        await navigator.serviceWorker.register(workerUrl, { scope: '/', updateViaCache: 'none' });
+        const registration = await navigator.serviceWorker.ready;
+        const existing = await registration.pushManager.getSubscription();
+        button.disabled = false;
+        button.textContent = existing && Notification.permission === 'granted' ? 'Notifikasi aktif' : 'Aktifkan notifikasi';
+        if (existing && Notification.permission === 'granted') {
+            const saved = await saveSubscription(existing);
+            if (saved.ok) {
+                setStatus('Notifikasi Ticketing aktif pada perangkat ini.');
+                return;
+            }
+        } else if (Notification.permission === 'denied') {
+            setStatus('Izin notifikasi diblokir. Izinkan notifikasi situs ini melalui setelan browser.');
+        } else {
+            setStatus('Aktifkan agar tiket baru dan pembaruan tiket tampil di perangkat ini.');
+        }
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            try {
+                let permission = Notification.permission;
+                if (permission === 'default') permission = await Notification.requestPermission();
+                if (permission !== 'granted') throw new Error('Izin notifikasi belum diberikan.');
+                const subscription = existing || await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: decodeVapidKey(config.publicKey),
+                });
+                const saved = await saveSubscription(subscription);
+                if (!saved.ok) throw new Error('Langganan notifikasi gagal disimpan.');
+                button.textContent = 'Notifikasi aktif';
+                setStatus('Notifikasi Ticketing aktif pada perangkat ini.');
+            } catch (error) {
+                button.disabled = false;
+                setStatus(error.message || 'Notifikasi belum berhasil diaktifkan.');
+                window.Alpine?.store('toast')?.error(error.message || 'Notifikasi belum berhasil diaktifkan.');
+            }
+        }, { once: true });
+    } catch (error) {
+        button.textContent = 'Notifikasi belum siap';
+        button.disabled = true;
+        setStatus(error.message || 'Service worker push gagal disiapkan.');
+        console.warn('[Ticketing] gagal menyiapkan push:', error);
+    }
+}
+
+function initTicketPushButtons() {
+    document.querySelectorAll('[data-ticket-push]:not([data-push-ready])').forEach((button) => {
+        button.dataset.pushReady = '1';
+        setupTicketPush(button);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initTicketPushButtons);
+document.addEventListener('livewire:navigated', initTicketPushButtons);
+
+function initTicketRealtimeNotifications() {
+    if (!window.Echo) return;
+
+    document.querySelectorAll('[data-ticket-push-notice]:not([data-realtime-ready])').forEach((panel) => {
+        const userId = panel.dataset.ticketUserId;
+        if (!userId) return;
+
+        panel.dataset.realtimeReady = '1';
+        window.Echo.private(`it-ticket.user.${userId}`)
+            .listen('.ItTicketNotification', (notification) => {
+                const message = [notification.title, notification.body].filter(Boolean).join(' · ');
+                window.Alpine?.store('toast')?.info(message || 'Ada pembaruan Ticketing.');
+            });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initTicketRealtimeNotifications);
+document.addEventListener('livewire:navigated', initTicketRealtimeNotifications);
+
 // Ekspos ke window agar bisa dipakai di directive x-init "@barcode" pada halaman Asset.
 window.JsBarcode = JsBarcode;
 window.QRCode = QRCode;

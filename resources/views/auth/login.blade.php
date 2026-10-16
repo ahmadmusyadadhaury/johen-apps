@@ -15,6 +15,7 @@
               x-data="{ loading: false, showForgotModal: false }"
               x-on:submit="loading = true; $nextTick(() => { $el.querySelector('button[type=submit]').disabled = true })">
             @csrf
+            <input type="hidden" name="pwa_standalone" value="0" x-init="$el.value = (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) ? '1' : '0'">
 
             {{-- Username --}}
             <div class="login-stagger-1 motion-reduce:opacity-100">

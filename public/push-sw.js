@@ -8,11 +8,11 @@ self.addEventListener('push', (event) => {
     }
 
     event.waitUntil(self.registration.showNotification(data.title || 'Johen Apps', {
-        body: data.body || 'Ada deadline script yang perlu diselesaikan.',
+        body: data.body || 'Ada pembaruan yang perlu diperiksa.',
         icon: '/pwa/icon-192.png',
         badge: '/pwa/icon-192.png',
-        tag: data.tag || 'script-video-deadline',
-        data: { url: data.url || '/hris/script-video' },
+        tag: data.tag || 'johen-apps-notification',
+        data: { url: data.url || '/it/tickets' },
     }));
 });
 

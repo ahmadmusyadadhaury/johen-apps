@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ItTicket;
 use App\Models\User;
+use App\Services\ItTicketPushService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -64,7 +65,14 @@ class ItTicketController extends Controller
         $lastKode = ItTicket::where('kode', 'like', $todayPrefix . '%')->max('kode');
         $nextNumber = $lastKode ? ((int) substr($lastKode, -3)) + 1 : 1;
         $data['kode'] = $todayPrefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
-        ItTicket::create($data);
+        $ticket = ItTicket::create($data);
+        $itUsers = User::whereIn('role', [User::ROLE_KOORDINATOR_IT, User::ROLE_STAFF_IT])->get();
+        app(ItTicketPushService::class)->sendToUsers(
+            $itUsers->reject(fn (User $itUser) => $itUser->is($request->user())),
+            'Tiket IT baru',
+            $ticket->kode . ' · ' . $ticket->judul,
+            $ticket,
+        );
 
         return back()->with('success', 'Tiket IT berhasil dikirim.');
     }
@@ -153,8 +161,22 @@ class ItTicketController extends Controller
         }
 
         $oldAssigneeId = $ticket->assignee_id;
+        $oldStatus = $ticket->status;
 
         $ticket->update($data);
+
+        $recipients = User::whereIn('id', array_filter([
+            $ticket->requester_id,
+            $oldAssigneeId,
+            $ticket->assignee_id,
+        ]))->get()->reject(fn (User $recipient) => $recipient->is($user));
+        $pushStatus = $ticket->status !== $oldStatus ? 'Status ' . ucfirst($ticket->status) : 'Tiket diperbarui';
+        app(ItTicketPushService::class)->sendToUsers(
+            $recipients,
+            $pushStatus,
+            $ticket->kode . ' · ' . $ticket->judul,
+            $ticket,
+        );
 
         $isItRole = $user->isKoordinatorIt() || $user->isStaffIt();
         $accepting = $isItRole
@@ -187,6 +209,13 @@ class ItTicketController extends Controller
             Storage::disk('public')->delete($ticket->bukti_kendala);
         }
 
+        app(ItTicketPushService::class)->sendToUsers(
+            [$ticket->requester],
+            'Tiket dihapus',
+            $ticket->kode . ' · ' . $ticket->judul,
+            $ticket,
+        );
+
         $ticket->delete();
         return back()->with('success', 'Tiket ' . $ticket->kode . ' dihapus.');
     }
@@ -200,6 +229,14 @@ class ItTicketController extends Controller
         ]);
 
         $ticket->update(['feedback_atasan' => $request->input('feedback_atasan')]);
+
+        $recipients = $ticket->assignee ? collect([$ticket->assignee]) : User::whereIn('role', [User::ROLE_KOORDINATOR_IT, User::ROLE_STAFF_IT])->get();
+        app(ItTicketPushService::class)->sendToUsers(
+            $recipients,
+            'Feedback tiket baru',
+            $ticket->kode . ' · ' . $ticket->judul,
+            $ticket,
+        );
 
         return back()->with('success', 'Feedback untuk tiket ' . $ticket->kode . ' berhasil disimpan.');
     }
