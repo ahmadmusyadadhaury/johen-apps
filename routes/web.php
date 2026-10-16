@@ -315,6 +315,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('it')->name('it.')->group(function () {
         Route::get('/tickets', [ItTicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/{ticket}/evidence', [ItTicketController::class, 'evidence'])->name('tickets.evidence');
         Route::post('/tickets', [ItTicketController::class, 'store'])->name('tickets.store');
         Route::patch('/tickets/{ticket}', [ItTicketController::class, 'update'])->name('tickets.update');
         Route::delete('/tickets/{ticket}', [ItTicketController::class, 'destroy'])->name('tickets.destroy');

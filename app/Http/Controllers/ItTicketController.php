@@ -69,6 +69,21 @@ class ItTicketController extends Controller
         return back()->with('success', 'Tiket IT berhasil dikirim.');
     }
 
+    public function evidence(Request $request, ItTicket $ticket)
+    {
+        $user = $request->user();
+        abort_unless(
+            $ticket->requester_id === $user->id || $this->canManage($user) || $user->isHeadOfStore2(),
+            403
+        );
+        abort_unless($ticket->bukti_kendala, 404);
+
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($ticket->bukti_kendala), 404);
+
+        return $disk->response($ticket->bukti_kendala);
+    }
+
     public function update(Request $request, ItTicket $ticket): RedirectResponse
     {
         $user = $request->user();
