@@ -1288,9 +1288,11 @@
                     Kembali Edit
                 </button>
                 @if($editId)
-                    <button type="button" @click="$wire.update()" class="btn-primary text-xs">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        Simpan Perubahan
+                    <button type="button" wire:click="update" wire:loading.attr="disabled" wire:target="update" class="btn-primary text-xs">
+                        <svg wire:loading.remove wire:target="update" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        <svg wire:loading wire:target="update" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                        <span wire:loading.remove wire:target="update">Simpan Perubahan</span>
+                        <span wire:loading wire:target="update">Menyimpan...</span>
                     </button>
                 @else
                     <button type="button" @click="$wire.save()" class="btn-primary text-xs">
