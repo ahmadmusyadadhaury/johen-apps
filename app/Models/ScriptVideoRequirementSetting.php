@@ -31,11 +31,13 @@ class ScriptVideoRequirementSetting extends Model
                 ])->orWhereHas('employee.positions', function ($positions) {
                     // Some game coordinators use the generic `koordinator` role and
                     // their position titles vary between installations. Resolve them
-                    // from their game division and coordinator position instead of
-                    // requiring an exact title match.
+                    // from their game division and coordinator or assistant coordinator
+                    // position instead of requiring an exact title match.
                     $positions->where(function ($titles) {
                         $titles->where('nama', 'like', 'Koordinator%')
-                            ->orWhere('nama', 'like', 'Coordinator%');
+                            ->orWhere('nama', 'like', 'Coordinator%')
+                            ->orWhere('nama', 'like', 'Askoor%')
+                            ->orWhere('nama', 'like', 'Asst. Coordinator%');
                     })->whereHas('division', function ($division) {
                         $division->whereIn('nama', array_values(GameDivision::DIVISION_NAME));
                     });
