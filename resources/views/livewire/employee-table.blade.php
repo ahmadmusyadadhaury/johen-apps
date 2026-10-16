@@ -1327,7 +1327,7 @@
                     @endforeach
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" wire:click="cancelResignation" class="btn-secondary">Kembali</button>
+                    <button type="button" wire:click="finishWithoutReplacement" wire:loading.attr="disabled" wire:target="finishWithoutReplacement" class="btn-secondary">Simpan Tanpa Pengganti</button>
                     <button type="button" wire:click="confirmResignation" wire:loading.attr="disabled" wire:target="confirmResignation" class="btn-primary">
                         <span wire:loading.remove wire:target="confirmResignation">Simpan Perubahan</span>
                         <span wire:loading wire:target="confirmResignation">Menyimpan...</span>

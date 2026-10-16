@@ -6,6 +6,8 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\Region;
+use App\Models\ScriptVideoRequirementSetting;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -572,6 +574,8 @@ class EmployeeTable extends Component
 
                 return;
             }
+
+            $this->deactivateFormerEmployeeRelations($emp);
         }
 
         $this->showReplacementModal = false;
@@ -650,6 +654,9 @@ class EmployeeTable extends Component
             'replacementByPosition.*' => ['nullable', 'string', Rule::in(['', ...$activeEmployeeIds])],
         ]);
 
+        $formerUserIds = User::withTrashed()->where('employee_id', $employee->id)->pluck('id')->all();
+        $replacementUserIds = [];
+
         foreach ($this->replacementByPosition as $positionId => $replacementEmployeeId) {
             if (! $replacementEmployeeId) {
                 continue;
@@ -664,10 +671,22 @@ class EmployeeTable extends Component
                 return;
             }
 
+            $replacementUserIds = array_merge(
+                $replacementUserIds,
+                User::query()->where('employee_id', $replacementEmployee->id)->pluck('id')->all()
+            );
+
+            foreach ($replacementEmployee->positions()->wherePivot('is_main', true)->get(['positions.id']) as $currentMainPosition) {
+                $replacementEmployee->positions()->updateExistingPivot($currentMainPosition->id, ['is_main' => false]);
+            }
+
             $replacementEmployee->positions()->syncWithoutDetaching([
-                (int) $positionId => ['is_main' => false],
+                (int) $positionId => ['is_main' => true],
             ]);
         }
+
+        ScriptVideoRequirementSetting::transferRequiredUsers($formerUserIds, $replacementUserIds);
+        $this->deactivateFormerEmployeeRelations($employee);
 
         $this->showReplacementModal = false;
         $this->replacementPositions = [];
@@ -681,13 +700,38 @@ class EmployeeTable extends Component
         }
     }
 
-    public function cancelResignation(): void
+    public function finishWithoutReplacement(): void
     {
-        $this->showReplacementModal = false;
-        $this->pendingResignationEmployeeId = null;
+        $this->authorizeWrite('update-data');
+        $employee = $this->pendingResignationEmployeeId
+            ? Employee::find($this->pendingResignationEmployeeId)
+            : null;
+        if (! $employee) {
+            $this->dispatch('notify', type: 'error', message: 'Data pegawai tidak ditemukan. Muat ulang halaman lalu periksa kembali.');
+
+            return;
+        }
+
+        $formerUserIds = User::withTrashed()->where('employee_id', $employee->id)->pluck('id')->all();
+        ScriptVideoRequirementSetting::transferRequiredUsers($formerUserIds, []);
+        $this->deactivateFormerEmployeeRelations($employee);
         $this->replacementPositions = [];
         $this->replacementByPosition = [];
         $this->replacementCandidates = [];
+        $this->closeModal();
+        $this->dispatch('notify', type: 'success', message: 'Data pegawai disimpan tanpa pengganti. Akun dan penempatan lama dinonaktifkan.');
+
+        if ($this->modalOnly) {
+            $this->dispatch('employee-updated');
+        }
+    }
+
+    private function deactivateFormerEmployeeRelations(Employee $employee): void
+    {
+        User::query()->where('employee_id', $employee->id)->delete();
+        $employee->positions()->detach();
+        $employee->divisions()->detach();
+        $employee->update(['position' => null]);
     }
 
     public function confirmDelete(int $id): void
