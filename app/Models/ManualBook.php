@@ -8,6 +8,7 @@ class ManualBook extends Model
 {
     protected $fillable = [
         'nama',
+        'versi',
         'kategori',
         'deskripsi',
         'thumbnail',

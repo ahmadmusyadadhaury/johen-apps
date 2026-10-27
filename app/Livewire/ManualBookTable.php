@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Facades\FileVault;
 use App\Models\ManualBook;
 use App\Models\TrainingVideo;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -32,6 +31,8 @@ class ManualBookTable extends Component
     public string $filterVideoKategori = '';
 
     public string $nama = '';
+
+    public string $versi = 'v1.0';
 
     public string $kategori = '';
 
@@ -64,25 +65,33 @@ class ManualBookTable extends Component
 
     public function openNew(): void
     {
+        abort_unless($this->canManageBooks(), 403);
         $this->resetInput();
         $this->showModal = true;
     }
 
     public function openEdit(int $id): void
     {
+        abort_unless($this->canManageBooks(), 403);
         $book = ManualBook::findOrFail($id);
         $this->editId = $book->id;
         $this->nama = $book->nama;
+        $this->versi = $book->versi ?: 'v1.0';
         $this->kategori = $book->kategori ?? '';
         $this->deskripsi = $book->deskripsi ?? '';
-        $this->thumbnail_preview = $book->thumbnail ? Storage::url($book->thumbnail) : null;
+        $this->thumbnail_preview = $book->thumbnail
+            ? route('hris.manual-book.file', [$book->id, 'thumbnail'])
+            : null;
         $this->showModal = true;
     }
 
     public function save(): void
     {
+        abort_unless($this->canManageBooks(), 403);
+
         $rules = [
             'nama' => 'required|string|max:255',
+            'versi' => ['required', 'string', 'max:20', 'regex:/^v\d+\.\d+$/'],
             'kategori' => ['required', 'in:'.implode(',', ManualBook::KATEGORI_OPTIONS)],
             'deskripsi' => 'nullable|string',
             'thumbnail' => $this->editId ? 'nullable|image|max:2048' : 'nullable|image|max:2048',
@@ -93,6 +102,7 @@ class ManualBookTable extends Component
 
         $data = [
             'nama' => $this->nama,
+            'versi' => $this->versi,
             'kategori' => $this->kategori,
             'deskripsi' => $this->deskripsi ?: null,
         ];
@@ -131,6 +141,10 @@ class ManualBookTable extends Component
 
     public function executeDelete(): void
     {
+        if (! auth()->user()->isSuperAdminLike()) {
+            abort(403);
+        }
+
         if (! $this->deleteId) {
             return;
         }
@@ -253,11 +267,19 @@ class ManualBookTable extends Component
     {
         $this->editId = null;
         $this->nama = '';
+        $this->versi = 'v1.0';
         $this->kategori = '';
         $this->deskripsi = '';
         $this->thumbnail = null;
         $this->file_pdf = null;
         $this->thumbnail_preview = null;
+    }
+
+    private function canManageBooks(): bool
+    {
+        $user = auth()->user();
+
+        return $user && ($user->isSuperAdminLike() || $user->isGmCeo());
     }
 
     private function resetVideoInput(): void

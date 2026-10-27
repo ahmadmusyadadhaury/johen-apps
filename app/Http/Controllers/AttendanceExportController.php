@@ -19,7 +19,10 @@ class AttendanceExportController extends Controller
 {
     public function export(Request $request)
     {
-        abort_unless($request->user()?->isSuperAdmin(), 403);
+        abort_unless(
+            $request->user()?->isSuperAdmin() || $request->user()?->isGmCeo(),
+            403
+        );
 
         $filters = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],

@@ -141,6 +141,35 @@ class User extends Authenticatable
         return $this->isSuperAdmin() || $this->isGmCeo();
     }
 
+    public function canManageTraining(): bool
+    {
+        return $this->isSuperAdmin()
+            || $this->isGmCeo()
+            || $this->isAdminMaster()
+            || $this->isStaffAdmin()
+            || $this->isStaffHr()
+            || $this->isHeadOfStore();
+    }
+
+    public function canJoinTraining(): bool
+    {
+        return $this->isStaff()
+            || $this->isAnyKoordinator()
+            || $this->isFcMobileCoordinator()
+            || $this->isStaffIt()
+            || $this->isStaffCreative()
+            || $this->isStaffAdmin()
+            || $this->isStaffStock()
+            || in_array($this->role, self::HOST_LIVE_ROLES, true);
+    }
+
+    public function canViewTrainingTeam(): bool
+    {
+        return $this->isAnyKoordinator()
+            || $this->isKoordinatorProject()
+            || $this->isFcMobileCoordinator();
+    }
+
     public function isStaffHr(): bool
     {
         return $this->role === self::ROLE_STAFF_HR;

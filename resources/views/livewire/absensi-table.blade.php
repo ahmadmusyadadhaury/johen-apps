@@ -414,7 +414,7 @@
                     </div>
 
                     <div class="w-full sm:w-auto">
-                        @if(auth()->user()->isSuperAdmin() && !$karyawanView && $tab === 'tim' && $exportPeriod === 'month')
+                        @if((auth()->user()->isSuperAdmin() || auth()->user()->isGmCeo()) && !$karyawanView && $tab === 'tim' && $exportPeriod === 'month')
                             <div class="relative">
                                 <label for="presensi-export-month" class="sr-only">Pilih bulan export presensi</label>
                                 <select
@@ -442,7 +442,7 @@
                         @endif
                     </div>
 
-                    @if(auth()->user()->isSuperAdmin() && !$karyawanView && $tab === 'tim')
+                    @if((auth()->user()->isSuperAdmin() || auth()->user()->isGmCeo()) && !$karyawanView && $tab === 'tim')
                         <div class="relative w-full sm:w-auto">
                             <label for="presensi-export-period" class="sr-only">Pilih periode export presensi</label>
                             <select

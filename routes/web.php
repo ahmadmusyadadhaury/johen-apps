@@ -20,9 +20,11 @@ use App\Http\Controllers\InternetController;
 use App\Http\Controllers\IplRukoController;
 use App\Http\Controllers\ItTicketController;
 use App\Http\Controllers\TicketPushSubscriptionController;
+use App\Http\Controllers\TrainingThumbnailController;
 use App\Http\Controllers\JadwalMaintenanceController;
 use App\Http\Controllers\JobdeskController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\ManualBookFileController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PayrollImportController;
 use App\Http\Controllers\PayrollPreviewController;
@@ -57,6 +59,7 @@ use App\Livewire\ScriptVideoTable;
 use App\Livewire\StockDailyTrackingTable;
 use App\Livewire\StokKetersediaanTable;
 use App\Livewire\StokTargetTable;
+use App\Livewire\TrainingWorkspace;
 use App\Livewire\UserTable;
 use Illuminate\Support\Facades\Route;
 
@@ -134,7 +137,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/struktur-organisasi', [StrukturOrganisasiController::class, 'index'])->name('struktur-organisasi');
         Route::get('/absensi', AbsensiTable::class)->name('absensi');
         Route::get('/absensi/export', [\App\Http\Controllers\AttendanceExportController::class, 'export'])
-            ->name('absensi.export')->middleware('role:super_admin');
+            ->name('absensi.export')->middleware('role:super_admin,gm_ceo');
         Route::get('/presensi-host', PresensiHostLive::class)->name('presensi-host');
         Route::get('/presensi-host-rekap', PresensiHostRekap::class)->name('presensi-host-rekap');
         Route::get('/cuti-izin', CutiIzinTable::class)->name('cuti-izin');
@@ -142,6 +145,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kontrak-kerja/{contract}/evaluasi', KontrakEvaluasiWorkspace::class)->name('kontrak-kerja.evaluasi');
         Route::get('/freelance', FreelanceTable::class)->name('freelance');
         Route::get('/manual-book', ManualBookTable::class)->name('manual-book');
+        Route::get('/manual-book/{manualBook}/file/{type}', [ManualBookFileController::class, 'show'])
+            ->whereIn('type', ['thumbnail', 'pdf'])->name('manual-book.file');
+        Route::get('/seminar-pelatihan', TrainingWorkspace::class)->name('seminar-pelatihan');
+        Route::get('/seminar-pelatihan/{trainingSession}/thumbnail', [TrainingThumbnailController::class, 'show'])->name('training.thumbnail');
         Route::get('/pengumuman', AnnouncementTable::class)->name('announcements')->middleware('role:' . implode(',', [...\App\Models\User::PENGUMUMAN_ADMIN_ROLES, \App\Models\User::ROLE_GM_CEO]));
         Route::get('/pengumuman-saya', PengumumanInbox::class)->name('pengumuman-saya')->middleware('role:' . implode(',', \App\Models\User::PENGUMUMAN_VIEWER_ROLES));
         Route::get('/pengarsipan', PengarsipanTable::class)->name('pengarsipan')->middleware('role:super_admin,gm_ceo');

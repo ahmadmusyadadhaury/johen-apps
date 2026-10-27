@@ -31,9 +31,24 @@
                                 Ticketing IT
                             </a>
                             @endif
-                            @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isStaffHostFcMobile() || auth()->user()->isSuperAdminLike())
+                            @if(auth()->user()->isStaff() || auth()->user()->isStaffAdmin() || auth()->user()->isKoordinatorIt() || auth()->user()->isKoordinatorAdmin() || auth()->user()->isKoordinatorPubg() || auth()->user()->isKoordinatorFf() || auth()->user()->isKoordinatorRoblox() || auth()->user()->isKoordinatorMonkeyPubg() || auth()->user()->isStaffIt() || auth()->user()->isStaffHostPubg() || auth()->user()->isStaffHostFf() || auth()->user()->isStaffHostRoblox() || auth()->user()->isStaffHostMonkeyPubg() || auth()->user()->isStaffHostFcMobile() || auth()->user()->isSuperAdminLike() || auth()->user()->isGmCeo())
                             <a href="{{ route('hris.manual-book') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.manual-book') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                                 Pelatihan
+                            </a>
+                            @endif
+                            @if(auth()->user()->canJoinTraining() || auth()->user()->canManageTraining())
+                            <a href="{{ route('hris.seminar-pelatihan', ['tab' => 'jadwal']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.seminar-pelatihan') && request('tab', 'jadwal') === 'jadwal' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Seminar & Pelatihan
+                            </a>
+                            @endif
+                            @if(auth()->user()->canJoinTraining())
+                            <a href="{{ route('hris.seminar-pelatihan', ['tab' => 'saya']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.seminar-pelatihan') && request('tab') === 'saya' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Pelatihan Saya
+                            </a>
+                            @endif
+                            @if(auth()->user()->canViewTrainingTeam())
+                            <a href="{{ route('hris.seminar-pelatihan', ['tab' => 'tim']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.seminar-pelatihan') && request('tab') === 'tim' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                                Pelatihan Tim
                             </a>
                             @endif
                             @if(auth()->user()->isKoordinator() && !auth()->user()->isStaffCreative() && !auth()->user()->isManager() && !auth()->user()->isHeadOfStore())

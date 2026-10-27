@@ -11,7 +11,7 @@ $jsEsc = function ($s) {
 };
 @endphp
 
-<div x-data="{ tab: 'manual', previewBook: null, openPdf(url, nama, deskripsi) { if (window.matchMedia('(max-width: 767px)').matches) { if (url) { window.open(url, '_blank'); } } else { this.previewBook = { nama: nama, deskripsi: deskripsi, pdfUrl: url }; } } }">
+<div x-data="{ tab: 'manual', previewBook: null, openPdf(url, nama, deskripsi, versi) { this.previewBook = { nama: nama, deskripsi: deskripsi, versi: versi, pdfUrl: url }; } }">
     {{-- Tab Navigation --}}
     <div class="mb-6">
         <div class="flex sm:inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
@@ -27,15 +27,35 @@ $jsEsc = function ($s) {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 Video
             </button>
+            @if(auth()->user()->canJoinTraining() || auth()->user()->canManageTraining() || auth()->user()->canViewTrainingTeam())
+            <button @click="tab = 'pelatihan'"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                :class="tab === 'pelatihan' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="5.8" cy="5" r="2.4"/>
+                    <path d="M1 21v-3.2a4.7 4.7 0 0 1 4.7-4.7h1.1c.7 0 1.4.2 2 .5l3.7 2 2.1-4.3a1.4 1.4 0 0 1 2.5 1.2l-2.7 5.6a2 2 0 0 1-2.7.9l-3-1.6V21H1Z"/>
+                    <rect x="13" y="2.5" width="10" height="9.5" rx="1.2"/>
+                    <path d="M15.2 5.2h5.6M15.2 7.3h3.8M15.2 9.4H19" fill="none" stroke="white" stroke-linecap="round" stroke-width="1.15"/>
+                    <path d="M17 12v1.6m2 0V12m-4 1.6h6m-5.5 0L13 21m5.5-7.4L21.5 21" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3"/>
+                </svg>
+                Pelatihan
+            </button>
+            @endif
         </div>
     </div>
+
+    @if(auth()->user()->canJoinTraining() || auth()->user()->canManageTraining() || auth()->user()->canViewTrainingTeam())
+    <div x-show="tab === 'pelatihan'" x-cloak>
+        @livewire('training-workspace')
+    </div>
+    @endif
 
     <div x-show="tab === 'manual'">
     <div class="flex items-center justify-between gap-4 mb-6">
         <div>
             <p class="text-sm text-gray-500 dark:text-gray-400">Koleksi panduan & dokumentasi</p>
         </div>
-        @if(auth()->user()->isSuperAdminLike())
+        @if(auth()->user()->isSuperAdminLike() || auth()->user()->isGmCeo())
         <button wire:click="openNew" class="btn-primary text-xs py-2 whitespace-nowrap">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Tambah Buku
@@ -64,7 +84,7 @@ $jsEsc = function ($s) {
             {{-- Thumbnail --}}
             <div class="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                 @if($book->thumbnail)
-                <img src="{{ Storage::url($book->thumbnail) }}" alt="{{ $book->nama }}"
+                <img src="{{ route('hris.manual-book.file', [$book->id, 'thumbnail']) }}" alt="{{ $book->nama }}"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                 @else
                 <div class="flex items-center justify-center h-full">
@@ -73,7 +93,7 @@ $jsEsc = function ($s) {
                 @endif
                 {{-- Overlay on hover --}}
                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                    <button @click="openPdf('{{ $jsEsc($book->file_pdf ? Storage::url($book->file_pdf) : '') }}', '{{ $jsEsc($book->nama) }}', '{{ $jsEsc($book->deskripsi ?? '') }}')"
+                    <button @click="openPdf('{{ $book->file_pdf ? route('hris.manual-book.file', ['manualBook' => $book->id, 'type' => 'pdf', 'v' => 'filename-v2']) : '' }}', '{{ $jsEsc($book->nama) }}', '{{ $jsEsc($book->deskripsi ?? '') }}', '{{ $jsEsc($book->versi ?: 'v1.0') }}')"
                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-semibold hover:bg-white shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Baca
@@ -83,17 +103,22 @@ $jsEsc = function ($s) {
 
             {{-- Info --}}
             <div class="p-4">
-                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{{ $book->nama }}</h3>
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{{ $book->nama }}</h3>
+                    <span class="shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">{{ $book->versi ?: 'v1.0' }}</span>
+                </div>
                 @if($book->kategori)
                 <span class="inline-flex mt-2 items-center rounded-full bg-primary-50 dark:bg-primary-900/30 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:text-primary-400">{{ $book->kategori }}</span>
                 @endif
                 @if($book->deskripsi)
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ $book->deskripsi }}</p>
                 @endif
-                @if(auth()->user()->isSuperAdminLike())
+                @if(auth()->user()->isSuperAdminLike() || auth()->user()->isGmCeo())
                 <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                     <button wire:click="openEdit({{ $book->id }})" class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">Edit</button>
+                    @if(auth()->user()->isSuperAdminLike())
                     <button wire:click="confirmDelete({{ $book->id }})" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 font-medium">Hapus</button>
+                    @endif
                 </div>
                 @endif
             </div>
@@ -184,19 +209,24 @@ $jsEsc = function ($s) {
 
     {{-- PDF Preview Modal (shared) --}}
     <div x-show="previewBook !== null" x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-start justify-center bg-gray-900/60 backdrop-blur-sm overflow-y-auto p-0 sm:p-4 sm:pt-10"
          @click="previewBook = null">
-        <div @click.stop class="relative w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-2xl my-10">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100" x-text="previewBook?.nama"></h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="previewBook?.deskripsi" x-show="previewBook?.deskripsi"></p>
+        <div @click.stop class="relative flex h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-white shadow-2xl dark:bg-gray-800 sm:my-10 sm:h-[calc(80vh+4rem)] sm:max-h-[calc(100dvh-5rem)] sm:max-w-4xl sm:rounded-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700 sm:px-6 sm:py-4">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <h3 class="truncate text-base font-semibold text-gray-900 dark:text-gray-100" x-text="previewBook?.nama"></h3>
+                        <span class="shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300" x-text="previewBook?.versi"></span>
+                    </div>
+                    <p class="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400" x-text="previewBook?.deskripsi" x-show="previewBook?.deskripsi"></p>
                 </div>
-                <button @click="previewBook = null" class="rounded-xl p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0">
+                <button @click="previewBook = null" class="shrink-0 rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <iframe :src="previewBook?.pdfUrl" class="w-full h-[80vh] rounded-b-2xl" frameborder="0"></iframe>
+            <div class="min-h-0 w-full flex-1 overflow-auto overscroll-contain bg-gray-100 dark:bg-gray-900">
+                <iframe :src="previewBook?.pdfUrl ? previewBook.pdfUrl + '#view=FitH' : ''" title="Preview PDF manual book" class="block h-full min-h-[70vh] w-full max-w-full border-0 sm:min-h-0" frameborder="0"></iframe>
+            </div>
         </div>
     </div>
 
@@ -235,6 +265,12 @@ $jsEsc = function ($s) {
                     <x-input-label value="Nama Manual Book *" />
                     <x-text-input type="text" wire:model="nama" class="mt-1 block w-full" placeholder="Judul buku panduan" />
                     @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <x-input-label value="Versi *" />
+                    <x-text-input type="text" wire:model="versi" class="mt-1 block w-full" placeholder="v1.0" />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Gunakan format v1.0, v1.1, v2.0, dan seterusnya.</p>
+                    @error('versi') <p class="text-xs text-red-600 mt-1">Masukkan versi dengan format seperti v1.0 atau v1.1.</p> @enderror
                 </div>
                 <div>
                     <x-input-label value="Kategori *" />
