@@ -151,7 +151,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/seminar-pelatihan/{trainingSession}/thumbnail', [TrainingThumbnailController::class, 'show'])->name('training.thumbnail');
         Route::get('/pengumuman', AnnouncementTable::class)->name('announcements')->middleware('role:' . implode(',', [...\App\Models\User::PENGUMUMAN_ADMIN_ROLES, \App\Models\User::ROLE_GM_CEO]));
         Route::get('/pengumuman-saya', PengumumanInbox::class)->name('pengumuman-saya')->middleware('role:' . implode(',', \App\Models\User::PENGUMUMAN_VIEWER_ROLES));
-        Route::get('/pengarsipan', PengarsipanTable::class)->name('pengarsipan')->middleware('role:super_admin,gm_ceo');
+        Route::get('/pengarsipan', PengarsipanTable::class)->name('pengarsipan')->middleware('role:super_admin,admin_master,gm_ceo');
         Route::get('/ucapan-ulang-tahun', BirthdayWishTable::class)->name('birthday-wishes')->middleware('role:super_admin,staff_hr,gm_ceo');
         Route::get('/ucapan-ulang-tahun/{employee}', BirthdayWishDetail::class)->name('birthday-wishes.detail')->middleware('role:super_admin,staff_hr,gm_ceo');
         Route::post('/pengumuman/{announcement}/dibaca', [AnnouncementController::class, 'markRead'])->name('announcements.mark-read');
@@ -352,7 +352,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin');
-    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin,gm_ceo,staff_hr');
+    Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin,admin_master,gm_ceo,staff_hr');
 });
 
 Route::middleware('auth')->group(function () {
