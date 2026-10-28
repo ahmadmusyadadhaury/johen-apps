@@ -45,6 +45,126 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 1000);
 });
 </script>
+<script>
+(() => {
+    const storageKey = 'it-ticket-submission:' + (document.querySelector('[data-ticket-user-id]')?.dataset.ticketUserId || 'anonymous');
+    const getForm = () => document.querySelector('[data-it-ticket-form]');
+    const setFeedback = (form, message, error = false) => {
+        const feedback = form?.querySelector('[data-ticket-submit-feedback]');
+        if (!feedback) return;
+        feedback.textContent = message;
+        feedback.classList.toggle('hidden', !message);
+        feedback.classList.toggle('border-rose-200', error);
+        feedback.classList.toggle('bg-rose-50', error);
+        feedback.classList.toggle('text-rose-700', error);
+        feedback.classList.toggle('border-blue-200', !error);
+        feedback.classList.toggle('bg-blue-50', !error);
+        feedback.classList.toggle('text-blue-700', !error);
+    };
+    const setButtonBusy = (form, busy) => {
+        const button = form?.querySelector('[data-ticket-submit-button]');
+        if (!button) return;
+        button.disabled = busy;
+        button.textContent = busy ? 'Mengirim...' : 'Kirim Tiket';
+    };
+
+    window.startNewItTicketAttempt = (form = getForm()) => {
+        if (!form) return;
+        const input = form.querySelector('[name="submission_key"]');
+        let pending = null;
+        try { pending = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch (_) {}
+        if (pending?.key) {
+            if (input) input.value = pending.key;
+            form.dataset.retryable = '1';
+            setFeedback(form, 'Ada pengajuan yang belum mendapat konfirmasi. Kirim ulang dengan aman; tiket tidak akan dibuat dua kali.');
+        } else {
+            if (input) input.value = crypto.randomUUID();
+            form.dataset.retryable = '0';
+            setFeedback(form, '');
+        }
+    };
+    window.discardItTicketAttempt = () => sessionStorage.removeItem(storageKey);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = getForm();
+        if (!form) return;
+        try {
+            const pending = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+            if (pending?.key) {
+                form.querySelector('[name="submission_key"]').value = pending.key;
+                form.dataset.retryable = '1';
+                setFeedback(form, 'Ada pengajuan yang belum mendapat konfirmasi. Kirim ulang dengan aman; tiket tidak akan dibuat dua kali.');
+            }
+        } catch (_) {
+            sessionStorage.removeItem(storageKey);
+        }
+    });
+
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('[data-it-ticket-form]');
+        if (!form) return;
+        event.preventDefault();
+        if (form.dataset.submitting === '1') return;
+
+        if (!navigator.onLine) {
+            setFeedback(form, 'Koneksi Anda sedang offline. Periksa jaringan lalu kirim kembali; data form tetap tersimpan.', true);
+            return;
+        }
+
+        const key = form.querySelector('[name="submission_key"]')?.value;
+        if (!key) {
+            setFeedback(form, 'Kunci pengajuan belum tersedia. Muat ulang halaman lalu coba kembali.', true);
+            return;
+        }
+
+        form.dataset.submitting = '1';
+        form.dataset.retryable = '1';
+        sessionStorage.setItem(storageKey, JSON.stringify({ key }));
+        setButtonBusy(form, true);
+        setFeedback(form, 'Sedang mengirim pengajuan. Mohon tunggu dan jangan tutup halaman.');
+        const requestController = new AbortController();
+        const requestTimeout = window.setTimeout(() => requestController.abort(), 30000);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+                signal: requestController.signal,
+            });
+
+            if (response.status === 422) {
+                const result = await response.json();
+                const firstError = Object.values(result.errors || {}).flat()[0];
+                form.dataset.retryable = '0';
+                sessionStorage.removeItem(storageKey);
+                setFeedback(form, firstError || 'Periksa kembali data pengajuan Anda.', true);
+                return;
+            }
+
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                throw new Error(result.message || 'Pengajuan gagal diproses (HTTP ' + response.status + ').');
+            }
+
+            await response.json();
+            sessionStorage.removeItem(storageKey);
+            window.location.reload();
+        } catch (error) {
+            const isNetworkError = !navigator.onLine || error.name === 'AbortError' || error instanceof TypeError;
+            const message = isNetworkError
+                ? 'Koneksi Anda belum stabil. Pengajuan belum dapat dipastikan. Periksa jaringan lalu coba lagi; sistem akan mencegah tiket ganda.'
+                : error.message || 'Pengajuan belum berhasil diproses. Coba lagi dengan kunci pengajuan yang sama.';
+            setFeedback(form, message, true);
+        } finally {
+            window.clearTimeout(requestTimeout);
+            form.dataset.submitting = '0';
+            setButtonBusy(form, false);
+        }
+    });
+})();
+</script>
 @endpush
 
 <x-app-layout title="Ticketing IT">
@@ -764,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <h2 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Riwayat Pengajuan Saya</h2>
                         <p class="mt-0.5 text-xs text-gray-400">Pantau status tiket yang pernah Anda ajukan</p>
                     </div>
-                    <button type="button" @click="showForm = true" class="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">
+                    <button type="button" @click="showForm = true; $nextTick(() => window.startNewItTicketAttempt?.(document.querySelector('[data-it-ticket-form]')))" class="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         Buat Tiket
                     </button>
@@ -821,19 +941,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <template x-if="showForm">
                 <div class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-                    <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="showForm = false"></div>
+                    <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="if(document.querySelector('[data-it-ticket-form]')?.dataset.submitting !== '1'){showForm = false; window.discardItTicketAttempt?.()}"></div>
                     <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
                         <div class="flex items-start justify-between gap-4 border-b border-gray-100 p-5 dark:border-gray-800">
                             <div>
                                 <h3 class="text-base font-display font-bold text-gray-900 dark:text-gray-100">Buat Tiket</h3>
                                 <p class="mt-0.5 text-xs text-gray-400">Sampaikan kebutuhan IT dengan detail agar dapat ditangani lebih cepat.</p>
                             </div>
-                            <button type="button" @click="showForm = false" class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+                            <button type="button" @click="if(document.querySelector('[data-it-ticket-form]')?.dataset.submitting !== '1'){showForm = false; window.discardItTicketAttempt?.()}" class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
-                        <form method="POST" action="{{ route('it.tickets.store') }}" enctype="multipart/form-data" class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
+                        <form method="POST" action="{{ route('it.tickets.store') }}" enctype="multipart/form-data" data-it-ticket-form class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
                             @csrf
+                            <input type="hidden" name="submission_key" value="{{ old('submission_key', (string) \Illuminate\Support\Str::uuid()) }}">
+                            <div data-ticket-submit-feedback role="status" aria-live="polite" class="hidden rounded-lg border px-3 py-2 text-xs"></div>
                             <div>
                                 <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Judul permintaan</label>
                                 <input name="judul" value="{{ old('judul') }}" required maxlength="150" placeholder="Contoh: Tidak bisa akses aplikasi absensi" class="mt-1 w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
@@ -890,8 +1012,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 @error('bukti_kendala') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>
                             <div class="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
-                                <button type="button" @click="showForm = false" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Batal</button>
-                                <button type="submit" class="rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">Kirim Tiket</button>
+                                <button type="button" @click="if(document.querySelector('[data-it-ticket-form]')?.dataset.submitting !== '1'){showForm = false; window.discardItTicketAttempt?.()}" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Batal</button>
+                                <button type="submit" data-ticket-submit-button class="rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-wait disabled:opacity-60">Kirim Tiket</button>
                             </div>
                         </form>
                     </div>

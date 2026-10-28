@@ -4,6 +4,8 @@ use App\Http\Controllers\ActivityCompetitorController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssetViewController;
 use App\Http\Controllers\BonusController;
+use App\Http\Controllers\ChatAttachmentController;
+use App\Http\Controllers\ChatCallSignalController;
 use App\Http\Controllers\DailyTrackingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DigitalAssetController;
@@ -42,6 +44,7 @@ use App\Livewire\BirthdayWishDetail;
 use App\Livewire\BirthdayWishTable;
 use App\Livewire\ContentPlanTable;
 use App\Livewire\CutiIzinTable;
+use App\Livewire\ChatWorkspace;
 use App\Livewire\FreelanceTable;
 use App\Livewire\KontrakEvaluasiWorkspace;
 use App\Livewire\KalenderEventTable;
@@ -59,7 +62,6 @@ use App\Livewire\ScriptVideoTable;
 use App\Livewire\StockDailyTrackingTable;
 use App\Livewire\StokKetersediaanTable;
 use App\Livewire\StokTargetTable;
-use App\Livewire\TrainingWorkspace;
 use App\Livewire\UserTable;
 use Illuminate\Support\Facades\Route;
 
@@ -84,6 +86,13 @@ Route::get('/offline', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/chat', ChatWorkspace::class)->name('chat');
+    Route::get('/chat/attachments/{directMessage}', [ChatAttachmentController::class, 'show'])->name('chat.attachments.show');
+    Route::post('/chat/signals/{recipient}', [ChatCallSignalController::class, 'store'])->middleware('throttle:300,1')->name('chat.signals');
+    Route::post('/chat/presence', function () {
+        \App\Models\User::whereKey(auth()->id())->update(['last_seen_at' => now()]);
+        return response()->noContent();
+    })->name('chat.presence');
     Route::post('/dashboard/ucapan-ultah', [DashboardController::class, 'storeBirthdayWish'])->name('dashboard.birthday-wish');
     Route::post('/dashboard/ucapan-ultah/sembunyikan', [DashboardController::class, 'hideBirthdayBanner'])->name('dashboard.birthday-banner.hide');
     Route::get('/dashboard/divisi/{division}', [DashboardController::class, 'division'])->name('dashboard.division');
@@ -137,17 +146,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/struktur-organisasi', [StrukturOrganisasiController::class, 'index'])->name('struktur-organisasi');
         Route::get('/absensi', AbsensiTable::class)->name('absensi');
         Route::get('/absensi/export', [\App\Http\Controllers\AttendanceExportController::class, 'export'])
-            ->name('absensi.export')->middleware('role:super_admin,gm_ceo');
+            ->name('absensi.export')->middleware('role:super_admin,admin_master,gm_ceo');
         Route::get('/presensi-host', PresensiHostLive::class)->name('presensi-host');
         Route::get('/presensi-host-rekap', PresensiHostRekap::class)->name('presensi-host-rekap');
         Route::get('/cuti-izin', CutiIzinTable::class)->name('cuti-izin');
         Route::get('/kontrak-kerja', KontrakKerjaTable::class)->name('kontrak-kerja');
         Route::get('/kontrak-kerja/{contract}/evaluasi', KontrakEvaluasiWorkspace::class)->name('kontrak-kerja.evaluasi');
         Route::get('/freelance', FreelanceTable::class)->name('freelance');
-        Route::get('/manual-book', ManualBookTable::class)->name('manual-book');
+        Route::get('/manual-book', fn () => redirect()->route('hris.seminar-pelatihan'))->name('manual-book');
         Route::get('/manual-book/{manualBook}/file/{type}', [ManualBookFileController::class, 'show'])
             ->whereIn('type', ['thumbnail', 'pdf'])->name('manual-book.file');
-        Route::get('/seminar-pelatihan', TrainingWorkspace::class)->name('seminar-pelatihan');
+        Route::get('/seminar-pelatihan', ManualBookTable::class)->name('seminar-pelatihan');
         Route::get('/seminar-pelatihan/{trainingSession}/thumbnail', [TrainingThumbnailController::class, 'show'])->name('training.thumbnail');
         Route::get('/pengumuman', AnnouncementTable::class)->name('announcements')->middleware('role:' . implode(',', [...\App\Models\User::PENGUMUMAN_ADMIN_ROLES, \App\Models\User::ROLE_GM_CEO]));
         Route::get('/pengumuman-saya', PengumumanInbox::class)->name('pengumuman-saya')->middleware('role:' . implode(',', \App\Models\User::PENGUMUMAN_VIEWER_ROLES));

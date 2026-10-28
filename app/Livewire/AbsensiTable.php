@@ -561,6 +561,7 @@ class AbsensiTable extends Component
     private function canViewTeamTab($user): bool
     {
         return $user->isSuperAdmin()
+            || $user->isAdminMaster()
             || $user->isGmCeo()
             || $user->isAnyKoordinator()
             || $user->isFcMobileCoordinator()

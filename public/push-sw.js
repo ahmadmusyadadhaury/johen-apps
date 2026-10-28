@@ -7,13 +7,30 @@ self.addEventListener('push', (event) => {
         data = { body: event.data ? event.data.text() : '' };
     }
 
-    event.waitUntil(self.registration.showNotification(data.title || 'Johen Apps', {
-        body: data.body || 'Ada pembaruan yang perlu diperiksa.',
-        icon: '/pwa/icon-192.png',
-        badge: '/pwa/icon-192.png',
-        tag: data.tag || 'johen-apps-notification',
-        data: { url: data.url || '/it/tickets' },
-    }));
+    event.waitUntil((async () => {
+        if (String(data.tag || '').startsWith('chat-message-')) {
+            const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+            const visibleClient = clients.some((client) => {
+                try {
+                    return client.visibilityState === 'visible'
+                        && new URL(client.url).origin === self.location.origin;
+                } catch (_) {
+                    return false;
+                }
+            });
+
+            // The open page receives the same message over Reverb and shows its own notification.
+            if (visibleClient) return;
+        }
+
+        return self.registration.showNotification(data.title || 'Johen Apps', {
+            body: data.body || 'Ada pembaruan yang perlu diperiksa.',
+            icon: '/pwa/icon-192.png',
+            badge: '/pwa/icon-192.png',
+            tag: data.tag || 'johen-apps-notification',
+            data: { url: data.url || '/it/tickets' },
+        });
+    })());
 });
 
 self.addEventListener('notificationclick', (event) => {

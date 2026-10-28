@@ -184,6 +184,7 @@ class Employee extends Model
         'tanggal_masuk',
         'tanggal_resign',
         'updated_at',
+        'foto_version',
     ];
 
     public function scopeListSelect($query)
@@ -235,6 +236,7 @@ class Employee extends Model
         'tanggal_masuk',
         'tanggal_resign',
         'foto',
+        'foto_version',
         'catatan',
     ];
 
@@ -291,7 +293,8 @@ class Employee extends Model
     public function getFotoUrlAttribute(): ?string
     {
         if (! array_key_exists('foto', $this->attributes) && array_key_exists('foto_is_base64', $this->attributes)) {
-            return $this->foto_is_base64 ? route('hris.employees.photo', $this).'?'.($this->updated_at?->timestamp ?? '') : null;
+            $version = $this->foto_version ?: ($this->updated_at?->timestamp ?? '');
+            return $this->foto_is_base64 ? route('hris.employees.photo', $this).'?v='.rawurlencode((string) $version) : null;
         }
 
         if (! $this->foto) {
@@ -299,7 +302,8 @@ class Employee extends Model
         }
 
         if (str_starts_with($this->foto, 'base64:')) {
-            return route('hris.employees.photo', $this).'?'.($this->updated_at?->timestamp ?? '');
+            $version = $this->foto_version ?: ($this->updated_at?->timestamp ?? '');
+            return route('hris.employees.photo', $this).'?v='.rawurlencode((string) $version);
         }
 
         return asset('storage/employees/'.$this->foto);

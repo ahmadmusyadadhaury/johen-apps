@@ -28,6 +28,12 @@ $groupIcons = [
     </a>
 </div>
 
+<a href="{{ route('chat') }}" class="mb-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('chat') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-9.75 8.25 2.77-3.323A8.964 8.964 0 013 12a9 9 0 119 9c-1.858 0-3.584-.563-5.015-1.527L3.75 20.25z"/></svg>
+    Chat
+    <livewire:sidebar-chat-badge />
+</a>
+
 <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{{ $menu['label'] }}</p>
 
 <div x-data="{ openGroup: @js($activeGroup) }" class="space-y-0.5">

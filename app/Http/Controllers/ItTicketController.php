@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\ItTicket;
 use App\Models\User;
 use App\Services\ItTicketPushService;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -46,9 +49,10 @@ class ItTicketController extends Controller
         return view('it.tickets', compact('tickets', 'itUsers', 'canManage', 'canDelete', 'canViewOnly', 'canGiveFeedback', 'stats'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
+            'submission_key' => ['required', 'uuid'],
             'judul' => ['required', 'string', 'max:150'],
             'deskripsi' => ['required', 'string', 'max:3000'],
             'kategori' => ['required', 'in:perangkat,aplikasi,akun_akses,jaringan,lainnya'],
@@ -56,25 +60,85 @@ class ItTicketController extends Controller
             'bukti_kendala' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
 
-        if ($request->hasFile('bukti_kendala')) {
-            $data['bukti_kendala'] = $request->file('bukti_kendala')->store('bukti-kendala', 'public');
+        $submissionKey = $data['submission_key'];
+        unset($data['submission_key']);
+        $requester = $request->user();
+
+        $existingTicket = ItTicket::where('submission_key', $submissionKey)
+            ->where('requester_id', $requester->id)
+            ->first();
+
+        if ($existingTicket) {
+            return $this->ticketSubmissionResponse($request, $existingTicket, true);
         }
 
-        $data['requester_id'] = $request->user()->id;
-        $todayPrefix = 'IT-' . now()->format('Ymd') . '-';
-        $lastKode = ItTicket::where('kode', 'like', $todayPrefix . '%')->max('kode');
-        $nextNumber = $lastKode ? ((int) substr($lastKode, -3)) + 1 : 1;
-        $data['kode'] = $todayPrefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
-        $ticket = ItTicket::create($data);
+        $storedEvidence = null;
+        if ($request->hasFile('bukti_kendala')) {
+            $storedEvidence = $request->file('bukti_kendala')->store('bukti-kendala', 'public');
+            $data['bukti_kendala'] = $storedEvidence;
+        }
+
+        try {
+            $ticket = DB::transaction(function () use ($data, $requester, $submissionKey) {
+                $todayPrefix = 'IT-' . now()->format('Ymd') . '-';
+                $lastKode = ItTicket::where('kode', 'like', $todayPrefix . '%')->lockForUpdate()->max('kode');
+                $nextNumber = $lastKode ? ((int) substr($lastKode, -3)) + 1 : 1;
+
+                return ItTicket::create([
+                    ...$data,
+                    'requester_id' => $requester->id,
+                    'submission_key' => $submissionKey,
+                    'kode' => $todayPrefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT),
+                ]);
+            });
+        } catch (QueryException $exception) {
+            $existingTicket = ItTicket::where('submission_key', $submissionKey)
+                ->where('requester_id', $requester->id)
+                ->first();
+
+            if ($existingTicket) {
+                if ($storedEvidence && $existingTicket->bukti_kendala !== $storedEvidence) {
+                    Storage::disk('public')->delete($storedEvidence);
+                }
+
+                return $this->ticketSubmissionResponse($request, $existingTicket, true);
+            }
+
+            if ($storedEvidence) {
+                Storage::disk('public')->delete($storedEvidence);
+            }
+
+            throw $exception;
+        }
+
         $itUsers = User::whereIn('role', [User::ROLE_KOORDINATOR_IT, User::ROLE_STAFF_IT])->get();
         app(ItTicketPushService::class)->sendToUsers(
-            $itUsers->reject(fn (User $itUser) => $itUser->is($request->user())),
+            $itUsers->reject(fn (User $itUser) => $itUser->is($requester)),
             'Tiket IT baru',
             $ticket->kode . ' · ' . $ticket->judul,
             $ticket,
         );
 
-        return back()->with('success', 'Tiket IT berhasil dikirim.');
+        return $this->ticketSubmissionResponse($request, $ticket, false);
+    }
+
+    private function ticketSubmissionResponse(Request $request, ItTicket $ticket, bool $duplicate): RedirectResponse|JsonResponse
+    {
+        $message = $duplicate
+            ? "Pengajuan {$ticket->kode} sudah diterima sebelumnya. Tiket tidak dibuat ulang."
+            : "Tiket {$ticket->kode} berhasil dikirim.";
+
+        if ($request->expectsJson()) {
+            $request->session()->flash('success', $message);
+
+            return response()->json([
+                'message' => $message,
+                'ticket_code' => $ticket->kode,
+                'duplicate' => $duplicate,
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function evidence(Request $request, ItTicket $ticket)

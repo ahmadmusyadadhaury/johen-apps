@@ -904,6 +904,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'pin_hash' => 'hashed',
+            'last_seen_at' => 'datetime',
         ];
     }
 }

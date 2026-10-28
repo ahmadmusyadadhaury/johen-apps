@@ -234,7 +234,10 @@ class EmployeeController extends Controller
         $file = $request->file('foto');
         $contents = base64_encode(file_get_contents($file->getRealPath()));
 
-        $employee->update(['foto' => 'base64:'.$contents]);
+        $employee->update([
+            'foto' => 'base64:'.$contents,
+            'foto_version' => bin2hex(random_bytes(16)),
+        ]);
 
         return redirect()->route('hris.employees.show', $employee)
             ->with('success', 'Foto berhasil diperbarui.');

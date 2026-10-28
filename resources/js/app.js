@@ -242,6 +242,176 @@ function initTicketRealtimeNotifications() {
 document.addEventListener('DOMContentLoaded', initTicketRealtimeNotifications);
 document.addEventListener('livewire:navigated', initTicketRealtimeNotifications);
 
+function initChatRealtimeNotifications() {
+    const anchor = document.querySelector('#chat-realtime-anchor[data-chat-user-id]');
+    if (!anchor || !window.Echo) return;
+
+    const userId = anchor.dataset.chatUserId;
+    if (!userId || anchor.dataset.chatRealtimeReady === '1') return;
+    anchor.dataset.chatRealtimeReady = '1';
+
+    window.Echo.private(`chat.user.${userId}`)
+        .listen('.ChatMessageNotification', (notification) => {
+            window.Livewire?.dispatch('chat-unread-refresh');
+
+            const currentUrl = new URL(window.location.href);
+            const chatUrl = new URL(anchor.dataset.chatUrl, window.location.origin);
+            const isCurrentConversation = currentUrl.pathname === chatUrl.pathname
+                && currentUrl.searchParams.get('user') === String(notification.sender_id);
+            const targetUrl = new URL(notification.url || chatUrl.href, window.location.origin);
+            const isVisible = document.visibilityState === 'visible';
+
+            if (isCurrentConversation && isVisible) {
+                window.Livewire?.dispatch('chat-message-received');
+            }
+
+            if ('Notification' in window && Notification.permission === 'granted' && (!isCurrentConversation || !isVisible)) {
+                try {
+                    const browserNotification = new Notification(`Pesan baru dari ${notification.sender_name}`, {
+                        body: notification.body || 'Anda menerima pesan baru.',
+                        icon: '/pwa/icon-192.png',
+                        tag: `chat-message-${notification.message_id}`,
+                        data: { url: targetUrl.href },
+                    });
+                    browserNotification.onclick = () => {
+                        window.focus();
+                        window.location.assign(targetUrl.href);
+                    };
+                } catch (_) {
+                    // Service worker push remains available in browsers that restrict page notifications.
+                }
+            }
+        })
+        .listen('.ChatCallSignal', (signal) => {
+            window.dispatchEvent(new CustomEvent('chat:call-signal', { detail: signal }));
+        });
+}
+
+document.addEventListener('DOMContentLoaded', initChatRealtimeNotifications);
+document.addEventListener('livewire:navigated', initChatRealtimeNotifications);
+
+async function setupChatPush(button) {
+    const panel = button.closest('[data-chat-push-notice]');
+    const status = panel?.querySelector('[data-chat-push-status]');
+    const setStatus = (message) => { if (status) status.textContent = message; };
+    const waitWithTimeout = (promise, milliseconds, message) => new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error(message)), milliseconds);
+        promise.then((value) => {
+            window.clearTimeout(timer);
+            resolve(value);
+        }, (error) => {
+            window.clearTimeout(timer);
+            reject(error);
+        });
+    });
+    const saveSubscription = async (subscription) => fetch(button.dataset.subscribeUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        },
+        body: JSON.stringify(subscription.toJSON()),
+    });
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        button.textContent = 'Tidak didukung';
+        button.disabled = true;
+        setStatus('Browser ini tidak mendukung notifikasi push.');
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Memeriksa...';
+    setStatus('Memeriksa dukungan notifikasi pada browser ini...');
+
+    try {
+        const response = await waitWithTimeout(
+            fetch(button.dataset.configUrl, { headers: { Accept: 'application/json' } }),
+            10000,
+            'Permintaan konfigurasi notifikasi melewati batas waktu.'
+        );
+        if (!response.ok) throw new Error('Konfigurasi notifikasi gagal dimuat.');
+        const config = await response.json();
+        if (!config.available) {
+            button.textContent = 'Belum tersedia';
+            button.disabled = true;
+            setStatus('Push browser belum dikonfigurasi pada server.');
+            return;
+        }
+
+        const workerUrl = import.meta.env.DEV ? '/push-sw.js' : '/sw.js';
+        setStatus('Menyiapkan service worker notifikasi...');
+        await waitWithTimeout(
+            navigator.serviceWorker.register(workerUrl, { scope: '/', updateViaCache: 'none' }),
+            10000,
+            'Pendaftaran service worker melewati batas waktu.'
+        );
+        setStatus('Menunggu service worker aktif...');
+        const registration = await waitWithTimeout(
+            navigator.serviceWorker.ready,
+            12000,
+            'Service worker belum aktif. Muat ulang halaman lalu coba lagi.'
+        );
+        const existing = await registration.pushManager.getSubscription();
+        button.disabled = false;
+        button.textContent = existing && Notification.permission === 'granted' ? 'Notifikasi aktif' : 'Aktifkan';
+        if (existing && Notification.permission === 'granted') {
+            const saved = await saveSubscription(existing);
+            if (saved.ok) {
+                button.disabled = true;
+                setStatus('Pesan baru akan muncul sebagai notifikasi browser.');
+                return;
+            }
+        }
+
+        setStatus(Notification.permission === 'denied'
+            ? 'Izin diblokir. Izinkan notifikasi untuk situs ini melalui setelan browser.'
+            : 'Aktifkan agar pesan baru muncul saat chat tidak sedang dibuka.');
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            try {
+                let permission = Notification.permission;
+                if (permission === 'default') permission = await Notification.requestPermission();
+                if (permission !== 'granted') throw new Error('Izin notifikasi browser belum diberikan.');
+                const subscription = existing || await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: decodeVapidKey(config.publicKey),
+                });
+                const saved = await saveSubscription(subscription);
+                if (!saved.ok) throw new Error('Langganan notifikasi gagal disimpan.');
+                button.textContent = 'Notifikasi aktif';
+                button.disabled = true;
+                setStatus('Pesan baru akan muncul sebagai notifikasi browser.');
+            } catch (error) {
+                button.disabled = false;
+                setStatus(error.message || 'Notifikasi belum berhasil diaktifkan.');
+                window.Alpine?.store('toast')?.error(error.message || 'Notifikasi belum berhasil diaktifkan.');
+            }
+        });
+    } catch (error) {
+        button.textContent = 'Coba lagi';
+        button.disabled = false;
+        setStatus(error.message || 'Service worker notifikasi gagal disiapkan.');
+        button.addEventListener('click', () => setupChatPush(button), { once: true });
+    }
+}
+
+function initChatPushButtons() {
+    document.querySelectorAll('[data-chat-push]:not([data-push-ready])').forEach((button) => {
+        button.dataset.pushReady = '1';
+        setupChatPush(button);
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChatPushButtons, { once: true });
+} else {
+    initChatPushButtons();
+}
+document.addEventListener('livewire:navigated', initChatPushButtons);
+
 // Ekspos ke window agar bisa dipakai di directive x-init "@barcode" pada halaman Asset.
 window.JsBarcode = JsBarcode;
 window.QRCode = QRCode;
@@ -406,6 +576,7 @@ document.addEventListener('alpine:init', () => {
  */
 
 import './echo';
+import './chat-calls';
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {

@@ -127,7 +127,7 @@ class DivisionMenu
                 ['label' => 'Cuti & Izin', 'route' => 'hris.cuti-izin', 'icon' => 'cuti', 'desc' => 'Pengajuan cuti dan izin', 'group' => 'Operasional'],
                 ['label' => 'Jobdesk', 'route' => 'hris.jobdesk', 'icon' => 'content', 'desc' => 'Jobdesk dan tanggung jawab', 'group' => 'Operasional'],
                 ['label' => 'Ticketing IT', 'route' => 'it.tickets.index', 'icon' => 'ticket', 'desc' => 'Kelola tiket bantuan IT', 'group' => 'Operasional'],
-                ['label' => 'Pelatihan', 'route' => 'hris.manual-book', 'icon' => 'manual', 'desc' => 'Panduan & video pelatihan aplikasi', 'group' => 'Operasional'],
+                ['label' => 'Seminar & Pelatihan', 'route' => 'hris.seminar-pelatihan', 'icon' => 'manual', 'desc' => 'Jadwal kegiatan dan buku panduan pelatihan', 'group' => 'Operasional'],
                 ['label' => 'Pengumuman', 'route' => 'hris.announcements', 'icon' => 'default', 'desc' => 'Kelola pengumuman tayang', 'group' => 'Operasional'],
                 ['label' => 'Ucapan Ulang Tahun', 'route' => 'hris.birthday-wishes', 'icon' => 'default', 'desc' => 'Ucapan ulang tahun karyawan', 'group' => 'Operasional'],
                 ['label' => 'Pengarsipan', 'route' => 'hris.pengarsipan', 'icon' => 'default', 'desc' => 'Arsip berkas dan dokumen', 'group' => 'Operasional'],

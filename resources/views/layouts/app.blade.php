@@ -141,6 +141,14 @@ if ($divisionViewUser) {
                         Dashboard
                     </x-nav-link>
 
+                    <x-nav-link href="{{ route('chat') }}" :active="request()->routeIs('chat')">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 8.25h9m-9 3.75h6m-9.75 8.25 2.77-3.323A8.964 8.964 0 013 12a9 9 0 119 9c-1.858 0-3.584-.563-5.015-1.527L3.75 20.25z"/></svg>
+                        </x-slot>
+                        Chat
+                        <livewire:sidebar-chat-badge />
+                    </x-nav-link>
+
 @include('layouts.partials.sidebar-sdm')
 @include('layouts.partials.sidebar-operasional')
 
@@ -963,6 +971,26 @@ if ($divisionViewUser) {
         @livewireScripts
         @stack('scripts')
         @include('partials.pwa-scripts')
+        @auth
+        <span id="chat-realtime-anchor" class="hidden" data-chat-user-id="{{ auth()->id() }}" data-chat-url="{{ route('chat') }}"></span>
+        <script>
+            (() => {
+                const heartbeatUrl = @json(route('chat.presence'));
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                const ping = () => {
+                    if (document.visibilityState !== 'visible') return;
+                    fetch(heartbeatUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                    }).catch(() => {});
+                };
+                ping();
+                window.setInterval(ping, 30000);
+                document.addEventListener('visibilitychange', ping);
+            })();
+        </script>
+        @endauth
         <script>
             function idleTimeout() {
                 const TIMEOUT_MS = 15 * 60 * 1000;

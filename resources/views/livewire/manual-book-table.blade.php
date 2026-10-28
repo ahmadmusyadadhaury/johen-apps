@@ -1,7 +1,7 @@
 @push('topbar-left')
     <div>
-        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Pelatihan</h1>
-        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Panduan & video pelatihan</p>
+        <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 truncate">Seminar & Pelatihan</h1>
+        <p class="hidden sm:block text-xs text-gray-400 mt-0.5">Buku panduan, video, dan kegiatan pelatihan</p>
     </div>
 @endpush
 
@@ -49,7 +49,6 @@ $jsEsc = function ($s) {
         @livewire('training-workspace')
     </div>
     @endif
-
     <div x-show="tab === 'manual'">
     <div class="flex items-center justify-between gap-4 mb-6">
         <div>
@@ -206,7 +205,6 @@ $jsEsc = function ($s) {
         </div>
         @endif
     </div>
-
     {{-- PDF Preview Modal (shared) --}}
     <div x-show="previewBook !== null" x-cloak
          class="fixed inset-0 z-50 flex items-start justify-center bg-gray-900/60 backdrop-blur-sm overflow-y-auto p-0 sm:p-4 sm:pt-10"
