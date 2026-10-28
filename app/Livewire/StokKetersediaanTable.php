@@ -41,7 +41,6 @@ class StokKetersediaanTable extends Component
 
     public const STATUS_OPTIONS = ['kosong', 'kurang', 'cukup', 'over'];
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

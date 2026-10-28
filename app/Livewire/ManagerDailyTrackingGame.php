@@ -29,7 +29,6 @@ class ManagerDailyTrackingGame extends Component
     public string $nama = '';
     public bool $showSuccess = false;
 
-    protected $updatesQueryString = ['search'];
 
     public function mount(string $divisi = ''): void
     {

@@ -62,7 +62,6 @@ class PubgDailyTrackingTable extends Component
 
     public string $fotoBuktiLivePath = '';
 
-    protected $updatesQueryString = ['search'];
 
     public function mount(): void
     {

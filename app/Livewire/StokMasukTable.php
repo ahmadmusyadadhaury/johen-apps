@@ -29,7 +29,6 @@ class StokMasukTable extends Component
     public string $sumber = '';
     public string $zimbra = '';
 
-    protected $updatesQueryString = ['search'];
 
     private const EFUTBOL_DIVISIONS = ['e-football', 'fc mobile'];
 

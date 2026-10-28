@@ -15,7 +15,7 @@ class AbsensiTable extends Component
 {
     use WithPagination;
 
-    protected $queryString = ['date', 'search', 'tab', 'bulan', 'tahun'];
+    protected $queryString = ['date', 'tab', 'bulan', 'tahun'];
 
     public string $date = '';
 

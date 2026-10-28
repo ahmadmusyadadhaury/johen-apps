@@ -12,7 +12,7 @@ class AnnouncementTable extends Component
 {
     use WithPagination;
 
-    protected $queryString = ['search', 'statusFilter'];
+    protected $queryString = ['statusFilter'];
 
     public string $search = '';
 

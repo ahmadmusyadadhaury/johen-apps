@@ -8,9 +8,11 @@ use App\Models\Position;
 use App\Models\TrainingRegistration;
 use App\Models\TrainingSession;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Throwable;
 
 class TrainingWorkspace extends Component
 {
@@ -29,6 +31,10 @@ class TrainingWorkspace extends Component
     public ?int $deletingSessionId = null;
 
     public ?int $momRegistrationId = null;
+
+    public ?int $certificateRegistrationId = null;
+
+    public $certificateUpload = null;
 
     public string $momText = '';
 
@@ -219,8 +225,9 @@ class TrainingWorkspace extends Component
 
     public function selectSession(int $id): void
     {
-        $this->authorizeManager();
-        $this->selectedSessionId = TrainingSession::query()->whereKey($id)->value('id');
+        $session = TrainingSession::findOrFail($id);
+        $this->authorizeSessionEditor($session);
+        $this->selectedSessionId = $session->id;
     }
 
     public function confirmDelete(int $id): void
@@ -263,6 +270,82 @@ class TrainingWorkspace extends Component
             'dihadiri_pada' => $status === 'attended' ? now() : null,
             'dicatat_oleh' => auth()->id(),
         ]);
+    }
+
+    public function openCertificateUpload(int $registrationId): void
+    {
+        $registration = TrainingRegistration::with('session')->findOrFail($registrationId);
+        abort_unless($registration->session, 404);
+        $this->authorizeCertificateIssuer($registration->session);
+        abort_unless($registration->status === 'attended', 422, 'Sertifikat hanya dapat diberikan kepada peserta yang tercatat hadir.');
+
+        $this->selectedSessionId = $registration->training_session_id;
+        $this->certificateRegistrationId = $registration->id;
+        $this->reset('certificateUpload');
+        $this->resetValidation('certificateUpload');
+    }
+
+    public function saveCertificate(): void
+    {
+        abort_unless($this->certificateRegistrationId, 404);
+
+        $registration = TrainingRegistration::with('session')->findOrFail($this->certificateRegistrationId);
+        abort_unless($registration->session, 404);
+        $this->authorizeCertificateIssuer($registration->session);
+        abort_unless($registration->status === 'attended', 422, 'Sertifikat hanya dapat diberikan kepada peserta yang tercatat hadir.');
+
+        $this->validate([
+            'certificateUpload' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png'],
+        ], [
+            'certificateUpload.required' => 'Pilih file sertifikat terlebih dahulu.',
+            'certificateUpload.mimes' => 'Sertifikat harus berupa PDF, JPG, atau PNG.',
+            'certificateUpload.max' => 'Ukuran sertifikat maksimal 10 MB.',
+        ]);
+
+        // Ambil metadata sebelum store(), karena file temporary dan disk tujuan
+        // sama sehingga Livewire memindahkan file dari direktori sementara.
+        $upload = $this->certificateUpload;
+        $name = $upload->getClientOriginalName();
+        $mime = $upload->getMimeType() ?: 'application/octet-stream';
+        $size = $upload->getSize();
+        $path = $upload->store('training-certificates/'.$registration->training_session_id, 'local');
+
+        if (! $path || ! Storage::disk('local')->exists($path)) {
+            $this->addError('certificateUpload', 'File sertifikat gagal disimpan. Silakan unggah ulang.');
+            return;
+        }
+
+        $oldPath = $registration->certificate_path;
+
+        try {
+            $registration->update([
+                'certificate_path' => $path,
+                'certificate_name' => $name,
+                'certificate_mime' => $mime,
+                'certificate_size' => $size,
+                'certificate_issued_by' => auth()->id(),
+                'certificate_issued_at' => now(),
+            ]);
+        } catch (Throwable $exception) {
+            Storage::disk('local')->delete($path);
+            throw $exception;
+        }
+
+        if ($oldPath && $oldPath !== $path) {
+            Storage::disk('local')->delete($oldPath);
+        }
+
+        $this->certificateRegistrationId = null;
+        $this->reset('certificateUpload');
+        $this->resetValidation('certificateUpload');
+        $this->dispatch('notify', type: 'success', message: 'Sertifikat berhasil diberikan kepada peserta.');
+    }
+
+    public function closeCertificateUpload(): void
+    {
+        $this->certificateRegistrationId = null;
+        $this->reset('certificateUpload');
+        $this->resetValidation('certificateUpload');
     }
 
     public function openMom(int $registrationId): void
@@ -330,6 +413,11 @@ class TrainingWorkspace extends Component
     {
         $user = auth()->user();
         abort_unless($user && ($user->canManageTraining() || (int) $session->dibuat_oleh === (int) $user->id), 403);
+    }
+
+    private function authorizeCertificateIssuer(TrainingSession $session): void
+    {
+        $this->authorizeSessionEditor($session);
     }
 
     private function normalizeTab(): void
@@ -436,9 +524,21 @@ class TrainingWorkspace extends Component
         }
 
         $selectedSession = null;
-        if ($user->canManageTraining() && $this->selectedSessionId) {
-            $selectedSession = TrainingSession::with(['registrations.employee'])
+        if ($this->selectedSessionId) {
+            $candidate = TrainingSession::with(['registrations.employee'])
                 ->find($this->selectedSessionId);
+
+            if ($candidate && ($user->canManageTraining() || (int) $candidate->dibuat_oleh === (int) $user->id)) {
+                $selectedSession = $candidate;
+            }
+        }
+
+        $selectedCertificateRegistration = null;
+        if ($selectedSession && $this->certificateRegistrationId) {
+            $candidateRegistration = $selectedSession->registrations->firstWhere('id', $this->certificateRegistrationId);
+            if ($candidateRegistration?->status === 'attended') {
+                $selectedCertificateRegistration = $candidateRegistration;
+            }
         }
 
         return view('livewire.training-workspace', [
@@ -447,7 +547,9 @@ class TrainingWorkspace extends Component
             'myRegistrations' => $myRegistrations,
             'teamRegistrations' => $teamRegistrations,
             'selectedSession' => $selectedSession,
+            'selectedCertificateRegistration' => $selectedCertificateRegistration,
             'canManage' => $user->canManageTraining(),
+            'canManageSelectedSession' => (bool) ($selectedSession && ($user->canManageTraining() || (int) $selectedSession->dibuat_oleh === (int) $user->id)),
             'canJoin' => $user->canJoinTraining(),
             'canViewTeam' => $user->canViewTrainingTeam(),
             'employeeLinked' => (bool) $user->employee,

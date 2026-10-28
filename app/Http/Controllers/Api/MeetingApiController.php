@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Meeting;
 use App\Models\MeetingRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class MeetingApiController extends Controller
@@ -137,11 +139,31 @@ class MeetingApiController extends Controller
             $query->where('employee_id', $request->employee_id);
         }
 
-        $requests = $query->latest()->get();
+        if ($request->filled('requester_username')) {
+            $employeeId = User::where('username', $request->string('requester_username'))->value('employee_id');
+            $query->where('employee_id', $employeeId ?? 0);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')->trim()->toString();
+            $query->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('room', 'like', "%{$search}%")
+                    ->orWhereHas('employee', fn ($employee) => $employee->where('nama', 'like', "%{$search}%"));
+            });
+        }
+
+        $requests = $query->latest()->paginate(min(100, max(1, (int) $request->input('per_page', 100))));
 
         return response()->json([
             'success' => true,
-            'data' => $requests,
+            'data' => $requests->items(),
+            'pagination' => [
+                'total' => $requests->total(),
+                'per_page' => $requests->perPage(),
+                'current_page' => $requests->currentPage(),
+                'last_page' => $requests->lastPage(),
+            ],
         ]);
     }
 
@@ -156,8 +178,18 @@ class MeetingApiController extends Controller
             'why' => 'nullable|string',
             'what' => 'nullable|string',
             'how' => 'nullable|string',
-            'employee_id' => 'required|exists:employees,id',
+            'employee_id' => 'nullable|exists:employees,id',
+            'requester_username' => 'required_without:employee_id|string|exists:users,username',
         ]);
+
+        if (! empty($validated['requester_username'])) {
+            $validated['employee_id'] = User::where('username', $validated['requester_username'])->value('employee_id');
+            unset($validated['requester_username']);
+        }
+
+        if (empty($validated['employee_id'])) {
+            return response()->json(['success' => false, 'message' => 'Akun pemohon belum terhubung ke data karyawan.'], 422);
+        }
 
         $meetingRequest = MeetingRequest::create($validated);
 
@@ -170,49 +202,82 @@ class MeetingApiController extends Controller
 
     public function approveMeetingRequest(Request $request, MeetingRequest $meetingRequest)
     {
-        if ($meetingRequest->status !== 'pending') {
+        $processed = DB::transaction(function () use ($meetingRequest, $request) {
+            $lockedRequest = MeetingRequest::query()->lockForUpdate()->findOrFail($meetingRequest->id);
+            if ($lockedRequest->status !== 'pending') {
+                return false;
+            }
+
+            $lockedRequest->update([
+                'status' => 'disetujui',
+                'approved_by' => $request->user()->id,
+                'notes' => $request->input('notes'),
+            ]);
+
+            Meeting::create([
+                'title' => $lockedRequest->title,
+                'date' => $lockedRequest->date,
+                'start_time' => $lockedRequest->start_time,
+                'end_time' => $lockedRequest->end_time,
+                'room' => $lockedRequest->room,
+                'status' => 'booked',
+                'description' => collect([
+                    $lockedRequest->why ? 'Why: '.$lockedRequest->why : null,
+                    $lockedRequest->what ? 'What: '.$lockedRequest->what : null,
+                    $lockedRequest->how ? 'How: '.$lockedRequest->how : null,
+                ])->filter()->implode("\n"),
+                'created_by' => $request->user()->id,
+            ]);
+
+            return true;
+        });
+
+        if (! $processed) {
             return response()->json([
                 'success' => false,
                 'message' => 'Permintaan sudah diproses sebelumnya',
             ], 409);
         }
 
-        $meetingRequest->update([
-            'status' => 'disetujui',
-            'approved_by' => $request->user()->id,
-            'notes' => $request->notes,
-        ]);
-
         return response()->json([
             'success' => true,
             'message' => 'Permintaan meeting disetujui',
-            'data' => $meetingRequest->load(['employee', 'approver']),
+            'data' => $meetingRequest->refresh()->load(['employee', 'approver']),
         ]);
     }
 
     public function rejectMeetingRequest(Request $request, MeetingRequest $meetingRequest)
     {
-        if ($meetingRequest->status !== 'pending') {
+        $validated = $request->validate([
+            'notes' => 'required|string',
+        ]);
+
+        $processed = DB::transaction(function () use ($meetingRequest, $request, $validated) {
+            $lockedRequest = MeetingRequest::query()->lockForUpdate()->findOrFail($meetingRequest->id);
+            if ($lockedRequest->status !== 'pending') {
+                return false;
+            }
+
+            $lockedRequest->update([
+                'status' => 'ditolak',
+                'approved_by' => $request->user()->id,
+                'notes' => $validated['notes'],
+            ]);
+
+            return true;
+        });
+
+        if (! $processed) {
             return response()->json([
                 'success' => false,
                 'message' => 'Permintaan sudah diproses sebelumnya',
             ], 409);
         }
 
-        $validated = $request->validate([
-            'notes' => 'required|string',
-        ]);
-
-        $meetingRequest->update([
-            'status' => 'ditolak',
-            'approved_by' => $request->user()->id,
-            'notes' => $validated['notes'],
-        ]);
-
         return response()->json([
             'success' => true,
             'message' => 'Permintaan meeting ditolak',
-            'data' => $meetingRequest->load(['employee', 'approver']),
+            'data' => $meetingRequest->refresh()->load(['employee', 'approver']),
         ]);
     }
 }

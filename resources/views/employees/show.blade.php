@@ -730,7 +730,7 @@ data-promotion-success="{{ session('promotion_success') }}"
                 <div class="flex items-center justify-between gap-4 mb-5 flex-wrap">
                     <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-0.5 w-80 focus-within:border-blue-500 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:shadow-sm transition-all">
                         <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <input type="text" x-model="cariDokumen" placeholder="Cari Dokumen" class="border-none outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 w-full placeholder:text-gray-400">
+                        <input type="text" x-model="cariDokumen" placeholder="Cari Dokumen" autocomplete="off" class="border-none outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 w-full placeholder:text-gray-400">
                     </div>
                     @if($canManageEmployeeData)
                     <button @click="dokumenModal = true"
@@ -1716,7 +1716,7 @@ NIP {{ $employee->nik }}
                         <div x-show="openPos" x-cloak
                              class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
                             <div class="p-2 border-b border-gray-100 dark:border-gray-700">
-                                <input type="text" x-model="posisiCari" placeholder="Cari jabatan..."
+                                <input type="text" x-model="posisiCari" placeholder="Cari jabatan..." autocomplete="off"
                                        class="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
                             </div>
                             <div class="max-h-48 overflow-y-auto p-1.5 space-y-0.5">
@@ -1818,7 +1818,7 @@ NIP {{ $employee->nik }}
                         <div x-show="openPos" x-cloak
                              class="absolute z-20 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
                             <div class="p-2 border-b border-gray-100">
-                                <input type="text" x-model="posisiCari" placeholder="Cari jabatan..."
+                                <input type="text" x-model="posisiCari" placeholder="Cari jabatan..." autocomplete="off"
                                        class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
                             </div>
                             <div class="max-h-48 overflow-y-auto p-1.5 space-y-0.5">

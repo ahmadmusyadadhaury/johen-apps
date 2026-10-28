@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Meeting;
-use App\Models\MeetingRequest;
+use App\Services\MeetingApiService;
+use Carbon\Carbon;
 use App\Services\ExternalMeetingService;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Throwable;
 
 class MeetingController extends Controller
 {
@@ -106,39 +110,52 @@ class MeetingController extends Controller
         return strtolower((string) $m->title) . '|' . $dateStr . '|' . $time;
     }
 
-    public function permintaan(Request $request)
+    public function permintaan(Request $request, MeetingApiService $meetingApi)
     {
         $user = auth()->user();
-        $employee = $user->employee;
+        $canReview = $user->canViewAll();
+        $apiError = null;
+        $requests = new LengthAwarePaginator(collect(), 0, 10, LengthAwarePaginator::resolveCurrentPage(), [
+            'path' => LengthAwarePaginator::resolveCurrentPath(),
+        ]);
 
-        if ($user->isStaff()) {
-            $requests = MeetingRequest::with('employee')
-                ->where('employee_id', $employee?->id)
-                ->latest()
-                ->paginate(10);
-        } else {
-            $requests = MeetingRequest::with(['employee', 'approver'])
-                ->when($request->status, function ($q, $status) {
-                    $q->where('status', $status);
-                })
-                ->when($request->search, function ($q, $search) {
-                    $q->where(function ($q) use ($search) {
-                        $q->where('title', 'like', "%{$search}%")
-                            ->orWhere('room', 'like', "%{$search}%")
-                            ->orWhereHas('employee', function ($q) use ($search) {
-                                $q->where('nama', 'like', "%{$search}%");
-                            });
-                    });
-                })
-                ->latest()
-                ->paginate(10);
+        try {
+            $filters = array_filter([
+                'status' => $request->input('status'),
+                'search' => $request->input('search'),
+                'requester_username' => $canReview ? null : $user->username,
+                'per_page' => 100,
+                'page' => max(1, (int) $request->input('page', 1)),
+            ], fn ($value) => $value !== null && $value !== '');
+            $payload = $meetingApi->requests($filters);
+            $pagination = data_get($payload, 'pagination', []);
+            $items = collect(data_get($payload, 'data', []))->map(fn (array $item) => (object) [
+                ...$item,
+                'date' => ! empty($item['date']) ? Carbon::parse($item['date']) : null,
+                'start_time' => $item['start_time'] ?? null,
+                'end_time' => $item['end_time'] ?? null,
+                'employee' => (object) ['nama' => data_get($item, 'employee.nama', data_get($item, 'employee.name', '-'))],
+                'approver' => (object) ['name' => data_get($item, 'approver.name', '-')],
+            ]);
+            $requests = new LengthAwarePaginator(
+                $items,
+                (int) data_get($pagination, 'total', $items->count()),
+                (int) data_get($pagination, 'per_page', 100),
+                (int) data_get($pagination, 'current_page', 1),
+                ['path' => LengthAwarePaginator::resolveCurrentPath(), 'query' => $request->query()]
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+            $apiError = 'Data meeting belum dapat dimuat dari server meeting. '.$exception->getMessage();
         }
 
-        return view('meeting.permintaan', compact('requests'));
+        return view('meeting.permintaan', compact('requests', 'apiError', 'canReview'));
     }
 
-    public function storePermintaan(Request $request)
+    public function storePermintaan(Request $request, MeetingApiService $meetingApi)
     {
+        abort_unless(auth()->user()->isStaff(), 403);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'date' => 'required|date',
@@ -150,36 +167,49 @@ class MeetingController extends Controller
             'how' => 'nullable|string',
         ]);
 
-        $employee = auth()->user()->employee;
-
-        if (!$employee) {
-            return back()->with('error', 'Akun Anda tidak terhubung ke data karyawan.');
+        $username = auth()->user()->username;
+        if (! $username) {
+            return back()->withInput()->with('error', 'Akun Anda belum memiliki username untuk dihubungkan ke sistem meeting.');
         }
 
-        MeetingRequest::create(array_merge($validated, [
-            'employee_id' => $employee->id,
-        ]));
+        try {
+            $meetingApi->submit([...$validated, 'requester_username' => $username]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withInput()->with('error', 'Pengajuan belum terkirim: '.$exception->getMessage());
+        }
 
         return redirect()->route('meeting.permintaan')->with('success', 'Permintaan meeting berhasil dikirim.');
     }
 
-    public function setujui(MeetingRequest $meetingRequest)
+    public function setujui(int $meetingRequest, MeetingApiService $meetingApi)
     {
-        $meetingRequest->update([
-            'status' => 'disetujui',
-            'approved_by' => auth()->id(),
-        ]);
+        abort_unless(auth()->user()->canViewAll(), 403);
+
+        try {
+            $meetingApi->approve($meetingRequest);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'Persetujuan belum tersimpan: '.$exception->getMessage());
+        }
 
         return back()->with('success', 'Permintaan meeting disetujui.');
     }
 
-    public function tolak(Request $request, MeetingRequest $meetingRequest)
+    public function tolak(Request $request, int $meetingRequest, MeetingApiService $meetingApi)
     {
-        $meetingRequest->update([
-            'status' => 'ditolak',
-            'approved_by' => auth()->id(),
-            'notes' => $request->notes,
-        ]);
+        abort_unless(auth()->user()->canViewAll(), 403);
+        $validated = $request->validate(['notes' => 'required|string|max:10000']);
+
+        try {
+            $meetingApi->reject($meetingRequest, $validated['notes']);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withInput()->with('error', 'Penolakan belum tersimpan: '.$exception->getMessage());
+        }
 
         return back()->with('success', 'Permintaan meeting ditolak.');
     }

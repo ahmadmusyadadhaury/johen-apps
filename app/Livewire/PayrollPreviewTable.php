@@ -15,7 +15,6 @@ class PayrollPreviewTable extends Component
     public string $sortField = 'nik';
     public string $sortDirection = 'asc';
 
-    protected $updatesQueryString = ['search'];
 
     public function sortBy(string $field): void
     {

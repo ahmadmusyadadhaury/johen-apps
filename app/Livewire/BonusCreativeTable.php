@@ -50,7 +50,6 @@ class BonusCreativeTable extends Component
 
     public string $total = '';
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

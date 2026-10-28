@@ -29,7 +29,6 @@ class PositionTable extends Component
 
     public ?int $selectedDivision = null;
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

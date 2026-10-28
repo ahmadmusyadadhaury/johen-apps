@@ -21,7 +21,7 @@ class PengumumanInbox extends Component
     /** @var 'semua'|'pengumuman'|'surat_edaran'|'surat_keputusan'|'pemberitahuan' */
     public string $jenisFilter = 'semua';
 
-    protected $queryString = ['search', 'jenisFilter' => ['except' => 'semua']];
+    protected $queryString = ['jenisFilter' => ['except' => 'semua']];
 
     private const ARSIP_JENIS = [
         'surat_edaran' => Pengarsipan::JENIS_SURAT_EDARAN,

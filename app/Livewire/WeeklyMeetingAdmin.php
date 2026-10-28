@@ -75,7 +75,12 @@ class WeeklyMeetingAdmin extends Component
     // Tab "QR Code" / "Weekly Saya" hanya untuk Super Admin & Staff HR.
     public function getShowTabsProperty(): bool
     {
-        return auth()->user()->isSuperAdmin() || auth()->user()->isStaffHr();
+        return auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster() || auth()->user()->isStaffHr();
+    }
+
+    private function authorizeMeetingManagement(): void
+    {
+        abort_unless(auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster(), 403);
     }
 
     // Form fields
@@ -85,8 +90,8 @@ class WeeklyMeetingAdmin extends Component
     public string $end_time = '15:00';
     public string $location = 'Ruangan Meeting Lantai 1';
     public string $description = '';
-    public string $latitude = '';
-    public string $longitude = '';
+    public string $latitude = '-6.9596113';
+    public string $longitude = '107.6990410';
     public string $radius_meters = '100';
 
     public bool $showModal = false;
@@ -141,6 +146,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function createMeeting(): void
     {
+        $this->authorizeMeetingManagement();
         $this->validate();
 
         $meeting = WeeklyMeeting::create([
@@ -167,6 +173,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function editMeeting(int $meetingId): void
     {
+        $this->authorizeMeetingManagement();
         $meeting = WeeklyMeeting::findOrFail($meetingId);
         $this->selectedMeetingId = $meeting->id;
         $this->title = $meeting->title;
@@ -175,9 +182,9 @@ class WeeklyMeetingAdmin extends Component
         $this->end_time = $meeting->end_time?->format('H:i') ?? '';
         $this->location = $meeting->location ?? '';
         $this->description = $meeting->description ?? '';
-        $this->latitude = $meeting->latitude !== null ? (string) $meeting->latitude : '';
-        $this->longitude = $meeting->longitude !== null ? (string) $meeting->longitude : '';
-        $this->radius_meters = (string) ($meeting->radius_meters ?? 100);
+        $this->latitude = (string) ($meeting->latitude ?? WeeklyMeeting::DEFAULT_FACE_LATITUDE);
+        $this->longitude = (string) ($meeting->longitude ?? WeeklyMeeting::DEFAULT_FACE_LONGITUDE);
+        $this->radius_meters = (string) ($meeting->radius_meters ?: WeeklyMeeting::DEFAULT_FACE_RADIUS_METERS);
         $this->mode = 'list';
         $this->showModal = true;
         $this->dispatch('open-modal', name: 'meeting-form');
@@ -185,6 +192,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function updateMeeting(): void
     {
+        $this->authorizeMeetingManagement();
         $this->validate();
 
         $meeting = WeeklyMeeting::findOrFail($this->selectedMeetingId);
@@ -208,6 +216,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function viewAttendance(int $meetingId): void
     {
+        $this->authorizeMeetingManagement();
         // Navigasi ke rute detail attendance agar URL ikut berubah. Dengan
         // begitu ketika halaman di-refresh, user tetap di halaman detail
         // (yang berisi QR) bukan kembali ke daftar.
@@ -216,11 +225,13 @@ class WeeklyMeetingAdmin extends Component
 
     public function backToList(): void
     {
+        $this->authorizeMeetingManagement();
         $this->redirectRoute('hris.weekly-meeting.index');
     }
 
     public function generateQrCode(): void
     {
+        $this->authorizeMeetingManagement();
         $meeting = WeeklyMeeting::findOrFail($this->selectedMeetingId);
         $meeting->generateQrCode();
         $this->dispatch('notify', type: 'success', message: 'QR Code berhasil digenerate ulang.');
@@ -232,6 +243,7 @@ class WeeklyMeetingAdmin extends Component
      */
     public function regenerateQrAuto(): void
     {
+        $this->authorizeMeetingManagement();
         if ($this->mode === 'attendance' && $this->selectedMeetingId) {
             try {
                 $meeting = WeeklyMeeting::findOrFail($this->selectedMeetingId);
@@ -254,6 +266,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function deleteMeeting(int $meetingId): void
     {
+        $this->authorizeMeetingManagement();
         WeeklyMeeting::findOrFail($meetingId)->delete();
         $this->dispatch('notify', type: 'success', message: 'Rapat mingguan berhasil dihapus.');
     }
@@ -273,6 +286,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function confirmDelete(int $meetingId): void
     {
+        $this->authorizeMeetingManagement();
         $this->deleteTargetId = $meetingId;
         $this->showDeleteConfirm = true;
     }
@@ -285,6 +299,7 @@ class WeeklyMeetingAdmin extends Component
 
     public function executeDelete(): void
     {
+        $this->authorizeMeetingManagement();
         if ($this->deleteTargetId) {
             WeeklyMeeting::findOrFail($this->deleteTargetId)->delete();
         }
@@ -294,16 +309,19 @@ class WeeklyMeetingAdmin extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['title', 'meeting_date', 'start_time', 'end_time', 'location', 'description', 'latitude', 'longitude', 'selectedMeetingId', 'showModal', 'showAttendanceModal']);
+        $this->reset(['title', 'meeting_date', 'start_time', 'end_time', 'location', 'description', 'selectedMeetingId', 'showModal', 'showAttendanceModal']);
         $this->meeting_date = Carbon::today()->format('Y-m-d');
         $this->start_time = '13:00';
         $this->end_time = '15:00';
-        $this->radius_meters = '100';
+        $this->latitude = (string) WeeklyMeeting::DEFAULT_FACE_LATITUDE;
+        $this->longitude = (string) WeeklyMeeting::DEFAULT_FACE_LONGITUDE;
+        $this->radius_meters = (string) WeeklyMeeting::DEFAULT_FACE_RADIUS_METERS;
         $this->resetValidation();
     }
 
     public function openCreateModal(): void
     {
+        $this->authorizeMeetingManagement();
         $this->resetForm();
         $this->mode = 'list';
         $this->showModal = true;
@@ -406,7 +424,7 @@ class WeeklyMeetingAdmin extends Component
         return view('livewire.weekly-meeting-admin', [
             'meetings' => $this->meetings,
             'attendance' => $this->attendance,
-            'absentEmployees' => auth()->user()->isSuperAdmin() ? $this->absentEmployees : collect(),
+            'absentEmployees' => (auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster()) ? $this->absentEmployees : collect(),
             'totalEmployees' => $this->totalEmployees,
         ]);
     }

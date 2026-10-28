@@ -108,7 +108,7 @@ class ExternalMeetingService
                     return null;
                 }
 
-                return data_get($response->json(), 'data.token');
+                return data_get($response->json(), 'token') ?? data_get($response->json(), 'data.token');
             } catch (\Throwable $e) {
                 report($e);
 

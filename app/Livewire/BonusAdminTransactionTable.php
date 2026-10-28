@@ -33,7 +33,6 @@ class BonusAdminTransactionTable extends Component
     public string $sesi = '';
     public string $ach_sold = '';
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

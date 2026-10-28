@@ -30,7 +30,6 @@ class StockDailyTrackingTable extends Component
     public string $insentif = '';
     public string $catatan = '';
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

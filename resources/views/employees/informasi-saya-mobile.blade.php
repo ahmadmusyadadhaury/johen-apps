@@ -459,7 +459,7 @@
                 <label for="mobile-document-search" class="sr-only">Cari dokumen</label>
                 <div class="flex h-11 items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-3.5 focus-within:border-primary-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary-100 dark:border-gray-700 dark:bg-gray-800/60 dark:focus-within:border-primary-500 dark:focus-within:bg-gray-800 dark:focus-within:ring-primary-950">
                     <svg class="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    <input id="mobile-document-search" type="search" x-model="searchDocuments" placeholder="Cari dokumen" class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-gray-100">
+                    <input id="mobile-document-search" type="search" x-model="searchDocuments" placeholder="Cari dokumen" autocomplete="off" class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-gray-100">
                 </div>
             </div>
             <div class="space-y-3">

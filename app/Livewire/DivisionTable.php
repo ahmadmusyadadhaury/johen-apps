@@ -27,7 +27,7 @@ class DivisionTable extends Component
     public bool $showDeleteConfirm = false;
     public ?int $deleteId = null;
 
-    protected $updatesQueryString = ['search', 'filterStatus'];
+    protected $updatesQueryString = ['filterStatus'];
 
     protected function rules(): array
     {

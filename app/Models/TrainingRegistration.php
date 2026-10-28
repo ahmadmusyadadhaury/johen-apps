@@ -16,6 +16,12 @@ class TrainingRegistration extends Model
         'mom',
         'mom_diisi_pada',
         'dicatat_oleh',
+        'certificate_path',
+        'certificate_name',
+        'certificate_mime',
+        'certificate_size',
+        'certificate_issued_by',
+        'certificate_issued_at',
     ];
 
     protected function casts(): array
@@ -24,6 +30,8 @@ class TrainingRegistration extends Model
             'terdaftar_pada' => 'datetime',
             'dihadiri_pada' => 'datetime',
             'mom_diisi_pada' => 'datetime',
+            'certificate_issued_at' => 'datetime',
+            'certificate_size' => 'integer',
         ];
     }
 
@@ -40,5 +48,10 @@ class TrainingRegistration extends Model
     public function markedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dicatat_oleh');
+    }
+
+    public function certificateIssuer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'certificate_issued_by');
     }
 }

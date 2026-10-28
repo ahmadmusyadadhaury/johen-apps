@@ -97,11 +97,7 @@
                     <div class="min-w-0 flex-1">
                         <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Silakan presensi dengan Face ID + Lokasi</h5>
                         <p class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300">Weekly Meeting tanggal {{ $currentMeeting->meeting_date->copy()->locale('id')->translatedFormat('d F Y') }} - PT Johen Sukses Abadi</p>
-                        @if($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters)
-                            <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Admin belum mengatur titik koordinat dan radius untuk rapat ini.</p>
-                        @else
-                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi wajah melalui kamera dan pastikan berada dalam radius {{ $currentMeeting->radius_meters }} m dari kantor Johen Gaming.</p>
-                        @endif
+                        <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Verifikasi wajah dan lokasi dalam radius {{ $currentMeeting->faceAttendanceRadiusMeters() }} m dari titik rapat.</p>
                         <p id="weekly-face-status" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Face ID didaftarkan satu kali pada akun Anda.</p>
                     </div>
                     <div class="flex w-full sm:w-auto flex-wrap gap-2 shrink-0">
@@ -130,7 +126,7 @@
                         </button>
                     </div>
                 </div>
-                <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                <button type="button" id="weekly-face-attend" class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm">
                     <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l7 3v5c0 4.4-3 8.2-7 10-4-1.8-7-5.6-7-10V6l7-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 11a3 3 0 116 0c0 1.5-1.3 2.5-3 2.5S9 12.5 9 11zm-2.5 6c.8-1.5 2.5-2.3 5.5-2.3s4.7.8 5.5 2.3"/></svg>
                     <span>Presensi Face ID</span>
                 </button>
@@ -160,7 +156,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Ganti Kamera
                     </button>
-                    <button type="button" id="weekly-face-attend" @disabled($currentMeeting->latitude === null || $currentMeeting->longitude === null || ! $currentMeeting->radius_meters) class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                    <button type="button" id="weekly-face-attend" class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm">
                         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l7 3v5c0 4.4-3 8.2-7 10-4-1.8-7-5.6-7-10V6l7-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 11a3 3 0 116 0c0 1.5-1.3 2.5-3 2.5S9 12.5 9 11zm-2.5 6c.8-1.5 2.5-2.3 5.5-2.3s4.7.8 5.5 2.3"/></svg>
                         <span>Presensi Face ID</span>
                     </button>
@@ -253,7 +249,7 @@
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;overflow-y:auto;background:rgba(15,23,42,.82);padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))';
         const frameStyle = document.createElement('style');
-        frameStyle.textContent = '.face-camera-stage{position:relative;width:100%;aspect-ratio:4/3;max-height:min(58vh,520px);max-height:min(58dvh,520px);overflow:hidden;border-radius:14px;background:linear-gradient(145deg,#0f172a,#111827)}.face-camera-video{display:block;width:100%;height:100%;object-fit:cover;transform:none!important}.face-guide-oval{position:absolute;left:50%;top:48%;width:43%;height:66%;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.94);border-radius:50%;box-shadow:0 0 0 3px rgba(37,99,235,.82),0 0 28px rgba(34,211,238,.62),inset 0 0 20px rgba(37,99,235,.14);pointer-events:none}.face-guide-oval:after{content:"";position:absolute;inset:7px;border:1px solid rgba(103,232,249,.6);border-radius:50%}.face-scan-line{position:absolute;left:27%;right:27%;top:18%;height:2px;border-radius:4px;background:#67e8f9;box-shadow:0 0 12px 3px rgba(34,211,238,.78);animation:faceScanMove 2.8s ease-in-out infinite alternate;pointer-events:none}@keyframes faceScanMove{from{top:18%;opacity:.55}to{top:76%;opacity:1}}html.dark .face-camera-panel{background:#111827!important;border-color:#334155!important}html.dark .face-camera-brand{background:#1f2937!important;border-color:#334155!important}html.dark .face-camera-heading{color:#f8fafc!important}html.dark .face-camera-subtitle{color:#94a3b8!important}html.dark .face-camera-meeting{color:#bfdbfe!important;background:#172554!important;border-color:#1e40af!important}html.dark .face-camera-close{color:#e2e8f0!important;background:#1f2937!important;border-color:#475569!important}@media(max-width:640px){.face-camera-stage{aspect-ratio:3/4}.face-guide-oval{width:58%;height:68%}.face-scan-line{left:22%;right:22%}}@media(prefers-reduced-motion:reduce){.face-scan-line{animation:none;top:48%}}';
+        frameStyle.textContent = '.face-camera-stage{position:relative;width:100%;aspect-ratio:4/3;max-height:min(58vh,520px);max-height:min(58dvh,520px);overflow:hidden;border-radius:14px;background:#0f172a}.face-camera-video{display:block;width:100%;height:100%;object-fit:cover;transform:none!important}html.dark .face-camera-panel{background:#111827!important;border-color:#334155!important}html.dark .face-camera-brand{background:#1f2937!important;border-color:#334155!important}html.dark .face-camera-heading{color:#f8fafc!important}html.dark .face-camera-subtitle{color:#94a3b8!important}html.dark .face-camera-meeting{color:#bfdbfe!important;background:#172554!important;border-color:#1e40af!important}html.dark .face-camera-close{color:#e2e8f0!important;background:#1f2937!important;border-color:#475569!important}@media(max-width:640px){.face-camera-stage{aspect-ratio:3/4}}';
         const panel = document.createElement('div');
         panel.className = 'face-camera-panel';
         panel.style.cssText = 'width:min(100%,520px);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;gap:14px;padding:clamp(14px,3vw,22px);background:#fff;border:1px solid #dbeafe;border-radius:20px;box-shadow:0 24px 64px rgba(2,6,23,.42)';
@@ -301,13 +297,7 @@
         const video = document.createElement('video');
         video.autoplay = true; video.playsInline = true; video.muted = true;
         video.className = 'face-camera-video';
-        const guide = document.createElement('div');
-        guide.className = 'face-guide-oval';
-        guide.setAttribute('aria-hidden', 'true');
-        const scanLine = document.createElement('div');
-        scanLine.className = 'face-scan-line';
-        scanLine.setAttribute('aria-hidden', 'true');
-        stage.append(video, guide, scanLine);
+        stage.append(video);
         const label = document.createElement('div');
         label.textContent = 'Meminta akses kamera...';
         label.setAttribute('role', 'status');
@@ -420,13 +410,11 @@
                 if (cancelled) throw new DOMException('Kamera ditutup.', 'AbortError');
                 const face = result.face?.length === 1 ? result.face[0] : null;
                 const box = Array.isArray(face?.box) ? face.box.map(Number) : null;
-                let faceInsideGuide = false;
+                let faceWellPositioned = false;
                 if (box?.length >= 4 && box.slice(0, 4).every(Number.isFinite) && video.videoWidth && video.videoHeight) {
                     const [x, y, width, height] = box;
                     const stageWidth = stage.clientWidth;
                     const stageHeight = stage.clientHeight;
-                    const guideRect = guide.getBoundingClientRect();
-                    const stageRect = stage.getBoundingClientRect();
                     const scale = Math.max(stageWidth / video.videoWidth, stageHeight / video.videoHeight);
                     const offsetX = (stageWidth - video.videoWidth * scale) / 2;
                     const offsetY = (stageHeight - video.videoHeight * scale) / 2;
@@ -436,21 +424,17 @@
                     const bottom = ((y + height) * scale + offsetY) / stageHeight;
                     const centerX = (left + right) / 2;
                     const centerY = (top + bottom) / 2;
-                    const guideCenterX = (guideRect.left + guideRect.width / 2 - stageRect.left) / stageWidth;
-                    const guideCenterY = (guideRect.top + guideRect.height / 2 - stageRect.top) / stageHeight;
-                    const rx = guideRect.width / stageRect.width / 2;
-                    const ry = guideRect.height / stageRect.height / 2;
-                    const ellipseContains = (px, py) => ((px - guideCenterX) / rx) ** 2 + ((py - guideCenterY) / ry) ** 2 <= 1;
                     const faceWidth = right - left;
                     const faceHeight = bottom - top;
-                    const faceSizeValid = faceWidth >= 0.10 && faceHeight >= 0.16
-                        && faceWidth <= (rx * 2) * 1.15 && faceHeight <= (ry * 2) * 1.15;
-                    faceInsideGuide = faceSizeValid && ellipseContains(centerX, centerY);
+                    faceWellPositioned = faceWidth >= 0.08 && faceHeight >= 0.10
+                        && faceWidth <= 0.88 && faceHeight <= 0.92
+                        && centerX >= 0.06 && centerX <= 0.94
+                        && centerY >= 0.06 && centerY <= 0.94;
                 }
                 const liveNow = Number(face?.real ?? 0) > 0.5 && Number(face?.live ?? 0) > 0.5;
                 const liveOkay = stepIndex > 0 ? liveConfirmed : liveNow;
                 const poseOkay = face ? poseMatches(face) : false;
-                if (face?.embedding?.length === 1024 && faceInsideGuide && poseOkay && liveOkay) {
+                if (face?.embedding?.length === 1024 && faceWellPositioned && poseOkay && liveOkay) {
                     if (liveNow) liveConfirmed = true;
                     stableEmbeddings.push(face.embedding);
                     if (stableEmbeddings.length >= 2) {
@@ -482,7 +466,7 @@
                 } else {
                     stableEmbeddings = [];
                     if (!face) setStatus('Wajah belum terbaca. Hadapkan wajah ke kamera dengan pencahayaan cukup.');
-                    else if (!faceInsideGuide) setStatus('Posisikan wajah di dalam garis oval dan sesuaikan jarak kamera.');
+                    else if (!faceWellPositioned) setStatus('Arahkan wajah ke area kamera dan sesuaikan jarak sampai seluruh wajah terlihat.');
                     else if (!poseOkay) setStatus(poseSteps[stepIndex].prompt);
                     else if (!liveOkay) setStatus('Lihat lurus ke kamera dan berkedip untuk verifikasi wajah hidup.');
                     else setStatus('Tahan posisi wajah sebentar agar terbaca stabil.');

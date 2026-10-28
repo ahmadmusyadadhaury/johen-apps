@@ -68,7 +68,6 @@ class BonusHostLiveTable extends Component
 
     public string $fotoBuktiLivePath = '';
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

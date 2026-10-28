@@ -151,8 +151,8 @@ class FaceAttendanceController extends Controller
         $candidateEmbeddings = array_map(fn (array $embedding) => array_map('floatval', $embedding), $candidateEmbeddings);
         $similarity = $this->bestSimilarity($knownEmbeddings, $candidateEmbeddings);
         abort_if($similarity < 0.5, 403, 'Wajah belum cukup cocok (skor '.round($similarity * 100).'%). Hadap kamera, pastikan pencahayaan cukup, atau minta Super Admin mereset pendaftaran wajah.');
-        $distance = $meetings->distanceBetween((float) $meeting->latitude, (float) $meeting->longitude, (float) $data['latitude'], (float) $data['longitude']);
-        abort_if($distance > $meeting->radius_meters, 403, 'Lokasi Anda berada di luar radius rapat ('.round($distance).' m).');
+        $distance = $meetings->distanceBetween($meeting->faceAttendanceLatitude(), $meeting->faceAttendanceLongitude(), (float) $data['latitude'], (float) $data['longitude']);
+        abort_if($distance > $meeting->faceAttendanceRadiusMeters(), 403, 'Lokasi Anda berada di luar radius rapat ('.round($distance).' m).');
 
         $attendance = DB::transaction(function () use ($meeting, $employee, $data, $now, $distance) {
             $locked = WeeklyMeeting::whereKey($meeting->id)->lockForUpdate()->firstOrFail();
@@ -226,10 +226,6 @@ class FaceAttendanceController extends Controller
             ->where('employee_id', $employee->id)->first();
         if ($attendance) {
             return ['meeting' => $meeting, 'employee' => $employee, 'message' => 'Anda sudah absen pada rapat ini pada '.$attendance->attended_at->format('H:i:s').'.'];
-        }
-
-        if ($meeting->latitude === null || $meeting->longitude === null || !$meeting->radius_meters) {
-            return ['meeting' => $meeting, 'employee' => $employee, 'message' => 'Presensi belum bisa dilakukan. Admin belum mengatur titik lokasi dan radius rapat.'];
         }
 
         $faceTemplate = UserFaceTemplate::where('user_id', $user->id)->first();

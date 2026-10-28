@@ -28,7 +28,6 @@ class StokKeluarTable extends Component
     public string $tujuan = '';
     public string $keterangan = '';
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

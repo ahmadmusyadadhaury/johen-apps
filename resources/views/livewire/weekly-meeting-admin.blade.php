@@ -6,7 +6,7 @@
 @endpush
 
 <div class="space-y-4" x-data="{ showAbsentEmployees: false }" @keydown.escape.window="showAbsentEmployees = false">
-    {{-- Tab QR Code / Weekly Saya (khusus Super Admin & Staff HR) --}}
+    {{-- Tab QR Code / Weekly Saya (khusus Super Admin, Admin Master & Staff HR) --}}
     @if($this->showTabs && $mode === 'list')
     <div class="flex items-center gap-1 w-fit bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
         <button wire:click="setTab('qr')" class="flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 {{ $tab === 'qr' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
@@ -68,7 +68,7 @@
     @elseif($mode === 'attendance')
     <div class="flex items-center justify-between gap-3" wire:poll.30s="regenerateQrAuto">
         <button wire:click="backToList" class="btn-secondary shrink-0 text-xs">Kembali ke Daftar</button>
-        @if(auth()->user()->isSuperAdmin())
+        @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster())
         <button type="button" @click="showAbsentEmployees = true" class="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-950/80">
             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm dark:bg-blue-500">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 9v3.75m0 3h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -82,7 +82,7 @@
     </div>
     @endif
 
-    @if($mode === 'attendance' && $selectedMeetingId && auth()->user()->isSuperAdmin())
+    @if($mode === 'attendance' && $selectedMeetingId && (auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster()))
     <div x-show="showAbsentEmployees" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-gray-950/60 px-4 py-6 backdrop-blur-sm" @click.self="showAbsentEmployees = false">
         <section x-show="showAbsentEmployees" x-transition class="relative flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             <header class="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
@@ -178,8 +178,8 @@
 
                 <div class="rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20 p-4 space-y-3">
                     <div>
-                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Titik lokasi untuk Absen Passkey</h4>
-                        <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Klik titik rapat pada peta atau geser pin. Koordinat akan terisi otomatis; kosongkan jika rapat hanya memakai QR.</p>
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Titik lokasi untuk Absen Face ID</h4>
+                        <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Koordinat awal {{ \App\Models\WeeklyMeeting::DEFAULT_FACE_LATITUDE }}, {{ \App\Models\WeeklyMeeting::DEFAULT_FACE_LONGITUDE }} dengan radius 100 meter. Klik titik rapat pada peta atau geser pin untuk mengubahnya.</p>
                     </div>
                     <div id="weekly-meeting-location-map" wire:ignore class="h-64 sm:h-80 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"></div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">

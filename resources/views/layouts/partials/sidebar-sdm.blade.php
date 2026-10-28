@@ -6,13 +6,15 @@
                     --}}
                     @if(auth()->user()->canViewAll() && !auth()->user()->isStaffHr())
                     <div class="mt-4">
-                        <button @click="openMenu = openMenu === 'sdm' ? null : 'sdm'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'sdm' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
+                        <button x-data="{ notificationCount: 0 }" x-init="const menu = $el.nextElementSibling; const updateCount = () => { notificationCount = [...menu.querySelectorAll('[data-sidebar-notification-count]')].reduce((sum, badge) => sum + (parseInt(badge.textContent.trim(), 10) || (badge.textContent.trim() === '99+' ? 99 : 0)), 0); }; new MutationObserver(updateCount).observe(menu, { childList: true, subtree: true, characterData: true }); updateCount();" @click="openMenu = openMenu === 'sdm' ? null : 'sdm'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'sdm' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
                             <span class="flex items-center gap-3">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                 SDM
-                                <livewire:sidebar-slip-badge />
                             </span>
-                            <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': openMenu === 'sdm' }" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            <span class="flex items-center gap-2">
+                                <span x-show="notificationCount > 0" x-cloak class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold leading-none text-white" x-text="notificationCount > 99 ? '99+' : notificationCount" aria-label="Notifikasi SDM"></span>
+                                <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': openMenu === 'sdm' }" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            </span>
                         </button>
                         <div x-show="openMenu === 'sdm'" x-cloak
                              x-transition:enter="transition-all ease-out duration-200"
@@ -59,13 +61,15 @@
                     </div>
                     @else
                     <div class="mt-4">
-                        <button @click="openMenu = openMenu === 'sdm' ? null : 'sdm'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'sdm' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
+                        <button x-data="{ notificationCount: 0 }" x-init="const menu = $el.nextElementSibling; const updateCount = () => { notificationCount = [...menu.querySelectorAll('[data-sidebar-notification-count]')].reduce((sum, badge) => sum + (parseInt(badge.textContent.trim(), 10) || (badge.textContent.trim() === '99+' ? 99 : 0)), 0); }; new MutationObserver(updateCount).observe(menu, { childList: true, subtree: true, characterData: true }); updateCount();" @click="openMenu = openMenu === 'sdm' ? null : 'sdm'" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200" :class="openMenu === 'sdm' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'">
                             <span class="flex items-center gap-3">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                 SDM
-                                <livewire:sidebar-slip-badge />
                             </span>
-                            <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': openMenu === 'sdm' }" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            <span class="flex items-center gap-2">
+                                <span x-show="notificationCount > 0" x-cloak class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold leading-none text-white" x-text="notificationCount > 99 ? '99+' : notificationCount" aria-label="Notifikasi SDM"></span>
+                                <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': openMenu === 'sdm' }" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            </span>
                         </button>
                         <div x-show="openMenu === 'sdm'" x-cloak
                              x-transition:enter="transition-all ease-out duration-200"

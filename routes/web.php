@@ -23,6 +23,7 @@ use App\Http\Controllers\IplRukoController;
 use App\Http\Controllers\ItTicketController;
 use App\Http\Controllers\TicketPushSubscriptionController;
 use App\Http\Controllers\TrainingThumbnailController;
+use App\Http\Controllers\TrainingCertificateController;
 use App\Http\Controllers\JadwalMaintenanceController;
 use App\Http\Controllers\JobdeskController;
 use App\Http\Controllers\MeetingController;
@@ -88,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/chat', ChatWorkspace::class)->name('chat');
     Route::get('/chat/attachments/{directMessage}', [ChatAttachmentController::class, 'show'])->name('chat.attachments.show');
+    Route::get('/seminar-pelatihan/sertifikat/{registration}', [TrainingCertificateController::class, 'show'])->name('training.certificate');
     Route::post('/chat/signals/{recipient}', [ChatCallSignalController::class, 'store'])->middleware('throttle:300,1')->name('chat.signals');
     Route::post('/chat/presence', function () {
         \App\Models\User::whereKey(auth()->id())->update(['last_seen_at' => now()]);
@@ -212,11 +214,11 @@ Route::middleware(['auth'])->group(function () {
 
         // Weekly Meeting routes
         Route::prefix('weekly-meeting')->name('weekly-meeting.')->group(function () {
-            // Only Super Admin can manage meetings; Staff HR uses the scan page.
-            Route::get('/', \App\Livewire\WeeklyMeetingAdmin::class)->name('index')->middleware('role:super_admin');
-            Route::get('/create', \App\Livewire\WeeklyMeetingAdmin::class)->name('create')->middleware('role:super_admin');
-            Route::get('/{weeklyMeeting}/attendance', \App\Livewire\WeeklyMeetingAdmin::class)->name('attendance')->middleware('role:super_admin');
-            Route::post('/{weeklyMeeting}/generate-qr', [\App\Http\Controllers\WeeklyMeetingController::class, 'generateQr'])->name('generate-qr')->middleware('role:super_admin');
+            // Super Admin and Admin Master manage meetings; other roles use the scan page.
+            Route::get('/', \App\Livewire\WeeklyMeetingAdmin::class)->name('index')->middleware('role:super_admin,admin_master');
+            Route::get('/create', \App\Livewire\WeeklyMeetingAdmin::class)->name('create')->middleware('role:super_admin,admin_master');
+            Route::get('/{weeklyMeeting}/attendance', \App\Livewire\WeeklyMeetingAdmin::class)->name('attendance')->middleware('role:super_admin,admin_master');
+            Route::post('/{weeklyMeeting}/generate-qr', [\App\Http\Controllers\WeeklyMeetingController::class, 'generateQr'])->name('generate-qr')->middleware('role:super_admin,admin_master');
 
             // All other roles - scan QR to attend
             Route::get('/scan', \App\Livewire\WeeklyMeetingScan::class)->name('scan');

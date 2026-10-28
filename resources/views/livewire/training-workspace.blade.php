@@ -45,22 +45,20 @@
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-gray-800">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ $session->jenis }}</span>
-                            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold {{ $sessionStatus === 'Selesai' ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300' : ($sessionStatus === 'Berlangsung' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300') }}">{{ $sessionStatus }}</span>
+                            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold {{ $sessionStatus === 'Selesai' ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300' : ($sessionStatus === 'Berlangsung' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300') }}">{{ $sessionStatus }}</span>
                             @if($canManage && ! $session->is_published)<span class="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Draft</span>@endif
                         </div>
                         <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
                             @if($canManage || (int) $session->dibuat_oleh === (int) auth()->id())
                             <button wire:click="edit({{ $session->id }})" class="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-sky-100 dark:bg-blue-900/30 dark:text-blue-300">Edit</button>
-                            @if($canManage)
-                            <button wire:click="confirmDelete({{ $session->id }})" class="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300">Hapus</button>
-                            <button wire:click="selectSession({{ $session->id }})" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Kelola Peserta</button>
-                            @endif
+                            @if($canManage)<button wire:click="confirmDelete({{ $session->id }})" class="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300">Hapus</button>@endif
+                            <button wire:click="selectSession({{ $session->id }})" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Kelola Peserta & Sertifikat</button>
                             @endif
                             @if($canJoin)
                                 @if(! $employeeLinked)
                                     <span class="text-xs text-amber-700 dark:text-amber-300">Akun belum terhubung ke data pegawai</span>
                                 @elseif($myRegistration)
-                                    <span class="inline-flex rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $myRegistration->status === 'attended' ? 'Hadir' : ($myRegistration->status === 'absent' ? 'Tidak hadir' : 'Sudah terdaftar') }}</span>
+                                    <span class="inline-flex rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ $myRegistration->status === 'attended' ? 'Hadir' : ($myRegistration->status === 'absent' ? 'Tidak hadir' : 'Sudah terdaftar') }}</span>
                                 @elseif(now()->greaterThan($session->selesai_pada))
                                     <span class="text-xs text-gray-500">Pendaftaran ditutup.</span>
                                 @elseif($session->kuota !== null && $session->registrations_count >= $session->kuota)
@@ -118,7 +116,7 @@
             <div wire:poll.60s.visible class="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                     <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-                        <thead class="bg-gray-50 dark:bg-gray-800/60 text-left text-xs uppercase text-gray-500"><tr><th class="px-4 py-3">Kegiatan</th><th class="px-4 py-3">Jenis</th><th class="px-4 py-3">Tanggal</th><th class="px-4 py-3">Kehadiran</th><th class="px-4 py-3">Status / MOM</th></tr></thead>
+                        <thead class="bg-gray-50 dark:bg-gray-800/60 text-left text-xs uppercase text-gray-500"><tr><th class="px-4 py-3">Kegiatan</th><th class="px-4 py-3">Jenis</th><th class="px-4 py-3">Tanggal</th><th class="px-4 py-3">Kehadiran</th><th class="px-4 py-3">Status / MOM</th><th class="px-4 py-3">Sertifikat</th></tr></thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @forelse($myRegistrations as $registration)
                                 @php($sessionEnded = $registration->session && now()->greaterThanOrEqualTo($registration->session->selesai_pada))
@@ -126,11 +124,11 @@
                                     <td class="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">{{ $registration->session?->judul ?? 'Kegiatan dihapus' }}</td>
                                     <td class="px-4 py-3">{{ $registration->session?->jenis ?? '-' }}</td>
                                     <td class="px-4 py-3">{{ $registration->session?->mulai_pada?->format('d M Y') ?? '-' }}</td>
-                                    <td class="px-4 py-3"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Hadir</span></td>
+                                    <td class="px-4 py-3"><span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Hadir</span></td>
                                     <td class="px-4 py-3">
                                         @if($sessionEnded)
                                             @if($registration->mom)
-                                                <div class="space-y-1"><span class="block rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Selesai · MOM diisi</span><button wire:click="openMom({{ $registration->id }})" class="text-xs font-semibold text-primary-600 hover:underline">Lihat / Edit MOM</button></div>
+                                                <div class="space-y-1"><span class="block rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Selesai · MOM diisi</span><button wire:click="openMom({{ $registration->id }})" class="text-xs font-semibold text-primary-600 hover:underline">Lihat / Edit MOM</button></div>
                                             @else
                                                 <div class="space-y-1"><span class="block rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Selesai · MOM wajib diisi</span><button wire:click="openMom({{ $registration->id }})" class="text-xs font-semibold text-primary-600 hover:underline">Isi MOM</button></div>
                                             @endif
@@ -138,9 +136,16 @@
                                             <span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">Menunggu kegiatan selesai</span>
                                         @endif
                                     </td>
+                                    <td class="px-4 py-3">
+                                        @if($registration->certificate_path)
+                                            <div class="flex flex-col items-start gap-1"><a href="{{ route('training.certificate', $registration) }}" target="_blank" rel="noopener" class="text-xs font-semibold text-primary-700 hover:underline dark:text-primary-300">Lihat sertifikat</a><a href="{{ route('training.certificate', ['registration' => $registration->id, 'download' => 1]) }}" class="text-xs font-medium text-gray-500 hover:underline">Unduh</a></div>
+                                        @else
+                                            <span class="text-xs text-gray-400">Belum tersedia</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="px-4 py-10 text-center text-gray-500">Belum ada riwayat pelatihan yang diikuti.</td></tr>
+                                <tr><td colspan="6" class="px-4 py-10 text-center text-gray-500">Belum ada riwayat pelatihan yang diikuti.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -159,7 +164,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-800/60 text-left text-xs uppercase text-gray-500"><tr><th class="px-4 py-3">Pegawai</th><th class="px-4 py-3">Kegiatan</th><th class="px-4 py-3">Tanggal</th><th class="px-4 py-3">Status</th></tr></thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @forelse($teamRegistrations as $registration)
-                            <tr><td class="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">{{ $registration->employee?->nama ?? '-' }}</td><td class="px-4 py-3">{{ $registration->session?->judul ?? '-' }}</td><td class="px-4 py-3">{{ $registration->session?->mulai_pada?->format('d M Y, H:i') ?? '-' }}</td><td class="px-4 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $registration->status === 'attended' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : ($registration->status === 'absent' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300') }}">{{ $registration->status === 'attended' ? 'Hadir' : ($registration->status === 'absent' ? 'Tidak hadir' : 'Terdaftar') }}</span></td></tr>
+                            <tr><td class="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">{{ $registration->employee?->nama ?? '-' }}</td><td class="px-4 py-3">{{ $registration->session?->judul ?? '-' }}</td><td class="px-4 py-3">{{ $registration->session?->mulai_pada?->format('d M Y, H:i') ?? '-' }}</td><td class="px-4 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $registration->status === 'attended' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : ($registration->status === 'absent' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300') }}">{{ $registration->status === 'attended' ? 'Hadir' : ($registration->status === 'absent' ? 'Tidak hadir' : 'Terdaftar') }}</span></td></tr>
                         @empty
                             <tr><td colspan="4" class="px-4 py-10 text-center text-gray-500">Belum ada riwayat pendaftaran dari tim Anda.</td></tr>
                         @endforelse
@@ -198,7 +203,7 @@
                 <div class="flex items-start justify-between gap-3"><div><h3 class="font-bold text-gray-900 dark:text-gray-100">Peserta: {{ $selectedSession->judul }}</h3><p class="text-xs text-gray-500">Atur status kehadiran untuk memperbarui riwayat peserta.</p></div><button wire:click="$set('selectedSessionId', null)" class="text-sm text-gray-500 hover:text-gray-900">Tutup</button></div>
                 <div class="mt-4 overflow-x-auto"><table class="min-w-full text-sm"><thead><tr class="border-b text-left text-xs uppercase text-gray-500"><th class="py-2 pr-3">Pegawai</th><th class="py-2 pr-3">Status</th><th class="py-2">Tindakan</th></tr></thead><tbody>
                     @forelse($selectedSession->registrations as $registration)
-                        <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-3 pr-3">{{ $registration->employee?->nama ?? '-' }}</td><td class="py-3 pr-3">{{ $registration->status === 'attended' ? 'Hadir' : ($registration->status === 'absent' ? 'Tidak hadir' : 'Terdaftar') }}</td><td class="py-3"><div class="flex gap-2"><button wire:click="markAttendance({{ $registration->id }}, 'attended')" class="text-xs font-semibold text-emerald-700">Hadir</button><button wire:click="markAttendance({{ $registration->id }}, 'absent')" class="text-xs font-semibold text-red-600">Tidak hadir</button></div></td></tr>
+                        <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-3 pr-3">{{ $registration->employee?->nama ?? '-' }}</td><td class="py-3 pr-3">{{ $registration->status === 'attended' ? 'Hadir' : ($registration->status === 'absent' ? 'Tidak hadir' : 'Terdaftar') }}</td><td class="py-3"><div class="flex gap-2"><button wire:click="markAttendance({{ $registration->id }}, 'attended')" class="text-xs font-semibold text-blue-700">Hadir</button><button wire:click="markAttendance({{ $registration->id }}, 'absent')" class="text-xs font-semibold text-red-600">Tidak hadir</button></div></td></tr>
                     @empty
                         <tr><td colspan="3" class="py-6 text-center text-gray-500">Belum ada peserta terdaftar.</td></tr>
                     @endforelse
@@ -273,27 +278,68 @@
         </div>
     @endif
 
-    @if($canManage && $selectedSession)
+    @if($canManageSelectedSession && $selectedSession)
         <div class="fixed inset-0 z-[75] flex items-center justify-center overflow-y-auto bg-gray-950/70 p-3 backdrop-blur-sm sm:p-6" wire:key="training-participants-modal-{{ $selectedSession->id }}" wire:click.self="$set('selectedSessionId', null)">
             <section class="my-auto max-h-[90dvh] w-full max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900" role="dialog" aria-modal="true" aria-labelledby="training-participants-title">
                 <div class="flex items-start justify-between gap-4 border-b border-gray-100 p-5 dark:border-gray-800 sm:p-6">
-                    <div><h2 id="training-participants-title" class="text-lg font-bold text-gray-900 dark:text-gray-100">Peserta: {{ $selectedSession->judul }}</h2><p class="mt-1 text-sm text-gray-500">Catat kehadiran peserta kegiatan.</p></div>
+                    <div><h2 id="training-participants-title" class="text-lg font-bold text-gray-900 dark:text-gray-100">Peserta: {{ $selectedSession->judul }}</h2><p class="mt-1 text-sm text-gray-500">{{ $canManage ? 'Atur kehadiran dan berikan sertifikat kepada peserta yang hadir.' : 'Berikan sertifikat kepada peserta yang sudah tercatat hadir.' }}</p></div>
                     <button type="button" wire:click="$set('selectedSessionId', null)" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Tutup">&times;</button>
                 </div>
                 <div class="max-h-[calc(90dvh-6rem)] overflow-auto p-5 sm:p-6">
                     <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
                         <table class="min-w-full text-sm">
-                            <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800/60"><tr><th class="px-4 py-3">Pegawai</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tindakan</th></tr></thead>
+                            <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800/60"><tr><th class="px-4 py-3">Pegawai</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Kehadiran</th><th class="px-4 py-3">Sertifikat</th></tr></thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                 @forelse($selectedSession->registrations as $registration)
-                                    <tr><td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $registration->employee?->nama ?? '-' }}</td><td class="px-4 py-3">{{ $registration->status === 'attended' ? 'Hadir' : ($registration->status === 'absent' ? 'Tidak hadir' : 'Terdaftar') }}</td><td class="px-4 py-3"><div class="flex flex-wrap gap-2"><button wire:click="markAttendance({{ $registration->id }}, 'attended')" class="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300">Hadir</button><button wire:click="markAttendance({{ $registration->id }}, 'absent')" class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300">Tidak hadir</button></div></td></tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $registration->employee?->nama ?? '-' }}</td>
+                                        <td class="px-4 py-3">{{ $registration->status === 'attended' ? 'Hadir' : ($registration->status === 'absent' ? 'Tidak hadir' : 'Terdaftar') }}</td>
+                                        <td class="px-4 py-3">
+                                            @if($canManage)<div class="flex flex-wrap gap-2"><button wire:click="markAttendance({{ $registration->id }}, 'attended')" class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300">Hadir</button><button wire:click="markAttendance({{ $registration->id }}, 'absent')" class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300">Tidak hadir</button></div>@else<span class="text-xs text-gray-400">Dikelola admin</span>@endif
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if($registration->status === 'attended')
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    @if($registration->certificate_path)<a href="{{ route('training.certificate', $registration) }}" target="_blank" rel="noopener" class="text-xs font-semibold text-primary-700 hover:underline dark:text-primary-300">Lihat</a>@endif
+                                                    <button wire:click="openCertificateUpload({{ $registration->id }})" class="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300">{{ $registration->certificate_path ? 'Ganti sertifikat' : 'Berikan sertifikat' }}</button>
+                                                </div>
+                                            @else<span class="text-xs text-gray-400">Tersedia setelah status Hadir</span>@endif
+                                        </td>
+                                    </tr>
                                 @empty
-                                    <tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">Belum ada peserta terdaftar.</td></tr>
+                                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Belum ada peserta terdaftar.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </section>
+        </div>
+    @endif
+
+    @if($selectedCertificateRegistration)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-gray-950/70 p-4 backdrop-blur-sm" wire:key="training-certificate-modal-{{ $selectedCertificateRegistration->id }}" wire:click.self="closeCertificateUpload">
+            <section class="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-gray-700 dark:bg-gray-900 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="training-certificate-title">
+                <div class="mb-5 flex items-start justify-between gap-4">
+                    <div><h2 id="training-certificate-title" class="text-lg font-bold text-gray-900 dark:text-gray-100">Sertifikat peserta</h2><p class="mt-1 text-sm text-gray-500">{{ $selectedCertificateRegistration->employee?->nama }} · {{ $selectedCertificateRegistration->session?->judul }}</p></div>
+                    <button type="button" wire:click="closeCertificateUpload" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Tutup">&times;</button>
+                </div>
+                @if($selectedCertificateRegistration->certificate_path)
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-primary-50 p-3 dark:bg-primary-900/20">
+                        <div class="min-w-0"><p class="text-xs font-semibold text-primary-800 dark:text-primary-200">Sertifikat saat ini</p><p class="truncate text-xs text-primary-700 dark:text-primary-300">{{ $selectedCertificateRegistration->certificate_name }}</p></div>
+                        <a href="{{ route('training.certificate', ['registration' => $selectedCertificateRegistration->id, 'download' => 1]) }}" class="shrink-0 text-xs font-semibold text-primary-700 hover:underline dark:text-primary-300">Unduh</a>
+                    </div>
+                @endif
+                <form wire:submit.prevent="saveCertificate" class="space-y-4">
+                    <div>
+                        <label for="training-certificate-upload" class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $selectedCertificateRegistration->certificate_path ? 'Pilih pengganti sertifikat' : 'Pilih sertifikat' }}</label>
+                        <input id="training-certificate-upload" type="file" wire:model="certificateUpload" accept="application/pdf,image/jpeg,image/png" class="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:text-gray-300 dark:file:bg-primary-900/30 dark:file:text-primary-300">
+                        <p class="mt-1 text-xs text-gray-500">PDF, JPG, atau PNG. Maksimal 10 MB.</p>
+                        <div wire:loading wire:target="certificateUpload" class="mt-2 text-xs text-primary-600">Mengunggah sertifikat...</div>
+                        @error('certificateUpload')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-gray-800"><button type="button" wire:click="closeCertificateUpload" class="btn-secondary text-xs">Batal</button><button type="submit" wire:loading.attr="disabled" class="btn-primary text-xs">Simpan Sertifikat</button></div>
+                </form>
             </section>
         </div>
     @endif
@@ -308,3 +354,4 @@
         </div>
     @endif
 </div>
+

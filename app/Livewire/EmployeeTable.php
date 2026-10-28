@@ -250,7 +250,6 @@ class EmployeeTable extends Component
         return (string) ($row->id ?? '');
     }
 
-    protected $updatesQueryString = ['search'];
 
     protected function rules(): array
     {

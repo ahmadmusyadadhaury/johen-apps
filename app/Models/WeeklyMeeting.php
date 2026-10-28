@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WeeklyMeeting extends Model
 {
+    public const DEFAULT_FACE_LATITUDE = -6.9596113;
+    public const DEFAULT_FACE_LONGITUDE = 107.6990410;
+    public const DEFAULT_FACE_RADIUS_METERS = 100;
+
     protected $fillable = [
         'title',
         'meeting_date',
@@ -46,6 +50,21 @@ class WeeklyMeeting extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function faceAttendanceLatitude(): float
+    {
+        return (float) ($this->latitude ?? self::DEFAULT_FACE_LATITUDE);
+    }
+
+    public function faceAttendanceLongitude(): float
+    {
+        return (float) ($this->longitude ?? self::DEFAULT_FACE_LONGITUDE);
+    }
+
+    public function faceAttendanceRadiusMeters(): int
+    {
+        return (int) ($this->radius_meters ?: self::DEFAULT_FACE_RADIUS_METERS);
     }
 
     public function generateQrCode(): string

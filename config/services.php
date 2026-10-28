@@ -51,8 +51,10 @@ return [
 
     'meeting' => [
         'url' => env('MEETING_API_URL'),
-        'login_path' => env('MEETING_API_LOGIN_PATH', '/api/login'),
+        'login_path' => env('MEETING_API_LOGIN_PATH', '/api/auth/login'),
         'path' => env('MEETING_API_PATH', '/api/meetings'),
+        'requests_path' => env('MEETING_API_REQUESTS_PATH', '/api/meeting-requests'),
+        'rooms_path' => env('MEETING_API_ROOMS_PATH', '/api/rooms'),
         'username' => env('MEETING_API_USERNAME'),
         'password' => env('MEETING_API_PASSWORD'),
         'token' => env('MEETING_API_TOKEN', env('KENDARAAN_API_TOKEN')),
