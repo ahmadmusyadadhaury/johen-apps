@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\ItTicket;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Support\OfficeContext;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -14,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->scoped(OfficeContext::class, fn () => new OfficeContext);
     }
 
     public function boot(): void
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer(['layouts.app', 'layouts::app'], function ($view) {
             $user = auth()->user();
+
+            $officeContext = app(OfficeContext::class);
+            if ($user) {
+                $officeContext->resolve($user);
+            }
 
             $leaveRequestMenungguCount = 0;
             if ($user && $user->employee) {
@@ -44,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
                 : 0);
 
             $view->with('leaveRequestMenungguCount', $leaveRequestMenungguCount);
+            $view->with('officeContext', $officeContext);
         });
 
         Blade::directive('assets', function () {

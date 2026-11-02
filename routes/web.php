@@ -28,6 +28,8 @@ use App\Http\Controllers\JadwalMaintenanceController;
 use App\Http\Controllers\JobdeskController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ManualBookFileController;
+use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\OfficeContextController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PayrollImportController;
 use App\Http\Controllers\PayrollPreviewController;
@@ -147,6 +149,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/divisions', [DivisionController::class, 'index'])->name('divisions.index');
         Route::get('/struktur-organisasi', [StrukturOrganisasiController::class, 'index'])->name('struktur-organisasi');
         Route::get('/absensi', AbsensiTable::class)->name('absensi');
+        Route::prefix('absensi/face')->name('absensi.face.')->group(function () {
+            Route::get('/status', [\App\Http\Controllers\DailyFaceAttendanceController::class, 'status'])->name('status');
+            Route::post('/register', [\App\Http\Controllers\DailyFaceAttendanceController::class, 'register'])->name('register');
+            Route::post('/attend', [\App\Http\Controllers\DailyFaceAttendanceController::class, 'attend'])->name('attend');
+        });
         Route::get('/absensi/export', [\App\Http\Controllers\AttendanceExportController::class, 'export'])
             ->name('absensi.export')->middleware('role:super_admin,admin_master,gm_ceo');
         Route::get('/presensi-host', PresensiHostLive::class)->name('presensi-host');
@@ -243,6 +250,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{import}/preview', [PayrollPreviewController::class, 'index'])->name('preview');
         Route::post('/{import}/process-batch', [PayrollController::class, 'processBatch'])->name('process-batch');
         Route::post('/detail/{detail}/retry', [PayrollController::class, 'retryFailed'])->name('retry-failed');
+        Route::get('/detail/{detail}/verify', [\App\Http\Controllers\PayrollSlipVerificationController::class, 'show'])->name('slip.verify');
+        Route::get('/detail/{detail}/verify/face/challenge', [\App\Http\Controllers\PayrollSlipVerificationController::class, 'faceChallenge'])->name('slip.verify.face.challenge');
+        Route::post('/detail/{detail}/verify/email/send', [\App\Http\Controllers\PayrollSlipVerificationController::class, 'sendEmailCode'])->middleware('throttle:5,10')->name('slip.verify.email.send');
+        Route::post('/detail/{detail}/verify/email', [\App\Http\Controllers\PayrollSlipVerificationController::class, 'verifyEmailCode'])->middleware('throttle:10,1')->name('slip.verify.email');
+        Route::post('/detail/{detail}/verify/face', [\App\Http\Controllers\PayrollSlipVerificationController::class, 'verifyFace'])->middleware('throttle:10,1')->name('slip.verify.face');
         Route::get('/{import}', [PayrollController::class, 'show'])->name('show');
         Route::get('/detail/{detail}/download', [PayrollController::class, 'downloadPdf'])->name('download-pdf');
         Route::get('/detail/{detail}/view', [PayrollController::class, 'viewPdf'])->name('view-pdf');
@@ -353,6 +365,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'update'])->name('maintenance.update');
         Route::delete('/maintenance/{schedule}', [JadwalMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
         Route::delete('/maintenance/pc/{pc}', [JadwalMaintenanceController::class, 'destroyPc'])->name('maintenance.pc.destroy');
+        Route::patch('/maintenance/pc/{pc}/asset', [JadwalMaintenanceController::class, 'linkAsset'])->name('maintenance.pc.asset');
         Route::post('/maintenance/{schedule}/feedback', [JadwalMaintenanceController::class, 'feedback'])->name('maintenance.feedback');
         Route::post('/maintenance/{schedule}/feedback-koordinator', [JadwalMaintenanceController::class, 'feedbackKoordinator'])->name('maintenance.feedback-koordinator');
     });
@@ -362,13 +375,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/running-rate', RunningRateDashboard::class)->name('running-rate');
     });
 
-    Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin');
+    Route::get('/kelola-akun', UserTable::class)->name('kelola-akun')->middleware('role:super_admin,admin_master');
+    Route::post('/kantor-aktif', [OfficeContextController::class, 'update'])->name('office-context.update');
+    Route::get('/pengaturan/kantor', [OfficeController::class, 'index'])->name('offices.index')->middleware('role:super_admin');
+    Route::patch('/pengaturan/kantor/{office}', [OfficeController::class, 'update'])->name('offices.update')->middleware('role:super_admin');
     Route::get('/kelola-jabatan', PositionTable::class)->name('kelola-jabatan')->middleware('role:super_admin,admin_master,gm_ceo,staff_hr');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/template-payroll', [ProfileController::class, 'downloadPayrollTemplate'])->name('profile.payroll-template')->middleware('role:super_admin,admin_master');
     Route::get('/profile/pin', [ProfileController::class, 'pin'])->name('profile.pin');
     Route::post('/profile/pin', [ProfileController::class, 'updatePin'])->name('profile.pin.update');
 

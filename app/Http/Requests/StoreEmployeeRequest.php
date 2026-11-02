@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,6 +33,7 @@ class StoreEmployeeRequest extends FormRequest
             'atasan' => 'nullable|string|max:255',
             'atasan2' => 'nullable|string|max:255',
             'tipe' => 'required|in:karyawan_aktif,mantan_karyawan',
+            'lokasi_kerja' => ['nullable', Rule::in(Employee::WORK_LOCATION_OPTIONS)],
             'jenis_kerja' => 'nullable|in:Operasional,Office',
             'jam_kerja' => 'nullable|string|max:255',
             'tanggal_masuk' => 'nullable|date',

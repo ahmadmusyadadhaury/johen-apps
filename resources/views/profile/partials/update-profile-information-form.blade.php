@@ -29,6 +29,28 @@
             <x-input-error class="mt-2" :messages="$errors->get('username')" />
         </div>
 
+        <div>
+            <x-input-label for="email" :value="__('Email untuk Verifikasi Slip Gaji')" />
+            <x-text-input id="email" name="email" type="email" class="input-field mt-1.5" :value="old('email', $user->email)" autocomplete="email" />
+            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            @if($user->email && $user->hasVerifiedEmail())
+                <p class="mt-2 text-xs text-emerald-600">Email {{ $user->email }} sudah diverifikasi.</p>
+            @elseif($user->email)
+                <div class="mt-2 flex flex-wrap items-center gap-3">
+                    <p class="text-xs text-amber-600">Email belum diverifikasi. Tautan dikirim otomatis saat email baru disimpan.</p>
+                    <button form="send-verification" type="submit" class="text-xs font-semibold text-primary-600 hover:text-primary-500">Kirim ulang tautan</button>
+                </div>
+                @if(session('status') === 'verification-link-sent')
+                    <p class="mt-2 text-xs text-emerald-600">Tautan verifikasi dikirim. Periksa kotak masuk email Anda.</p>
+                @endif
+                @if(session('email_verification_error'))
+                    <p class="mt-2 text-xs text-red-600">{{ session('email_verification_error') }}</p>
+                @endif
+            @else
+                <p class="mt-2 text-xs text-gray-500">Tambahkan email aktif untuk menggunakan verifikasi email saat membuka slip gaji.</p>
+            @endif
+        </div>
+
         <div class="flex items-center gap-4 pt-2">
             <button type="submit" class="btn-primary">Simpan Perubahan</button>
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasOfficeOwnership;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class Employee extends Model
 {
+    use HasOfficeOwnership;
+
     public const SHIFT_PAGI = 'Shift Pagi (07.00-12.00)';
 
     public const SHIFT_SIANG = 'Shift Siang (13.00-18.00)';
@@ -42,6 +45,12 @@ class Employee extends Model
     public const TIPE_KARYAWAN_AKTIF = 'karyawan_aktif';
 
     public const TIPE_MANTAN_KARYAWAN = 'mantan_karyawan';
+
+    public const WORK_LOCATION_OPTIONS = [
+        'Summarecon',
+        'Baleendah',
+        'Johen Streamer',
+    ];
 
     public const TIPE_OPTIONS = [
         self::TIPE_KARYAWAN_AKTIF => 'Karyawan Aktif',
@@ -195,6 +204,7 @@ class Employee extends Model
     }
 
     protected $fillable = [
+        'office_id',
         'nik',
         'nik_ktp',
         'device_user_id',

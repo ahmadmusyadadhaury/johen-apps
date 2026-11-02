@@ -8,6 +8,7 @@ use App\Models\Position;
 use App\Models\Region;
 use App\Models\ScriptVideoRequirementSetting;
 use App\Models\User;
+use App\Support\OfficeContext;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -284,7 +285,7 @@ class EmployeeTable extends Component
             'atasan2' => ['nullable', 'string', Rule::in(array_merge(Employee::atasanOptions(), ['Other']))],
             'tanggal_masuk' => 'nullable|date',
             'jenis_karyawan' => 'nullable|string|max:30',
-            'lokasi_kerja' => 'nullable|in:Summarecon,Baleendah',
+            'lokasi_kerja' => ['nullable', Rule::in(Employee::WORK_LOCATION_OPTIONS)],
             'jenis_kerja' => 'nullable|in:Office,Operasional',
             'jam_kerja' => 'nullable|string|max:255',
             'jam_masuk' => 'nullable|date_format:H:i',
@@ -892,7 +893,13 @@ class EmployeeTable extends Component
         $this->atasan2 = '';
         $this->tanggal_masuk = '';
         $this->jenis_karyawan = '';
-        $this->lokasi_kerja = '';
+        $activeOfficeCode = app(OfficeContext::class)->office()?->code;
+        $this->lokasi_kerja = match ($activeOfficeCode) {
+            \App\Models\Office::CODE_SUMMARECON_BANDUNG => 'Summarecon',
+            \App\Models\Office::CODE_BALEENDAH => 'Baleendah',
+            \App\Models\Office::CODE_JOHEN_STREAMER => 'Johen Streamer',
+            default => '',
+        };
         $this->jenis_kerja = '';
         $this->jam_kerja = '';
         $this->jam_masuk = '';

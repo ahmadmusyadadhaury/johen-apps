@@ -74,6 +74,21 @@
 </div>
 @endif
 
+@if(auth()->user()->isAdminMaster() || auth()->user()->isSuperAdmin())
+    <div class="card mt-6 p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Template Excel Payroll</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Unduh format resmi untuk mengisi dan mengunggah data payroll.</p>
+            </div>
+            <a href="{{ route('profile.payroll-template') }}" class="btn-primary inline-flex shrink-0 items-center gap-2 text-sm">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
+                Unduh Template Excel
+            </a>
+        </div>
+    </div>
+@endif
+
     @if(session('pin_success'))
     <div x-data="{ open: true }" x-show="open" x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"

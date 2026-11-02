@@ -34,7 +34,10 @@ class PdfGenerationService
             $canvas->get_cpdf()->setEncryption($password, $password, []);
         }
 
-        FileVault::put('public', $path, $dompdf->output(), $filename, 'application/pdf');
+        FileVault::put('local', $path, $dompdf->output(), $filename, 'application/pdf');
+        if (FileVault::exists('local', $path)) {
+            FileVault::delete('public', $path);
+        }
 
         return $path;
     }

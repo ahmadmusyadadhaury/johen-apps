@@ -12,9 +12,9 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $admin = User::firstOrCreate(
-            ['username' => 'admin'],
+            ['username' => 'yuli'],
             [
-                'name' => 'ci',
+                'name' => 'Yuliana Sventy Yasmine',
                 'email' => 'gonzaga@johen.com',
                 'password' => Hash::make('password'),
                 'role' => 'super_admin',
@@ -31,10 +31,10 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        User::where('username', 'admin')->where('role', 'staff')->update(['role' => 'super_admin']);
+        User::where('username', 'yuli')->where('role', 'staff')->update(['role' => 'super_admin']);
         User::where('username', 'gm')->where('role', 'staff')->update(['role' => 'gm_ceo']);
 
-        if (!$admin->employee) {
+        if (! $admin->employee) {
             $emp = Employee::create([
                 'nik' => 'ADM001',
                 'nama' => $admin->name,
@@ -45,7 +45,7 @@ class AdminUserSeeder extends Seeder
             $admin->save();
         }
 
-        if (!$gm->employee) {
+        if (! $gm->employee) {
             $emp = Employee::create([
                 'nik' => 'GM001',
                 'nama' => $gm->name,

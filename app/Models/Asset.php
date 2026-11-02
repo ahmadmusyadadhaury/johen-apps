@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Asset extends Model
 {
@@ -41,6 +42,16 @@ class Asset extends Model
     public function maintenances(): HasMany
     {
         return $this->hasMany(AssetMaintenance::class);
+    }
+
+    public function latestAssetMaintenance(): HasOne
+    {
+        return $this->hasOne(AssetMaintenance::class)->latestOfMany('maintenance_date');
+    }
+
+    public function itMaintenancePc(): HasOne
+    {
+        return $this->hasOne(ItMaintenancePc::class, 'asset_code', 'code');
     }
 
     public function payments(): HasMany

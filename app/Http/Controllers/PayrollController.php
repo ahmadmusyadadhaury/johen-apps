@@ -6,6 +6,7 @@ use App\Facades\FileVault;
 use App\Models\PayrollDetail;
 use App\Models\PayrollImport;
 use App\Services\PdfGenerationService;
+use App\Services\PayrollSlipAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -96,12 +97,29 @@ class PayrollController extends Controller
         ];
     }
 
-    public function downloadPdf(PayrollDetail $detail)
+    public function downloadPdf(PayrollDetail $detail, PayrollSlipAccess $access)
     {
+        $user = request()->user();
+        $access->authorize($user, $detail);
+        if (! $access->isVerified($user, $detail)) {
+            return redirect()->route('payroll.slip.verify', ['detail' => $detail, 'action' => 'download']);
+        }
+
         $filename = sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode);
 
-        if (! $detail->pdf_path || ! FileVault::exists('public', $detail->pdf_path)) {
+        if (! $detail->pdf_path || (! FileVault::exists('local', $detail->pdf_path) && ! FileVault::exists('public', $detail->pdf_path))) {
             return redirect()->back()->with('error', 'File PDF tidak ditemukan.');
+        }
+
+        if (FileVault::exists('local', $detail->pdf_path)) {
+            if (Storage::disk('local')->exists($detail->pdf_path)) {
+                return Storage::disk('local')->download($detail->pdf_path, $filename);
+            }
+
+            return response(FileVault::get('local', $detail->pdf_path), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
         }
 
         if (Storage::disk('public')->exists($detail->pdf_path)) {
@@ -114,16 +132,33 @@ class PayrollController extends Controller
         ]);
     }
 
-    public function viewPdf(PayrollDetail $detail)
+    public function viewPdf(PayrollDetail $detail, PayrollSlipAccess $access)
     {
+        $user = request()->user();
+        $access->authorize($user, $detail);
+        if (! $access->isVerified($user, $detail)) {
+            return redirect()->route('payroll.slip.verify', ['detail' => $detail, 'action' => 'view']);
+        }
+
         $filename = sprintf('Slip_%s_%s.pdf', $detail->nik, $detail->payrollImport->periode);
 
-        if (! $detail->pdf_path || ! FileVault::exists('public', $detail->pdf_path)) {
+        if (! $detail->pdf_path || (! FileVault::exists('local', $detail->pdf_path) && ! FileVault::exists('public', $detail->pdf_path))) {
             return redirect()->back()->with('error', 'File PDF tidak ditemukan.');
         }
 
         // `response()` memakai Content-Disposition: inline, jadi PDF dibuka di
         // tab browser (viewer bawaan) alih-alih diunduh seperti `download()`.
+        if (FileVault::exists('local', $detail->pdf_path)) {
+            if (Storage::disk('local')->exists($detail->pdf_path)) {
+                return Storage::disk('local')->response($detail->pdf_path, $filename);
+            }
+
+            return response(FileVault::get('local', $detail->pdf_path), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            ]);
+        }
+
         if (Storage::disk('public')->exists($detail->pdf_path)) {
             return Storage::disk('public')->response($detail->pdf_path, $filename);
         }

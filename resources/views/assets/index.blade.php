@@ -363,7 +363,7 @@
             @php
                 $isPeralatanKantor = $selectedCategory && strtolower(str_replace('-', ' ', $selectedCategory)) === 'peralatan kantor';
                 $isSosialMedia = $selectedCategory && strtolower(str_replace('-', ' ', $selectedCategory)) === 'sosial media';
-                $colspan = $isPeralatanKantor ? 9 : ($isSosialMedia ? 9 : ($selectedCategory ? 7 : 8));
+                $colspan = $isPeralatanKantor ? 11 : ($isSosialMedia ? 9 : ($selectedCategory ? 7 : 8));
             @endphp
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -373,6 +373,8 @@
                             <th class="px-6 py-3 text-center w-10">No</th>
                             <th class="px-6 py-3">Kode Aset</th>
                             <th class="px-6 py-3">Nama Barang</th>
+                            <th class="px-6 py-3">PIC</th>
+                            <th class="px-6 py-3">Servis Terakhir</th>
                             <th class="px-6 py-3 text-center">Jumlah</th>
                             <th class="px-6 py-3 text-right">Nilai (Rp)</th>
                             <th class="px-6 py-3 text-right">Harga Saat Ini</th>
@@ -388,6 +390,27 @@
                             <td class="table-cell text-center text-gray-500 dark:text-gray-400">{{ $startNo + $loop->index }}</td>
                             <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $a->code }}</td>
                             <td class="table-cell font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ $a->name }}</td>
+                            <td class="table-cell whitespace-nowrap">{{ $m['pic'] ?? '-' }}</td>
+                            <td class="table-cell whitespace-nowrap">
+                                @php
+                                    $officeService = $a->latestAssetMaintenance;
+                                    $itService = $a->itMaintenancePc?->latestCompletedSchedule;
+                                    $officeServiceDate = $officeService?->maintenance_date;
+                                    $itServiceDate = $itService?->tanggal_selesai ?? $itService?->tanggal_mulai ?? $itService?->updated_at;
+                                    $useOfficeService = $officeServiceDate && (! $itServiceDate || $officeServiceDate->gte($itServiceDate));
+                                    $lastService = $useOfficeService ? $officeService : $itService;
+                                    $lastServiceDate = $useOfficeService ? $officeServiceDate : $itServiceDate;
+                                @endphp
+                                @if($lastServiceDate)
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ $lastServiceDate->format('d M Y') }}</span>
+                                    @php($lastServiceNote = $useOfficeService ? ($officeService?->description ?: $officeService?->notes) : $itService?->catatan)
+                                    @if($lastServiceNote)
+                                        <span class="block max-w-[180px] truncate text-xs text-gray-400" title="{{ $lastServiceNote }}">{{ $lastServiceNote }}</span>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-gray-400">Belum pernah</span>
+                                @endif
+                            </td>
                             <td class="table-cell text-center">{{ $m['jumlah'] ?? '-' }}</td>
                             <td class="table-cell text-right font-medium tabular-nums text-gray-700 dark:text-gray-300">{{ isset($m['nilai']) && $m['nilai'] !== '' ? 'Rp ' . number_format((float) $m['nilai'], 0, ',', '.') : '-' }}</td>
                             <td class="table-cell text-right font-medium tabular-nums text-gray-700 dark:text-gray-300">{{ isset($m['harga_per_hari_ini']) && $m['harga_per_hari_ini'] !== '' ? 'Rp ' . number_format((float) $m['harga_per_hari_ini'], 0, ',', '.') : '-' }}</td>

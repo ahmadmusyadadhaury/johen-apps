@@ -97,6 +97,7 @@ class KontrakEvaluasiWorkspace extends Component
             abort(403);
         }
 
+
         $myEval = $contract->evaluations()->where('evaluator_id', auth()->id())->first();
 
         if (!$myEval && !($this->withinWindow($contract))) {
@@ -289,6 +290,7 @@ class KontrakEvaluasiWorkspace extends Component
 
     public function submit(): void
     {
+        $this->assertEvaluationAccess();
         abort_unless(auth()->user()?->canEvaluateContractFor($this->contract), 403);
 
         $rules = [];
@@ -479,4 +481,5 @@ class KontrakEvaluasiWorkspace extends Component
             'scoreLabel' => $this->scoreLabel,
         ]);
     }
+
 }

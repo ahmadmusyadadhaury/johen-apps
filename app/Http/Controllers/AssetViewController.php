@@ -134,7 +134,7 @@ class AssetViewController extends Controller
             $q->whereIn('id', $myAssetIds);
         };
 
-        $query = Asset::with(['category', 'creator']);
+        $query = Asset::with(['category', 'creator', 'latestAssetMaintenance', 'itMaintenancePc.latestCompletedSchedule']);
 
         if ($isMyAssets) {
             $applyMyAssetsFilter($query);
@@ -286,7 +286,7 @@ class AssetViewController extends Controller
 
 public function detail(Asset $asset)
     {
-        return response()->json($this->detailPayload($asset));
+        return response()->json($this->detailPayload($asset, true));
     }
 
     public function publicShow(string $code)
@@ -302,11 +302,11 @@ public function detail(Asset $asset)
 
         return view('assets.public', [
             'asset' => $asset,
-            'detail' => $this->detailPayload($asset),
+            'detail' => $this->detailPayload($asset, false),
         ]);
     }
 
-    private function detailPayload(Asset $asset): array
+    private function detailPayload(Asset $asset, bool $includeMaintenance): array
     {
         $asset->load(['category', 'creator']);
 
@@ -333,6 +333,26 @@ public function detail(Asset $asset)
             $response['description'] = null;
         } elseif ($asset->category?->name === 'Peralatan Kantor') {
             $response['fields'] = $this->peralatanKantorFields($asset->metadata);
+            if ($includeMaintenance) {
+                $asset->loadMissing(['latestAssetMaintenance', 'itMaintenancePc.latestCompletedSchedule']);
+                $assetService = $asset->latestAssetMaintenance;
+                $itService = $asset->itMaintenancePc?->latestCompletedSchedule;
+                $assetServiceDate = $assetService?->maintenance_date;
+                $itServiceDate = $itService?->tanggal_selesai ?? $itService?->tanggal_mulai ?? $itService?->updated_at;
+                $useAssetService = $assetServiceDate && (! $itServiceDate || $assetServiceDate->gte($itServiceDate));
+                $latestService = $useAssetService ? $assetService : $itService;
+                $latestServiceDate = $useAssetService ? $assetServiceDate : $itServiceDate;
+                $response['fields'][] = [
+                    'label' => 'Servis Terakhir',
+                    'value' => $latestServiceDate?->format('d/m/Y') ?? 'Belum pernah',
+                ];
+                $latestServiceDescription = $useAssetService
+                    ? ($assetService?->description ?: $assetService?->notes)
+                    : $itService?->catatan;
+                if ($latestServiceDescription) {
+                    $response['fields'][] = ['label' => 'Keterangan Servis Terakhir', 'value' => $latestServiceDescription];
+                }
+            }
             $response['description'] = null;
         } elseif ($asset->category?->name === 'Kendaraan') {
             $response['fields'] = $this->vehicleFields($asset->metadata);

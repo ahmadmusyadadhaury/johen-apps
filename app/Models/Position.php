@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasOfficeOwnership;
+use App\Models\Scopes\OfficeScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -9,7 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Position extends Model
 {
+    use HasOfficeOwnership;
+
     protected $fillable = [
+        'office_id',
         'nama',
         'parent_id',
         'division_id',
@@ -43,6 +48,9 @@ class Position extends Model
     public function employees(): BelongsToMany
     {
         return $this->belongsToMany(Employee::class, 'employee_position')
+            // Pimpinan perusahaan dapat ditempatkan pada struktur beberapa kantor,
+            // sementara data induk pegawainya tetap dimiliki kantor asal.
+            ->withoutGlobalScope(OfficeScope::class)
             ->withPivot('is_main')
             ->withTimestamps();
     }

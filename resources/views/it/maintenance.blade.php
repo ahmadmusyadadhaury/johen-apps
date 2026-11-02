@@ -13,6 +13,10 @@
         formNama: '',
         formCatatan: '',
         formPeriode: '{{ $periode }}',
+        showLinkAsset: false,
+        linkPcId: null,
+        linkPcName: '',
+        linkAssetCode: '',
         editTarget: null,
         editPreviewSebelum: null,
         editPreviewSesudah: null,
@@ -109,7 +113,8 @@
                     <thead class="bg-gray-50/70 dark:bg-gray-800/50">
                         <tr class="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                             <th class="px-5 py-3">No</th>
-                            <th class="px-5 py-3">Nama PC</th>
+                            <th class="px-5 py-3">PC / PIC Johen Office</th>
+                            <th class="px-5 py-3">Servis Terakhir</th>
                             <th class="px-5 py-3">Tanggal Mulai</th>
                             <th class="px-5 py-3">Tanggal Selesai</th>
                             <th class="px-5 py-3">Status</th>
@@ -128,10 +133,30 @@
                         @forelse($pcs as $index => $pc)
                             @php
                                 $latest = $pc->schedules->first();
+                                $lastService = $pc->latestCompletedSchedule;
+                                $lastServiceDate = $lastService?->tanggal_selesai ?? $lastService?->tanggal_mulai ?? $lastService?->updated_at;
                             @endphp
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                                 <td class="px-5 py-3.5 text-gray-400">{{ $index + 1 }}</td>
-                                <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-gray-100">{{ $pc->nama }}</td>
+                                <td class="px-5 py-3.5">
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">{{ $pc->nama }}</div>
+                                    @if($pc->asset)
+                                        <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $pc->asset->name }} · PIC: {{ data_get($pc->asset->metadata, 'pic') ?: '-' }}</div>
+                                    @endif
+                                    @if($canManage)
+                                        <button type="button" @click="linkPcId = {{ $pc->id }}; linkPcName = @js($pc->nama); linkAssetCode = @js($pc->asset_code ?? ''); showLinkAsset = true" class="mt-1 block text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">{{ $pc->asset ? 'Ubah tautan aset' : 'Hubungkan ke Aset Johen Office' }}</button>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-3.5">
+                                    @if($lastServiceDate)
+                                        <div class="font-medium text-gray-700 dark:text-gray-300">{{ $lastServiceDate->format('d M Y') }}</div>
+                                        @if($lastService?->catatan)
+                                            <div class="mt-1 max-w-[180px] truncate text-xs text-gray-500 dark:text-gray-400" title="{{ $lastService->catatan }}">{{ $lastService->catatan }}</div>
+                                        @endif
+                                    @else
+                                        <span class="text-xs text-gray-400">Belum pernah</span>
+                                    @endif
+                                </td>
                                 @if($latest)
                                     <td class="px-5 py-3.5">
                                         <span class="text-gray-700 dark:text-gray-300">{{ $latest->tanggal_mulai?->format('d M Y') ?? '-' }}</span>
@@ -200,7 +225,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ 8 + (($canGiveFeedbackKoordinator || $canGiveFeedback || $canManage) ? 1 : 0) + ($canManage ? 1 : 0) }}" class="px-5 py-12 text-center text-gray-400">
+                                <td colspan="{{ 9 + (($canGiveFeedbackKoordinator || $canGiveFeedback || $canManage) ? 1 : 0) + ($canManage ? 1 : 0) }}" class="px-5 py-12 text-center text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
                                     Belum ada jadwal pada periode {{ $periode }}.
                                 </td>
@@ -234,6 +259,31 @@
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" @click="showAddMaintenance = false" class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Batal</button>
                             <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+
+        {{-- Hubungkan PC maintenance dengan aset dari Johen Office --}}
+        <template x-if="showLinkAsset">
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                <div class="fixed inset-0 bg-black/50" @click="showLinkAsset = false"></div>
+                <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900" @click.stop>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Hubungkan ke Data Aset</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pilih aset Johen Office untuk <span class="font-semibold" x-text="linkPcName"></span>.</p>
+                    <form :action="'{{ url('it/maintenance/pc') }}/' + linkPcId + '/asset'" method="POST" class="mt-5 space-y-4">
+                        @csrf
+                        @method('PATCH')
+                        <select name="asset_code" class="block w-full rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                            <option value="" :selected="!linkAssetCode">Tidak dihubungkan</option>
+                            @foreach($officeAssets as $officeAsset)
+                                <option value="{{ $officeAsset->code }}" :selected="linkAssetCode === @js($officeAsset->code)">{{ $officeAsset->code }} · {{ $officeAsset->name }} (PIC: {{ data_get($officeAsset->metadata, 'pic') ?: '-' }})</option>
+                            @endforeach
+                        </select>
+                        <div class="flex justify-end gap-3">
+                            <button type="button" @click="showLinkAsset = false" class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Batal</button>
+                            <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Simpan Hubungan</button>
                         </div>
                     </form>
                 </div>

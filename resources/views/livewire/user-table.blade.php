@@ -29,6 +29,7 @@
                     <option value="manager">Manager</option>
 <option value="koordinator">Koordinator</option>
                     <option value="staff">Staff</option>
+                    <option value="streamer">Streamer</option>
                     <option value="koordinator_project">Koordinator Project</option>
                     <option value="koordinator_it">Koordinator IT</option>
                     <option value="staff_it">Staff IT</option>
@@ -73,6 +74,7 @@
                         <th class="px-6 py-3">Nama</th>
                         <th class="px-6 py-3">Username</th>
                         <th class="px-6 py-3">Role</th>
+                        <th class="px-6 py-3">Kantor</th>
                         <th class="px-6 py-3">Karyawan</th>
                         <th class="px-6 py-3 text-center">Aksi</th>
                     </tr>
@@ -144,8 +146,23 @@
                                     <span class="badge-info">Staff HR</span>
                                 @elseif($u->role === 'koordinator_project')
                                     <span class="badge-info">Koordinator Project</span>
+                                @elseif($u->role === 'streamer')
+                                    <span class="badge-secondary">Streamer</span>
                                 @else
                                     <span class="badge-secondary">Staff</span>
+                                @endif
+                            </td>
+                            <td class="table-cell text-gray-600 dark:text-gray-400">
+                                @if($u->hasGlobalOfficeAccess())
+                                    <span class="badge-info">Semua Kantor</span>
+                                @elseif($u->offices->isNotEmpty())
+                                    <div class="flex max-w-xs flex-wrap gap-1">
+                                        @foreach($u->offices as $office)
+                                            <span class="badge-secondary">{{ $office->name }}</span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-xs text-red-500">Belum ditempatkan</span>
                                 @endif
                             </td>
                             <td class="table-cell text-gray-600 dark:text-gray-400">
@@ -153,24 +170,24 @@
                             </td>
                             <td class="table-cell text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-1">
-                                    @can('update-data')
+                                    @if(auth()->user()->isSuperAdmin())
                                     <button wire:click="openEditModal({{ $u->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
                                         Edit
                                     </button>
-                                    @endcan
-                                    @can('delete-data')
+                                    @endif
+                                    @if(auth()->user()->isSuperAdmin())
                                     <button wire:click="confirmDelete({{ $u->id }})" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                                         Hapus
                                     </button>
-                                    @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-16 text-center">
+                            <td colspan="7" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mb-3">
                                         <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
@@ -236,8 +253,9 @@
 
                 <div>
                     <x-input-label for="create-role" value="Role *" />
-                    <select id="create-role" wire:model="role" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <select id="create-role" wire:model.live="role" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                         <option value="staff">Staff</option>
+                        <option value="streamer">Streamer</option>
                         <option value="koordinator_project">Koordinator Project</option>
                         <option value="koordinator_it">Koordinator IT</option>
                     <option value="staff_it">Staff IT</option>
@@ -265,7 +283,9 @@
                         <option value="koordinator">Koordinator</option>
                         <option value="manager">Manager</option>
                         <option value="gm_ceo">GM / CEO</option>
+                        @if(!auth()->user()->isAdminMaster())
                         <option value="super_admin">Super Admin</option>
+                        @endif
                         <option value="admin_master">Admin Master</option>
                         <option value="staff_hr">Staff HR</option>
                     </select>
@@ -280,6 +300,26 @@
                             <option value="{{ $emp->id }}">{{ $emp->nama }} ({{ $emp->nik }})</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div>
+                    <x-input-label value="Akses Kantor *" />
+                    @if(in_array($role, [\App\Models\User::ROLE_SUPER_ADMIN, \App\Models\User::ROLE_GM_CEO], true))
+                        <div class="mt-1 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 text-xs text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+                            Role ini otomatis memiliki akses ke semua kantor aktif.
+                        </div>
+                    @else
+                        <div class="mt-1 space-y-2 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                            @foreach($offices as $office)
+                                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" value="{{ $office->id }}" wire:model="officeIds" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900">
+                                    <span>{{ $office->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+                    @error('officeIds') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    @error('officeIds.*') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -337,8 +377,9 @@
 
                 <div>
                     <x-input-label for="edit-role" value="Role *" />
-                    <select id="edit-role" wire:model="role" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
+                    <select id="edit-role" wire:model.live="role" class="mt-1 block w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                         <option value="staff">Staff</option>
+                        <option value="streamer">Streamer</option>
                         <option value="koordinator_project">Koordinator Project</option>
                         <option value="koordinator_it">Koordinator IT</option>
                     <option value="staff_it">Staff IT</option>
@@ -380,6 +421,26 @@
                             <option value="{{ $emp->id }}">{{ $emp->nama }} ({{ $emp->nik }})</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div>
+                    <x-input-label value="Akses Kantor *" />
+                    @if(in_array($role, [\App\Models\User::ROLE_SUPER_ADMIN, \App\Models\User::ROLE_GM_CEO], true))
+                        <div class="mt-1 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 text-xs text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+                            Role ini otomatis memiliki akses ke semua kantor aktif.
+                        </div>
+                    @else
+                        <div class="mt-1 space-y-2 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                            @foreach($offices as $office)
+                                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" value="{{ $office->id }}" wire:model="officeIds" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900">
+                                    <span>{{ $office->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+                    @error('officeIds') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    @error('officeIds.*') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\PayrollSlipMail;
+use App\Facades\FileVault;
 use App\Models\EmailLog;
 use App\Models\PayrollDetail;
 use Illuminate\Support\Facades\Mail;
@@ -19,7 +20,10 @@ class EmailService
         ]);
 
         try {
-            $pdfPath = Storage::disk('public')->path($detail->pdf_path);
+            if (! Storage::disk('local')->exists($detail->pdf_path)) {
+                FileVault::get('local', $detail->pdf_path);
+            }
+            $pdfPath = Storage::disk('local')->path($detail->pdf_path);
 
             Mail::to($detail->email)->send(new PayrollSlipMail(
                 nama: $detail->nama,

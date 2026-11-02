@@ -214,12 +214,12 @@
     <div x-data="{ open: $wire.entangle('showCreateModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl my-8">
+        <div @click.stop class="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-6">
 
             {{-- HEADER --}}
-            <div class="flex items-center justify-between mb-4">
+            <div class="mb-4 flex shrink-0 items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $k('Tambah Karyawan') }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $k('Lengkapi data karyawan baru') }}</p>
@@ -230,7 +230,7 @@
             </div>
 
             {{-- STEP INDICATOR --}}
-            <div class="mb-5">
+            <div class="mb-5 shrink-0 overflow-x-auto px-1 pt-1">
                 <div class="flex items-center justify-center gap-0">
                     @foreach ([1 => 'Informasi Pribadi', 2 => 'Data Pekerjaan', 3 => 'Kontak & Darurat'] as $num => $label)
                         <div class="flex items-center">
@@ -260,7 +260,7 @@
             </div>
 
             {{-- FORM --}}
-            <form wire:submit.prevent="confirmPreview">
+            <form wire:submit.prevent="confirmPreview" class="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
 
                 {{-- STEP 1: Informasi Pribadi --}}
                 @if($step == 1)
@@ -519,8 +519,9 @@
                             <x-input-label for="create-lokasi_kerja" value="Lokasi Kerja" />
                             <select id="create-lokasi_kerja" wire:model="lokasi_kerja" class="mt-1 block w-full rounded-xl border @error('lokasi_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih lokasi kerja</option>
-                                <option value="Summarecon">Summarecon</option>
-                                <option value="Baleendah">Baleendah</option>
+                                @foreach(\App\Models\Employee::WORK_LOCATION_OPTIONS as $workLocation)
+                                    <option value="{{ $workLocation }}">{{ $workLocation }}</option>
+                                @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('lokasi_kerja')" class="mt-2" />
                         </div>
@@ -660,7 +661,7 @@
                 @endif
 
                 {{-- FOOTER NAVIGATION --}}
-                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
+                <div class="sticky bottom-0 z-10 mt-4 flex items-center justify-between border-t border-gray-100 bg-white pb-1 pt-4 dark:border-gray-700 dark:bg-gray-800">
                     <div>
                         @if($step > 1)
                             <button type="button" wire:click="prevStep" class="btn-secondary text-xs">
@@ -696,11 +697,11 @@
     <div x-data="{ open: $wire.entangle('showEditModal') }"
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-gray-900/60 p-3 backdrop-blur-sm sm:p-4"
          @click="open = false">
-        <div @click.stop class="relative w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-2xl my-8">
+        <div @click.stop class="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white p-4 shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:p-6">
 
-            <div class="flex items-center justify-between mb-4">
+            <div class="mb-4 flex shrink-0 items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $k('Edit Karyawan') }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $k('Perbarui data karyawan') }}</p>
@@ -711,7 +712,7 @@
             </div>
 
             {{-- STEP INDICATOR --}}
-            <div class="mb-5">
+            <div class="mb-5 shrink-0 overflow-x-auto px-1 pt-1">
                 <div class="flex items-center justify-center gap-0">
                     @foreach ([1 => 'Informasi Pribadi', 2 => 'Data Pekerjaan', 3 => 'Kontak & Darurat'] as $num => $label)
                         <div class="flex items-center">
@@ -740,7 +741,7 @@
                 </div>
             </div>
 
-            <form wire:submit.prevent="confirmPreview">
+            <form wire:submit.prevent="confirmPreview" class="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
 
                 {{-- STEP 1: Informasi Pribadi --}}
                 @if($step == 1)
@@ -999,8 +1000,9 @@
                             <x-input-label for="edit-lokasi_kerja" value="Lokasi Kerja" />
                             <select id="edit-lokasi_kerja" wire:model="lokasi_kerja" class="mt-1 block w-full rounded-xl border @error('lokasi_kerja') border-red-400 focus:border-red-400 focus:ring-red-100 @else border-gray-200 dark:border-gray-600 @enderror bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all duration-200">
                                 <option value="">Pilih lokasi kerja</option>
-                                <option value="Summarecon">Summarecon</option>
-                                <option value="Baleendah">Baleendah</option>
+                                @foreach(\App\Models\Employee::WORK_LOCATION_OPTIONS as $workLocation)
+                                    <option value="{{ $workLocation }}">{{ $workLocation }}</option>
+                                @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('lokasi_kerja')" class="mt-2" />
                         </div>
@@ -1127,7 +1129,7 @@
                 @endif
 
                 {{-- FOOTER NAVIGATION --}}
-                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
+                <div class="sticky bottom-0 z-10 mt-4 flex items-center justify-between border-t border-gray-100 bg-white pb-1 pt-4 dark:border-gray-700 dark:bg-gray-800">
                     <div>
                         @if($step > 1)
                             <button type="button" wire:click="prevStep" class="btn-secondary text-xs">

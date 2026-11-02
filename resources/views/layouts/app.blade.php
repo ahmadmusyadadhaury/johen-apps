@@ -749,8 +749,15 @@ if ($divisionViewUser) {
                     @endunless
                     @endunless @endcan
 
-                    @if(auth()->user()->isSuperAdmin())
+                    @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdminMaster())
+                    @if($officeContext->office()?->code !== \App\Models\Office::CODE_JOHEN_STREAMER)
                     <div class="mt-3">
+                        @if(auth()->user()->isSuperAdmin())
+                        <a href="{{ route('offices.index') }}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 {{ request()->routeIs('offices.*') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M8.25 7.5h1.5m-1.5 3.75h1.5m-1.5 3.75h1.5m4.5-7.5h1.5m-1.5 3.75h1.5m-1.5 3.75h1.5M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                            Master Kantor
+                        </a>
+                        @endif
                         <a href="{{ route('kelola-akun') }}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 {{ request()->routeIs('kelola-akun') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                             Kelola Akun
@@ -772,6 +779,7 @@ if ($divisionViewUser) {
                         </a>
                         @endif
                     </div>
+                    @endif
 
                     @if(auth()->user()->canAccessScriptVideo() && ! auth()->user()->isGmCeo())
                     <div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 {{ request()->routeIs('hris.script-video') ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
@@ -807,6 +815,57 @@ if ($divisionViewUser) {
 
                     <div class="flex items-center gap-2 shrink-0">
                         @stack('topbar-right')
+
+                        @if(Auth::user()->hasGlobalOfficeAccess())
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-2.5 text-gray-600 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" :aria-expanded="open" aria-haspopup="true" title="Pilih kantor aktif">
+                                <svg class="h-4 w-4 shrink-0 text-primary-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M8.25 7.5h1.5m-1.5 3.75h1.5m-1.5 3.75h1.5m4.5-7.5h1.5m-1.5 3.75h1.5m-1.5 3.75h1.5M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                                <span class="hidden max-w-36 truncate text-xs font-semibold md:block">{{ $officeContext->label() }}</span>
+                                <svg class="hidden h-3 w-3 text-gray-400 transition-transform md:block" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                                <span class="sr-only">Kantor aktif: {{ $officeContext->label() }}</span>
+                            </button>
+
+                            <div x-show="open" x-cloak
+                                 x-transition:enter="transition ease-out duration-150"
+                                 x-transition:enter-start="opacity-0 -translate-y-1"
+                                 x-transition:enter-end="opacity-100 translate-y-0"
+                                 x-transition:leave="transition ease-in duration-100"
+                                 x-transition:leave-start="opacity-100 translate-y-0"
+                                 x-transition:leave-end="opacity-0 -translate-y-1"
+                                 class="fixed inset-x-3 top-[calc(env(safe-area-inset-top,0px)+4.25rem)] z-50 max-h-[calc(100dvh-env(safe-area-inset-top,0px)-5rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-72 sm:max-h-none sm:overflow-hidden">
+                                <div class="border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                                    <p class="text-xs font-bold text-gray-900 dark:text-gray-100">Pilih Kantor</p>
+                                    <p class="mt-0.5 text-[11px] text-gray-400">Menentukan konteks kantor aktif</p>
+                                </div>
+
+                                <div class="space-y-1 p-2">
+                                    <form method="POST" action="{{ route('office-context.update') }}">
+                                        @csrf
+                                        <input type="hidden" name="office_id" value="{{ \App\Support\OfficeContext::ALL_OFFICES }}">
+                                        <button type="submit" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors {{ $officeContext->isAllOffices() ? 'bg-primary-50 font-semibold text-primary-700 dark:bg-primary-950/50 dark:text-primary-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                                            <span>Semua Kantor</span>
+                                            @if($officeContext->isAllOffices())
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                                            @endif
+                                        </button>
+                                    </form>
+
+                                    @foreach($officeContext->availableOffices() as $officeOption)
+                                        <form method="POST" action="{{ route('office-context.update') }}">
+                                            @csrf
+                                            <input type="hidden" name="office_id" value="{{ $officeOption->id }}">
+                                            <button type="submit" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors {{ $officeContext->office()?->is($officeOption) ? 'bg-primary-50 font-semibold text-primary-700 dark:bg-primary-950/50 dark:text-primary-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                                                <span class="truncate">{{ $officeOption->name }}</span>
+                                                @if($officeContext->office()?->is($officeOption))
+                                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                                                @endif
+                                            </button>
+                                        </form>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        @endif
 
                         <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl px-1.5 py-1.5 bg-white dark:bg-gray-800 shadow-sm">
                             <div x-data="pwaInstall()" x-show="!installed" x-cloak class="mr-1.5 flex h-8 items-center border-r border-gray-200 pr-1.5 dark:border-gray-700">

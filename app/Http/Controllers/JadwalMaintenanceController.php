@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ItMaintenancePc;
 use App\Models\ItMaintenanceSchedule;
+use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -40,16 +41,22 @@ class JadwalMaintenanceController extends Controller
         $pcs = ItMaintenancePc::query()
             ->where('aktif', true)
             ->whereHas('schedules', fn ($q) => $q->where('periode', $periode))
-            ->with(['schedules' => function ($q) use ($periode) {
+            ->with(['asset.category', 'latestCompletedSchedule', 'schedules' => function ($q) use ($periode) {
                 $q->where('periode', $periode)->orderByDesc('tanggal_mulai')->limit(1);
             }])
             ->get();
+
+        $officeAssets = Asset::query()
+            ->with(['category', 'itMaintenancePc'])
+            ->whereHas('category', fn ($query) => $query->where('name', 'Peralatan Kantor'))
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'category_id', 'metadata']);
 
         $canManage = auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt();
         $canGiveFeedback = auth()->user()->isHeadOfStore2();
         $canGiveFeedbackKoordinator = auth()->user()->isKoordinatorIt();
 
-        return view('it.maintenance', compact('pcs', 'canManage', 'canGiveFeedback', 'canGiveFeedbackKoordinator', 'periodeList', 'periode'));
+        return view('it.maintenance', compact('pcs', 'officeAssets', 'canManage', 'canGiveFeedback', 'canGiveFeedbackKoordinator', 'periodeList', 'periode'));
     }
 
     public function storeMaintenance(Request $request)
@@ -99,6 +106,7 @@ class JadwalMaintenanceController extends Controller
         }
 
         $data['status'] = 'selesai';
+        $data['tanggal_selesai'] = $schedule->tanggal_selesai?->toDateString() ?? now()->toDateString();
         $schedule->update($data);
         return back()->with('success', 'Jadwal maintenance ditandai selesai.');
     }
@@ -115,6 +123,10 @@ class JadwalMaintenanceController extends Controller
             'foto_sebelum' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'foto_sesudah' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
+
+        if ($data['status'] === 'selesai' && empty($data['tanggal_selesai']) && ! $schedule->tanggal_selesai) {
+            $data['tanggal_selesai'] = now()->toDateString();
+        }
 
         if ($request->hasFile('foto_sebelum')) {
             if ($schedule->foto_sebelum) {
@@ -162,6 +174,32 @@ class JadwalMaintenanceController extends Controller
         }
         $pc->delete();
         return back()->with('success', 'PC berhasil dihapus.');
+    }
+
+    public function linkAsset(Request $request, ItMaintenancePc $pc)
+    {
+        abort_unless(auth()->user()->isKoordinatorIt() || auth()->user()->isStaffIt(), 403);
+
+        $data = $request->validate([
+            'asset_code' => ['nullable', 'string', 'exists:assets,code'],
+        ]);
+
+        if (! empty($data['asset_code'])) {
+            abort_unless(Asset::query()
+                ->where('code', $data['asset_code'])
+                ->whereHas('category', fn ($query) => $query->where('name', 'Peralatan Kantor'))
+                ->exists(), 422, 'Pilih aset dari kategori Peralatan Kantor.');
+            abort_unless(! ItMaintenancePc::query()
+                ->where('asset_code', $data['asset_code'])
+                ->where('id', '!=', $pc->id)
+                ->exists(), 422, 'Aset tersebut sudah dihubungkan ke PC maintenance lain.');
+        }
+
+        $pc->update(['asset_code' => $data['asset_code'] ?? null]);
+
+        return back()->with('success', $data['asset_code'] ?? null
+            ? 'PC berhasil dihubungkan ke Data Aset Johen Office.'
+            : 'Hubungan PC dengan Data Aset berhasil dihapus.');
     }
 
     public function feedback(Request $request, ItMaintenanceSchedule $schedule)

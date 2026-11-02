@@ -37,6 +37,10 @@
     @if($sinkronView ?? false)
         <livewire:machine-user-sync-table />
     @elseif($karyawanView || isset($koordinatorView))
+        @if($tab === 'saya' && $employee?->office?->usesWebFaceAttendance())
+            @include('livewire.partials.daily-face-attendance')
+        @endif
+
         {{-- Info libur mingguan (Office) --}}
         @if(!empty($mingguLiburHariIni))
             <div class="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-5 py-4">

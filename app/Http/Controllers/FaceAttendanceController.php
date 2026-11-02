@@ -173,15 +173,14 @@ class FaceAttendanceController extends Controller
         $sum = 0.0;
         foreach ($left as $index => $value) $sum += ((float) $value - (float) $right[$index]) ** 2;
 
-        // Match Human 3.3.6 normalization: multiply squared Euclidean distance
-        // before taking its root, then normalize to the documented [0.2, 0.8]
-        // similarity range. Multiplying sqrt(sum) directly by 25 incorrectly
-        // clamps almost every real comparison to 20%.
+        // Match Human 3.3.6: distance = round(100 * multiplier * sum, 2),
+        // with multiplier 25 by default. Using only 25 * sum makes the distance
+        // 10x too small and inflates scores for unrelated faces.
         if ($sum === 0.0) {
             return 1.0;
         }
 
-        $distance = round(25 * $sum, 2);
+        $distance = round(2500 * $sum, 2);
         $normalized = (1 - (sqrt($distance) / 100) - 0.2) / (0.8 - 0.2);
 
         return round(max(0.0, min(1.0, $normalized)), 2);

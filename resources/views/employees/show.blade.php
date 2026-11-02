@@ -2270,6 +2270,9 @@ NIP {{ $employee->nik }}
 
     {{-- Modal Edit Karyawan (reuse dari livewire employee-table) --}}
     <livewire:employee-table :modal-only="true" />
+    @if($canSeePayroll)
+        @include('payroll.verification-modal')
+    @endif
 
     <script>
         document.addEventListener('livewire:init', () => {

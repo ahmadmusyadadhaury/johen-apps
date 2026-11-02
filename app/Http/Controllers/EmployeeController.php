@@ -243,8 +243,13 @@ class EmployeeController extends Controller
             ->with('success', 'Foto berhasil diperbarui.');
     }
 
-    public function showPhoto(Employee $employee)
+    public function showPhoto(int $employee)
     {
+        // Foto dipakai pada bagan organisasi lintas kantor. Resolusi model
+        // biasa terkena OfficeScope dan menghasilkan 404 untuk atasan yang
+        // tampil di bagan tetapi berasal dari kantor lain.
+        $employee = Employee::withoutGlobalScopes()->findOrFail($employee);
+
         if (! $employee->foto || ! str_starts_with($employee->foto, 'base64:')) {
             abort(404);
         }

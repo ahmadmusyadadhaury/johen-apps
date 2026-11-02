@@ -15,7 +15,9 @@ class PayrollImportService
     {
         $spreadsheet = IOFactory::load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
-        $rows = $worksheet->toArray();
+        // Jangan membaca nilai yang sudah diformat sebagai teks. Format Excel
+        // `50,000,000` bisa terbaca string lalu diparse menjadi 50.
+        $rows = $worksheet->toArray(null, true, false, false);
 
         $header = array_shift($rows);
         $data = collect($rows)->filter(fn($row) => !empty(array_filter($row)));
@@ -178,17 +180,37 @@ class PayrollImportService
             return 0.0;
         }
 
-        // Titik ribuan ala Indonesia: "5.000", "500.000", "5.000.000", opsional koma desimal
-        if (preg_match('/^-?\d{1,3}(\.\d{3})+(,\d+)?$/', $cleaned)) {
-            $cleaned = str_replace('.', '', $cleaned);
-            $cleaned = str_replace(',', '.', $cleaned);
+        // Format ribuan tanpa desimal, baik Indonesia (50.000.000) maupun
+        // internasional (50,000,000). Tangani sebelum separator desimal.
+        if (preg_match('/^-?\d{1,3}(\.\d{3})+$/', $cleaned)
+            || preg_match('/^-?\d{1,3}(,\d{3})+$/', $cleaned)) {
+            return (float) str_replace([',', '.'], '', $cleaned);
+        }
+
+        // Jika titik dan koma muncul bersama, separator paling kanan adalah
+        // desimal dan separator lainnya adalah pemisah ribuan.
+        if (str_contains($cleaned, ',') && str_contains($cleaned, '.')) {
+            if (strrpos($cleaned, ',') > strrpos($cleaned, '.')) {
+                $cleaned = str_replace('.', '', $cleaned);
+                $cleaned = str_replace(',', '.', $cleaned);
+            } else {
+                $cleaned = str_replace(',', '', $cleaned);
+            }
             return (float) $cleaned;
         }
 
-        // Koma desimal saja: "1,5"
-        if (str_contains($cleaned, ',') && !str_contains($cleaned, '.')) {
-            $cleaned = str_replace(',', '.', $cleaned);
-            return (float) $cleaned;
+        // Satu koma dengan tiga digit di belakang berarti format ribuan;
+        // koma lain dianggap sebagai separator desimal Indonesia.
+        if (str_contains($cleaned, ',')) {
+            if (preg_match('/^-?\d{1,3},\d{3}$/', $cleaned)) {
+                return (float) str_replace(',', '', $cleaned);
+            }
+            return (float) str_replace(',', '.', $cleaned);
+        }
+
+        // Titik tunggal tiga digit di belakang lazimnya pemisah ribuan.
+        if (preg_match('/^-?\d{1,3}\.\d{3}$/', $cleaned)) {
+            return (float) str_replace('.', '', $cleaned);
         }
 
         return (float) $cleaned;

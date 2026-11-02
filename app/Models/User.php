@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Scopes\OfficeScope;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -18,14 +18,52 @@ use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'username', 'email', 'password', 'role', 'pin_hash'])]
 #[Hidden(['password', 'remember_token', 'pin_hash'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
+    /** Kirim seluruh notifikasi email akun ke alamat yang tersimpan di Profil. */
+    public function routeNotificationForMail($notification): ?string
+    {
+        return $this->email;
+    }
+
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id')
+            ->withoutGlobalScope(OfficeScope::class);
+    }
+
+    public function offices(): BelongsToMany
+    {
+        return $this->belongsToMany(Office::class)
+            ->withPivot('is_default')
+            ->withTimestamps();
+    }
+
+    public function hasGlobalOfficeAccess(): bool
+    {
+        return $this->isSuperAdmin() || $this->isGmCeo();
+    }
+
+    public function canAccessOffice(Office|int $office): bool
+    {
+        if ($this->hasGlobalOfficeAccess()) {
+            return true;
+        }
+
+        $officeId = $office instanceof Office ? $office->getKey() : $office;
+
+        return $this->offices()->whereKey($officeId)->exists();
+    }
+
+    public function defaultOffice(): ?Office
+    {
+        return $this->offices()
+            ->orderByPivot('is_default', 'desc')
+            ->orderBy('sort_order')
+            ->first();
     }
 
     public function passkeys(): HasMany
@@ -42,12 +80,15 @@ class User extends Authenticatable
 
     public function hasPin(): bool
     {
-        return !is_null($this->pin_hash);
+        return ! is_null($this->pin_hash);
     }
 
     public function verifyPin(string $pin): bool
     {
-        if (!$this->hasPin()) return false;
+        if (! $this->hasPin()) {
+            return false;
+        }
+
         return password_verify($pin, $this->pin_hash);
     }
 
@@ -90,36 +131,68 @@ class User extends Authenticatable
     }
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
+
     public const ROLE_GM_CEO = 'gm_ceo';
+
     public const ROLE_MANAGER = 'manager';
+
     public const ROLE_KOORDINATOR = 'koordinator';
+
     public const ROLE_STAFF = 'staff';
+
     public const ROLE_KOORDINATOR_IT = 'koordinator_it';
+
     public const ROLE_STAFF_IT = 'staff_it';
+
     public const ROLE_KOORDINATOR_CREATIVE = 'koordinator_creative';
+
     public const ROLE_STAFF_CREATIVE = 'staff_creative';
+
     public const ROLE_STAFF_HOST_PUBG = 'staff_host_pubg';
+
     public const ROLE_STAFF_ADMIN = 'staff_admin';
+
     public const ROLE_KOORDINATOR_ADMIN = 'koordinator_admin';
+
     public const ROLE_KOORDINATOR_PUBG = 'koordinator_pubg';
+
     public const ROLE_KOORDINATOR_FF = 'koordinator_ff';
+
     public const ROLE_STAFF_HOST_FF = 'staff_host_ff';
+
     public const ROLE_STAFF_HOST_MLBB = 'staff_host_mlbb';
+
     public const ROLE_KOORDINATOR_MLBB = 'koordinator_mlbb';
+
     public const ROLE_KOORDINATOR_EFOOTBALL = 'koordinator_efootball';
+
     public const ROLE_STAFF_HOST_EFOOTBALL = 'staff_host_efootball';
+
     public const ROLE_KOORDINATOR_VALORANT = 'koordinator_valorant';
+
     public const ROLE_STAFF_HOST_VALORANT = 'staff_host_valorant';
+
     public const ROLE_KOORDINATOR_ROBLOX = 'koordinator_roblox';
+
     public const ROLE_STAFF_HOST_ROBLOX = 'staff_host_roblox';
+
     public const ROLE_KOORDINATOR_MONKEY_PUBG = 'koordinator_monkey_pubg';
+
     public const ROLE_STAFF_HOST_MONKEY_PUBG = 'staff_host_monkey_pubg';
+
     public const ROLE_STAFF_HOST_FC_MOBILE = 'staff_host_fc_mobile';
+
     public const ROLE_KOORDINATOR_STOCK = 'koordinator_stock';
+
     public const ROLE_STAFF_STOCK = 'staff_stock';
+
     public const ROLE_STAFF_HR = 'staff_hr';
+
     public const ROLE_KOORDINATOR_PROJECT = 'koordinator_project';
+
     public const ROLE_ADMIN_MASTER = 'admin_master';
+
+    public const ROLE_STREAMER = 'streamer';
 
     public function isSuperAdmin(): bool
     {
@@ -187,7 +260,7 @@ class User extends Authenticatable
 
     public function canApproveContractFor(EmployeeContract $contract): bool
     {
-        if (!$this->canApproveContract()) {
+        if (! $this->canApproveContract()) {
             return false;
         }
 
@@ -199,13 +272,19 @@ class User extends Authenticatable
         // Manager: approve berdasarkan struktur organisasi (posisi hierarchy)
         if ($this->role === self::ROLE_MANAGER) {
             $employee = $contract->employee;
-            if (!$employee) return false;
+            if (! $employee) {
+                return false;
+            }
 
             $managerEmployee = $this->employee;
-            if (!$managerEmployee) return false;
+            if (! $managerEmployee) {
+                return false;
+            }
 
             $managerPosition = $managerEmployee->mainPosition();
-            if (!$managerPosition) return false;
+            if (! $managerPosition) {
+                return false;
+            }
 
             // Ambil semua descendant position ID (termasuk posisi manager sendiri)
             $descendantIds = $this->getAllDescendantIdsForPosition($managerPosition);
@@ -225,7 +304,7 @@ class User extends Authenticatable
 
     public function canEvaluateContractFor(EmployeeContract $contract): bool
     {
-        if (!$this->canEvaluateContract()) {
+        if (! $this->canEvaluateContract()) {
             return false;
         }
 
@@ -254,7 +333,7 @@ class User extends Authenticatable
 
     public function pegawaiLabel(string $label): string
     {
-        if (!$this->usesPegawaiTerm()) {
+        if (! $this->usesPegawaiTerm()) {
             return $label;
         }
 
@@ -268,7 +347,12 @@ class User extends Authenticatable
 
     public function isStaff(): bool
     {
-        return in_array($this->role, [self::ROLE_STAFF, self::ROLE_KOORDINATOR_PROJECT]);
+        return in_array($this->role, [self::ROLE_STAFF, self::ROLE_KOORDINATOR_PROJECT, self::ROLE_STREAMER], true);
+    }
+
+    public function isStreamer(): bool
+    {
+        return $this->role === self::ROLE_STREAMER;
     }
 
     public function isKoordinatorProject(): bool
@@ -298,8 +382,13 @@ class User extends Authenticatable
 
     public function canSeeBiaya(): bool
     {
-        if ($this->isKoordinatorCreative()) return true;
-        if ($this->isStaffCreative() && str_starts_with($this->employee?->mainPosition()?->nama ?? '', 'Admin KOL')) return true;
+        if ($this->isKoordinatorCreative()) {
+            return true;
+        }
+        if ($this->isStaffCreative() && str_starts_with($this->employee?->mainPosition()?->nama ?? '', 'Admin KOL')) {
+            return true;
+        }
+
         return false;
     }
 
@@ -452,15 +541,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator Free Fire')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -474,15 +567,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator Johen PUBG')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -496,15 +593,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator MLBB')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -518,15 +619,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator E-football')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -540,15 +645,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator Valorant')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -562,15 +671,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator Roblox')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -584,15 +697,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator Monkey PUBG')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -606,15 +723,19 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAnyKoordinator()) {
+        if (! $this->isAnyKoordinator()) {
             return false;
         }
 
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', 'Koordinator FC Mobile')->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -635,10 +756,14 @@ class User extends Authenticatable
     public function hasDivisionPosition(string $rootPositionName): bool
     {
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
 
         $root = Position::where('nama', $rootPositionName)->first();
-        if (!$root) return false;
+        if (! $root) {
+            return false;
+        }
 
         $descendantIds = $this->getAllDescendantIdsForPosition($root);
         $descendantIds[] = $root->id;
@@ -653,6 +778,7 @@ class User extends Authenticatable
             $ids[] = $child->id;
             $ids = array_merge($ids, $this->getAllDescendantIdsForPosition($child));
         }
+
         return $ids;
     }
 
@@ -679,22 +805,28 @@ class User extends Authenticatable
     public function isHeadOfStore(): bool
     {
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
         $positionName = $employee->mainPosition()?->nama ?? $employee->position;
+
         return str_contains(strtolower((string) $positionName), 'head of store');
     }
 
     public function isHeadOfStore2(): bool
     {
         $employee = $this->employee;
-        if (!$employee) return false;
+        if (! $employee) {
+            return false;
+        }
         $positionName = $employee->mainPosition()?->nama ?? $employee->position;
+
         return strtolower((string) $positionName) === 'head of store 2';
     }
 
     public function isHeadOfStore1(): bool
     {
-        return $this->isHeadOfStore() && !$this->isHeadOfStore2();
+        return $this->isHeadOfStore() && ! $this->isHeadOfStore2();
     }
 
     public function isKoordinatorItOrAbove(): bool
@@ -734,6 +866,7 @@ class User extends Authenticatable
             self::ROLE_STAFF_HOST_FC_MOBILE => 1,
             self::ROLE_KOORDINATOR_STOCK => 1,
             self::ROLE_STAFF_STOCK => 1,
+            self::ROLE_STREAMER => 1,
             default => 0,
         };
     }
@@ -785,6 +918,7 @@ class User extends Authenticatable
             $this->isManager() => 'Manager',
             $this->isKoordinator() => 'Koordinator',
             $this->isKoordinatorProject() => 'Koordinator Project',
+            $this->isStreamer() => 'Streamer',
             $this->isStaff() => 'Staff',
             $this->isSuperAdmin() => 'Super Admin',
             $this->isAdminMaster() => 'Admin Master',
@@ -864,26 +998,33 @@ class User extends Authenticatable
         self::ROLE_STAFF_HOST_MONKEY_PUBG,
         self::ROLE_STAFF_HOST_FC_MOBILE,
         self::ROLE_STAFF_STOCK,
+        self::ROLE_STREAMER,
         self::ROLE_ADMIN_MASTER,
     ];
 
     public function canCreateData(): bool
     {
-        if ($this->isReadOnlyWorkspace()) return false;
+        if ($this->isReadOnlyWorkspace()) {
+            return false;
+        }
 
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO]);
     }
 
     public function canUpdateData(): bool
     {
-        if ($this->isReadOnlyWorkspace()) return false;
+        if ($this->isReadOnlyWorkspace()) {
+            return false;
+        }
 
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO, self::ROLE_MANAGER]);
     }
 
     public function canDeleteData(): bool
     {
-        if ($this->isReadOnlyWorkspace()) return false;
+        if ($this->isReadOnlyWorkspace()) {
+            return false;
+        }
 
         return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_MASTER, self::ROLE_GM_CEO]);
     }

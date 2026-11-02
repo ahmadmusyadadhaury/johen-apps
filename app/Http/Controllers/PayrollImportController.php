@@ -59,6 +59,7 @@ class PayrollImportController extends Controller
 
         foreach ($import->payrollDetails as $detail) {
             if ($detail->pdf_path) {
+                FileVault::delete('local', $detail->pdf_path);
                 FileVault::delete('public', $detail->pdf_path);
             }
         }

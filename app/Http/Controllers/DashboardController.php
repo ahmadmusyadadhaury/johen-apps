@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Services\DashboardService;
 use App\Services\ExternalMeetingService;
 use App\Support\DivisionMenu;
+use App\Support\OfficeContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,11 +19,17 @@ class DashboardController extends Controller
         private DashboardService $dashboardService,
     ) {}
 
-    public function index(Request $request, ExternalMeetingService $externalMeetingService)
+    public function index(Request $request, ExternalMeetingService $externalMeetingService, OfficeContext $officeContext)
     {
         session()->forget('division_menu');
 
         $user = auth()->user();
+
+        if (! $officeContext->isAllOffices() && $officeContext->office() && ! Division::exists()) {
+            return view('dashboard.empty-office', [
+                'office' => $officeContext->office(),
+            ]);
+        }
 
         $birthdayEmployees = Employee::whereNotNull('tanggal_lahir')
             ->where('tipe', 'karyawan_aktif')

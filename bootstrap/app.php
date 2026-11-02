@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\ResolveOfficeContext;
 use App\Http\Middleware\StaffHrAccess;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -17,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [StaffHrAccess::class]);
+        $middleware->web(append: [ResolveOfficeContext::class, StaffHrAccess::class]);
         $middleware->api(append: [StaffHrAccess::class]);
         $middleware->alias([
             'role' => CheckRole::class,
